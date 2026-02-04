@@ -1,86 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Manager - Store Inventory</title>
+    <title>Hammad Mart - Manager</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; padding: 20px; }
-        .no-print { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto 30px; }
-        .input-group { display: flex; gap: 10px; flex-wrap: wrap; }
-        input { padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; flex: 1; min-width: 150px; }
-        button { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-        .btn-add { background: #2563eb; color: white; }
-        .btn-print { background: #64748b; color: white; margin-top: 15px; width: 100%; }
-        
-        /* Label Grid for A4 */
-        #print-area { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
-        .sticker { width: 110px; height: 140px; border: 1px solid #e2e8f0; background: white; padding: 5px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; page-break-inside: avoid; }
-        .st-name { font-size: 10px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; color: #1e293b; height: 24px; overflow: hidden; }
-        
-        @media print {
-            .no-print { display: none; }
-            body { background: white; padding: 0; }
-            #print-area { grid-template-columns: repeat(6, 1fr); gap: 5px; }
-            .sticker { border: 1px solid #eee; }
-        }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        .box { background: white; padding: 25px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: #1e293b; text-align: center; }
+        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-add { background: #22c55e; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #print-area { margin-top: 30px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .sticker { border: 1px solid #ccc; padding: 10px; text-align: center; background: white; }
     </style>
 </head>
 <body>
-
-<div class="no-print">
-    <h2>🛒 Product Manager</h2>
-    <div class="input-group">
-        <input type="text" id="pID" placeholder="Code (e.g. 101)">
-        <input type="text" id="pName" placeholder="Short Name (e.g. LUX SOAP)">
-        <input type="number" id="pPrice" placeholder="Retail Price">
-        <button class="btn-add" onclick="saveAndGenerate()">Add & Save</button>
+    <div class="box no-print">
+        <h2>🛒 Hammad Mart Manager</h2>
+        <input type="text" id="pID" placeholder="Product ID (e.g. 101)">
+        <input type="text" id="enName" placeholder="English Name">
+        <input type="text" id="urName" placeholder="اردو نام (Urdu Name)" dir="rtl">
+        <input type="number" id="price" placeholder="Price (Rs)">
+        <select id="unit">
+            <option value="Per Kg">Per Kg</option>
+            <option value="Per Item">Per Item</option>
+            <option value="Per Liter">Per Liter</option>
+            <option value="Per Pack">Per Pack</option>
+        </select>
+        <input type="text" id="img" placeholder="Image Link (Direct URL)">
+        <button class="btn-add" onclick="save()">Save & Generate QR</button>
+        <button onclick="window.print()" style="margin-top:10px; width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; cursor:pointer;">Print Labels</button>
     </div>
-    <button class="btn-print" onclick="window.print()">🖨️ Print Labels (A4 PDF)</button>
-    <p id="msg" style="color: green; font-size: 13px; margin-top: 10px; display: none;">Saving to Google Sheets...</p>
-</div>
+    <div id="print-area"></div>
 
-<div id="print-area"></div>
+    <script>
+        const API = "APNA_NEW_WEB_APP_URL_YAHAN_DAALEIN";
 
-<script>
-    // Updated with your new URL
-    const API_URL = "https://script.google.com/macros/s/AKfycbyzILPEE8uDgmmZD_rTY5oaf64uEOgsQXyWo03pwxdkGwu7Fw-SYfr_s_XJzD8GtYVRSw/exec";
+        function save() {
+            const data = {
+                id: document.getElementById('pID').value,
+                enName: document.getElementById('enName').value,
+                urName: document.getElementById('urName').value,
+                price: document.getElementById('price').value,
+                unit: document.getElementById('unit').value,
+                img: document.getElementById('img').value
+            };
 
-    function saveAndGenerate() {
-        const id = document.getElementById('pID').value;
-        const name = document.getElementById('pName').value;
-        const price = document.getElementById('pPrice').value;
+            fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
 
-        if(!id || !name || !price) return alert("Please fill all fields!");
-
-        // Show status
-        document.getElementById('msg').style.display = "block";
-
-        // 1. Save to Google Sheets
-        fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({id: id, name: name, price: price})
-        }).then(() => {
-            document.getElementById('msg').innerText = "✅ Saved successfully!";
-            setTimeout(() => document.getElementById('msg').style.display = "none", 2000);
-        });
-
-        // 2. Create Sticker
-        const area = document.getElementById('print-area');
-        const sticker = document.createElement('div');
-        sticker.className = 'sticker';
-        sticker.innerHTML = `<div class="st-name">${name}</div><div id="qr-${id}"></div><div style="font-size:8px; margin-top:4px; color:#94a3b8;">SCAN FOR PRICE</div>`;
-        area.appendChild(sticker);
-
-        // QR contains ONLY the ID for fast scanning
-        new QRCode(document.getElementById(`qr-${id}`), { text: id, width: 85, height: 85 });
-
-        // Reset
-        document.getElementById('pID').value = '';
-        document.getElementById('pName').value = '';
-        document.getElementById('pPrice').value = '';
-    }
-</script>
+            const div = document.createElement('div');
+            div.className = 'sticker';
+            div.innerHTML = `<div style="font-size:10px; font-weight:bold;">${data.enName}</div><div id="q-${data.id}"></div>`;
+            document.getElementById('print-area').appendChild(div);
+            new QRCode(document.getElementById(`q-${data.id}`), { text: data.id, width: 80, height: 80 });
+        }
+    </script>
 </body>
 </html>
