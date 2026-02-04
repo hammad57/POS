@@ -2,106 +2,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smart POS Scanner</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0f172a">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hammad Mart Scanner</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; overflow: hidden; }
+        :root { --primary: #0f172a; --accent: #22c55e; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--primary); color: white; margin: 0; text-align: center; }
+        .header { padding: 20px; background: #1e293b; border-bottom: 3px solid var(--accent); }
+        .mart-name { font-size: 28px; font-weight: 800; color: var(--accent); margin: 0; }
         
-        /* App Header */
-        .app-bar { height: 60px; display: flex; align-items: center; justify-content: center; background: var(--card); box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        #reader { width: 90%; max-width: 400px; margin: 20px auto; border-radius: 20px; overflow: hidden; }
         
-        /* Scanner Area */
-        #reader { width: 100vw !important; height: 70vh !important; border: none !important; }
-        #reader__scan_region { background: var(--bg); }
-        
-        /* Floating Result Card */
-        .result-overlay { 
-            position: fixed; bottom: 0; left: 0; right: 0; 
-            background: var(--card); padding: 30px; 
-            border-radius: 30px 30px 0 0; display: none;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
-            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1000;
+        .product-card { 
+            background: #1e293b; margin: 20px; padding: 20px; border-radius: 25px; 
+            display: none; animation: popIn 0.3s ease; 
         }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        .p-name { font-size: 22px; font-weight: 600; color: #94a3b8; margin-bottom: 5px; }
-        .p-price { font-size: 54px; font-weight: 900; color: var(--accent); margin: 10px 0; }
+        .prod-img { width: 120px; height: 120px; object-fit: cover; border-radius: 15px; margin-bottom: 15px; border: 2px solid var(--accent); }
+        .name-en { font-size: 22px; font-weight: bold; }
+        .name-ur { font-size: 24px; color: #94a3b8; margin: 5px 0; font-family: 'Urdu Typesetting', serif; }
+        .price-box { font-size: 45px; font-weight: 900; color: var(--accent); }
+        .unit-text { font-size: 16px; color: #64748b; }
         
-        .btn-scan-again { 
-            width: 100%; background: #3b82f6; color: white; border: none; 
-            padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold;
-            margin-top: 10px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-        }
-
-        /* Loading Spinner */
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: none; margin: auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .nav-link { display: block; margin-top: 30px; color: #3b82f6; text-decoration: none; font-size: 14px; }
+        .btn-next { background: var(--accent); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; margin-top: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="app-bar">
-        <h3 style="margin:0; letter-spacing:1px;">PRICE SCANNER</h3>
+    <div class="header">
+        <h1 class="mart-name">HAMMAD MART</h1>
+        <small style="color: #94a3b8;">Smart Inventory System</small>
     </div>
 
     <div id="reader"></div>
 
-    <div id="result-card" class="result-overlay">
-        <div id="loader" class="spinner"></div>
-        <div id="content">
-            <div class="p-name" id="res-name">Product Name</div>
-            <div class="p-price" id="res-price">Rs. 0</div>
-            <button class="btn-scan-again" onclick="resetScanner()">TAP TO SCAN NEXT</button>
-        </div>
+    <div id="product-card" class="product-card">
+        <img id="p-img" class="prod-img" src="" alt="Product">
+        <div class="name-en" id="p-en">Product Name</div>
+        <div class="name-ur" id="p-ur">اردو نام</div>
+        <hr style="border: 0; border-top: 1px solid #334155; margin: 15px 0;">
+        <div class="price-box">Rs. <span id="p-price">0</span></div>
+        <div class="unit-text" id="p-unit">Per Item</div>
+        <button class="btn-next" onclick="location.reload()">SCAN NEXT</button>
     </div>
 
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzILPEE8uDgmmZD_rTY5oaf64uEOgsQXyWo03pwxdkGwu7Fw-SYfr_s_XJzD8GtYVRSw/exec";
-        
-        const html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 20, qrbox: { width: 250, height: 250 } };
+    <a href="https://hammad57.github.io/POS/manager.html" class="nav-link">Open Manager Settings</a>
 
-        const startScanner = () => {
-            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
-        };
+    <script>
+        const API = "APNA_NEW_WEB_APP_URL_YAHAN_DAALEIN";
 
         function onScanSuccess(decodedText) {
-            // Success Vibration
-            if (navigator.vibrate) navigator.vibrate(100);
+            html5QrcodeScanner.clear();
+            const card = document.getElementById('product-card');
+            card.style.display = "block";
             
-            html5QrCode.stop();
-            document.getElementById('result-card').style.display = "block";
-            document.getElementById('loader').style.display = "block";
-            document.getElementById('content').style.opacity = "0.3";
-
-            fetch(`${SCRIPT_URL}?action=getDetails&id=${decodedText}`)
+            fetch(`${API}?action=getDetails&id=${decodedText}`)
                 .then(res => res.json())
                 .then(data => {
-                    document.getElementById('loader').style.display = "none";
-                    document.getElementById('content').style.opacity = "1";
-                    if(data.error) {
-                        document.getElementById('res-name').innerText = "Not Found!";
-                        document.getElementById('res-price').innerText = "---";
+                    if(!data.error) {
+                        document.getElementById('p-en').innerText = data.enName;
+                        document.getElementById('p-ur').innerText = data.urName;
+                        document.getElementById('p-price').innerText = data.price;
+                        document.getElementById('p-unit').innerText = data.unit;
+                        document.getElementById('p-img').src = data.img || "https://via.placeholder.com/150?text=No+Image";
                     } else {
-                        document.getElementById('res-name').innerText = data.name;
-                        document.getElementById('res-price').innerText = "Rs. " + data.price;
+                        document.getElementById('p-en').innerText = "Not Found!";
                     }
                 });
         }
 
-        function resetScanner() {
-            document.getElementById('result-card').style.display = "none";
-            startScanner();
-        }
-
-        // Start on load
-        window.onload = startScanner;
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
 </html>
