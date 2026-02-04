@@ -1,0 +1,15 @@
+{
+  "name": "Smart POS Scanner",
+  "short_name": "Scanner",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/241/241508.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
