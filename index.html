@@ -8,36 +8,66 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Top Bar */
-        .header { padding: 15px; background: var(--card); text-align: center; border-bottom: 2px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 10; }
-        .mart-name { font-size: 22px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; text-transform: uppercase; }
+        /* Top Header */
+        .header { padding: 15px; background: var(--card); text-align: center; border-bottom: 2px solid var(--accent); z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .mart-name { font-size: 24px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; text-transform: uppercase; }
         
-        /* Scanner View */
-        .scanner-container { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
-        #reader { width: 100% !important; height: 100% !important; border: none !important; object-fit: cover; }
+        /* Scanner Area */
+        .scanner-container { flex: 1; position: relative; background: black; }
+        #reader { width: 100% !important; height: 100% !important; border: none !important; }
         
-        /* Product Result Popup */
+        /* Result Popup (Glassmorphism effect) */
         .result-overlay { 
-            position: fixed; bottom: 0; left: 0; right: 0; 
-            background: var(--card); border-radius: 25px 25px 0 0; 
-            padding: 25px; display: none; 
-            box-shadow: 0 -5px 30px rgba(0,0,0,0.6); 
-            animation: slideUp 0.3s ease-out; z-index: 20;
-            text-align: center;
+            position: fixed; bottom: 0; left: 0; right: 0; top: 0;
+            background: rgba(15, 23, 42, 0.95); /* Dark background */
+            display: none; 
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 20; padding: 20px;
+            animation: fadeIn 0.3s ease-out;
         }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Product Details */
-        .prod-img { width: 100px; height: 100px; border-radius: 15px; border: 2px solid var(--accent); object-fit: cover; margin-top: -60px; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .p-en { font-size: 20px; font-weight: bold; margin-top: 10px; color: white; }
-        .p-ur { font-size: 22px; color: #94a3b8; font-family: 'Segoe UI', sans-serif; margin-bottom: 10px; }
-        .price-tag { font-size: 48px; font-weight: 900; color: var(--accent); margin: 5px 0; }
-        .unit-tag { font-size: 14px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        /* BIG Image Style */
+        .prod-img { 
+            width: 80%; /* Screen ka 80% hissa */
+            max-width: 300px; /* Zyada se zyada 300px */
+            height: auto; 
+            aspect-ratio: 1/1; 
+            border-radius: 20px; 
+            border: 4px solid var(--accent); 
+            object-fit: cover; 
+            background: white; 
+            box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3);
+            margin-bottom: 20px;
+        }
 
-        .btn-scan { width: 100%; background: #3b82f6; color: white; border: none; padding: 15px; border-radius: 50px; font-size: 16px; font-weight: bold; margin-top: 20px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
-        .mgr-link { display: block; text-align: center; margin-top: 15px; color: #64748b; text-decoration: none; font-size: 12px; }
+        /* Name & Translate Row */
+        .name-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 5px; width: 100%; }
+        
+        .p-name { font-size: 26px; font-weight: bold; color: white; text-align: center; line-height: 1.2; }
+        
+        /* Translate Icon Button */
+        .trans-btn {
+            background: #3b82f6; color: white; border: none; 
+            width: 40px; height: 40px; border-radius: 50%; 
+            font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            transition: transform 0.2s;
+        }
+        .trans-btn:active { transform: scale(0.9); }
+
+        .price-tag { font-size: 56px; font-weight: 900; color: var(--accent); margin: 10px 0; text-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+        .unit-tag { font-size: 18px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
+
+        .btn-scan { 
+            width: 90%; max-width: 350px; background: white; color: var(--bg); border: none; 
+            padding: 18px; border-radius: 50px; font-size: 18px; font-weight: 900; 
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.2); cursor: pointer;
+        }
+        
+        .mgr-link { position: absolute; bottom: 20px; color: #64748b; text-decoration: none; font-size: 12px; }
 
     </style>
 </head>
@@ -52,45 +82,79 @@
     </div>
 
     <div id="result" class="result-overlay">
-        <img id="p-img" class="prod-img" src="https://via.placeholder.com/150" alt="Product">
-        <div class="p-en" id="p-en">Scanning...</div>
-        <div class="p-ur" id="p-ur">...</div>
+        
+        <img id="p-img" class="prod-img" src="" alt="Product Image">
+        
+        <div class="name-row">
+            <div class="p-name" id="p-name">Loading...</div>
+            <button class="trans-btn" onclick="toggleLanguage()">🌐</button>
+        </div>
+
         <div class="price-tag" id="p-price">---</div>
         <div class="unit-tag" id="p-unit"></div>
         
-        <button class="btn-scan" onclick="resetScanner()">Scan Next Item</button>
+        <button class="btn-scan" onclick="resetScanner()">SCAN NEXT ITEM</button>
+        
         <a href="https://hammad57.github.io/POS/manager.html" class="mgr-link">Open Manager</a>
     </div>
 
     <script>
-        // NEW VERSION 5 URL
+        // AAPKA WEB APP URL (Version 5)
         const API = "https://script.google.com/macros/s/AKfycbx_QoHQzoG7laQkuFHNCKWpMn2z-yPcTak-OJ4AnnRcmCdGBgDRdKJUngwLimgKcoFu1Q/exec";
 
         let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
+        
+        // Data store karne ke liye variables
+        let currentProduct = { en: "", ur: "" };
+        let isUrdu = false;
 
         function onScanSuccess(decodedText) {
             html5QrcodeScanner.clear();
-            document.getElementById('result').style.display = "block";
-            document.getElementById('p-en').innerText = "Fetching Data...";
-            document.getElementById('p-price').innerText = "...";
             
+            // Show result screen
+            document.getElementById('result').style.display = "flex";
+            document.getElementById('p-name').innerText = "Fetching...";
+            document.getElementById('p-price').innerText = "...";
+            document.getElementById('p-img').src = "https://cdn.dribbble.com/users/765253/screenshots/2540865/loader.gif"; // Loading gif
+
             fetch(`${API}?action=getDetails&id=${decodedText}`)
                 .then(res => res.json())
                 .then(data => {
                     if(!data.error) {
-                        document.getElementById('p-en').innerText = data.enName;
-                        document.getElementById('p-ur').innerText = data.urName || "";
+                        // Store data for toggling
+                        currentProduct.en = data.enName;
+                        currentProduct.ur = data.urName || data.enName; // Agar Urdu na ho to English hi dikhaye
+                        
+                        // Default show English
+                        isUrdu = false;
+                        document.getElementById('p-name').innerText = currentProduct.en;
+                        
                         document.getElementById('p-price').innerText = "Rs. " + data.price;
                         document.getElementById('p-unit').innerText = data.unit || "Per Item";
-                        document.getElementById('p-img').src = data.img || "https://via.placeholder.com/150?text=No+Image";
+                        document.getElementById('p-img').src = data.img || "https://via.placeholder.com/400?text=No+Image";
                     } else {
-                        document.getElementById('p-en').innerText = "Item Not Found";
+                        document.getElementById('p-name').innerText = "Item Not Found";
                         document.getElementById('p-price').innerText = "---";
+                        document.getElementById('p-img').src = "https://via.placeholder.com/400?text=Not+Found";
                     }
                 })
                 .catch(err => {
-                    document.getElementById('p-en').innerText = "Network Error";
+                    document.getElementById('p-name').innerText = "Network Error";
                 });
+        }
+
+        // Language Toggle Function
+        function toggleLanguage() {
+            const nameEl = document.getElementById('p-name');
+            if(isUrdu) {
+                // Switch to English
+                nameEl.innerText = currentProduct.en;
+                isUrdu = false;
+            } else {
+                // Switch to Urdu
+                nameEl.innerText = currentProduct.ur;
+                isUrdu = true;
+            }
         }
 
         function resetScanner() {
