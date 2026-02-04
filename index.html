@@ -2,142 +2,106 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store Smart Scanner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart POS Scanner</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --accent: #22c55e;
-            --text: #f8fafc;
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; overflow: hidden; }
+        
+        /* App Header */
+        .app-bar { height: 60px; display: flex; align-items: center; justify-content: center; background: var(--card); box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        
+        /* Scanner Area */
+        #reader { width: 100vw !important; height: 70vh !important; border: none !important; }
+        #reader__scan_region { background: var(--bg); }
+        
+        /* Floating Result Card */
+        .result-overlay { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: var(--card); padding: 30px; 
+            border-radius: 30px 30px 0 0; display: none;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
         }
-        body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .p-name { font-size: 22px; font-weight: 600; color: #94a3b8; margin-bottom: 5px; }
+        .p-price { font-size: 54px; font-weight: 900; color: var(--accent); margin: 10px 0; }
+        
+        .btn-scan-again { 
+            width: 100%; background: #3b82f6; color: white; border: none; 
+            padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold;
+            margin-top: 10px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
         }
-        .header {
-            padding: 20px;
-            text-align: center;
-        }
-        #reader {
-            width: 90%;
-            max-width: 400px;
-            border-radius: 20px;
-            overflow: hidden;
-            border: 4px solid var(--card) !important;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-        .result-container {
-            width: 85%;
-            max-width: 400px;
-            margin-top: 30px;
-            padding: 25px;
-            background: var(--card);
-            border-radius: 24px;
-            display: none;
-            border-bottom: 6px solid var(--accent);
-            animation: slideUp 0.3s ease-out;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .p-label { font-size: 14px; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
-        .p-name { font-size: 24px; font-weight: 700; margin-bottom: 15px; }
-        .p-price { font-size: 48px; color: var(--accent); font-weight: 900; }
-        .btn-next {
-            margin-top: 25px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
-        }
-        #reader__dashboard_section_csr button {
-            background: var(--accent) !important;
-            color: white !important;
-            border-radius: 8px !important;
-            padding: 10px !important;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
+
+        /* Loading Spinner */
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: none; margin: auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2 style="margin:0; color:#3b82f6;">POS Scanner</h2>
-        <p style="color:#94a3b8; font-size:14px;">Scan QR to see live price</p>
+    <div class="app-bar">
+        <h3 style="margin:0; letter-spacing:1px;">PRICE SCANNER</h3>
     </div>
 
     <div id="reader"></div>
 
-    <div id="result-card" class="result-container">
-        <div class="p-label">Product Name</div>
-        <div id="res-name" class="p-name">---</div>
-        <hr style="border:0; border-top:1px solid #334155; margin:15px 0;">
-        <div class="p-label">Retail Price</div>
-        <div id="res-price" class="p-price">Rs. 0</div>
-        <button class="btn-next" onclick="resetScanner()">SCAN NEXT</button>
+    <div id="result-card" class="result-overlay">
+        <div id="loader" class="spinner"></div>
+        <div id="content">
+            <div class="p-name" id="res-name">Product Name</div>
+            <div class="p-price" id="res-price">Rs. 0</div>
+            <button class="btn-scan-again" onclick="resetScanner()">TAP TO SCAN NEXT</button>
+        </div>
     </div>
 
     <script>
-        // Aapka provide karda URL
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzILPEE8uDgmmZD_rTY5oaf64uEOgsQXyWo03pwxdkGwu7Fw-SYfr_s_XJzD8GtYVRSw/exec";
+        
+        const html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 20, qrbox: { width: 250, height: 250 } };
 
-        let scanner = new Html5QrcodeScanner("reader", { 
-            fps: 20, 
-            qrbox: {width: 250, height: 250},
-            aspectRatio: 1.0 
-        });
+        const startScanner = () => {
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
+        };
 
         function onScanSuccess(decodedText) {
-            // Scanner ko roko taake bar bar fetch na kare
-            scanner.clear();
+            // Success Vibration
+            if (navigator.vibrate) navigator.vibrate(100);
             
-            const card = document.getElementById('result-card');
-            const nameEl = document.getElementById('res-name');
-            const priceEl = document.getElementById('res-price');
+            html5QrCode.stop();
+            document.getElementById('result-card').style.display = "block";
+            document.getElementById('loader').style.display = "block";
+            document.getElementById('content').style.opacity = "0.3";
 
-            card.style.display = "block";
-            nameEl.innerText = "Searching Sheet...";
-            priceEl.innerText = "...";
-
-            // Live Fetch from Google Sheets
             fetch(`${SCRIPT_URL}?action=getDetails&id=${decodedText}`)
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
+                    document.getElementById('loader').style.display = "none";
+                    document.getElementById('content').style.opacity = "1";
                     if(data.error) {
-                        nameEl.innerText = "Not Found!";
-                        priceEl.innerText = "N/A";
+                        document.getElementById('res-name').innerText = "Not Found!";
+                        document.getElementById('res-price').innerText = "---";
                     } else {
-                        nameEl.innerText = data.name;
-                        priceEl.innerText = "Rs. " + data.price;
+                        document.getElementById('res-name').innerText = data.name;
+                        document.getElementById('res-price').innerText = "Rs. " + data.price;
                     }
-                })
-                .catch(err => {
-                    nameEl.innerText = "Network Error";
-                    console.error(err);
                 });
         }
 
         function resetScanner() {
             document.getElementById('result-card').style.display = "none";
-            location.reload(); // Simple and clean reset
+            startScanner();
         }
 
-        scanner.render(onScanSuccess);
+        // Start on load
+        window.onload = startScanner;
     </script>
 </body>
 </html>
