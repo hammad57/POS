@@ -21,7 +21,7 @@
         .mart-name { font-size: 20px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
         .admin-btn { background: #3b82f6; color: white; text-decoration: none; padding: 8px 15px; border-radius: 6px; font-size: 13px; font-weight: bold; }
 
-        /* --- AAPKA WAITING THEME CSS --- */
+        /* --- WAITING THEME CSS --- */
         #loading-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.95); z-index: 1000;
@@ -40,7 +40,6 @@
             color: var(--accent); letter-spacing: 2px; animation: pulse 1.5s infinite;
         }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        /* ------------------------------ */
 
         #reader { width: 100% !important; background: black; border: none !important; }
 
@@ -62,6 +61,13 @@
             width: 100%; padding: 16px; border-radius: 12px; 
             font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px;
         }
+
+        /* Error Popup Style */
+        .error-popup {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #ef4444; color: white; padding: 20px; border-radius: 15px;
+            z-index: 3000; text-align: center; width: 80%;
+        }
     </style>
 </head>
 <body>
@@ -73,10 +79,16 @@
 
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <div class="loading-text">SCANNING... PLEASE WAIT</div>
+        <div class="loading-text">SEARCHING...</div>
     </div>
 
     <div id="reader"></div>
+
+    <div id="error-popup" class="error-popup">
+        <h2 style="margin:0">Data Not Available</h2>
+        <p id="error-msg"></p>
+        <button class="btn-close" style="background: white; color: red;" onclick="hideError()">OK</button>
+    </div>
 
     <div id="result" class="result-card">
         <img id="p-img" class="p-img" src="">
@@ -95,42 +107,62 @@
         });
 
         function onScanSuccess(decodedText) {
-            // Show Your Waiting Theme
             document.getElementById('loading-overlay').style.display = 'flex';
             html5QrcodeScanner.pause();
-            
             if (navigator.vibrate) navigator.vibrate(100);
 
-            // Fetch from API
-            fetch(`${API_URL}?action=getDetails&id=${decodedText}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.error) {
-                        showProduct(data);
-                    } else {
-                        document.getElementById('loading-overlay').style.display = 'none';
-                        alert("Product Not Found! ID: " + decodedText);
-                        html5QrcodeScanner.resume();
-                    }
-                })
-                .catch(err => {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                    alert("Network Error!");
-                    html5QrcodeScanner.resume();
-                });
+            // --- STEP 1: Pehle Local Memory check karo (Offline) ---
+            const localData = JSON.parse(localStorage.getItem('mart_products') || "[]");
+            const localItem = localData.find(p => p.id.toString().trim() === decodedText.trim());
+
+            if (localItem) {
+                console.log("Found in Local Storage");
+                showProduct(localItem);
+            } else {
+                // --- STEP 2: Local nahi mila to Online check karo ---
+                console.log("Not found locally, checking online...");
+                fetchOnline(decodedText);
+            }
+        }
+
+        async function fetchOnline(id) {
+            try {
+                const response = await fetch(`${API_URL}?action=getDetails&id=${id}`);
+                const data = await response.json();
+                
+                if (!data.error) {
+                    showProduct(data);
+                } else {
+                    showError("Item Code: " + id);
+                }
+            } catch (err) {
+                // Agar internet off hai aur local bhi nahi mila tab
+                showError("No Internet & Item Not Found Locally");
+            }
         }
 
         function showProduct(data) {
-            // Hide Waiting Theme
             document.getElementById('loading-overlay').style.display = 'none';
             
-            document.getElementById('p-en').innerText = data.enName || data.en || "No Name";
-            document.getElementById('p-ur').innerText = data.urName || data.ur || "";
-            document.getElementById('p-price').innerText = "Rs. " + (data.price || data.pr);
-            document.getElementById('p-unit').innerText = "Unit: " + (data.unit || data.un || "pc");
+            // Handle both Local (pr, un) and API (price, unit) naming
+            document.getElementById('p-en').innerText = data.en || data.enName || "No Name";
+            document.getElementById('p-ur').innerText = data.ur || data.urName || "";
+            document.getElementById('p-price').innerText = "Rs. " + (data.pr || data.price || "0");
+            document.getElementById('p-unit').innerText = "Unit: " + (data.un || data.unit || "pc");
             document.getElementById('p-img').src = (data.img && data.img.length > 5) ? data.img : "https://via.placeholder.com/150?text=Hammad+Mart";
             
             document.getElementById('result').style.display = "block";
+        }
+
+        function showError(msg) {
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('error-msg').innerText = msg;
+            document.getElementById('error-popup').style.display = "block";
+        }
+
+        function hideError() {
+            document.getElementById('error-popup').style.display = "none";
+            html5QrcodeScanner.resume();
         }
 
         function closeResult() {
