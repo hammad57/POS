@@ -1,54 +1,123 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Manager - Hammad Mart</title>
+    <title>Hammad Mart - Manager</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; background: #f1f5f9; margin: 0; padding: 15px; }
-        .nav { background: #1e293b; color: white; padding: 15px; margin: -15px -15px 20px -15px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-sync { background: #22c55e; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        .btn-save { background: #1e293b; color: white; width: 100%; padding: 15px; border: none; border-radius: 5px; font-weight: bold; }
+        :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding-bottom: 50px; }
+        .header { background: var(--primary); color: white; padding: 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 800px; margin: 15px auto; padding: 0 10px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
+        .btn-save { background: var(--accent); color: white; margin-bottom: 10px; }
+        .btn-sync { background: #3b82f6; color: white; width: auto; padding: 8px 15px; }
+        
+        /* Tabs Style */
+        .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab { flex: 1; padding: 10px; text-align: center; background: #ddd; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .tab.active { background: var(--primary); color: white; }
+        
+        .product-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .product-item:hover { background: #f9f9f9; }
+        .product-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; margin-right: 12px; }
+        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
     </style>
 </head>
 <body>
-    <div class="nav">
-        <span>Manager Panel</span>
-        <button class="btn-sync" onclick="sync()">UPDATE DATA 🔄</button>
+    <div class="header">
+        <span style="font-weight: bold;">MANAGER PANEL</span>
+        <button class="btn btn-sync" onclick="syncData()">UPDATE OFFLINE 🔄</button>
     </div>
 
-    <div class="card">
-        <input type="text" id="id" placeholder="Barcode ID">
-        <input type="text" id="en" placeholder="English Name">
-        <input type="text" id="ur" placeholder="Urdu Name">
-        <input type="text" id="pr" placeholder="Price">
-        <input type="text" id="un" placeholder="Unit (kg/pc)">
-        <input type="text" id="im" placeholder="Image Link">
-        <button class="btn-save" onclick="save()">SAVE TO CLOUD</button>
+    <div class="container">
+        <div class="card">
+            <h3 id="form-title">Add/Edit Product</h3>
+            <input type="text" id="pID" placeholder="Barcode / ID">
+            <input type="text" id="en" placeholder="English Name">
+            <input type="text" id="ur" placeholder="Urdu Name">
+            <input type="text" id="pr" placeholder="Price">
+            <input type="text" id="un" placeholder="Unit (e.g. kg/pc)">
+            <input type="text" id="im" placeholder="Image URL">
+            <button class="btn btn-save" onclick="saveToCloud()">SAVE TO GOOGLE SHEET</button>
+            <button class="btn" onclick="resetForm()">Clear Form</button>
+        </div>
+
+        <div class="tabs">
+            <div id="tab-online" class="tab active" onclick="switchTab('online')">ONLINE (Cloud)</div>
+            <div id="tab-offline" class="tab" onclick="switchTab('offline')">OFFLINE (Mobile)</div>
+        </div>
+
+        <div class="card" style="padding: 0;">
+            <div id="inventory-list">
+                <p style="padding: 20px;">Loading inventory...</p>
+            </div>
+        </div>
     </div>
 
     <script>
         const API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
+        let currentTab = 'online';
+        let onlineData = [];
 
-        async function sync() {
-            const btn = document.querySelector('.btn-sync');
-            btn.innerText = "Syncing...";
+        async function loadOnlineData() {
             try {
                 const res = await fetch(API + "?action=read");
-                const data = await res.json();
-                localStorage.setItem('mart_data', JSON.stringify(data));
-                alert("Data Updated! " + data.length + " items saved offline.");
-            } catch (e) {
-                alert("Sync Error: Check Internet or Google Script Permissions.");
-            }
-            btn.innerText = "UPDATE DATA 🔄";
+                onlineData = await res.json();
+                if(currentTab === 'online') renderList(onlineData);
+            } catch (e) { console.error(e); }
         }
 
-        async function save() {
+        function renderList(data) {
+            const listDiv = document.getElementById('inventory-list');
+            if(!data || data.length === 0) {
+                listDiv.innerHTML = "<p style='padding:20px;'>No items found.</p>";
+                return;
+            }
+            listDiv.innerHTML = data.map(item => `
+                <div class="product-item" onclick="editItem('${item.id}')">
+                    <img src="${item.img || 'https://via.placeholder.com/50'}">
+                    <div style="flex:1">
+                        <div style="font-weight:bold">${item.en}</div>
+                        <div style="font-size:12px; color:gray">${item.id} | Rs. ${item.price || item.pr}</div>
+                    </div>
+                    <span class="status-dot" style="background:${currentTab==='online'?'#22c55e':'#f59e0b'}"></span>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(type) {
+            currentTab = type;
+            document.getElementById('tab-online').className = 'tab' + (type==='online'?' active':'');
+            document.getElementById('tab-offline').className = 'tab' + (type==='offline'?' active':'');
+            
+            if(type === 'offline') {
+                const local = JSON.parse(localStorage.getItem('mart_data') || "[]");
+                renderList(local);
+            } else {
+                renderList(onlineData);
+            }
+        }
+
+        function editItem(id) {
+            const list = currentTab === 'online' ? onlineData : JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const p = list.find(x => x.id == id);
+            if(p) {
+                document.getElementById('pID').value = p.id;
+                document.getElementById('en').value = p.en;
+                document.getElementById('ur').value = p.ur;
+                document.getElementById('pr').value = p.price || p.pr;
+                document.getElementById('un').value = p.unit || p.un;
+                document.getElementById('im').value = p.img;
+                window.scrollTo({top:0, behavior:'smooth'});
+            }
+        }
+
+        async function saveToCloud() {
             const payload = {
-                action: 'add',
-                id: document.getElementById('id').value,
+                action: 'update',
+                id: document.getElementById('pID').value,
                 en: document.getElementById('en').value,
                 ur: document.getElementById('ur').value,
                 price: document.getElementById('pr').value,
@@ -56,8 +125,23 @@
                 img: document.getElementById('im').value
             };
             await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-            alert("Saved to Cloud! Now click Update Data.");
+            alert("Sheet Updated!");
+            loadOnlineData();
         }
+
+        async function syncData() {
+            const res = await fetch(API + "?action=read");
+            const data = await res.json();
+            localStorage.setItem('mart_data', JSON.stringify(data));
+            alert("Mobile Data Updated Offline!");
+            if(currentTab === 'offline') renderList(data);
+        }
+
+        function resetForm() {
+            ['pID', 'en', 'ur', 'pr', 'un', 'im'].forEach(id => document.getElementById(id).value = "");
+        }
+
+        window.onload = loadOnlineData;
     </script>
 </body>
 </html>
