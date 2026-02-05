@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hammad Mart Scanner</title>
-    <link rel="manifest" href="manifest.json">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
@@ -22,142 +21,209 @@
         .mart-name { font-size: 20px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
         .admin-btn { background: #3b82f6; color: white; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-size: 14px; font-weight: 600; }
 
-        #reader { width: 100% !important; border: none !important; flex-grow: 1; }
-        #reader__scan_region { background: #000; }
-        #reader__dashboard { display: none !important; }
-
-        .result-card {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: var(--card); padding: 25px;
-            border-top-left-radius: 25px; border-top-right-radius: 25px;
-            box-shadow: 0 -10px 25px rgba(0,0,0,0.5);
-            display: none; z-index: 100; animation: slideUp 0.3s ease-out;
+        /* Search Styles */
+        .search-container { padding: 10px; background: var(--card); margin: 5px; border-radius: 12px; }
+        .search-input { 
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; 
+            background: #0f172a; color: white; box-sizing: border-box; outline: none;
         }
+        .search-input:focus { border-color: var(--accent); }
+        
+        .search-results { 
+            position: absolute; width: calc(100% - 30px); left: 15px; 
+            max-height: 300px; overflow-y: auto; background: var(--card); 
+            border-radius: 10px; z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: none; border: 1px solid #334155; margin-top: 5px;
+        }
+        .search-item {
+            display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #334155;
+            cursor: pointer;
+        }
+        .search-item:last-child { border-bottom: none; }
+        .search-item img { width: 45px; height: 45px; border-radius: 6px; object-fit: cover; margin-right: 12px; border: 1px solid #475569; }
+        .search-info { flex: 1; overflow: hidden; }
+        .search-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .search-sub { font-size: 12px; color: #94a3b8; }
+        .search-price { color: var(--accent); font-weight: bold; font-size: 14px; }
 
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        #reader-container { flex: 1; position: relative; display: flex; flex-direction: column; }
+        #reader { width: 100% !important; border: none !important; }
+        #reader__dashboard_section_csr button { background: var(--accent) !important; color: white !important; border-radius: 5px !important; padding: 8px !important; border: none !important; }
 
-        .p-img { width: 120px; height: 120px; object-fit: cover; border-radius: 15px; background: #fff; margin: 0 auto 15px; display: block; border: 3px solid var(--accent); }
-        .p-name { font-size: 22px; font-weight: bold; text-align: center; margin: 5px 0; color: var(--accent); }
-        .p-ur { font-size: 20px; text-align: center; margin-bottom: 10px; color: #94a3b8; }
-        .price-tag { font-size: 28px; font-weight: 800; text-align: center; color: #fff; background: var(--accent); padding: 10px; border-radius: 12px; margin: 15px 0; }
-        .p-info { display: flex; justify-content: space-between; border-top: 1px solid #334155; padding-top: 15px; color: #94a3b8; font-size: 14px; }
-
-        .close-btn { width: 100%; padding: 15px; background: #334155; color: white; border: none; border-radius: 10px; margin-top: 15px; font-weight: 600; cursor: pointer; }
+        .result-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 5000; display: none; padding: 20px; box-sizing: border-box; overflow-y: auto;
+        }
+        .product-card { background: var(--card); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .product-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 15px; margin-bottom: 15px; background: white; }
+        .price-tag { font-size: 32px; font-weight: 800; color: var(--accent); margin: 10px 0; }
+        .en-name { font-size: 22px; font-weight: 700; margin-bottom: 5px; }
+        .ur-name { font-size: 24px; font-weight: 700; color: #3b82f6; margin-bottom: 15px; }
+        .detail-row { display: flex; justify-content: space-between; border-top: 1px solid #334155; padding: 10px 0; color: #94a3b8; }
+        .close-btn { background: #ef4444; color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: 700; margin-top: 20px; cursor: pointer; }
 
         #loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.8); display: none;
-            justify-content: center; align-items: center; z-index: 200; flex-direction: column;
+            background: rgba(15, 23, 42, 0.9); z-index: 6000; display: none;
+            justify-content: center; align-items: center; flex-direction: column;
         }
-        .spinner { width: 40px; height: 40px; border: 4px solid #334155; border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        .spinner { border: 4px solid #334155; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        #error-popup {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #ef4444; color: white; padding: 20px; border-radius: 15px;
-            display: none; z-index: 300; text-align: center; width: 80%;
-        }
+        #error-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ef4444; color: white; padding: 20px; border-radius: 15px; z-index: 7000; display: none; text-align: center; width: 80%; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1 class="mart-name">HAMMAD MART</h1>
-        <a href="manager.html" class="admin-btn">Manager</a>
+        <a href="manager.html" class="admin-btn">MANAGER</a>
     </div>
 
-    <div id="reader"></div>
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search Name (English/Urdu)..." oninput="handleSearch(this.value)">
+        <div id="searchResults" class="search-results"></div>
+    </div>
+
+    <div id="reader-container">
+        <div id="reader"></div>
+    </div>
+
+    <div id="result" class="result-overlay">
+        <div class="product-card">
+            <img id="p-img" class="product-img" src="" alt="Product">
+            <div id="p-en" class="en-name"></div>
+            <div id="p-ur" class="ur-name"></div>
+            <div id="p-price" class="price-tag"></div>
+            <div class="detail-row">
+                <span>Unit/Size:</span>
+                <span id="p-unit"></span>
+            </div>
+            <div class="detail-row">
+                <span>Barcode:</span>
+                <span id="p-id"></span>
+            </div>
+            <button class="close-btn" onclick="closeResult()">TAP TO SCAN AGAIN</button>
+        </div>
+    </div>
 
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <p style="margin-top: 15px;">Checking Inventory...</p>
+        <p style="margin-top: 15px;">Finding Product...</p>
     </div>
 
     <div id="error-popup">
-        <h3 style="margin: 0 0 10px 0;">Item Not Found!</h3>
-        <p id="error-msg">Product detail not available in local data.</p>
-        <button onclick="hideError()" style="margin-top: 10px; padding: 10px 20px; border-radius: 5px; border: none; background: white; color: #ef4444; font-weight: bold;">SCAN AGAIN</button>
+        <h3 style="margin: 0 0 10px 0;">NOT FOUND!</h3>
+        <p id="error-msg" style="margin: 0 0 15px 0;"></p>
+        <button onclick="hideError()" style="padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; background: white; color: #ef4444;">TRY AGAIN</button>
     </div>
-
-    <div id="result" class="result-card">
-        <img id="p-img" src="" class="p-img">
-        <div id="p-en" class="p-name">Product Name</div>
-        <div id="p-ur" class="p-ur">نام</div>
-        <div id="p-price" class="price-tag">Rs. 00</div>
-        <div class="p-info">
-            <span id="p-id">Barcode: 000</span>
-            <span id="p-unit">Unit: pc</span>
-        </div>
-        <button class="close-btn" onclick="closeResult()">SCAN NEXT ITEM</button>
-    </div>
-
-    <audio id="beep" src="https://www.soundjay.com/buttons/beep-07a.mp3"></audio>
 
     <script>
-        // Service Worker Registration for Offline Refresh
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log("SW error", err));
-        }
-
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQp7W6L-x-F_yRz9A8z4F5q_K_mX9zO5_g/exec"; 
+        // Use your existing Apps Script URL
+        const API_URL = "YOUR_GOOGLE_SCRIPT_URL_HERE"; 
 
         const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-            fps: 20, 
+            fps: 10, 
             qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0
+            rememberLastUsedCamera: true
         });
 
+        html5QrcodeScanner.render(onScanSuccess);
+
         function onScanSuccess(decodedText) {
-            document.getElementById('beep').play();
-            html5QrcodeScanner.pause();
-            fetchProduct(decodedText);
+            processItem(decodedText);
         }
 
-        async function fetchProduct(id) {
+        async function processItem(barcode) {
             document.getElementById('loading-overlay').style.display = 'flex';
             
-            // 1. Pehly LOCAL DATA check karein (LocalStorage)
-            const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
-            const localProduct = localData.find(p => String(p.id) === String(id) || String(p.pID) === String(id));
-
-            if (localProduct) {
-                console.log("Showing from local storage");
-                showProduct(localProduct);
-                return;
-            }
-
-            // 2. Agar local nahi mila to INTERNET check karein
+            // Step 1: Check Online (if internet is available)
             if (navigator.onLine) {
                 try {
-                    const response = await fetch(`${SCRIPT_URL}?action=read&id=${id}`);
+                    const response = await fetch(API_URL + "?id=" + barcode);
                     const data = await response.json();
-                    if (data.status === "success") {
-                        showProduct(data.data);
-                    } else {
-                        showError("Product not found in system.");
+                    if (data && data.id) {
+                        showProduct(data);
+                        return;
                     }
-                } catch (error) {
-                    showError("Error connecting to server.");
+                } catch (e) {
+                    console.log("Online fetch failed, switching to local.");
                 }
+            }
+
+            // Step 2: Offline/Fallback Mode (Check Local Storage)
+            const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const item = localData.find(p => p.id == barcode || p.pID == barcode);
+
+            if (item) {
+                showProduct(item);
             } else {
-                showError("Offline: Product not saved locally.");
+                showError("Barcode " + barcode + " is not in records.");
+            }
+        }
+
+        function handleSearch(query) {
+            const resultsDiv = document.getElementById('searchResults');
+            if (!query || query.length < 2) { 
+                resultsDiv.style.display = 'none'; 
+                return; 
+            }
+
+            const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const filtered = localData.filter(p => {
+                const en = (p.enName || p.en || "").toLowerCase();
+                const ur = (p.urName || p.ur || "");
+                const code = (p.id || p.pID || "");
+                return en.includes(query.toLowerCase()) || ur.includes(query) || code.includes(query);
+            });
+
+            if (filtered.length > 0) {
+                resultsDiv.innerHTML = "";
+                filtered.forEach(p => {
+                    const name = p.enName || p.en || "No Name";
+                    const urName = p.urName || p.ur || "";
+                    const price = p.price || p.pr || "0";
+                    const code = p.id || p.pID || "---";
+                    const img = (p.img && p.img.length > 10) ? p.img : "https://via.placeholder.com/50";
+
+                    const div = document.createElement('div');
+                    div.className = 'search-item';
+                    div.onclick = () => {
+                        showProduct(p);
+                        resultsDiv.style.display = 'none';
+                        document.getElementById('searchInput').value = "";
+                    };
+                    div.innerHTML = `
+                        <img src="${img}">
+                        <div class="search-info">
+                            <div class="search-name">${name}</div>
+                            <div class="search-sub">${urName} | ID: ${code}</div>
+                        </div>
+                        <div class="search-price">Rs.${price}</div>
+                    `;
+                    resultsDiv.appendChild(div);
+                });
+                resultsDiv.style.display = 'block';
+            } else {
+                resultsDiv.style.display = 'none';
             }
         }
 
         function showProduct(data) {
             document.getElementById('loading-overlay').style.display = 'none';
             
-            // Naming mapping for Local vs API
-            document.getElementById('p-en').innerText = data.en || data.enName || "No Name";
-            document.getElementById('p-ur').innerText = data.ur || data.urName || "";
-            document.getElementById('p-price').innerText = "Rs. " + (data.pr || data.price || "0");
-            document.getElementById('p-unit').innerText = "Unit: " + (data.un || data.unit || "pc");
-            document.getElementById('p-id').innerText = "Barcode: " + (data.id || data.pID || "");
+            // Handle both Local keys (pr, un, en) and API keys (price, unit, enName)
+            document.getElementById('p-en').innerText = data.enName || data.en || "No Name";
+            document.getElementById('p-ur').innerText = data.urName || data.ur || "";
+            document.getElementById('p-price').innerText = "Rs. " + (data.price || data.pr || "0");
+            document.getElementById('p-unit').innerText = (data.unit || data.un || "pc");
+            document.getElementById('p-id').innerText = data.id || data.pID || "N/A";
             
-            let imgUrl = data.img || "";
-            document.getElementById('p-img').src = (imgUrl.length > 10) ? imgUrl : "https://via.placeholder.com/150?text=No+Image";
+            const img = (data.img && data.img.length > 10) ? data.img : "https://via.placeholder.com/150?text=No+Image";
+            document.getElementById('p-img').src = img;
             
             document.getElementById('result').style.display = "block";
+            html5QrcodeScanner.pause();
         }
 
         function showError(msg) {
@@ -175,8 +241,6 @@
             document.getElementById('result').style.display = "none";
             html5QrcodeScanner.resume();
         }
-
-        html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
 </html>
