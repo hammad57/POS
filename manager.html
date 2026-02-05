@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
     <style>
         :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding-bottom: 80px; }
@@ -21,7 +23,9 @@
         .btn-sync { background: #3b82f6; margin-top: 10px; }
         .btn-pdf { background: #f59e0b; margin-top: 15px; }
         .btn-cam { background: #64748b; width: auto !important; margin-bottom: 10px; }
+        .btn-scan { background: #7c3aed; width: auto !important; margin-bottom: 10px; }
         .sync-info { font-size: 12px; color: #64748b; text-align: center; margin-top: 5px; }
+        
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
         .p-name-cell { font-weight: 600; color: #1e293b; }
@@ -35,9 +39,11 @@
         .barcode-container { background: #f8fafc; padding: 15px; border-radius: 10px; margin: 15px 0; }
         #mBarcode { max-width: 100%; height: auto; }
         
-        #camOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 6000; flex-direction: column; }
-        #videoFeed { width: 100%; height: 70%; object-fit: cover; }
-        .cam-controls { height: 30%; background: #1e293b; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; }
+        /* Overlays (Camera & Scanner) */
+        .full-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 6000; flex-direction: column; }
+        #videoFeed, #reader { width: 100%; height: 70%; object-fit: cover; }
+        .overlay-controls { height: 30%; background: #1e293b; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; }
+        
         #loading { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; align-items:center; justify-content:center; flex-direction: column; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -49,10 +55,18 @@
         <p>Processing...</p>
     </div>
 
-    <div id="camOverlay">
+    <div id="scannerOverlay" class="full-overlay">
+        <div id="reader"></div>
+        <div class="overlay-controls">
+            <h3 style="color:white; margin:0;">Scan Product Barcode/QR</h3>
+            <button class="btn" style="background:transparent; border:1px solid white; width:150px;" onclick="stopScanner()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="camOverlay" class="full-overlay">
         <video id="videoFeed" autoplay playsinline></video>
         <canvas id="tempCanvas" style="display:none;"></canvas>
-        <div class="cam-controls">
+        <div class="overlay-controls">
             <button id="snapBtn" class="btn" style="background:white; color:black; width:80px; height:80px; border-radius:50%;" onclick="takeSnapshot()">📸</button>
             <button class="btn" style="background:transparent; border:1px solid white; width:150px;" onclick="stopCamera()">Cancel</button>
         </div>
@@ -71,7 +85,13 @@
     <div class="container">
         <div class="box">
             <h3 id="form-header" style="margin-top:0;">Add New Product</h3>
-            <input type="number" id="pID" placeholder="Product ID (Auto)">
+            
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="pID" placeholder="Product ID">
+                <button class="btn btn-scan" onclick="startScanner()" title="Scan Existing Barcode">🔍 SCAN</button>
+            </div>
+            <p style="font-size: 11px; color: gray; margin: -5px 0 10px 0;">(Leave blank for Auto-ID or click SCAN)</p>
+
             <input type="text" id="enName" placeholder="English Name">
             <input type="text" id="urName" placeholder="Urdu Name">
             <input type="number" id="price" placeholder="Price">
@@ -88,7 +108,7 @@
 
             <div style="display: flex; gap: 5px;">
                 <input type="text" id="img" placeholder="Image URL / Data" style="margin-bottom:0;">
-                <button class="btn btn-cam" onclick="startCamera()">📸</button>
+                <button class="btn btn-cam" onclick="startCamera()">📸 PHOTO</button>
             </div>
             
             <button class="btn btn-save" onclick="saveToCloud()">SAVE TO CLOUD</button>
@@ -136,8 +156,38 @@
         let allProducts = [];
         let selectedID = null;
         let stream = null;
+        let html5QrScanner = null;
         let currentMode = 'online';
 
+        // 1. Scanner Functions (NEW)
+        function startScanner() {
+            document.getElementById('scannerOverlay').style.display = "flex";
+            html5QrScanner = new Html5Qrcode("reader");
+            html5QrScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText) => {
+                    document.getElementById('pID').value = decodedText;
+                    stopScanner();
+                },
+                (errorMessage) => { /* ignore errors */ }
+            ).catch(err => {
+                alert("Scanner Error: " + err);
+                stopScanner();
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrScanner) {
+                html5QrScanner.stop().then(() => {
+                    document.getElementById('scannerOverlay').style.display = "none";
+                });
+            } else {
+                document.getElementById('scannerOverlay').style.display = "none";
+            }
+        }
+
+        // 2. Data Load & UI Functions
         function switchTab(mode) {
             currentMode = mode;
             document.getElementById('tab-online').classList.toggle('active', mode === 'online');
@@ -165,7 +215,7 @@
         function updateUI(time) {
             document.getElementById('lastSync').innerText = "Last Update: " + (time || "Never");
             switchTab(currentMode);
-            if(!selectedID) generateAutoID();
+            if(!document.getElementById('pID').value) generateAutoID();
         }
 
         function renderTable(data) {
@@ -182,7 +232,7 @@
             `).join('');
         }
 
-        // Camera Logic
+        // 3. Camera Functions
         async function startCamera() {
             document.getElementById('camOverlay').style.display = "flex";
             try {
@@ -205,7 +255,7 @@
             stopCamera();
         }
 
-        // Detail View Logic (MODIFIED)
+        // 4. Product Details (Full Page View)
         function showDetails(id) {
             const checkData = (currentMode === 'online') ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
             const p = checkData.find(x => x.id == id);
@@ -219,20 +269,14 @@
             document.getElementById('mUnit').innerText = "Unit: " + (p.unit || "Piece");
             document.getElementById('mIDDisplay').innerText = "ID: " + p.id;
 
-            // Generate Barcode for the full page view
-            JsBarcode("#mBarcode", p.id, {
-                format: "CODE128",
-                width: 2,
-                height: 60,
-                displayValue: false
-            });
-
+            JsBarcode("#mBarcode", p.id, { format: "CODE128", width: 2, height: 60, displayValue: false });
             document.getElementById('detailModal').style.display = "block";
             window.scrollTo(0, 0);
         }
 
         function closeModal() { document.getElementById('detailModal').style.display = "none"; }
 
+        // 5. Actions
         function generateAutoID() {
             let id;
             const checkData = JSON.parse(localStorage.getItem('mart_data') || "[]");
@@ -251,7 +295,7 @@
                 unit: document.getElementById('unit').value,
                 img: document.getElementById('img').value
             };
-            if(!data.en || !data.price) return alert("Enter Name and Price");
+            if(!data.id || !data.en || !data.price) return alert("Fill ID, Name and Price");
             document.getElementById('loading').style.display = "flex";
             try {
                 await fetch(API, { method: 'POST', body: JSON.stringify(data) });
@@ -275,7 +319,7 @@
         }
 
         async function deleteCurrent() {
-            if(!confirm("Are you sure to delete?")) return;
+            if(!confirm("Are you sure?")) return;
             document.getElementById('loading').style.display = "flex";
             try {
                 await fetch(API, { method: 'POST', body: JSON.stringify({action:'delete', id: selectedID}) });
