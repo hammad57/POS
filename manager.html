@@ -1,218 +1,53 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Hammad Mart - Manager</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 0; margin: 0; padding-bottom: 80px;}
-        
-        /* Header */
-        .nav-bar { 
-            background: var(--primary); padding: 15px; color: white; 
-            display: flex; align-items: center; position: sticky; top: 0; z-index: 100; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .back-btn { 
-            color: white; text-decoration: none; font-size: 24px; margin-right: 15px; 
-            cursor: pointer; display: flex; align-items: center;
-        }
-        .page-title { margin: 0; font-size: 18px; flex: 1; font-weight: 600; }
-
-        .container { max-width: 800px; margin: 15px auto; padding: 0 15px; }
-        
-        /* Form Card */
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .card h3 { margin-top: 0; color: var(--primary); }
-        
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box; font-size: 16px; }
-        
-        .btn-group { display: flex; gap: 10px; }
-        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-size: 16px; }
-        .btn-save { background: var(--accent); color: white; }
-        .btn-clear { background: #64748b; color: white; }
-
-        /* Inventory List */
-        .item-row { display: flex; align-items: center; background: white; padding: 12px; margin-bottom: 8px; border-radius: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; }
-        .item-row:active { transform: scale(0.98); background: #f8fafc; }
-        .t-img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #eee; margin-right: 15px; }
-        .t-info { flex: 1; }
-        .t-name { font-weight: bold; color: var(--primary); display: block; }
-        .t-meta { font-size: 13px; color: #64748b; }
-        .t-price { font-weight: bold; color: var(--accent); font-size: 16px; }
-
-        /* Full Page View Modal (Popup) */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 2000;
-            display: none; justify-content: center; align-items: center;
-            backdrop-filter: blur(4px);
-        }
-        .modal-content {
-            background: white; width: 85%; max-width: 400px; border-radius: 20px;
-            padding: 25px; text-align: center; position: relative;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        .m-img { width: 150px; height: 150px; border-radius: 15px; object-fit: contain; margin-bottom: 15px; border: 2px solid #eee; }
-        .m-title { font-size: 22px; font-weight: 800; color: var(--primary); margin: 0; line-height: 1.2; }
-        .m-urdu { font-size: 20px; color: var(--accent); margin-bottom: 10px; }
-        .m-price { font-size: 40px; font-weight: 900; color: var(--primary); margin: 10px 0; }
-        .m-unit { color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .m-actions { margin-top: 25px; display: flex; gap: 10px; }
-        .btn-edit { background: #3b82f6; color: white; }
-        .btn-close { background: #ef4444; color: white; }
-
-        /* Loading */
-        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 3000; }
-    </style>
-</head>
-<body>
-
-    <div id="loading">
-        <img src="https://cdn.dribbble.com/users/765253/screenshots/2540865/loader.gif" width="100">
-        <p><b>Loading Inventory...</b></p>
+<div class="nav-bar">
+    <div class="page-title">Hammad Mart Manager</div>
+    <div style="text-align: right;">
+        <button onclick="syncDataToMobile()" style="background: var(--accent); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            Update Offline Data 🔄
+        </button>
+        <div id="sync-time" style="font-size: 10px; color: #cbd5e1; margin-top: 5px;">Last Sync: Never</div>
     </div>
+</div>
 
-    <div class="nav-bar">
-        <a href="index.html" class="back-btn">&#8592;</a> 
-        <h2 class="page-title">Inventory Manager</h2>
-    </div>
+<script>
+    // URL wahi rahe ga jo aapne pehle lagaya tha
+    const API = "APNA_G_SCRIPT_URL_YAHAN_RAHNE_DEN"; 
 
-    <div class="container">
-        <div class="card">
-            <h3 id="form-header">Add New Product</h3>
-            <input type="number" id="pID" placeholder="Scan Barcode or Enter ID">
-            <input type="text" id="enName" placeholder="English Name">
-            <input type="text" id="urName" placeholder="Urdu Name" dir="rtl">
-            <input type="number" id="price" placeholder="Price (Rs.)">
-            <input type="text" id="unit" placeholder="Unit (e.g. 1 Kg)">
-            <input type="text" id="img" placeholder="Image URL">
+    // Mobile mein data save karne ka function
+    async function syncDataToMobile() {
+        const btn = event.target;
+        const originalText = btn.innerText;
+        btn.innerText = "Syncing...";
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(API + "?action=read");
+            const data = await response.json();
             
-            <div class="btn-group">
-                <button class="btn btn-save" onclick="saveData()">SAVE ITEM</button>
-                <button class="btn btn-clear" onclick="resetForm()">CLEAR</button>
-            </div>
-        </div>
-
-        <h3>All Items (<span id="count">0</span>)</h3>
-        <div id="item-list"></div>
-    </div>
-
-    <div id="viewModal" class="modal-overlay" onclick="closeModal(event)">
-        <div class="modal-content">
-            <img id="m-img" class="m-img" src="">
-            <div id="m-en" class="m-title">Title</div>
-            <div id="m-ur" class="m-urdu">Urdu</div>
-            <div id="m-price" class="m-price">Rs. 0</div>
-            <div id="m-unit" class="m-unit">Unit</div>
+            // Local Storage mein save karna
+            localStorage.setItem('mart_products', JSON.stringify(data));
+            const now = new Date().toLocaleString();
+            localStorage.setItem('last_sync_time', now);
             
-            <div class="m-actions">
-                <button class="btn btn-edit" onclick="loadIntoForm()">EDIT ✏️</button>
-                <button class="btn btn-close" onclick="document.getElementById('viewModal').style.display='none'">CLOSE ✖</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // AAP KA DIYA HUA URL
-        const API = "https://script.google.com/macros/s/AKfycbxHd-OvF5Xve8O_u9mZnqgTSbmM7boHfafOfVg_ZZEeaIoAPGmEL4pchnPlXsaqGnUTOQ/exec";
-        
-        let allProducts = [];
-        let currentViewId = null;
-
-        async function loadData() {
-            document.getElementById('loading').style.display = "flex";
-            try {
-                const res = await fetch(`${API}?action=read`);
-                allProducts = await res.json();
-                renderList();
-            } catch(e) {
-                alert("Data load nahi ho saka. Internet check karein.");
-            }
-            document.getElementById('loading').style.display = "none";
+            updateSyncUI();
+            alert("Data Mobile mein save ho gaya hai! Ab aap internet ke baghair bhi scan kar sakte hain.");
+        } catch (error) {
+            alert("Sync fail! Internet check karein.");
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
         }
+    }
 
-        function renderList() {
-            document.getElementById('count').innerText = allProducts.length;
-            const container = document.getElementById('item-list');
-            container.innerHTML = allProducts.map(p => `
-                <div class="item-row" onclick="openModal('${p.id}')">
-                    <img src="${p.img || 'https://via.placeholder.com/100'}" class="t-img">
-                    <div class="t-info">
-                        <span class="t-name">${p.en}</span>
-                        <span class="t-meta">${p.id} | ${p.ur}</span>
-                    </div>
-                    <div class="t-price">Rs.${p.price}</div>
-                </div>
-            `).join('');
+    function updateSyncUI() {
+        const time = localStorage.getItem('last_sync_time');
+        if(time) {
+            document.getElementById('sync-time').innerText = "Last Sync: " + time;
         }
+    }
 
-        // Modal Open Logic
-        function openModal(id) {
-            const p = allProducts.find(x => x.id == id);
-            if(!p) return;
-            currentViewId = id;
-
-            document.getElementById('m-img').src = p.img || "https://via.placeholder.com/200?text=No+Image";
-            document.getElementById('m-en').innerText = p.en;
-            document.getElementById('m-ur').innerText = p.ur;
-            document.getElementById('m-price').innerText = "Rs. " + p.price;
-            document.getElementById('m-unit').innerText = p.unit;
-            
-            document.getElementById('viewModal').style.display = "flex";
-        }
-
-        function closeModal(e) {
-            if (e.target.id === 'viewModal') document.getElementById('viewModal').style.display = "none";
-        }
-
-        function loadIntoForm() {
-            document.getElementById('viewModal').style.display = 'none';
-            const p = allProducts.find(x => x.id == currentViewId);
-            document.getElementById('pID').value = p.id;
-            document.getElementById('enName').value = p.en;
-            document.getElementById('urName').value = p.ur;
-            document.getElementById('price').value = p.price;
-            document.getElementById('unit').value = p.unit;
-            document.getElementById('img').value = p.img;
-            
-            document.getElementById('form-header').innerText = "Edit Item (" + p.en + ")";
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        async function saveData() {
-            const id = document.getElementById('pID').value;
-            if(!id) return alert("Barcode/ID zaroori hai!");
-
-            const exists = allProducts.some(p => p.id == id);
-            const action = exists ? 'update' : 'add';
-
-            const payload = {
-                action: action,
-                id: id,
-                en: document.getElementById('enName').value,
-                ur: document.getElementById('urName').value,
-                price: document.getElementById('price').value,
-                unit: document.getElementById('unit').value,
-                img: document.getElementById('img').value
-            };
-            
-            document.getElementById('loading').style.display = "flex";
-            await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-            resetForm(); loadData();
-        }
-
-        function resetForm() {
-            ['pID', 'enName', 'urName', 'price', 'unit', 'img'].forEach(id => document.getElementById(id).value = "");
-            document.getElementById('form-header').innerText = "Add New Product";
-        }
-
-        window.onload = loadData;
-    </script>
-</body>
-</html>
-
+    // Page load hote hi time dikhao
+    window.addEventListener('load', () => {
+        updateSyncUI();
+        loadData(); // Purana function
+    });
+</script>
