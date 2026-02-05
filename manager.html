@@ -2,422 +2,181 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Hammad Mart - Manager</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hammad Mart Scanner</title>
+    <link rel="manifest" href="manifest.json">
     <script src="https://unpkg.com/html5-qrcode"></script>
-    
     <style>
-        :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; --danger: #ef4444; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding-bottom: 80px; }
-        .nav-bar { background: var(--primary); padding: 15px; color: white; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; }
-        .back-btn { color: white; text-decoration: none; font-size: 20px; margin-right: 10px; }
-        .tabs { display: flex; background: var(--primary); }
-        .tab { flex: 1; padding: 15px; text-align: center; color: #94a3b8; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .tab.active { color: var(--accent); border-bottom: 3px solid var(--accent); background: rgba(34, 197, 94, 0.1); }
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; background: var(--bg); 
+            color: var(--text); margin: 0; display: flex; flex-direction: column; 
+            height: 100vh; overflow: hidden;
+        }
         
-        .container { max-width: 800px; margin: 15px auto; padding: 0 15px; }
-        .box { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; outline: none; }
-        input:focus { border-color: var(--accent); }
-        
-        .btn { padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; color: white; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); }
-        .btn-save { background: var(--accent); font-size: 18px; }
-        .btn-sync { background: #3b82f6; margin-top: 10px; }
-        .btn-pdf { background: #f59e0b; margin-top: 15px; }
-        .btn-cam { background: #64748b; width: auto !important; margin-bottom: 10px; padding: 10px 15px; }
-        .btn-scan { background: #7c3aed; width: auto !important; margin-bottom: 10px; padding: 10px 15px; }
-        
-        .preview-img-container { text-align: center; margin-bottom: 15px; display: none; }
-        #formPreviewImg { width: 100px; height: 100px; object-fit: cover; border-radius: 10px; border: 2px solid var(--accent); }
+        .header { 
+            padding: 15px; background: var(--card); 
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid var(--accent); z-index: 10;
+        }
+        .mart-name { font-size: 20px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
+        .admin-btn { background: #3b82f6; color: white; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-size: 14px; font-weight: 600; }
 
-        .search-box { position: sticky; top: 60px; z-index: 90; background: var(--light); padding: 10px 0; }
-        .search-input { margin-bottom: 0; border: 2px solid #cbd5e1; }
+        #reader { width: 100% !important; border: none !important; flex-grow: 1; }
+        #reader__scan_region { background: #000; }
+        #reader__dashboard { display: none !important; }
 
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
-        .p-name-cell { font-weight: 600; color: #1e293b; }
-        .p-price-cell { color: var(--accent); font-weight: bold; text-align: right; }
-        
-        /* MODAL STYLE */
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index: 5000; overflow-y: auto; }
-        .modal-header { padding: 15px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
-        .modal-body { padding: 20px; text-align: center; }
-        .modal-img { width: 100%; max-width: 300px; height: 300px; object-fit: contain; border-radius: 15px; border: 1px solid #eee; margin-bottom: 15px; }
-        .barcode-container { background: #f8fafc; padding: 15px; border-radius: 10px; margin: 15px 0; }
-        
-        /* Overlays */
-        .full-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 6000; flex-direction: column; }
-        #videoFeed, #reader { width: 100%; height: 70%; object-fit: cover; }
-        .overlay-controls { height: 30%; background: #1e293b; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; }
-        
-        #loading { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; align-items:center; justify-content:center; flex-direction: column; }
-        .spinner { border:4px solid #f3f3f3; border-top:4px solid var(--accent); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; }
+        .result-card {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--card); padding: 25px;
+            border-top-left-radius: 25px; border-top-right-radius: 25px;
+            box-shadow: 0 -10px 25px rgba(0,0,0,0.5);
+            display: none; z-index: 100; animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .p-img { width: 120px; height: 120px; object-fit: cover; border-radius: 15px; background: #fff; margin: 0 auto 15px; display: block; border: 3px solid var(--accent); }
+        .p-name { font-size: 22px; font-weight: bold; text-align: center; margin: 5px 0; color: var(--accent); }
+        .p-ur { font-size: 20px; text-align: center; margin-bottom: 10px; color: #94a3b8; }
+        .price-tag { font-size: 28px; font-weight: 800; text-align: center; color: #fff; background: var(--accent); padding: 10px; border-radius: 12px; margin: 15px 0; }
+        .p-info { display: flex; justify-content: space-between; border-top: 1px solid #334155; padding-top: 15px; color: #94a3b8; font-size: 14px; }
+
+        .close-btn { width: 100%; padding: 15px; background: #334155; color: white; border: none; border-radius: 10px; margin-top: 15px; font-weight: 600; cursor: pointer; }
+
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.8); display: none;
+            justify-content: center; align-items: center; z-index: 200; flex-direction: column;
+        }
+        .spinner { width: 40px; height: 40px; border: 4px solid #334155; border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #error-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #ef4444; color: white; padding: 20px; border-radius: 15px;
+            display: none; z-index: 300; text-align: center; width: 80%;
+        }
     </style>
 </head>
 <body>
 
-    <div id="loading">
+    <div class="header">
+        <h1 class="mart-name">HAMMAD MART</h1>
+        <a href="manager.html" class="admin-btn">Manager</a>
+    </div>
+
+    <div id="reader"></div>
+
+    <div id="loading-overlay">
         <div class="spinner"></div>
-        <p style="font-weight: bold; margin-top: 10px;">Updating Cloud...</p>
+        <p style="margin-top: 15px;">Checking Inventory...</p>
     </div>
 
-    <div id="scannerOverlay" class="full-overlay">
-        <div id="reader"></div>
-        <div class="overlay-controls">
-            <h3 style="color:white; margin:0;">Scan Barcode</h3>
-            <button class="btn" style="background:var(--danger); width:150px;" onclick="stopScanner()">Cancel</button>
-        </div>
+    <div id="error-popup">
+        <h3 style="margin: 0 0 10px 0;">Item Not Found!</h3>
+        <p id="error-msg">Product detail not available in local data.</p>
+        <button onclick="hideError()" style="margin-top: 10px; padding: 10px 20px; border-radius: 5px; border: none; background: white; color: #ef4444; font-weight: bold;">SCAN AGAIN</button>
     </div>
 
-    <div id="camOverlay" class="full-overlay">
-        <video id="videoFeed" autoplay playsinline></video>
-        <canvas id="tempCanvas" style="display:none;"></canvas>
-        <div class="overlay-controls">
-            <button id="snapBtn" class="btn" style="background:white; color:black; width:80px; height:80px; border-radius:50%; font-size:30px;" onclick="takeSnapshot()">📸</button>
-            <button class="btn" style="background:var(--danger); width:150px;" onclick="stopCamera()">Cancel</button>
+    <div id="result" class="result-card">
+        <img id="p-img" src="" class="p-img">
+        <div id="p-en" class="p-name">Product Name</div>
+        <div id="p-ur" class="p-ur">نام</div>
+        <div id="p-price" class="price-tag">Rs. 00</div>
+        <div class="p-info">
+            <span id="p-id">Barcode: 000</span>
+            <span id="p-unit">Unit: pc</span>
         </div>
+        <button class="close-btn" onclick="closeResult()">SCAN NEXT ITEM</button>
     </div>
 
-    <div class="nav-bar">
-        <div style="display:flex; align-items:center;">
-            <a href="index.html" class="back-btn">←</a>
-            <h2 style="margin:0; font-size: 18px;">Hammad Mart Manager</h2>
-        </div>
-        <span id="syncStatus" style="font-size: 10px; background: #22c55e; padding: 2px 8px; border-radius: 10px;">Online</span>
-    </div>
-
-    <div class="tabs">
-        <div id="tab-online" class="tab active" onclick="switchTab('online')">ONLINE LIST</div>
-        <div id="tab-offline" class="tab" onclick="switchTab('offline')">OFFLINE CACHE</div>
-    </div>
-
-    <div class="container">
-        <div class="box">
-            <h3 id="form-header" style="margin-top:0; color: var(--primary);">Add New Product</h3>
-            
-            <div class="preview-img-container" id="previewContainer">
-                <img id="formPreviewImg" src="">
-                <p style="font-size: 10px; color: red; margin: 0; cursor: pointer;" onclick="removePhoto()">Remove Photo</p>
-            </div>
-
-            <div style="display: flex; gap: 5px;">
-                <input type="text" id="pID" placeholder="Product ID (e.g. 123456)">
-                <button class="btn btn-scan" onclick="startScanner()">🔍 SCAN</button>
-            </div>
-
-            <input type="text" id="enName" placeholder="English Name (e.g. Milk)">
-            <input type="text" id="urName" placeholder="Urdu Name (مثلاً دودھ)">
-            <input type="number" id="price" placeholder="Price (Rs.)">
-            
-            <select id="unit">
-                <option value="" disabled selected>Select Unit</option>
-                <option value="Kgs">Kgs</option>
-                <option value="Litters">Litters</option>
-                <option value="Bundle">Bundle</option>
-                <option value="Packet">Packet</option>
-                <option value="Bag">Bag</option>
-                <option value="Piece">Piece</option>
-            </select>
-
-            <div style="display: flex; gap: 5px; align-items: center;">
-                <input type="text" id="img" placeholder="Image URL or Data" style="margin-bottom:0;">
-                <button class="btn btn-cam" onclick="startCamera()">📸 PHOTO</button>
-            </div>
-            
-            <button class="btn btn-save" onclick="saveToCloud()">SAVE PRODUCT</button>
-            <button class="btn btn-sync" onclick="loadData()">🔄 REFRESH FROM GOOGLE SHEET</button>
-            <div id="lastSync" style="font-size: 11px; text-align: center; margin-top: 8px; color: #64748b;"></div>
-            <button class="btn btn-pdf" onclick="generatePDF()">📄 DOWNLOAD ALL BARCODES (PDF)</button>
-        </div>
-
-        <div class="search-box">
-            <input type="text" id="searchInput" class="search-input" placeholder="Search by name or ID..." oninput="filterProducts()">
-        </div>
-
-        <div class="box" style="padding:0;">
-            <table id="productTable">
-                <tbody id="productBody"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="detailModal" class="modal">
-        <div class="modal-header">
-            <span style="font-weight:bold;">Product Details</span>
-            <span onclick="closeModal()" style="font-size: 30px; cursor: pointer;">&times;</span>
-        </div>
-        <div class="modal-body">
-            <img id="mImg" class="modal-img" src="">
-            
-            <div class="barcode-container">
-                <svg id="mBarcode"></svg>
-                <p id="mIDDisplay" style="margin:5px 0; color:#64748b; font-weight:bold; letter-spacing: 2px;"></p>
-            </div>
-
-            <h1 id="mEn" style="margin:5px 0; font-size: 26px;"></h1>
-            <h3 id="mUr" style="color:gray; margin:0; font-weight: normal; font-family: 'Urdu Typesetting', serif;"></h3>
-            <h1 id="mPrice" style="color:var(--accent); margin:15px 0; font-size: 36px;"></h1>
-            <p id="mUnit" style="font-size: 18px; color:#475569; margin-bottom: 25px;"></p>
-            
-            <div style="display:flex; gap:10px;">
-                <button class="btn" style="background:#3b82f6; flex:1;" onclick="editCurrent()">EDIT</button>
-                <button class="btn" style="background:var(--danger); flex:1;" onclick="deleteCurrent()">DELETE</button>
-            </div>
-        </div>
-    </div>
-
-    <canvas id="barcodeCanvas" style="display:none;"></canvas>
+    <audio id="beep" src="https://www.soundjay.com/buttons/beep-07a.mp3"></audio>
 
     <script>
-        const API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
-        let allProducts = [];
-        let selectedID = null;
-        let stream = null;
-        let html5QrScanner = null;
-        let currentMode = 'online';
-
-        // --- 1. Core Data Functions ---
-        async function loadData() {
-            document.getElementById('loading').style.display = "flex";
-            try {
-                const res = await fetch(API + "?action=read");
-                allProducts = await res.json();
-                localStorage.setItem('mart_data', JSON.stringify(allProducts));
-                const now = new Date().toLocaleString();
-                localStorage.setItem('last_sync', now);
-                updateUI(now);
-            } catch(e) { 
-                allProducts = JSON.parse(localStorage.getItem('mart_data') || "[]");
-                updateUI(localStorage.getItem('last_sync'));
-                document.getElementById('syncStatus').innerText = "Offline Mode";
-                document.getElementById('syncStatus').style.background = "#64748b";
-            }
-            document.getElementById('loading').style.display = "none";
+        // Service Worker Registration for Offline Refresh
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log("SW error", err));
         }
 
-        function updateUI(time) {
-            document.getElementById('lastSync').innerText = "Last Sync: " + (time || "Never");
-            renderTable(allProducts);
-            if(!document.getElementById('pID').value) generateAutoID();
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQp7W6L-x-F_yRz9A8z4F5q_K_mX9zO5_g/exec"; 
+
+        const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+            fps: 20, 
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0
+        });
+
+        function onScanSuccess(decodedText) {
+            document.getElementById('beep').play();
+            html5QrcodeScanner.pause();
+            fetchProduct(decodedText);
         }
 
-        function renderTable(data) {
-            const body = document.getElementById('productBody');
-            if(!data || data.length === 0) {
-                body.innerHTML = "<tr><td colspan='2' style='text-align:center; padding:30px; color:#94a3b8;'>No products found</td></tr>";
+        async function fetchProduct(id) {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            // 1. Pehly LOCAL DATA check karein (LocalStorage)
+            const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const localProduct = localData.find(p => String(p.id) === String(id) || String(p.pID) === String(id));
+
+            if (localProduct) {
+                console.log("Showing from local storage");
+                showProduct(localProduct);
                 return;
             }
-            body.innerHTML = data.map(p => `
-                <tr onclick="showDetails('${p.id}')">
-                    <td class="p-name-cell">${p.en}<br><small style="color:#94a3b8;">ID: ${p.id}</small></td>
-                    <td class="p-price-cell">Rs. ${p.price}</td>
-                </tr>
-            `).join('');
-        }
 
-        function filterProducts() {
-            const term = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allProducts.filter(p => 
-                p.en.toLowerCase().includes(term) || 
-                p.id.toString().includes(term) ||
-                (p.ur && p.ur.includes(term))
-            );
-            renderTable(filtered);
-        }
-
-        function switchTab(mode) {
-            currentMode = mode;
-            document.getElementById('tab-online').classList.toggle('active', mode === 'online');
-            document.getElementById('tab-offline').classList.toggle('active', mode === 'offline');
-            const data = (mode === 'offline') ? JSON.parse(localStorage.getItem('mart_data') || "[]") : allProducts;
-            renderTable(data);
-        }
-
-        // --- 2. Camera & Scanner ---
-        async function startCamera() {
-            document.getElementById('camOverlay').style.display = "flex";
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                document.getElementById('videoFeed').srcObject = stream;
-            } catch(e) { alert("Camera Access Denied"); stopCamera(); }
-        }
-
-        function stopCamera() {
-            if(stream) stream.getTracks().forEach(t => t.stop());
-            document.getElementById('camOverlay').style.display = "none";
-        }
-
-        function takeSnapshot() {
-            const video = document.getElementById('videoFeed');
-            const canvas = document.getElementById('tempCanvas');
-            canvas.width = 400; canvas.height = 400;
-            canvas.getContext('2d').drawImage(video, 0, 0, 400, 400);
-            const data = canvas.toDataURL('image/jpeg', 0.7);
-            document.getElementById('img').value = data;
-            
-            // Show Preview
-            document.getElementById('previewContainer').style.display = "block";
-            document.getElementById('formPreviewImg').src = data;
-            
-            stopCamera();
-        }
-
-        function removePhoto() {
-            document.getElementById('img').value = "";
-            document.getElementById('previewContainer').style.display = "none";
-        }
-
-        function startScanner() {
-            document.getElementById('scannerOverlay').style.display = "flex";
-            html5QrScanner = new Html5Qrcode("reader");
-            html5QrScanner.start(
-                { facingMode: "environment" },
-                { fps: 15, qrbox: { width: 250, height: 250 } },
-                (decodedText) => {
-                    document.getElementById('pID').value = decodedText;
-                    stopScanner();
+            // 2. Agar local nahi mila to INTERNET check karein
+            if (navigator.onLine) {
+                try {
+                    const response = await fetch(`${SCRIPT_URL}?action=read&id=${id}`);
+                    const data = await response.json();
+                    if (data.status === "success") {
+                        showProduct(data.data);
+                    } else {
+                        showError("Product not found in system.");
+                    }
+                } catch (error) {
+                    showError("Error connecting to server.");
                 }
-            ).catch(err => { alert("Scanner Error"); stopScanner(); });
-        }
-
-        function stopScanner() {
-            if (html5QrScanner) {
-                html5QrScanner.stop().then(() => {
-                    document.getElementById('scannerOverlay').style.display = "none";
-                }).catch(() => document.getElementById('scannerOverlay').style.display = "none");
             } else {
-                document.getElementById('scannerOverlay').style.display = "none";
+                showError("Offline: Product not saved locally.");
             }
         }
 
-        // --- 3. Product Actions ---
-        function showDetails(id) {
-            const p = allProducts.find(x => x.id == id);
-            if(!p) return;
+        function showProduct(data) {
+            document.getElementById('loading-overlay').style.display = 'none';
             
-            selectedID = id;
-            document.getElementById('mImg').src = (p.img && p.img.length > 15) ? p.img : "https://via.placeholder.com/300?text=No+Image";
-            document.getElementById('mEn').innerText = p.en;
-            document.getElementById('mUr').innerText = p.ur || "";
-            document.getElementById('mPrice').innerText = "Rs. " + p.price;
-            document.getElementById('mUnit').innerText = "Unit: " + (p.unit || "Piece");
-            document.getElementById('mIDDisplay').innerText = p.id;
-
-            JsBarcode("#mBarcode", p.id, { format: "CODE128", width: 2, height: 50, displayValue: false });
-            document.getElementById('detailModal').style.display = "block";
-        }
-
-        function closeModal() { document.getElementById('detailModal').style.display = "none"; }
-
-        function generateAutoID() {
-            let id;
-            do { id = Math.floor(100000 + Math.random() * 900000); }
-            while (allProducts.some(p => p.id == id));
-            document.getElementById('pID').value = id;
-        }
-
-        async function saveToCloud() {
-            const data = {
-                action: 'update',
-                id: document.getElementById('pID').value.trim(),
-                en: document.getElementById('enName').value.trim(),
-                ur: document.getElementById('urName').value.trim(),
-                price: document.getElementById('price').value.trim(),
-                unit: document.getElementById('unit').value,
-                img: document.getElementById('img').value
-            };
-
-            if(!data.id || !data.en || !data.price) return alert("Required: ID, English Name, and Price");
-
-            document.getElementById('loading').style.display = "flex";
-            try {
-                await fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-                // Since no-cors doesn't give feedback, we wait a bit and refresh
-                setTimeout(() => {
-                    resetForm();
-                    loadData();
-                }, 1500);
-            } catch(e) { 
-                alert("Network Error. Check internet."); 
-                document.getElementById('loading').style.display = "none";
-            }
-        }
-
-        function editCurrent() {
-            const p = allProducts.find(x => x.id == selectedID);
-            document.getElementById('pID').value = p.id;
-            document.getElementById('enName').value = p.en;
-            document.getElementById('urName').value = p.ur || "";
-            document.getElementById('price').value = p.price;
-            document.getElementById('unit').value = p.unit || "Piece";
-            document.getElementById('img').value = p.img || "";
+            // Naming mapping for Local vs API
+            document.getElementById('p-en').innerText = data.en || data.enName || "No Name";
+            document.getElementById('p-ur').innerText = data.ur || data.urName || "";
+            document.getElementById('p-price').innerText = "Rs. " + (data.pr || data.price || "0");
+            document.getElementById('p-unit').innerText = "Unit: " + (data.un || data.unit || "pc");
+            document.getElementById('p-id').innerText = "Barcode: " + (data.id || data.pID || "");
             
-            if(p.img && p.img.length > 15) {
-                document.getElementById('previewContainer').style.display = "block";
-                document.getElementById('formPreviewImg').src = p.img;
-            }
-
-            document.getElementById('form-header').innerText = "Edit: " + p.en;
-            document.getElementById('form-header').style.color = "#3b82f6";
-            closeModal();
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
-
-        async function deleteCurrent() {
-            if(!confirm("Are you sure you want to delete this product?")) return;
-            document.getElementById('loading').style.display = "flex";
-            try {
-                await fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:'delete', id: selectedID}) });
-                setTimeout(() => {
-                    closeModal();
-                    loadData();
-                }, 1500);
-            } catch(e) { 
-                alert("Error deleting product");
-                document.getElementById('loading').style.display = "none";
-            }
-        }
-
-        function resetForm() {
-            selectedID = null;
-            ['pID', 'enName', 'urName', 'price', 'img'].forEach(i => document.getElementById(i).value = "");
-            document.getElementById('unit').value = "";
-            document.getElementById('form-header').innerText = "Add New Product";
-            document.getElementById('form-header').style.color = "var(--primary)";
-            document.getElementById('previewContainer').style.display = "none";
-            generateAutoID();
-        }
-
-        function generatePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            let x = 10, y = 15;
+            let imgUrl = data.img || "";
+            document.getElementById('p-img').src = (imgUrl.length > 10) ? imgUrl : "https://via.placeholder.com/150?text=No+Image";
             
-            doc.setFontSize(14);
-            doc.text("Hammad Mart - Inventory Labels", 70, 10);
-            
-            allProducts.forEach((p, index) => {
-                doc.setFontSize(8);
-                doc.text(p.en.substring(0,25), x, y);
-                doc.text("Rs. " + p.price, x, y + 4);
-                
-                const canvas = document.getElementById('barcodeCanvas');
-                JsBarcode(canvas, p.id, {format: "CODE128", height: 30, displayValue: false});
-                doc.addImage(canvas.toDataURL(), 'PNG', x, y + 5, 35, 12);
-                
-                x += 48; 
-                if(x > 180) { x = 10; y += 30; }
-                if(y > 270) { doc.addPage(); y = 15; x = 10; }
-            });
-            doc.save("Hammad_Mart_Labels.pdf");
+            document.getElementById('result').style.display = "block";
         }
 
-        window.onload = loadData;
+        function showError(msg) {
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('error-msg').innerText = msg;
+            document.getElementById('error-popup').style.display = "block";
+        }
+
+        function hideError() {
+            document.getElementById('error-popup').style.display = "none";
+            html5QrcodeScanner.resume();
+        }
+
+        function closeResult() {
+            document.getElementById('result').style.display = "none";
+            html5QrcodeScanner.resume();
+        }
+
+        html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
 </html>
