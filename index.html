@@ -7,211 +7,89 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
-        body { 
-            font-family: 'Segoe UI', sans-serif; background: var(--bg); 
-            color: var(--text); margin: 0; display: flex; flex-direction: column; 
-            height: 100vh; overflow: hidden;
-        }
-        
-        .header { 
-            padding: 15px; background: var(--card); 
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid var(--accent); z-index: 10;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .header { padding: 15px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); z-index: 10; }
         .mart-name { font-size: 20px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
         .admin-btn { background: #3b82f6; color: white; text-decoration: none; padding: 8px 15px; border-radius: 6px; font-size: 13px; font-weight: bold; }
-
-        /* Search Styles */
         .search-container { padding: 10px; background: var(--card); position: relative; z-index: 15; }
-        #searchInput { 
-            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; 
-            background: #0f172a; color: white; box-sizing: border-box;
-        }
-        #searchDropdown {
-            display: none; position: absolute; top: 100%; left: 10px; right: 10px;
-            background: #1e293b; border: 1px solid #334155; border-radius: 0 0 10px 10px;
-            max-height: 250px; overflow-y: auto; z-index: 2001;
-        }
-        .search-item {
-            display: flex; align-items: center; gap: 10px; padding: 10px;
-            border-bottom: 1px solid #334155; cursor: pointer;
-        }
-
-        #loading-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.95); z-index: 1000;
-            flex-direction: column; align-items: center; justify-content: center;
-        }
-        .spinner {
-            width: 70px; height: 70px;
-            border: 6px solid rgba(34, 197, 94, 0.1);
-            border-top: 6px solid var(--accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+        #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid #334155; border-radius: 0 0 10px 10px; max-height: 250px; overflow-y: auto; z-index: 2001; }
+        .search-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #334155; cursor: pointer; }
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
+        .spinner { width: 70px; height: 70px; border: 6px solid rgba(34, 197, 94, 0.1); border-top: 6px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .loading-text { 
-            margin-top: 20px; font-size: 18px; font-weight: bold; 
-            color: var(--accent); letter-spacing: 2px; animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
         #reader { width: 100% !important; background: black; border: none !important; }
-
-        .result-card { 
-            display: none; position: fixed; bottom: 0; width: 100%; 
-            background: var(--card); padding: 25px; 
-            border-radius: 30px 30px 0 0; box-sizing: border-box; 
-            z-index: 2000; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
-            text-align: center; animation: slideUp 0.3s ease-out;
-        }
+        .result-card { display: none; position: fixed; bottom: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; box-sizing: border-box; z-index: 2000; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); text-align: center; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        
         .p-img { width: 160px; height: 160px; object-fit: contain; margin-bottom: 15px; border-radius: 12px; background: white; }
         .p-title { font-size: 24px; font-weight: bold; color: white; margin: 5px 0; }
-        .p-urdu { font-size: 28px; color: #94a3b8; margin-bottom: 10px; font-family: 'Urdu Typesetting', serif; }
+        .p-urdu { font-size: 28px; color: #94a3b8; margin-bottom: 10px; }
         .p-price { font-size: 38px; color: var(--accent); font-weight: 900; margin: 10px 0; }
-        .btn-close { 
-            background: var(--accent); color: white; border: none; 
-            width: 100%; padding: 16px; border-radius: 12px; 
-            font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px;
-        }
-
-        .error-popup {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #ef4444; color: white; padding: 20px; border-radius: 15px;
-            z-index: 3000; text-align: center; width: 80%;
-        }
+        .btn-close { background: var(--accent); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-
     <div class="header">
         <div class="mart-name">HAMMAD MART</div>
         <a href="manager.html" class="admin-btn">ADMIN ⚙️</a>
     </div>
-
     <div class="search-container">
         <input type="text" id="searchInput" placeholder="Search Product Name..." oninput="indexSearch()">
         <div id="searchDropdown"></div>
     </div>
-
-    <div id="loading-overlay">
-        <div class="spinner"></div>
-        <div class="loading-text">SEARCHING...</div>
-    </div>
-
+    <div id="loading-overlay"><div class="spinner"></div></div>
     <div id="reader"></div>
-
-    <div id="error-popup" class="error-popup">
-        <h2 style="margin:0">Data Not Available</h2>
-        <p id="error-msg"></p>
-        <button class="btn-close" style="background: white; color: red;" onclick="hideError()">OK</button>
-    </div>
-
     <div id="result" class="result-card">
         <img id="p-img" class="p-img" src="">
         <div id="p-en" class="p-title"></div>
         <div id="p-ur" class="p-urdu"></div>
         <div id="p-price" class="p-price"></div>
-        <div id="p-unit" style="color: #94a3b8; margin-bottom: 15px; font-size: 18px;"></div>
+        <div id="p-unit" style="color: #94a3b8; margin-bottom: 15px;"></div>
         <button class="btn-close" onclick="closeResult()">SCAN NEXT 🔄</button>
     </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
-        
-        const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-            fps: 20, qrbox: {width: 250, height: 250}, aspectRatio: 1.0 
-        });
+        const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
 
-        // Search Logic for index.html
         function indexSearch() {
             const query = document.getElementById('searchInput').value.toLowerCase();
             const dropdown = document.getElementById('searchDropdown');
             const localData = JSON.parse(localStorage.getItem('mart_products') || "[]");
             dropdown.innerHTML = '';
-
             if (query.length < 2) { dropdown.style.display = 'none'; return; }
-
-            const matches = localData.filter(p => 
-                (p.en && p.en.toLowerCase().includes(query)) || 
-                (p.ur && p.ur.toLowerCase().includes(query))
-            );
-
+            const matches = localData.filter(p => (p.en && p.en.toLowerCase().includes(query)));
             if (matches.length > 0) {
                 matches.forEach(p => {
                     const item = document.createElement('div');
                     item.className = 'search-item';
-                    item.innerHTML = `<span>${p.en}</span> <span style="margin-left:auto; color:var(--accent)">Rs.${p.pr || p.price}</span>`;
-                    item.onclick = () => {
-                        showProduct(p);
-                        dropdown.style.display = 'none';
-                        document.getElementById('searchInput').value = '';
-                    };
+                    item.innerHTML = `<span>${p.en}</span><span style="margin-left:auto">Rs.${p.pr}</span>`;
+                    item.onclick = () => { showProduct(p); dropdown.style.display = 'none'; };
                     dropdown.appendChild(item);
                 });
                 dropdown.style.display = 'block';
-            } else {
-                dropdown.style.display = 'none';
             }
         }
 
         function onScanSuccess(decodedText) {
             document.getElementById('loading-overlay').style.display = 'flex';
-            html5QrcodeScanner.pause();
-            if (navigator.vibrate) navigator.vibrate(100);
-
             const localData = JSON.parse(localStorage.getItem('mart_products') || "[]");
-            const localItem = localData.find(p => p.id.toString().trim() === decodedText.trim());
-
-            if (localItem) {
-                showProduct(localItem);
-            } else {
-                fetchOnline(decodedText);
-            }
-        }
-
-        async function fetchOnline(id) {
-            try {
-                const response = await fetch(`${API_URL}?action=getDetails&id=${id}`);
-                const data = await response.json();
-                if (!data.error) {
-                    showProduct(data);
-                } else {
-                    showError("Item Code: " + id);
-                }
-            } catch (err) {
-                showError("No Internet & Item Found Locally");
-            }
+            const item = localData.find(p => p.id == decodedText);
+            if (item) showProduct(item);
+            else fetch(`${API_URL}?action=getDetails&id=${decodedText}`).then(r => r.json()).then(showProduct);
         }
 
         function showProduct(data) {
             document.getElementById('loading-overlay').style.display = 'none';
-            document.getElementById('p-en').innerText = data.en || data.enName || "No Name";
+            document.getElementById('p-en').innerText = data.en || data.enName;
             document.getElementById('p-ur').innerText = data.ur || data.urName || "";
-            document.getElementById('p-price').innerText = "Rs. " + (data.pr || data.price || "0");
-            document.getElementById('p-unit').innerText = "Unit: " + (data.un || data.unit || "pc");
-            document.getElementById('p-img').src = (data.img && data.img.length > 5) ? data.img : "https://via.placeholder.com/150?text=Hammad+Mart";
+            document.getElementById('p-price').innerText = "Rs. " + (data.pr || data.price);
+            document.getElementById('p-img').src = data.img || "https://via.placeholder.com/150";
             document.getElementById('result').style.display = "block";
+            html5QrcodeScanner.pause();
         }
 
-        function showError(msg) {
-            document.getElementById('loading-overlay').style.display = 'none';
-            document.getElementById('error-msg').innerText = msg;
-            document.getElementById('error-popup').style.display = "block";
-        }
-
-        function hideError() {
-            document.getElementById('error-popup').style.display = "none";
-            html5QrcodeScanner.resume();
-        }
-
-        function closeResult() {
-            document.getElementById('result').style.display = "none";
-            html5QrcodeScanner.resume();
-        }
-
+        function closeResult() { document.getElementById('result').style.display = "none"; html5QrcodeScanner.resume(); }
         html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
