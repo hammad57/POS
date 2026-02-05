@@ -8,49 +8,55 @@
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
         body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh;
+            font-family: 'Segoe UI', sans-serif; background: var(--bg); 
+            color: var(--text); margin: 0; overflow: hidden; height: 100vh;
         }
         
         .header { 
             padding: 15px; background: var(--card); 
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid var(--accent);
+            border-bottom: 2px solid var(--accent); position: relative; z-index: 10;
         }
-        .mart-name { font-size: 20px; font-weight: 800; color: var(--accent); margin: 0; }
-        .admin-btn { 
-            background: #3b82f6; color: white; text-decoration: none; 
-            padding: 8px 15px; border-radius: 6px; font-size: 13px; font-weight: bold;
-        }
+        .mart-name { font-size: 18px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
+        .admin-btn { background: #3b82f6; color: white; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; }
 
-        #reader { 
-            width: 100% !important; 
-            background: black;
-            border: none !important;
-        }
+        #reader { width: 100% !important; background: black; }
 
-        /* Result Popup Card */
+        /* Stylish Waiting Loader */
+        #loader {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.9); z-index: 2000;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .spinner {
+            width: 60px; height: 60px;
+            border: 5px solid rgba(34, 197, 94, 0.2);
+            border-top: 5px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { margin-top: 15px; font-weight: bold; color: var(--accent); letter-spacing: 2px; animation: blink 1.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* Result Card */
         .result-card { 
-            display: none; 
-            position: fixed; bottom: 0; width: 100%; 
-            background: var(--card); padding: 20px; 
-            border-radius: 25px 25px 0 0; box-sizing: border-box; 
-            z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
-            text-align: center;
+            display: none; position: fixed; bottom: 0; width: 100%; 
+            background: var(--card); padding: 25px; 
+            border-radius: 30px 30px 0 0; box-sizing: border-box; 
+            z-index: 3000; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+            text-align: center; transform: translateY(0); animation: slideUp 0.4s ease-out;
         }
-        .p-img { width: 150px; height: 150px; object-fit: contain; margin-bottom: 15px; border-radius: 10px; background: white; }
-        .p-title { font-size: 22px; margin: 5px 0; color: white; }
-        .p-urdu { font-size: 24px; color: #94a3b8; margin-bottom: 10px; font-family: 'Urdu Typesetting', serif; }
-        .p-price { font-size: 32px; color: var(--accent); font-weight: 900; margin: 10px 0; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .p-img { width: 160px; height: 160px; object-fit: contain; margin-bottom: 15px; border-radius: 15px; background: white; padding: 5px; }
+        .p-title { font-size: 24px; font-weight: bold; margin: 5px 0; color: white; }
+        .p-urdu { font-size: 26px; color: #94a3b8; margin: 10px 0; font-family: 'Urdu Typesetting', serif; }
+        .p-price { font-size: 36px; color: var(--accent); font-weight: 900; margin: 15px 0; }
         .btn-close { 
             background: var(--accent); color: white; border: none; 
-            width: 100%; padding: 15px; border-radius: 12px; 
-            font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px;
+            width: 100%; padding: 18px; border-radius: 15px; 
+            font-size: 18px; font-weight: bold; cursor: pointer;
         }
     </style>
 </head>
@@ -61,6 +67,11 @@
         <a href="manager.html" class="admin-btn">ADMIN ⚙️</a>
     </div>
 
+    <div id="loader">
+        <div class="spinner"></div>
+        <div class="loading-text">FETCHING DETAILS...</div>
+    </div>
+
     <div id="reader"></div>
 
     <div id="result" class="result-card">
@@ -68,66 +79,64 @@
         <div id="p-en" class="p-title"></div>
         <div id="p-ur" class="p-urdu"></div>
         <div id="p-price" class="p-price"></div>
-        <div id="p-unit" style="color: #94a3b8; margin-bottom: 15px;"></div>
+        <div id="p-unit" style="color: #94a3b8; margin-bottom: 20px; font-size: 18px;"></div>
         <button class="btn-close" onclick="closeResult()">SCAN NEXT 🔄</button>
     </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
         
-        // 1. Scanner Setup
         const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-            fps: 10, 
-            qrbox: {width: 250, height: 250},
-            aspectRatio: 1.0
+            fps: 15, qrbox: {width: 250, height: 250}, aspectRatio: 1.0 
         });
 
         function onScanSuccess(decodedText) {
-            console.log("Code Scanned:", decodedText);
-            // Scan hote hi thori der ke liye scanner pause karein
+            // Show Stylish Loader
+            document.getElementById('loader').style.display = 'flex';
             html5QrcodeScanner.pause();
             
-            // Vibration for mobile
             if (navigator.vibrate) navigator.vibrate(100);
 
-            // Check Offline Data First
+            // 1. Check Offline
             const localData = localStorage.getItem('mart_data');
-            let found = false;
-
             if (localData) {
                 const products = JSON.parse(localData);
                 const item = products.find(p => p.id.toString().trim() === decodedText.toString().trim());
                 if (item) {
-                    showProduct(item);
-                    found = true;
+                    setTimeout(() => { // Thora sa delay stylish lagta hai
+                        showProduct(item);
+                    }, 500);
+                    return;
                 }
             }
 
-            // If not found offline, fetch Online
-            if (!found) {
-                fetch(`${API_URL}?action=getDetails&id=${decodedText}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (!data.error) {
-                            showProduct(data);
-                        } else {
-                            alert("Product Not Found! ID: " + decodedText);
-                            html5QrcodeScanner.resume();
-                        }
-                    })
-                    .catch(err => {
-                        alert("Internet Error & Not Found Offline");
+            // 2. Fetch Online if not found offline
+            fetch(`${API_URL}?action=getDetails&id=${decodedText}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.error) {
+                        showProduct(data);
+                    } else {
+                        document.getElementById('loader').style.display = 'none';
+                        alert("Product Not Found!");
                         html5QrcodeScanner.resume();
-                    });
-            }
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('loader').style.display = 'none';
+                    alert("Network Error!");
+                    html5QrcodeScanner.resume();
+                });
         }
 
         function showProduct(data) {
-            document.getElementById('p-en').innerText = data.en || data.enName || "No Name";
-            document.getElementById('p-ur').innerText = data.ur || data.urName || "";
+            document.getElementById('loader').style.display = 'none'; // Hide Loader
+            
+            document.getElementById('p-en').innerText = data.en || "No Name";
+            document.getElementById('p-ur').innerText = data.ur || "";
             document.getElementById('p-price').innerText = "Rs. " + (data.price || data.pr);
             document.getElementById('p-unit').innerText = "Unit: " + (data.unit || data.un || "pc");
-            document.getElementById('p-img').src = (data.img && data.img.length > 5) ? data.img : "https://via.placeholder.com/150?text=No+Image";
+            document.getElementById('p-img').src = (data.img && data.img.length > 5) ? data.img : "https://via.placeholder.com/150?text=Hammad+Mart";
             
             document.getElementById('result').style.display = "block";
         }
@@ -137,9 +146,7 @@
             html5QrcodeScanner.resume();
         }
 
-        // Scanner Start
         html5QrcodeScanner.render(onScanSuccess);
-
     </script>
 </body>
 </html>
