@@ -8,37 +8,51 @@
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        .header { padding: 15px; background: var(--card); text-align: center; border-bottom: 2px solid var(--accent); }
-        .mart-name { font-size: 20px; font-weight: 800; color: var(--accent); margin: 0; }
         
-        #reader { width: 100% !important; border: none !important; }
-        .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); border-radius: 25px 25px 0 0; padding: 20px; box-sizing: border-box; animation: slideUp 0.3s ease; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); z-index: 100; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        
-        .product-img { width: 100%; max-height: 200px; object-fit: contain; border-radius: 15px; margin-bottom: 15px; background: white; }
-        .price-tag { font-size: 32px; font-weight: 800; color: var(--accent); margin: 10px 0; }
-        .btn-next { background: var(--accent); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        /* Header with visible Admin Button */
+        .header { 
+            padding: 15px; background: var(--card); 
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid var(--accent); z-index: 100;
+        }
+        .mart-name { font-size: 18px; font-weight: 800; color: var(--accent); margin: 0; }
+        .admin-btn { 
+            background: #3b82f6; color: white; text-decoration: none; 
+            padding: 8px 15px; border-radius: 6px; font-size: 12px; font-weight: bold;
+        }
+
+        #reader { width: 100% !important; border: none !important; flex-grow: 1; }
+
+        .result-card { 
+            display: none; position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: var(--card); border-radius: 25px 25px 0 0; padding: 20px; 
+            box-sizing: border-box; z-index: 200; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); 
+        }
+        .product-img { width: 100%; max-height: 180px; object-fit: contain; border-radius: 12px; margin-bottom: 10px; background: white; }
+        .price-tag { font-size: 32px; font-weight: 800; color: var(--accent); margin: 5px 0; }
+        .btn-next { background: var(--accent); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 18px; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="mart-name">HAMMAD MART SCANNER</div>
-        <div id="offline-tag" style="font-size: 10px; color: #64748b;">Mode: Fast Offline</div>
+        <div class="mart-name">HAMMAD MART</div>
+        <a href="manager.html" class="admin-btn">ADMIN PANEL ⚙️</a>
     </div>
 
     <div id="reader"></div>
 
     <div id="result" class="result-card">
         <img id="p-img" class="product-img" src="">
-        <h2 id="p-en" style="margin:0; font-size: 22px;"></h2>
+        <h2 id="p-en" style="margin:0;"></h2>
         <h3 id="p-ur" style="margin:5px 0; color: #94a3b8; font-weight: 400;"></h3>
         <div class="price-tag" id="p-price"></div>
-        <div id="p-unit" style="color: var(--accent);"></div>
+        <div id="p-unit" style="color: var(--accent); font-weight: bold;"></div>
         <button class="btn-next" onclick="resetScanner()">SCAN NEXT</button>
     </div>
 
     <script>
+        // APNA URL YAHAN DALAIN
         const API = "APNA_G_SCRIPT_URL_YAHAN_RAHNE_DEN";
 
         const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
@@ -46,41 +60,30 @@
         });
 
         function onScanSuccess(decodedText) {
-            // 1. Pehle Offline Data Check Karo (Mobile Memory)
+            // Check Offline Data First
             const localData = localStorage.getItem('mart_offline_data');
             if (localData) {
                 const products = JSON.parse(localData);
                 const item = products.find(p => p.id.toString().trim() === decodedText.trim());
-                
-                if (item) {
-                    showProduct(item);
-                    return; // Yahin se wapis chale jao, internet ki zaroorat nahi
-                }
+                if (item) { return showProduct(item); }
             }
 
-            // 2. Agar Mobile mein nahi mila, to Internet se check karo (Live Fetch)
+            // If not offline, fetch from Internet
             fetch(API + "?action=getDetails&id=" + decodedText)
                 .then(res => res.json())
                 .then(data => {
-                    if (!data.error) {
-                        showProduct(data);
-                    } else {
-                        alert("Product not found in System!");
-                    }
-                })
-                .catch(err => alert("Network Error & Not in Offline Cache!"));
+                    if (!data.error) showProduct(data);
+                    else alert("Product not found!");
+                });
         }
 
         function showProduct(data) {
             document.getElementById('result').style.display = "block";
-            // Map keys (handles both local and live property names)
             document.getElementById('p-en').innerText = data.en || data.enName;
             document.getElementById('p-ur').innerText = data.ur || data.urName || "";
             document.getElementById('p-price').innerText = "Rs. " + (data.price || data.pr);
-            document.getElementById('p-unit').innerText = data.unit || data.un || "Per Item";
-            
-            const imgUrl = (data.img && data.img.length > 5) ? data.img : "https://via.placeholder.com/400?text=No+Image";
-            document.getElementById('p-img').src = imgUrl;
+            document.getElementById('p-unit').innerText = data.unit || data.un || "";
+            document.getElementById('p-img').src = (data.img && data.img.length > 5) ? data.img : "https://via.placeholder.com/400?text=No+Image";
         }
 
         function resetScanner() {
