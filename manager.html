@@ -19,7 +19,9 @@
         .container { max-width: 800px; margin: 15px auto; padding: 0 15px; }
         .box { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        /* Input & Select Styling */
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; background: white; font-size: 16px; }
+        
         .btn { padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; color: white; }
         .btn-save { background: var(--accent); }
         .btn-sync { background: #3b82f6; margin-top: 10px; }
@@ -94,11 +96,25 @@
     <div class="container">
         <div class="box">
             <h3 id="form-header" style="margin-top:0;">Add New Product</h3>
-            <input type="text" id="pID" placeholder="Barcode ID">
+            
+            <div style="position: relative;">
+                <input type="number" id="pID" placeholder="Auto-Generated ID" style="background-color: #f8fafc; font-weight: bold;">
+                <span style="position: absolute; right: 10px; top: 12px; font-size: 12px; color: #22c55e; pointer-events: none;">✦ AUTO</span>
+            </div>
+
             <input type="text" id="enName" placeholder="English Name">
             <input type="text" id="urName" placeholder="Urdu Name">
             <input type="number" id="price" placeholder="Price">
-            <input type="text" id="unit" placeholder="Unit (e.g 1kg)">
+            
+            <select id="unit">
+                <option value="" disabled selected>Select Unit</option>
+                <option value="pc">Piece (pc)</option>
+                <option value="kg">Kgs</option>
+                <option value="ltr">Litters</option>
+                <option value="bundle">Bundle</option>
+                <option value="pkt">Packet</option>
+                <option value="bag">Bag</option>
+            </select>
             
             <div style="display: flex; gap: 5px;">
                 <input type="text" id="img" placeholder="Image URL (or take photo)" style="margin-bottom: 0;">
@@ -172,16 +188,10 @@
             const video = document.getElementById('videoFeed');
             const canvas = document.getElementById('capturedCanvas');
             const context = canvas.getContext('2d');
-
-            // Set canvas dimensions to match video (Resizing for Google Sheet Limit)
-            // We limit width to 300px to keep the Base64 string small enough for Sheets
             const scaleFactor = 300 / video.videoWidth;
             canvas.width = 300;
             canvas.height = video.videoHeight * scaleFactor;
-
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Switch UI to Review Mode
             video.style.display = 'none';
             canvas.style.display = 'block';
             document.getElementById('state-capture').style.display = 'none';
@@ -197,9 +207,7 @@
 
         function approvePicture() {
             const canvas = document.getElementById('capturedCanvas');
-            // Low quality (0.6) to reduce size further
             const dataURL = canvas.toDataURL('image/jpeg', 0.6); 
-            
             document.getElementById('img').value = dataURL;
             closeCamera();
         }
@@ -207,7 +215,6 @@
         function closeCamera() {
             const overlay = document.getElementById('camOverlay');
             overlay.style.display = 'none';
-            
             if (videoStream) {
                 videoStream.getTracks().forEach(track => track.stop());
                 videoStream = null;
@@ -228,6 +235,10 @@
                 
                 updateSyncUI(now);
                 renderTable(allProducts);
+                
+                // If not editing, generate new ID
+                if(!currentEditingId) generateUniqueID();
+
             } catch(e) {
                 alert("Internet connection error! Switching to Offline.");
                 switchTab('offline');
@@ -258,90 +269,16 @@
                 allProducts = JSON.parse(localStorage.getItem('mart_data') || "[]");
                 updateSyncUI(localStorage.getItem('last_sync'));
                 renderTable(allProducts);
+                if(!currentEditingId) generateUniqueID();
             } else {
                 loadData();
             }
         }
 
-        function openModal(id) {
-            const p = allProducts.find(item => item.id == id);
-            if(!p) return;
-            currentEditingId = id;
-            document.getElementById('mImg').src = p.img || "https://via.placeholder.com/150";
-            document.getElementById('mEn').innerText = p.en;
-            document.getElementById('mUr').innerText = p.ur || "";
-            document.getElementById('mPrice').innerText = "Rs. " + p.price;
-            document.getElementById('mUnit').innerText = "Unit: " + (p.unit || "1pc");
-            document.getElementById('detailModal').style.display = "flex";
-        }
-
-        function closeModal() { document.getElementById('detailModal').style.display = "none"; }
-
-        function startEdit() {
-            const p = allProducts.find(item => item.id == currentEditingId);
-            document.getElementById('pID').value = p.id;
-            document.getElementById('enName').value = p.en;
-            document.getElementById('urName').value = p.ur;
-            document.getElementById('price').value = p.price;
-            document.getElementById('unit').value = p.unit;
-            document.getElementById('img').value = p.img;
-            document.getElementById('form-header').innerText = "Editing: " + p.en;
-            closeModal();
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
-
-        async function saveData() {
-            const payload = {
-                action: 'update',
-                id: document.getElementById('pID').value,
-                en: document.getElementById('enName').value,
-                ur: document.getElementById('urName').value,
-                price: document.getElementById('price').value,
-                unit: document.getElementById('unit').value,
-                img: document.getElementById('img').value
-            };
-            document.getElementById('loading').style.display = "flex";
-            await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-            loadData();
-            resetForm();
-        }
-
-        async function deleteItem() {
-            if(!confirm("Delete this item permanently?")) return;
-            document.getElementById('loading').style.display = "flex";
-            await fetch(API, { method: 'POST', body: JSON.stringify({action:'delete', id: currentEditingId}) });
-            closeModal();
-            loadData();
-        }
-
-        function resetForm() {
-            ['pID', 'enName', 'urName', 'price', 'unit', 'img'].forEach(id => document.getElementById(id).value = "");
-            document.getElementById('form-header').innerText = "Add New Product";
-        }
-
-        function generatePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            let x = 10, y = 10;
-            allProducts.forEach((p) => {
-                doc.setFontSize(8);
-                doc.text(p.en.substring(0,20), x, y);
-                doc.text("Rs." + p.price, x, y + 4);
-                const canvas = document.getElementById('barcodeCanvas');
-                JsBarcode(canvas, p.id, {format: "CODE128", height: 30, displayValue: false});
-                doc.addImage(canvas.toDataURL("image/jpeg"), 'JPEG', x, y + 5, 35, 15);
-                x += 45;
-                if(x > 160) { x = 10; y += 30; }
-                if(y > 270) { doc.addPage(); y = 10; x = 10; }
-            });
-            doc.save("Hammad_Mart_Labels.pdf");
-        }
-
-        window.onload = () => {
-            const savedTime = localStorage.getItem('last_sync');
-            updateSyncUI(savedTime);
-            switchTab('offline'); // Pehle offline data dikhao for speed
-        };
-    </script>
-</body>
-</html>
+        // --- NEW: Generate Unique ID Logic ---
+        function generateUniqueID() {
+            let newID;
+            let exists = true;
+            // Generate random 6 digits until unique
+            while(exists) {
+                newID = Math.floor(Math.random() * 899999 +
