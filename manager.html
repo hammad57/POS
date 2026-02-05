@@ -8,78 +8,48 @@
     <style>
         :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding-bottom: 80px; }
-        
         .nav-bar { background: var(--primary); padding: 15px; color: white; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; }
         .back-btn { color: white; text-decoration: none; font-size: 20px; margin-right: 10px; }
-        
-        .tabs { display: flex; background: var(--primary); border-bottom: 1px solid #334155; }
+        .tabs { display: flex; background: var(--primary); }
         .tab { flex: 1; padding: 15px; text-align: center; color: #94a3b8; cursor: pointer; font-weight: bold; }
         .tab.active { color: var(--accent); border-bottom: 3px solid var(--accent); }
-
         .container { max-width: 800px; margin: 15px auto; padding: 0 15px; }
         .box { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
-        /* Input & Select Styling */
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; background: white; font-size: 16px; }
-        
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; }
         .btn { padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; color: white; }
         .btn-save { background: var(--accent); }
         .btn-sync { background: #3b82f6; margin-top: 10px; }
         .btn-pdf { background: #f59e0b; margin-top: 15px; }
-        /* Camera Button Style */
-        .btn-cam { background: #64748b; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-
+        .btn-cam { background: #64748b; width: auto !important; margin-bottom: 10px; }
         .sync-info { font-size: 12px; color: #64748b; text-align: center; margin-top: 5px; }
-
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
         .p-name-cell { font-weight: 600; color: #1e293b; }
         .p-price-cell { color: var(--accent); font-weight: bold; text-align: right; }
-
-        /* Modal */
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index: 2000; align-items:center; justify-content:center; }
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 2000; align-items:center; justify-content:center; }
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 20px; text-align: center; position: relative; }
-        .modal-img { width: 120px; height: 120px; object-fit: contain; border-radius: 10px; border: 1px solid #eee; }
+        .modal-img { width: 150px; height: 150px; object-fit: contain; margin-bottom: 10px; border-radius: 10px; }
         .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
-        .modal-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .btn-edit { background: #3b82f6; }
-        .btn-del { background: #ef4444; }
-
-        /* Camera Overlay Styles */
         #camOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 3000; flex-direction: column; }
         #videoFeed { width: 100%; height: 70%; object-fit: cover; }
-        #capturedCanvas { display: none; width: 100%; height: 70%; object-fit: contain; background: black; }
-        .cam-controls { height: 30%; background: #1e293b; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 20px; }
-        .cam-btn { padding: 12px 30px; border-radius: 30px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: white; width: 80%; }
-        .btn-snap { background: white; color: black; height: 60px; width: 60px; border-radius: 50%; padding: 0; border: 4px solid #ccc; }
-        .btn-retake { background: #ef4444; }
-        .btn-approve { background: var(--accent); }
-        .btn-close-cam { background: transparent; color: #94a3b8; margin-top: 10px; }
-
+        .cam-controls { height: 30%; background: #1e293b; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; }
         #loading { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; align-items:center; justify-content:center; flex-direction: column; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div id="loading">
         <div style="border:4px solid #f3f3f3; border-top:4px solid var(--accent); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;"></div>
-        <p>Syncing Data...</p>
+        <p>Processing...</p>
     </div>
 
     <div id="camOverlay">
         <video id="videoFeed" autoplay playsinline></video>
-        <canvas id="capturedCanvas"></canvas>
-        
+        <canvas id="tempCanvas" style="display:none;"></canvas>
         <div class="cam-controls">
-            <div id="state-capture" style="display:flex; flex-direction:column; align-items:center; width:100%;">
-                <button class="btn-snap" onclick="takePicture()"></button>
-                <button class="btn-close-cam" onclick="closeCamera()">Cancel</button>
-            </div>
-            
-            <div id="state-review" style="display:none; flex-direction:column; align-items:center; width:100%; gap:10px;">
-                <button class="cam-btn btn-approve" onclick="approvePicture()">✅ Approve</button>
-                <button class="cam-btn btn-retake" onclick="retakePicture()">🔄 Retake</button>
-            </div>
+            <button id="snapBtn" class="btn" style="background:white; color:black; width:80px; height:80px; border-radius:50%;" onclick="takeSnapshot()">📸</button>
+            <button class="btn" style="background:transparent; border:1px solid white; width:150px;" onclick="stopCamera()">Cancel</button>
         </div>
     </div>
 
@@ -90,43 +60,35 @@
 
     <div class="tabs">
         <div id="tab-online" class="tab active" onclick="switchTab('online')">ONLINE LIST</div>
-        <div id="tab-offline" class="tab" onclick="switchTab('offline')">OFFLINE (Local)</div>
+        <div id="tab-offline" class="tab" onclick="switchTab('offline')">OFFLINE</div>
     </div>
 
     <div class="container">
         <div class="box">
             <h3 id="form-header" style="margin-top:0;">Add New Product</h3>
-            
-            <div style="position: relative;">
-                <input type="number" id="pID" placeholder="Auto-Generated ID" style="background-color: #f8fafc; font-weight: bold;">
-                <span style="position: absolute; right: 10px; top: 12px; font-size: 12px; color: #22c55e; pointer-events: none;">✦ AUTO</span>
-            </div>
-
+            <input type="number" id="pID" placeholder="Product ID (Auto)">
             <input type="text" id="enName" placeholder="English Name">
             <input type="text" id="urName" placeholder="Urdu Name">
             <input type="number" id="price" placeholder="Price">
             
             <select id="unit">
                 <option value="" disabled selected>Select Unit</option>
-                <option value="pc">Piece (pc)</option>
-                <option value="kg">Kgs</option>
-                <option value="ltr">Litters</option>
-                <option value="bundle">Bundle</option>
-                <option value="pkt">Packet</option>
-                <option value="bag">Bag</option>
+                <option value="Kgs">Kgs</option>
+                <option value="Litters">Litters</option>
+                <option value="Bundle">Bundle</option>
+                <option value="Packet">Packet</option>
+                <option value="Bag">Bag</option>
+                <option value="Piece">Piece</option>
             </select>
-            
-            <div style="display: flex; gap: 5px;">
-                <input type="text" id="img" placeholder="Image URL (or take photo)" style="margin-bottom: 0;">
-                <button class="btn btn-cam" style="width: auto; margin-bottom: 0;" onclick="openCamera()">📸</button>
-            </div>
-            <p style="font-size: 10px; color: #64748b; margin-top: 5px; margin-bottom: 10px;">Click Camera to take photo or paste URL manually.</p>
 
-            <button class="btn btn-save" onclick="saveData()">SAVE TO CLOUD</button>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="img" placeholder="Image URL / Data" style="margin-bottom:0;">
+                <button class="btn btn-cam" onclick="startCamera()">📸</button>
+            </div>
             
+            <button class="btn btn-save" onclick="saveToCloud()">SAVE TO CLOUD</button>
             <button class="btn btn-sync" onclick="loadData()">🔄 SYNC GOOGLE SHEET</button>
-            <div id="lastSync" class="sync-info">Last Update: Never</div>
-            
+            <div id="lastSync" class="sync-info">Last Update: Loading...</div>
             <button class="btn btn-pdf" onclick="generatePDF()">📄 PRINT ALL BARCODE LABELS</button>
         </div>
 
@@ -141,13 +103,13 @@
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
             <img id="mImg" class="modal-img" src="">
-            <h2 id="mEn" style="margin:10px 0 5px 0;"></h2>
-            <h3 id="mUr" style="color:#64748b; margin:0;"></h3>
-            <h1 id="mPrice" style="color:var(--accent); margin:15px 0;"></h1>
-            <p id="mUnit" style="color:#94a3b8;"></p>
-            <div class="modal-btn-row">
-                <button class="btn btn-edit" onclick="startEdit()">EDIT</button>
-                <button class="btn btn-del" onclick="deleteItem()">DELETE</button>
+            <h2 id="mEn" style="margin:5px 0;"></h2>
+            <h4 id="mUr" style="color:gray; margin:0;"></h4>
+            <h1 id="mPrice" style="color:var(--accent); margin:10px 0;"></h1>
+            <p id="mUnit"></p>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" style="background:#3b82f6;" onclick="editCurrent()">EDIT</button>
+                <button class="btn" style="background:#ef4444;" onclick="deleteCurrent()">DELETE</button>
             </div>
         </div>
     </div>
@@ -157,128 +119,155 @@
     <script>
         const API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
         let allProducts = [];
-        let currentEditingId = null;
-        let currentMode = 'online';
+        let selectedID = null;
+        let stream = null;
 
-        // --- CAMERA LOGIC START ---
-        let videoStream = null;
-
-        async function openCamera() {
-            const overlay = document.getElementById('camOverlay');
-            const video = document.getElementById('videoFeed');
-            
-            overlay.style.display = 'flex';
-            document.getElementById('state-capture').style.display = 'flex';
-            document.getElementById('state-review').style.display = 'none';
-            document.getElementById('capturedCanvas').style.display = 'none';
-            video.style.display = 'block';
-
-            try {
-                videoStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" } 
-                });
-                video.srcObject = videoStream;
-            } catch (err) {
-                alert("Camera Access Denied or Not Available");
-                closeCamera();
-            }
-        }
-
-        function takePicture() {
-            const video = document.getElementById('videoFeed');
-            const canvas = document.getElementById('capturedCanvas');
-            const context = canvas.getContext('2d');
-            const scaleFactor = 300 / video.videoWidth;
-            canvas.width = 300;
-            canvas.height = video.videoHeight * scaleFactor;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            video.style.display = 'none';
-            canvas.style.display = 'block';
-            document.getElementById('state-capture').style.display = 'none';
-            document.getElementById('state-review').style.display = 'flex';
-        }
-
-        function retakePicture() {
-            document.getElementById('videoFeed').style.display = 'block';
-            document.getElementById('capturedCanvas').style.display = 'none';
-            document.getElementById('state-capture').style.display = 'flex';
-            document.getElementById('state-review').style.display = 'none';
-        }
-
-        function approvePicture() {
-            const canvas = document.getElementById('capturedCanvas');
-            const dataURL = canvas.toDataURL('image/jpeg', 0.6); 
-            document.getElementById('img').value = dataURL;
-            closeCamera();
-        }
-
-        function closeCamera() {
-            const overlay = document.getElementById('camOverlay');
-            overlay.style.display = 'none';
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-                videoStream = null;
-            }
-        }
-        // --- CAMERA LOGIC END ---
-
+        // 1. Load Data
         async function loadData() {
             document.getElementById('loading').style.display = "flex";
             try {
                 const res = await fetch(API + "?action=read");
                 allProducts = await res.json();
-                
-                // Local Storage Update
                 localStorage.setItem('mart_data', JSON.stringify(allProducts));
                 const now = new Date().toLocaleString();
                 localStorage.setItem('last_sync', now);
-                
-                updateSyncUI(now);
-                renderTable(allProducts);
-                
-                // If not editing, generate new ID
-                if(!currentEditingId) generateUniqueID();
-
-            } catch(e) {
-                alert("Internet connection error! Switching to Offline.");
-                switchTab('offline');
+                updateUI(now);
+            } catch(e) { 
+                allProducts = JSON.parse(localStorage.getItem('mart_data') || "[]");
+                updateUI(localStorage.getItem('last_sync'));
             }
             document.getElementById('loading').style.display = "none";
         }
 
-        function updateSyncUI(time) {
-            document.getElementById('lastSync').innerText = "Last Update: " + (time || "Never");
+        function updateUI(time) {
+            document.getElementById('lastSync').innerText = "Last Update: " + time;
+            renderTable(allProducts);
+            if(!selectedID) generateAutoID();
         }
 
         function renderTable(data) {
             const body = document.getElementById('productBody');
             body.innerHTML = data.map(p => `
-                <tr onclick="openModal('${p.id}')">
-                    <td class="p-name-cell">${p.en}<br><small style="color:#64748b">${p.id}</small></td>
+                <tr onclick="showDetails('${p.id}')">
+                    <td class="p-name-cell">${p.en}<br><small>${p.id}</small></td>
                     <td class="p-price-cell">Rs. ${p.price}</td>
                 </tr>
             `).join('');
         }
 
-        function switchTab(type) {
-            currentMode = type;
-            document.getElementById('tab-online').classList.toggle('active', type === 'online');
-            document.getElementById('tab-offline').classList.toggle('active', type === 'offline');
-            
-            if(type === 'offline') {
-                allProducts = JSON.parse(localStorage.getItem('mart_data') || "[]");
-                updateSyncUI(localStorage.getItem('last_sync'));
-                renderTable(allProducts);
-                if(!currentEditingId) generateUniqueID();
-            } else {
-                loadData();
-            }
+        // 2. Camera Functions
+        async function startCamera() {
+            const overlay = document.getElementById('camOverlay');
+            const video = document.getElementById('videoFeed');
+            overlay.style.display = "flex";
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = stream;
+            } catch(e) { alert("Camera Error"); stopCamera(); }
         }
 
-        // --- NEW: Generate Unique ID Logic ---
-        function generateUniqueID() {
-            let newID;
-            let exists = true;
-            // Generate random 6 digits until unique
-            while(exists) {
-                newID = Math.floor(Math.random() * 899999 +
+        function stopCamera() {
+            if(stream) stream.getTracks().forEach(t => t.stop());
+            document.getElementById('camOverlay').style.display = "none";
+        }
+
+        function takeSnapshot() {
+            const video = document.getElementById('videoFeed');
+            const canvas = document.getElementById('tempCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 300;
+            canvas.height = 300;
+            ctx.drawImage(video, 0, 0, 300, 300);
+            document.getElementById('img').value = canvas.toDataURL('image/jpeg', 0.6);
+            stopCamera();
+        }
+
+        // 3. Product Actions
+        function generateAutoID() {
+            let id;
+            do { id = Math.floor(100000 + Math.random() * 900000); }
+            while (allProducts.some(p => p.id == id));
+            document.getElementById('pID').value = id;
+        }
+
+        function showDetails(id) {
+            const p = allProducts.find(x => x.id == id);
+            if(!p) return;
+            selectedID = id;
+            document.getElementById('mImg').src = p.img || "https://via.placeholder.com/150";
+            document.getElementById('mEn').innerText = p.en;
+            document.getElementById('mUr').innerText = p.ur || "";
+            document.getElementById('mPrice').innerText = "Rs. " + p.price;
+            document.getElementById('mUnit').innerText = "Unit: " + (p.unit || "pc");
+            document.getElementById('detailModal').style.display = "flex";
+        }
+
+        function closeModal() { document.getElementById('detailModal').style.display = "none"; }
+
+        function editCurrent() {
+            const p = allProducts.find(x => x.id == selectedID);
+            document.getElementById('pID').value = p.id;
+            document.getElementById('enName').value = p.en;
+            document.getElementById('urName').value = p.ur;
+            document.getElementById('price').value = p.price;
+            document.getElementById('unit').value = p.unit || "Piece";
+            document.getElementById('img').value = p.img;
+            document.getElementById('form-header').innerText = "Editing: " + p.en;
+            closeModal();
+            window.scrollTo(0,0);
+        }
+
+        async function saveToCloud() {
+            const data = {
+                action: 'update',
+                id: document.getElementById('pID').value,
+                en: document.getElementById('enName').value,
+                ur: document.getElementById('urName').value,
+                price: document.getElementById('price').value,
+                unit: document.getElementById('unit').value,
+                img: document.getElementById('img').value
+            };
+            if(!data.en || !data.price) return alert("Fill Name and Price");
+            document.getElementById('loading').style.display = "flex";
+            await fetch(API, { method: 'POST', body: JSON.stringify(data) });
+            resetForm();
+            loadData();
+        }
+
+        async function deleteCurrent() {
+            if(!confirm("Delete this item?")) return;
+            document.getElementById('loading').style.display = "flex";
+            await fetch(API, { method: 'POST', body: JSON.stringify({action:'delete', id: selectedID}) });
+            closeModal();
+            loadData();
+        }
+
+        function resetForm() {
+            selectedID = null;
+            ['pID', 'enName', 'urName', 'price', 'img'].forEach(i => document.getElementById(i).value = "");
+            document.getElementById('unit').value = "";
+            document.getElementById('form-header').innerText = "Add New Product";
+            generateAutoID();
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let x = 10, y = 10;
+            allProducts.forEach(p => {
+                doc.setFontSize(7);
+                doc.text(p.en.substring(0,20), x, y);
+                doc.text("Rs. " + p.price, x, y + 3);
+                const canvas = document.getElementById('barcodeCanvas');
+                JsBarcode(canvas, p.id, {format: "CODE128", height: 25, displayValue: false});
+                doc.addImage(canvas.toDataURL(), 'PNG', x, y + 4, 30, 12);
+                x += 40; if(x > 170) { x = 10; y += 25; }
+                if(y > 270) { doc.addPage(); y = 10; x = 10; }
+            });
+            doc.save("Barcodes.pdf");
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>
