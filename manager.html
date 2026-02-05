@@ -5,138 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 0; margin: 0; padding-bottom: 80px;}
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding-bottom: 50px; }
         
-        /* Header */
-        .nav-bar { 
+        /* Top Bar with Buttons */
+        .header { 
             background: var(--primary); padding: 15px; color: white; 
-            display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
         }
-        .page-title { margin: 0; font-size: 18px; font-weight: 600; }
-        .sync-btn { background: var(--accent); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
-        .last-sync { font-size: 10px; color: #cbd5e1; margin-top: 2px; }
+        .sync-section { text-align: right; }
+        .btn-update { 
+            background: var(--accent); color: white; border: none; padding: 10px 15px; 
+            border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;
+        }
+        .last-sync { font-size: 10px; color: #cbd5e1; display: block; margin-top: 4px; }
+        .back-link { color: white; text-decoration: none; font-size: 14px; background: #475569; padding: 5px 10px; border-radius: 5px; }
 
-        .container { max-width: 800px; margin: 15px auto; padding: 0 15px; }
-        .box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; }
-        .btn-save { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
+        .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box; font-size: 16px; }
+        .btn-save { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; font-size: 16px; cursor: pointer; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 12px; overflow: hidden; }
-        th { background: #e2e8f0; padding: 12px; text-align: left; font-size: 14px; }
-        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
-        .btn-edit { background: #3b82f6; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        
-        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; font-weight: bold; }
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); color: white; justify-content: center; align-items: center; z-index: 1000; }
     </style>
 </head>
 <body>
 
-    <div id="loading">Processing... Please wait</div>
+    <div id="loading-overlay">Working... Please wait</div>
 
-    <div class="nav-bar">
+    <div class="header">
         <div>
-            <div class="page-title">Hammad Mart Manager</div>
-            <div id="sync-time" class="last-sync">Last Sync: Never</div>
+            <a href="index.html" class="back-link">← Scanner</a>
+            <h3 style="margin: 5px 0 0 0; font-size: 16px;">Manager Panel</h3>
         </div>
-        <button class="sync-btn" onclick="syncToMobile()">UPDATE DATA 🔄</button>
+        <div class="sync-section">
+            <button class="btn-update" onclick="syncData()">UPDATE DATA 🔄</button>
+            <span id="sync-time" class="last-sync">Last Sync: Never</span>
+        </div>
     </div>
 
     <div class="container">
-        <div class="box">
-            <h3 id="form-header" style="margin-top:0">Add New Product</h3>
-            <input type="text" id="pID" placeholder="Scan or Type Barcode/ID">
-            <input type="text" id="enName" placeholder="English Name">
-            <input type="text" id="urName" placeholder="Urdu Name">
-            <input type="text" id="price" placeholder="Price (e.g. 150)">
-            <input type="text" id="unit" placeholder="Unit (e.g. 1kg / Per Piece)">
-            <input type="text" id="img" placeholder="Image URL (Optional)">
-            <button class="btn-save" onclick="saveData()">SAVE PRODUCT</button>
-            <button onclick="resetForm()" style="background:none; border:none; color:gray; width:100%; margin-top:10px; cursor:pointer">Clear Form</button>
+        <div class="card">
+            <h3 id="form-title" style="margin-top:0">Add New Item</h3>
+            <input type="text" id="pID" placeholder="Barcode / ID">
+            <input type="text" id="enName" placeholder="Product Name (English)">
+            <input type="text" id="urName" placeholder="Product Name (Urdu)">
+            <input type="text" id="price" placeholder="Price (e.g. 250)">
+            <input type="text" id="unit" placeholder="Unit (e.g. 1kg or Piece)">
+            <input type="text" id="img" placeholder="Image Link (Optional)">
+            <button class="btn-save" onclick="saveToSheet()">SAVE TO CLOUD ☁️</button>
         </div>
-
-        <div style="overflow-x: auto;">
-            <table id="productTable">
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Price</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-        </div>
+        
+        <p style="text-align: center; color: #64748b; font-size: 14px;">Data save karne ke baad <b>Update Data</b> lazmi dabayen taake scanner mein nazar aaye.</p>
     </div>
 
     <script>
-        // YAHAN APNA GOOGLE SCRIPT URL PASTE KAREIN
-        const API = "APNA_G_SCRIPT_URL_YAHAN_RAHNE_DEN"; 
-        let allProducts = [];
+        // APNA URL YAHAN DALAIN
+        const API = "APNA_G_SCRIPT_URL_YAHAN_RAHNE_DEN";
 
-        // 1. Google Sheet se data laana aur list dikhana
-        async function loadData() {
-            document.getElementById('loading').style.display = "flex";
-            try {
-                const res = await fetch(API + "?action=read");
-                allProducts = await res.json();
-                renderTable(allProducts);
-            } catch (e) { alert("Error loading data!"); }
-            document.getElementById('loading').style.display = "none";
-        }
-
-        function renderTable(data) {
-            const body = document.getElementById('tableBody');
-            body.innerHTML = data.map(p => `
-                <tr>
-                    <td><b>${p.en}</b><br><small>${p.id}</small></td>
-                    <td>Rs. ${p.price}</td>
-                    <td><button class="btn-edit" onclick="editItem('${p.id}')">Edit</button></td>
-                </tr>
-            `).join('');
-        }
-
-        // 2. Offline Sync Function (Jo aapne manga tha)
-        async function syncToMobile() {
-            const btn = document.querySelector('.sync-btn');
+        // 1. Mobile Memory Mein Sync Karna
+        async function syncData() {
+            const btn = document.querySelector('.btn-update');
             btn.innerText = "Syncing...";
             btn.disabled = true;
 
             try {
                 const res = await fetch(API + "?action=read");
                 const data = await res.json();
-                
-                // Mobile ki memory (LocalStorage) mein save karlo
                 localStorage.setItem('mart_offline_data', JSON.stringify(data));
                 
-                const now = new Date().toLocaleString();
-                localStorage.setItem('last_sync_date', now);
+                const timeStr = new Date().toLocaleString();
+                localStorage.setItem('last_sync_date', timeStr);
+                document.getElementById('sync-time').innerText = "Last Sync: " + timeStr;
                 
-                updateSyncUI();
-                alert("Mubarak ho! Data mobile mein save ho gaya hai. Ab internet ke baghair bhi scanner chale ga.");
+                alert("Data Mobile mein save ho gaya! Ab aap offline scan kar saktay hain.");
             } catch (e) {
-                alert("Sync fail! Internet check karein.");
+                alert("Sync Error! Internet check karein.");
             } finally {
                 btn.innerText = "UPDATE DATA 🔄";
                 btn.disabled = false;
             }
         }
 
-        function updateSyncUI() {
-            const time = localStorage.getItem('last_sync_date');
-            if(time) document.getElementById('sync-time').innerText = "Last Sync: " + time;
-        }
-
-        // 3. Save / Update Data
-        async function saveData() {
+        // 2. Google Sheet Mein Save Karna
+        async function saveToSheet() {
             const id = document.getElementById('pID').value;
-            if(!id) return alert("Barcode zaroori hai!");
-
-            const exists = allProducts.some(p => p.id == id);
-            const action = exists ? 'update' : 'add';
+            if(!id) return alert("ID zaroori hai!");
 
             const payload = {
-                action: action,
+                action: 'add', // Script handles update automatically if ID exists
                 id: id,
                 en: document.getElementById('enName').value,
                 ur: document.getElementById('urName').value,
@@ -144,33 +101,25 @@
                 unit: document.getElementById('unit').value,
                 img: document.getElementById('img').value
             };
-            
-            document.getElementById('loading').style.display = "flex";
-            await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-            resetForm(); 
-            loadData(); // Table refresh karo
+
+            document.getElementById('loading-overlay').style.display = "flex";
+            try {
+                await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+                alert("Cloud mein save ho gaya! Ab 'Update Data' dabayein.");
+                clearForm();
+            } catch (e) {
+                alert("Error saving data.");
+            }
+            document.getElementById('loading-overlay').style.display = "none";
         }
 
-        function editItem(id) {
-            const p = allProducts.find(item => item.id == id);
-            document.getElementById('pID').value = p.id;
-            document.getElementById('enName').value = p.en;
-            document.getElementById('urName').value = p.ur;
-            document.getElementById('price').value = p.price;
-            document.getElementById('unit').value = p.unit;
-            document.getElementById('img').value = p.img;
-            document.getElementById('form-header').innerText = "Edit Product";
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
-
-        function resetForm() {
-            ['pID', 'enName', 'urName', 'price', 'unit', 'img'].forEach(id => document.getElementById(id).value = "");
-            document.getElementById('form-header').innerText = "Add New Product";
+        function clearForm() {
+            ['pID', 'enName', 'urName', 'price', 'unit', 'img'].forEach(i => document.getElementById(i).value = "");
         }
 
         window.onload = () => {
-            loadData();
-            updateSyncUI();
+            const last = localStorage.getItem('last_sync_date');
+            if(last) document.getElementById('sync-time').innerText = "Last Sync: " + last;
         };
     </script>
 </body>
