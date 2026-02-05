@@ -1,73 +1,208 @@
-<div style="margin-bottom: 20px; padding: 15px; background: var(--white); border-radius: 12px; border: 2px solid var(--primary); position: relative;">
-    <label style="display: block; font-weight: bold; margin-bottom: 8px; color: var(--primary);">🔍 Quick Search (Edit/Delete):</label>
-    <div style="display: flex; gap: 8px;">
-        <input type="text" id="mSearchInput" placeholder="Type Product Name (Urdu/English)..." 
-               style="flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px;" oninput="managerSearch()">
-    </div>
-    <div id="mSearchDropdown" style="display: none; position: absolute; left: 0; right: 0; top: 100%; background: white; z-index: 1000; border: 1px solid #ddd; max-height: 250px; overflow-y: auto; box-shadow: 0 8px 16px rgba(0,0,0,0.2); border-radius: 0 0 10px 10px;"></div>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hammad Mart - Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <style>
+        :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding-bottom: 80px; }
+        .nav-bar { background: var(--primary); padding: 15px; color: white; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; margin-right: 10px; }
+        .tabs { display: flex; background: var(--primary); }
+        .tab { flex: 1; padding: 15px; text-align: center; color: #94a3b8; cursor: pointer; font-weight: bold; }
+        .tab.active { color: var(--accent); border-bottom: 3px solid var(--accent); }
+        .container { padding: 15px; }
+        .card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
+        .btn-save { background: var(--accent); color: white; }
+        #loading { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:10000; align-items:center; justify-content:center; flex-direction:column; }
+    </style>
+</head>
+<body>
+
+<div id="loading"><b>⏳ Processing...</b></div>
+
+<div class="nav-bar">
+    <a href="index.html" class="back-btn">←</a>
+    <h2 style="margin:0">Manager Panel</h2>
 </div>
 
+<div class="tabs">
+    <div class="tab active" onclick="switchTab(1)">ADD / EDIT</div>
+    <div class="tab" onclick="switchTab(2)">INVENTORY</div>
+</div>
+
+<div class="container" id="tab1">
+    <div style="margin-bottom: 20px; padding: 10px; background: var(--white); border-radius: 10px; border: 1px solid #ddd; position: relative;">
+        <label style="display: block; font-weight: bold; margin-bottom: 5px;">Quick Find (Search to Edit/Delete):</label>
+        <div style="display: flex; gap: 5px;">
+            <input type="text" id="mSearchInput" placeholder="Enter Product Name..." style="flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 5px;">
+            <button onclick="managerSearch()" style="background: var(--primary); color: white; border: none; padding: 0 15px; border-radius: 5px;">Search</button>
+        </div>
+        <div id="mSearchDropdown" style="display: none; position: absolute; width: calc(100% - 20px); background: white; z-index: 1000; border: 1px solid #ddd; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+    </div>
+
+    <div class="card">
+        <h3 id="form-header">Add New Product</h3>
+        <input type="text" id="pID" placeholder="Product Barcode ID">
+        <input type="text" id="enName" placeholder="English Name">
+        <input type="text" id="urName" placeholder="Urdu Name (Optional)">
+        <input type="number" id="price" placeholder="Sale Price">
+        <input type="text" id="img" placeholder="Image URL (Optional)">
+        <select id="unit">
+            <option value="pc">Per Piece (pc)</option>
+            <option value="kg">Per KG (kg)</option>
+            <option value="pack">Per Pack</option>
+        </select>
+        <button class="btn btn-save" onclick="saveProduct()">SAVE PRODUCT</button>
+        <button class="btn" style="background:#f1f5f9; color:#64748b" onclick="resetForm()">CLEAR FORM</button>
+    </div>
+</div>
+
+<div class="container" id="tab2" style="display:none">
+    <div class="card">
+        <button class="btn" onclick="syncOnline()" style="background:#3b82f6; color:white">🔄 SYNC FROM ONLINE</button>
+        <button class="btn" onclick="generatePDF()" style="background:#ef4444; color:white; margin-top:10px">📄 DOWNLOAD BARCODES (PDF)</button>
+    </div>
+    <div id="inventory-list"></div>
+</div>
+
+<canvas id="barcodeCanvas" style="display:none"></canvas>
+
 <script>
-function managerSearch() {
-    const query = document.getElementById('mSearchInput').value.toLowerCase();
-    const dropdown = document.getElementById('mSearchDropdown');
-    dropdown.innerHTML = '';
+    let currentMode = 'offline';
+    let allProducts = [];
+    let selectedID = null;
 
-    if (query.length < 1) {
-        dropdown.style.display = 'none';
-        return;
+    function switchTab(t) {
+        document.getElementById('tab1').style.display = t===1?'block':'none';
+        document.getElementById('tab2').style.display = t===2?'block':'none';
+        document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', i+1===t));
     }
 
-    // Checking currentMode (Assuming allProducts is your global data array)
-    const sourceData = (typeof currentMode !== 'undefined' && currentMode === 'online') ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
+    // Manager Search Logic (Integrated from your provided code)
+    function managerSearch() {
+        const query = document.getElementById('mSearchInput').value.toLowerCase();
+        const dropdown = document.getElementById('mSearchDropdown');
+        dropdown.innerHTML = '';
 
-    const matches = sourceData.filter(p => 
-        (p.en && p.en.toLowerCase().includes(query)) || 
-        (p.ur && p.ur.toLowerCase().includes(query)) ||
-        (p.id && p.id.toString().includes(query))
-    );
+        if (query.length < 1) {
+            dropdown.style.display = 'none';
+            return;
+        }
 
-    if (matches.length > 0) {
-        matches.forEach(p => {
-            const item = document.createElement('div');
-            item.style = "display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid #eee; cursor: pointer;";
-            const imgSrc = (p.img && p.img.length > 5) ? p.img : "https://via.placeholder.com/50";
-            item.innerHTML = `
-                <img src="${imgSrc}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px; background: #f0f0f0;">
-                <div style="flex: 1;">
-                    <div style="font-weight: bold; color: #333;">${p.en}</div>
-                    <div style="font-size: 12px; color: #666;">${p.ur || ''} | Code: ${p.id}</div>
-                </div>
-                <div style="font-weight: 800; color: #22c55e;">Rs. ${p.price || p.pr}</div>
-            `;
-            item.onclick = () => {
-                // Clicking will fill the full detail into your existing form
-                if(typeof editProduct === 'function') {
+        const sourceData = (currentMode === 'online') ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
+
+        const matches = sourceData.filter(p => 
+            (p.en && p.en.toLowerCase().includes(query)) || 
+            (p.ur && p.ur.toLowerCase().includes(query)) ||
+            (p.id && p.id.toString().includes(query))
+        );
+
+        if (matches.length > 0) {
+            matches.forEach(p => {
+                const item = document.createElement('div');
+                item.style = "display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;";
+                const imgSrc = (p.img && p.img.length > 5) ? p.img : "https://via.placeholder.com/50";
+                item.innerHTML = `
+                    <img src="${imgSrc}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">${p.en}</div>
+                        <div style="font-size: 11px; color: #666;">${p.ur || ''} | ${p.id}</div>
+                    </div>
+                    <div style="font-weight: bold; color: #22c55e;">Rs. ${p.price || p.pr}</div>
+                `;
+                item.onclick = () => {
                     editProduct(p.id); 
-                } else {
-                    // Fallback: Manually fill if editProduct is not accessible
-                    document.getElementById('pID').value = p.id;
-                    document.getElementById('enName').value = p.en;
-                    document.getElementById('urName').value = p.ur || '';
-                    document.getElementById('price').value = p.price || p.pr;
-                    document.getElementById('img').value = p.img || '';
-                    if(document.getElementById('unit')) document.getElementById('unit').value = p.unit || p.un || '';
-                }
-                dropdown.style.display = 'none';
-                document.getElementById('mSearchInput').value = '';
-            };
-            dropdown.appendChild(item);
-        });
-        dropdown.style.display = 'block';
-    } else {
-        dropdown.style.display = 'none';
+                    dropdown.style.display = 'none';
+                    document.getElementById('mSearchInput').value = '';
+                    switchTab(1); 
+                };
+                dropdown.appendChild(item);
+            });
+            dropdown.style.display = 'block';
+        } else {
+            dropdown.style.display = 'none';
+        }
     }
-}
 
-// Close dropdown when clicking elsewhere
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('#mSearchInput')) {
-        document.getElementById('mSearchDropdown').style.display = 'none';
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#mSearchInput')) {
+            document.getElementById('mSearchDropdown').style.display = 'none';
+        }
+    });
+
+    // Core Manager Functions
+    async function saveProduct() {
+        const product = {
+            id: document.getElementById('pID').value,
+            en: document.getElementById('enName').value,
+            ur: document.getElementById('urName').value,
+            price: document.getElementById('price').value,
+            img: document.getElementById('img').value,
+            unit: document.getElementById('unit').value
+        };
+
+        if(!product.id || !product.en || !product.price) return alert("Fill ID, Name and Price!");
+
+        let data = JSON.parse(localStorage.getItem('mart_data') || "[]");
+        const index = data.findIndex(p => p.id === product.id);
+        
+        if(index > -1) data[index] = product;
+        else data.push(product);
+
+        localStorage.setItem('mart_data', JSON.stringify(data));
+        
+        // Update index.html storage as well
+        let scanData = data.map(p => ({id: p.id, en: p.en, ur: p.ur, pr: p.price, img: p.img, un: p.unit}));
+        localStorage.setItem('mart_products', JSON.stringify(scanData));
+
+        alert("Product Saved Locally!");
+        resetForm();
     }
-});
+
+    function editProduct(id) {
+        const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
+        const p = data.find(item => item.id == id);
+        if(p) {
+            document.getElementById('pID').value = p.id;
+            document.getElementById('enName').value = p.en;
+            document.getElementById('urName').value = p.ur || '';
+            document.getElementById('price').value = p.price;
+            document.getElementById('img').value = p.img || '';
+            document.getElementById('unit').value = p.unit || 'pc';
+            document.getElementById('form-header').innerText = "Edit Product";
+            switchTab(1);
+        }
+    }
+
+    function resetForm() {
+        ['pID', 'enName', 'urName', 'price', 'img'].forEach(i => document.getElementById(i).value = "");
+        document.getElementById('form-header').innerText = "Add New Product";
+    }
+
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
+        let x = 10, y = 10;
+        
+        data.forEach(p => {
+            doc.setFontSize(8);
+            doc.text(p.en.substring(0,20), x, y);
+            doc.text("Rs. " + p.price, x, y + 4);
+            const canvas = document.getElementById('barcodeCanvas');
+            JsBarcode(canvas, p.id, {format: "CODE128", height: 25, displayValue: false});
+            doc.addImage(canvas.toDataURL(), 'PNG', x, y + 5, 35, 12);
+            x += 45; if(x > 160) { x = 10; y += 30; }
+        });
+        doc.save("Barcodes.pdf");
+    }
 </script>
+</body>
+</html>
