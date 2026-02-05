@@ -1,126 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hammad Mart - Manager</title>
+    <title>Manager - Hammad Mart</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding-bottom: 50px; }
-        
-        /* Top Bar with Buttons */
-        .header { 
-            background: var(--primary); padding: 15px; color: white; 
-            display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 100;
-        }
-        .sync-section { text-align: right; }
-        .btn-update { 
-            background: var(--accent); color: white; border: none; padding: 10px 15px; 
-            border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;
-        }
-        .last-sync { font-size: 10px; color: #cbd5e1; display: block; margin-top: 4px; }
-        .back-link { color: white; text-decoration: none; font-size: 14px; background: #475569; padding: 5px 10px; border-radius: 5px; }
-
-        .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box; font-size: 16px; }
-        .btn-save { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; font-size: 16px; cursor: pointer; }
-        
-        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); color: white; justify-content: center; align-items: center; z-index: 1000; }
+        body { font-family: sans-serif; background: #f1f5f9; margin: 0; padding: 15px; }
+        .nav { background: #1e293b; color: white; padding: 15px; margin: -15px -15px 20px -15px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-sync { background: #22c55e; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .btn-save { background: #1e293b; color: white; width: 100%; padding: 15px; border: none; border-radius: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
-
-    <div id="loading-overlay">Working... Please wait</div>
-
-    <div class="header">
-        <div>
-            <a href="index.html" class="back-link">← Scanner</a>
-            <h3 style="margin: 5px 0 0 0; font-size: 16px;">Manager Panel</h3>
-        </div>
-        <div class="sync-section">
-            <button class="btn-update" onclick="syncData()">UPDATE DATA 🔄</button>
-            <span id="sync-time" class="last-sync">Last Sync: Never</span>
-        </div>
+    <div class="nav">
+        <span>Manager Panel</span>
+        <button class="btn-sync" onclick="sync()">UPDATE DATA 🔄</button>
     </div>
 
-    <div class="container">
-        <div class="card">
-            <h3 id="form-title" style="margin-top:0">Add New Item</h3>
-            <input type="text" id="pID" placeholder="Barcode / ID">
-            <input type="text" id="enName" placeholder="Product Name (English)">
-            <input type="text" id="urName" placeholder="Product Name (Urdu)">
-            <input type="text" id="price" placeholder="Price (e.g. 250)">
-            <input type="text" id="unit" placeholder="Unit (e.g. 1kg or Piece)">
-            <input type="text" id="img" placeholder="Image Link (Optional)">
-            <button class="btn-save" onclick="saveToSheet()">SAVE TO CLOUD ☁️</button>
-        </div>
-        
-        <p style="text-align: center; color: #64748b; font-size: 14px;">Data save karne ke baad <b>Update Data</b> lazmi dabayen taake scanner mein nazar aaye.</p>
+    <div class="card">
+        <input type="text" id="id" placeholder="Barcode ID">
+        <input type="text" id="en" placeholder="English Name">
+        <input type="text" id="ur" placeholder="Urdu Name">
+        <input type="text" id="pr" placeholder="Price">
+        <input type="text" id="un" placeholder="Unit (kg/pc)">
+        <input type="text" id="im" placeholder="Image Link">
+        <button class="btn-save" onclick="save()">SAVE TO CLOUD</button>
     </div>
 
     <script>
-        // APNA URL YAHAN DALAIN
-        const API = "APNA_G_SCRIPT_URL_YAHAN_RAHNE_DEN";
+        const API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
 
-        // 1. Mobile Memory Mein Sync Karna
-        async function syncData() {
-            const btn = document.querySelector('.btn-update');
+        async function sync() {
+            const btn = document.querySelector('.btn-sync');
             btn.innerText = "Syncing...";
-            btn.disabled = true;
-
             try {
                 const res = await fetch(API + "?action=read");
                 const data = await res.json();
-                localStorage.setItem('mart_offline_data', JSON.stringify(data));
-                
-                const timeStr = new Date().toLocaleString();
-                localStorage.setItem('last_sync_date', timeStr);
-                document.getElementById('sync-time').innerText = "Last Sync: " + timeStr;
-                
-                alert("Data Mobile mein save ho gaya! Ab aap offline scan kar saktay hain.");
+                localStorage.setItem('mart_data', JSON.stringify(data));
+                alert("Data Updated! " + data.length + " items saved offline.");
             } catch (e) {
-                alert("Sync Error! Internet check karein.");
-            } finally {
-                btn.innerText = "UPDATE DATA 🔄";
-                btn.disabled = false;
+                alert("Sync Error: Check Internet or Google Script Permissions.");
             }
+            btn.innerText = "UPDATE DATA 🔄";
         }
 
-        // 2. Google Sheet Mein Save Karna
-        async function saveToSheet() {
-            const id = document.getElementById('pID').value;
-            if(!id) return alert("ID zaroori hai!");
-
+        async function save() {
             const payload = {
-                action: 'add', // Script handles update automatically if ID exists
-                id: id,
-                en: document.getElementById('enName').value,
-                ur: document.getElementById('urName').value,
-                price: document.getElementById('price').value,
-                unit: document.getElementById('unit').value,
-                img: document.getElementById('img').value
+                action: 'add',
+                id: document.getElementById('id').value,
+                en: document.getElementById('en').value,
+                ur: document.getElementById('ur').value,
+                price: document.getElementById('pr').value,
+                unit: document.getElementById('un').value,
+                img: document.getElementById('im').value
             };
-
-            document.getElementById('loading-overlay').style.display = "flex";
-            try {
-                await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-                alert("Cloud mein save ho gaya! Ab 'Update Data' dabayein.");
-                clearForm();
-            } catch (e) {
-                alert("Error saving data.");
-            }
-            document.getElementById('loading-overlay').style.display = "none";
+            await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+            alert("Saved to Cloud! Now click Update Data.");
         }
-
-        function clearForm() {
-            ['pID', 'enName', 'urName', 'price', 'unit', 'img'].forEach(i => document.getElementById(i).value = "");
-        }
-
-        window.onload = () => {
-            const last = localStorage.getItem('last_sync_date');
-            if(last) document.getElementById('sync-time').innerText = "Last Sync: " + last;
-        };
     </script>
 </body>
 </html>
