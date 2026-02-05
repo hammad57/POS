@@ -1,66 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hammad Mart Scanner</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
-        .header { padding: 15px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); }
-        .admin-btn { background: #3b82f6; color: white; text-decoration: none; padding: 8px 12px; border-radius: 5px; font-size: 12px; }
-        #reader { width: 100% !important; }
-        .result-card { display: none; position: fixed; bottom: 0; width: 100%; background: var(--card); padding: 20px; border-radius: 20px 20px 0 0; box-sizing: border-box; z-index: 100; }
-        .p-img { width: 100%; max-height: 150px; object-fit: contain; margin-bottom: 10px; }
-        .price { font-size: 30px; color: var(--accent); font-weight: bold; }
-        .btn-close { background: var(--accent); color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; margin-top: 10px; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div style="font-weight: 800; color: var(--accent);">HAMMAD MART</div>
-        <a href="manager.html" class="admin-btn">ADMIN ⚙️</a>
-    </div>
+<script>
+    const API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
 
-    <div id="reader"></div>
-
-    <div id="result" class="result-card">
-        <img id="p-img" class="p-img" src="">
-        <h2 id="p-en" style="margin:0"></h2>
-        <h3 id="p-ur" style="color:#94a3b8; margin:5px 0"></h3>
-        <div class="price" id="p-price"></div>
-        <div id="p-unit"></div>
-        <button class="btn-close" onclick="document.getElementById('result').style.display='none'">SCAN NEXT</button>
-    </div>
-
-    <script>
-        const API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
-
-        function onScanSuccess(decodedText) {
-            // 1. Check Offline first
-            const local = localStorage.getItem('mart_data');
-            if(local) {
-                const products = JSON.parse(local);
-                const item = products.find(p => p.id == decodedText);
-                if(item) { showItem(item); return; }
+    function onScanSuccess(decodedText) {
+        console.log("Scanned ID:", decodedText);
+        
+        // 1. Pehle Mobile Memory (Offline) check karein
+        const local = localStorage.getItem('mart_data');
+        if(local) {
+            const products = JSON.parse(local);
+            const item = products.find(p => p.id.toString().trim() == decodedText.toString().trim());
+            if(item) {
+                showItem(item);
+                return; // Agar offline mil gaya to yahin ruk jayein
             }
-            // 2. If not found, fetch Online
-            fetch(API + "?action=getDetails&id=" + decodedText)
-                .then(r => r.json())
-                .then(data => { if(!data.error) showItem(data); });
         }
 
-        function showItem(data) {
-            document.getElementById('result').style.display = "block";
-            document.getElementById('p-en').innerText = data.en;
-            document.getElementById('p-ur').innerText = data.ur;
-            document.getElementById('p-price').innerText = "Rs. " + data.price;
-            document.getElementById('p-unit').innerText = data.unit;
-            document.getElementById('p-img').src = data.img || "https://via.placeholder.com/150";
-        }
+        // 2. Agar offline nahi mila to Online check karein
+        fetch(API + "?action=getDetails&id=" + decodedText)
+            .then(r => r.json())
+            .then(data => {
+                if(!data.error) {
+                    showItem(data);
+                } else {
+                    alert("Product not found in Sheet or Offline!");
+                }
+            })
+            .catch(err => alert("Internet connection error!"));
+    }
 
-        new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }).render(onScanSuccess);
-    </script>
-</body>
-</html>
+    function showItem(data) {
+        document.getElementById('result').style.display = "block";
+        document.getElementById('p-en').innerText = data.en;
+        document.getElementById('p-ur').innerText = data.ur || "";
+        document.getElementById('p-price').innerText = "Rs. " + (data.price || data.pr);
+        document.getElementById('p-unit').innerText = data.unit || data.un || "";
+        document.getElementById('p-img').src = data.img || "https://via.placeholder.com/150";
+        
+        // Vibration feedback (agar mobile support kare)
+        if(navigator.vibrate) navigator.vibrate(100);
+    }
+
+    // Scanner start
+    const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(onScanSuccess);
+</script>
