@@ -24,6 +24,8 @@
         .btn-save { background: var(--accent); }
         .btn-sync { background: #3b82f6; margin-top: 10px; }
         .btn-pdf { background: #f59e0b; margin-top: 15px; }
+        /* Camera Button Style */
+        .btn-cam { background: #64748b; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
         .sync-info { font-size: 12px; color: #64748b; text-align: center; margin-top: 5px; }
 
@@ -41,6 +43,17 @@
         .btn-edit { background: #3b82f6; }
         .btn-del { background: #ef4444; }
 
+        /* Camera Overlay Styles */
+        #camOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 3000; flex-direction: column; }
+        #videoFeed { width: 100%; height: 70%; object-fit: cover; }
+        #capturedCanvas { display: none; width: 100%; height: 70%; object-fit: contain; background: black; }
+        .cam-controls { height: 30%; background: #1e293b; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 20px; }
+        .cam-btn { padding: 12px 30px; border-radius: 30px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: white; width: 80%; }
+        .btn-snap { background: white; color: black; height: 60px; width: 60px; border-radius: 50%; padding: 0; border: 4px solid #ccc; }
+        .btn-retake { background: #ef4444; }
+        .btn-approve { background: var(--accent); }
+        .btn-close-cam { background: transparent; color: #94a3b8; margin-top: 10px; }
+
         #loading { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; align-items:center; justify-content:center; flex-direction: column; }
     </style>
 </head>
@@ -49,6 +62,23 @@
     <div id="loading">
         <div style="border:4px solid #f3f3f3; border-top:4px solid var(--accent); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;"></div>
         <p>Syncing Data...</p>
+    </div>
+
+    <div id="camOverlay">
+        <video id="videoFeed" autoplay playsinline></video>
+        <canvas id="capturedCanvas"></canvas>
+        
+        <div class="cam-controls">
+            <div id="state-capture" style="display:flex; flex-direction:column; align-items:center; width:100%;">
+                <button class="btn-snap" onclick="takePicture()"></button>
+                <button class="btn-close-cam" onclick="closeCamera()">Cancel</button>
+            </div>
+            
+            <div id="state-review" style="display:none; flex-direction:column; align-items:center; width:100%; gap:10px;">
+                <button class="cam-btn btn-approve" onclick="approvePicture()">✅ Approve</button>
+                <button class="cam-btn btn-retake" onclick="retakePicture()">🔄 Retake</button>
+            </div>
+        </div>
     </div>
 
     <div class="nav-bar">
@@ -69,7 +99,13 @@
             <input type="text" id="urName" placeholder="Urdu Name">
             <input type="number" id="price" placeholder="Price">
             <input type="text" id="unit" placeholder="Unit (e.g 1kg)">
-            <input type="text" id="img" placeholder="Image URL">
+            
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="img" placeholder="Image URL (or take photo)" style="margin-bottom: 0;">
+                <button class="btn btn-cam" style="width: auto; margin-bottom: 0;" onclick="openCamera()">📸</button>
+            </div>
+            <p style="font-size: 10px; color: #64748b; margin-top: 5px; margin-bottom: 10px;">Click Camera to take photo or paste URL manually.</p>
+
             <button class="btn btn-save" onclick="saveData()">SAVE TO CLOUD</button>
             
             <button class="btn btn-sync" onclick="loadData()">🔄 SYNC GOOGLE SHEET</button>
@@ -107,6 +143,77 @@
         let allProducts = [];
         let currentEditingId = null;
         let currentMode = 'online';
+
+        // --- CAMERA LOGIC START ---
+        let videoStream = null;
+
+        async function openCamera() {
+            const overlay = document.getElementById('camOverlay');
+            const video = document.getElementById('videoFeed');
+            
+            overlay.style.display = 'flex';
+            document.getElementById('state-capture').style.display = 'flex';
+            document.getElementById('state-review').style.display = 'none';
+            document.getElementById('capturedCanvas').style.display = 'none';
+            video.style.display = 'block';
+
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } 
+                });
+                video.srcObject = videoStream;
+            } catch (err) {
+                alert("Camera Access Denied or Not Available");
+                closeCamera();
+            }
+        }
+
+        function takePicture() {
+            const video = document.getElementById('videoFeed');
+            const canvas = document.getElementById('capturedCanvas');
+            const context = canvas.getContext('2d');
+
+            // Set canvas dimensions to match video (Resizing for Google Sheet Limit)
+            // We limit width to 300px to keep the Base64 string small enough for Sheets
+            const scaleFactor = 300 / video.videoWidth;
+            canvas.width = 300;
+            canvas.height = video.videoHeight * scaleFactor;
+
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Switch UI to Review Mode
+            video.style.display = 'none';
+            canvas.style.display = 'block';
+            document.getElementById('state-capture').style.display = 'none';
+            document.getElementById('state-review').style.display = 'flex';
+        }
+
+        function retakePicture() {
+            document.getElementById('videoFeed').style.display = 'block';
+            document.getElementById('capturedCanvas').style.display = 'none';
+            document.getElementById('state-capture').style.display = 'flex';
+            document.getElementById('state-review').style.display = 'none';
+        }
+
+        function approvePicture() {
+            const canvas = document.getElementById('capturedCanvas');
+            // Low quality (0.6) to reduce size further
+            const dataURL = canvas.toDataURL('image/jpeg', 0.6); 
+            
+            document.getElementById('img').value = dataURL;
+            closeCamera();
+        }
+
+        function closeCamera() {
+            const overlay = document.getElementById('camOverlay');
+            overlay.style.display = 'none';
+            
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+        }
+        // --- CAMERA LOGIC END ---
 
         async function loadData() {
             document.getElementById('loading').style.display = "flex";
