@@ -1,44 +1,97 @@
-<script>
-    const API = "APNA_NEW_DEPLOYMENT_URL_YAHAN_DAALEIN";
-    let allProducts = [];
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hammad Mart - Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --primary: #1e293b; --accent: #22c55e; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; padding: 15px; margin: 0; }
+        .box { background: white; padding: 20px; border-radius: 12px; max-width: 900px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn-save { background: var(--accent); color: white; margin-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: var(--primary); color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        .img-preview { width: 45px; height: 45px; object-fit: cover; border-radius: 5px; }
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    </style>
+</head>
+<body>
+    <div id="loading"><b>Syncing Data...</b></div>
+    <div class="box">
+        <h2 id="form-title">🛒 Manage Product</h2>
+        <input type="number" id="pID" placeholder="Barcode / ID">
+        <input type="text" id="enName" placeholder="English Name">
+        <input type="text" id="urName" placeholder="Urdu Name" dir="rtl">
+        <input type="number" id="price" placeholder="Price (Rs.)">
+        <input type="text" id="unit" placeholder="Unit (e.g. 1 Kg)">
+        <input type="text" id="img" placeholder="Image URL">
+        <button class="btn btn-save" onclick="saveData()">SAVE PRODUCT</button>
+        <button class="btn" style="background:#64748b; color:white;" onclick="resetForm()">NEW/CLEAR</button>
+    </div>
 
-    async function loadData() {
-        showLoading(true);
-        try {
-            // "read" action ab script mein handle ho raha hai
+    <div class="box">
+        <h3>Inventory List (<span id="count">0</span>)</h3>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr><th>ID</th><th>Img</th><th>Details</th><th>Price</th><th>Action</th></tr></thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API = "https://script.google.com/macros/s/AKfycbx_QoHQzoG7laQkuFHNCKWpMn2z-yPcTak-OJ4AnnRcmCdGBgDRdKJUngwLimgKcoFu1Q/exec";
+        let allProducts = [];
+
+        async function loadData() {
+            document.getElementById('loading').style.display = "flex";
             const res = await fetch(`${API}?action=read`);
             allProducts = await res.json();
-            renderTable(allProducts);
-        } catch (e) { 
-            console.error(e);
-            alert("Data load nahi ho saka. Deployment URL check karein."); 
+            document.getElementById('count').innerText = allProducts.length;
+            document.getElementById('table-body').innerHTML = allProducts.map(p => `
+                <tr>
+                    <td>${p.id}</td>
+                    <td><img src="${p.img || 'https://via.placeholder.com/50'}" class="img-preview"></td>
+                    <td><b>${p.en}</b><br><small>${p.ur || ''}</small></td>
+                    <td>Rs. ${p.price}<br><small>${p.unit || ''}</small></td>
+                    <td><button onclick="editItem('${p.id}')">Edit</button></td>
+                </tr>
+            `).join('');
+            document.getElementById('loading').style.display = "none";
         }
-        showLoading(false);
-    }
 
-    async function saveData() {
-        const id = document.getElementById('pID').value;
-        if(!id) return alert("ID zaroori hai!");
-
-        showLoading(true);
-        const payload = {
-            action: 'add',
-            id: id,
-            en: document.getElementById('enName').value,
-            ur: document.getElementById('urName').value,
-            price: document.getElementById('price').value,
-            unit: document.getElementById('unit').value,
-            img: document.getElementById('img').value
-        };
-
-        try {
+        async function saveData() {
+            const payload = {
+                action: 'add',
+                id: document.getElementById('pID').value,
+                en: document.getElementById('enName').value,
+                ur: document.getElementById('urName').value,
+                price: document.getElementById('price').value,
+                unit: document.getElementById('unit').value,
+                img: document.getElementById('img').value
+            };
             await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-            resetForm();
-            loadData();
-        } catch (e) {
-            alert("Save karte waqt error aaya.");
+            resetForm(); loadData();
         }
-        showLoading(false);
-    }
-    // Baaki functions (renderTable, deleteItem etc.) wahi rahen ge
-</script>
+
+        function editItem(id) {
+            const p = allProducts.find(item => item.id == id);
+            document.getElementById('pID').value = p.id;
+            document.getElementById('enName').value = p.en;
+            document.getElementById('urName').value = p.ur;
+            document.getElementById('price').value = p.price;
+            document.getElementById('unit').value = p.unit;
+            document.getElementById('img').value = p.img;
+            window.scrollTo(0,0);
+        }
+
+        function resetForm() {
+            ['pID', 'enName', 'urName', 'price', 'unit', 'img'].forEach(id => document.getElementById(id).value = "");
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>
