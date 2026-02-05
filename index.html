@@ -21,7 +21,7 @@
         /* Result Popup */
         .result-overlay { 
             position: fixed; bottom: 0; left: 0; right: 0; top: 0;
-            background: rgba(15, 23, 42, 0.96); /* Dark background */
+            background: rgba(15, 23, 42, 0.96); 
             display: none; 
             flex-direction: column; align-items: center; justify-content: center;
             z-index: 20; padding: 20px;
@@ -29,7 +29,7 @@
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* BIG Image Style */
+        /* Product Image */
         .prod-img { 
             width: 75%; 
             max-width: 280px; 
@@ -42,17 +42,13 @@
             margin-bottom: 15px;
         }
 
-        /* Names Styling */
         .name-box { text-align: center; margin-bottom: 10px; width: 100%; }
-        
         .p-en { font-size: 24px; font-weight: bold; color: white; margin-bottom: 5px; line-height: 1.2; }
-        .p-ur { font-size: 28px; color: var(--accent); font-family: 'Segoe UI', sans-serif; font-weight: 500; }
+        .p-ur { font-size: 28px; color: var(--accent); font-weight: 500; }
 
-        /* Price Styling */
         .price-tag { font-size: 60px; font-weight: 900; color: white; margin: 5px 0; text-shadow: 0 0 20px rgba(255, 255, 255, 0.2); }
         .unit-tag { font-size: 16px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
 
-        /* Button */
         .btn-scan { 
             width: 90%; max-width: 350px; background: var(--accent); color: white; border: none; 
             padding: 18px; border-radius: 50px; font-size: 18px; font-weight: bold; 
@@ -60,7 +56,6 @@
         }
         
         .mgr-link { position: absolute; bottom: 20px; color: #64748b; text-decoration: none; font-size: 12px; }
-
     </style>
 </head>
 <body>
@@ -74,7 +69,6 @@
     </div>
 
     <div id="result" class="result-overlay">
-        
         <img id="p-img" class="prod-img" src="" alt="Product Image">
         
         <div class="name-box">
@@ -86,51 +80,52 @@
         <div class="unit-tag" id="p-unit"></div>
         
         <button class="btn-scan" onclick="resetScanner()">SCAN NEXT ITEM</button>
-        
-        <a href="https://hammad57.github.io/POS/manager.html" class="mgr-link">Open Manager</a>
+        <a href="manager.html" class="mgr-link">Open Manager</a>
     </div>
 
     <script>
-        // AAPKA WEB APP URL (Version 5)
+        // YAHAN APNA NAYA DEPLOYMENT URL PASTE KAREIN
         const API = "https://script.google.com/macros/s/AKfycbx_QoHQzoG7laQkuFHNCKWpMn2z-yPcTak-OJ4AnnRcmCdGBgDRdKJUngwLimgKcoFu1Q/exec";
 
         let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
         
         function onScanSuccess(decodedText) {
+            // Scanner ko stop karna taake multiple scans na hon
             html5QrcodeScanner.clear();
             
-            // Show result screen
+            // UI Update
             document.getElementById('result').style.display = "flex";
-            document.getElementById('p-en').innerText = "Fetching Product...";
+            document.getElementById('p-en').innerText = "Searching...";
             document.getElementById('p-ur').innerText = "";
             document.getElementById('p-price').innerText = "...";
             document.getElementById('p-img').src = "https://cdn.dribbble.com/users/765253/screenshots/2540865/loader.gif"; 
 
-            fetch(`${API}?action=getDetails&id=${decodedText}`)
+            // API Call with trim() to remove extra spaces from Barcode
+            fetch(`${API}?action=getDetails&id=${decodedText.trim()}`)
                 .then(res => res.json())
                 .then(data => {
                     if(!data.error) {
-                        // English Name
                         document.getElementById('p-en').innerText = data.enName;
-                        // Urdu Name
                         document.getElementById('p-ur').innerText = data.urName || ""; 
-                        
                         document.getElementById('p-price').innerText = "Rs. " + data.price;
                         document.getElementById('p-unit').innerText = data.unit || "Per Item";
                         document.getElementById('p-img').src = data.img || "https://via.placeholder.com/400?text=No+Image";
                     } else {
                         document.getElementById('p-en').innerText = "Item Not Found";
+                        document.getElementById('p-ur').innerText = "Item code: " + decodedText;
                         document.getElementById('p-price').innerText = "---";
                         document.getElementById('p-img').src = "https://via.placeholder.com/400?text=Not+Found";
                     }
                 })
                 .catch(err => {
                     document.getElementById('p-en').innerText = "Network Error";
+                    console.error(err);
                 });
         }
 
         function resetScanner() {
             document.getElementById('result').style.display = "none";
+            // Page reload taake camera phir se active ho jaye
             location.reload();
         }
 
