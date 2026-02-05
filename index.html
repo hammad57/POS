@@ -11,21 +11,23 @@
         .header { padding: 15px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); z-index: 10; }
         .mart-name { font-size: 20px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
         .admin-btn { background: #3b82f6; color: white; text-decoration: none; padding: 8px 15px; border-radius: 6px; font-size: 13px; font-weight: bold; }
-        .search-container { padding: 10px; background: var(--card); position: relative; z-index: 15; }
-        #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
-        #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid #334155; border-radius: 0 0 10px 10px; max-height: 250px; overflow-y: auto; z-index: 2001; }
-        .search-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #334155; cursor: pointer; }
-        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
-        .spinner { width: 70px; height: 70px; border: 6px solid rgba(34, 197, 94, 0.1); border-top: 6px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #reader { width: 100% !important; background: black; border: none !important; }
-        .result-card { display: none; position: fixed; bottom: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; box-sizing: border-box; z-index: 2000; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); text-align: center; animation: slideUp 0.3s ease-out; }
+        
+        .search-container { padding: 10px; background: var(--card); position: relative; z-index: 100; }
+        #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
+        #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; z-index: 200; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; cursor: pointer; }
+        .search-item:hover { background: #2d3e5a; }
+        .search-item img { width: 40px; height: 40px; border-radius: 5px; object-fit: cover; background: white; }
+
+        #reader { width: 100% !important; flex-grow: 1; background: black; }
+        
+        .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; box-sizing: border-box; z-index: 2000; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); text-align: center; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .p-img { width: 160px; height: 160px; object-fit: contain; margin-bottom: 15px; border-radius: 12px; background: white; }
-        .p-title { font-size: 24px; font-weight: bold; color: white; margin: 5px 0; }
-        .p-urdu { font-size: 28px; color: #94a3b8; margin-bottom: 10px; }
-        .p-price { font-size: 38px; color: var(--accent); font-weight: 900; margin: 10px 0; }
-        .btn-close { background: var(--accent); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .p-img { width: 180px; height: 180px; object-fit: contain; margin-bottom: 15px; border-radius: 15px; background: white; padding: 5px; }
+        .p-title { font-size: 26px; font-weight: bold; color: white; margin: 5px 0; }
+        .p-price { font-size: 42px; color: var(--accent); font-weight: 900; margin: 15px 0; }
+        .btn-close { background: var(--accent); color: white; border: none; width: 100%; padding: 18px; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; }
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); z-index: 3000; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -33,64 +35,96 @@
         <div class="mart-name">HAMMAD MART</div>
         <a href="manager.html" class="admin-btn">ADMIN ⚙️</a>
     </div>
+    
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Search Product Name..." oninput="indexSearch()">
+        <input type="text" id="searchInput" placeholder="Search product name..." oninput="handleSearch()">
         <div id="searchDropdown"></div>
     </div>
-    <div id="loading-overlay"><div class="spinner"></div></div>
+
     <div id="reader"></div>
+    <div id="loading-overlay"><div style="color:white; font-size:20px;">Searching...</div></div>
+
     <div id="result" class="result-card">
         <img id="p-img" class="p-img" src="">
         <div id="p-en" class="p-title"></div>
-        <div id="p-ur" class="p-urdu"></div>
         <div id="p-price" class="p-price"></div>
-        <div id="p-unit" style="color: #94a3b8; margin-bottom: 15px;"></div>
+        <div id="p-unit" style="color: #94a3b8; margin-bottom: 20px; font-size: 18px;"></div>
         <button class="btn-close" onclick="closeResult()">SCAN NEXT 🔄</button>
     </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
-        const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
+        const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
 
-        function indexSearch() {
+        function handleSearch() {
             const query = document.getElementById('searchInput').value.toLowerCase();
             const dropdown = document.getElementById('searchDropdown');
-            const localData = JSON.parse(localStorage.getItem('mart_products') || "[]");
+            const data = JSON.parse(localStorage.getItem('mart_products') || "[]");
+            
             dropdown.innerHTML = '';
             if (query.length < 2) { dropdown.style.display = 'none'; return; }
-            const matches = localData.filter(p => (p.en && p.en.toLowerCase().includes(query)));
+
+            const matches = data.filter(p => p.en && p.en.toLowerCase().includes(query));
             if (matches.length > 0) {
                 matches.forEach(p => {
                     const item = document.createElement('div');
                     item.className = 'search-item';
-                    item.innerHTML = `<span>${p.en}</span><span style="margin-left:auto">Rs.${p.pr}</span>`;
-                    item.onclick = () => { showProduct(p); dropdown.style.display = 'none'; };
+                    item.innerHTML = `
+                        <img src="${p.img || 'https://via.placeholder.com/50'}">
+                        <div style="flex-grow:1">
+                            <div style="font-weight:bold; color:white">${p.en}</div>
+                            <div style="color:var(--accent); font-size:14px">Rs. ${p.pr}</div>
+                        </div>
+                    `;
+                    item.onclick = () => {
+                        showProduct(p);
+                        dropdown.style.display = 'none';
+                        document.getElementById('searchInput').value = '';
+                    };
                     dropdown.appendChild(item);
                 });
                 dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
             }
         }
 
-        function onScanSuccess(decodedText) {
+        function onScanSuccess(id) {
             document.getElementById('loading-overlay').style.display = 'flex';
-            const localData = JSON.parse(localStorage.getItem('mart_products') || "[]");
-            const item = localData.find(p => p.id == decodedText);
-            if (item) showProduct(item);
-            else fetch(`${API_URL}?action=getDetails&id=${decodedText}`).then(r => r.json()).then(showProduct);
+            const data = JSON.parse(localStorage.getItem('mart_products') || "[]");
+            const localMatch = data.find(p => p.id == id);
+            
+            if (localMatch) {
+                showProduct(localMatch);
+            } else {
+                fetch(`${API_URL}?action=getDetails&id=${id}`)
+                    .then(r => r.json())
+                    .then(showProduct)
+                    .catch(() => {
+                        alert("Product not found!");
+                        document.getElementById('loading-overlay').style.display = 'none';
+                    });
+            }
         }
 
-        function showProduct(data) {
+        function showProduct(p) {
             document.getElementById('loading-overlay').style.display = 'none';
-            document.getElementById('p-en').innerText = data.en || data.enName;
-            document.getElementById('p-ur').innerText = data.ur || data.urName || "";
-            document.getElementById('p-price').innerText = "Rs. " + (data.pr || data.price);
-            document.getElementById('p-img').src = data.img || "https://via.placeholder.com/150";
+            // Mapping fields (Local storage uses 'pr' and 'un', API uses 'price' and 'unit')
+            document.getElementById('p-en').innerText = p.en || p.enName;
+            document.getElementById('p-price').innerText = "Rs. " + (p.pr || p.price);
+            document.getElementById('p-unit').innerText = "Unit: " + (p.un || p.unit || "pc");
+            document.getElementById('p-img').src = (p.img && p.img.length > 10) ? p.img : "https://via.placeholder.com/150?text=No+Image";
+            
             document.getElementById('result').style.display = "block";
-            html5QrcodeScanner.pause();
+            scanner.pause();
         }
 
-        function closeResult() { document.getElementById('result').style.display = "none"; html5QrcodeScanner.resume(); }
-        html5QrcodeScanner.render(onScanSuccess);
+        function closeResult() {
+            document.getElementById('result').style.display = "none";
+            scanner.resume();
+        }
+
+        scanner.render(onScanSuccess);
     </script>
 </body>
 </html>
