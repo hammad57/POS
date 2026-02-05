@@ -26,11 +26,16 @@
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
         .p-name-cell { font-weight: 600; color: #1e293b; }
         .p-price-cell { color: var(--accent); font-weight: bold; text-align: right; }
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 2000; align-items:center; justify-content:center; }
-        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 20px; text-align: center; position: relative; }
-        .modal-img { width: 150px; height: 150px; object-fit: contain; margin-bottom: 10px; border-radius: 10px; }
-        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
-        #camOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 3000; flex-direction: column; }
+        
+        /* FULL PAGE MODAL STYLE */
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index: 5000; overflow-y: auto; }
+        .modal-header { padding: 15px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 20px; text-align: center; }
+        .modal-img { width: 100%; max-width: 300px; height: 300px; object-fit: contain; border-radius: 15px; border: 1px solid #eee; margin-bottom: 15px; }
+        .barcode-container { background: #f8fafc; padding: 15px; border-radius: 10px; margin: 15px 0; }
+        #mBarcode { max-width: 100%; height: auto; }
+        
+        #camOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 6000; flex-direction: column; }
         #videoFeed { width: 100%; height: 70%; object-fit: cover; }
         .cam-controls { height: 30%; background: #1e293b; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; }
         #loading { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; align-items:center; justify-content:center; flex-direction: column; }
@@ -100,16 +105,26 @@
     </div>
 
     <div id="detailModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
+        <div class="modal-header">
+            <span style="font-weight:bold;">Product Details</span>
+            <span onclick="closeModal()" style="font-size: 28px; cursor: pointer;">&times;</span>
+        </div>
+        <div class="modal-body">
             <img id="mImg" class="modal-img" src="">
-            <h2 id="mEn" style="margin:5px 0;"></h2>
-            <h4 id="mUr" style="color:gray; margin:0;"></h4>
-            <h1 id="mPrice" style="color:var(--accent); margin:10px 0;"></h1>
-            <p id="mUnit"></p>
-            <div style="display:flex; gap:10px;">
-                <button class="btn" style="background:#3b82f6;" onclick="editCurrent()">EDIT</button>
-                <button class="btn" style="background:#ef4444;" onclick="deleteCurrent()">DELETE</button>
+            
+            <div class="barcode-container">
+                <svg id="mBarcode"></svg>
+                <p id="mIDDisplay" style="margin:5px 0; color:#64748b; font-weight:bold;"></p>
+            </div>
+
+            <h1 id="mEn" style="margin:5px 0; font-size: 24px;"></h1>
+            <h3 id="mUr" style="color:gray; margin:0; font-weight: normal;"></h3>
+            <h1 id="mPrice" style="color:var(--accent); margin:15px 0; font-size: 32px;"></h1>
+            <p id="mUnit" style="font-size: 18px; color:#475569;"></p>
+            
+            <div style="display:flex; gap:10px; margin-top: 20px;">
+                <button class="btn" style="background:#3b82f6; flex:1;" onclick="editCurrent()">EDIT PRODUCT</button>
+                <button class="btn" style="background:#ef4444; flex:1;" onclick="deleteCurrent()">DELETE</button>
             </div>
         </div>
     </div>
@@ -123,21 +138,14 @@
         let stream = null;
         let currentMode = 'online';
 
-        // 1. Tab Switching Function (NEW)
         function switchTab(mode) {
             currentMode = mode;
             document.getElementById('tab-online').classList.toggle('active', mode === 'online');
             document.getElementById('tab-offline').classList.toggle('active', mode === 'offline');
-            
-            if(mode === 'offline') {
-                const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
-                renderTable(localData);
-            } else {
-                renderTable(allProducts);
-            }
+            const dataToShow = (mode === 'offline') ? JSON.parse(localStorage.getItem('mart_data') || "[]") : allProducts;
+            renderTable(dataToShow);
         }
 
-        // 2. Load Data
         async function loadData() {
             document.getElementById('loading').style.display = "flex";
             try {
@@ -156,14 +164,14 @@
 
         function updateUI(time) {
             document.getElementById('lastSync').innerText = "Last Update: " + (time || "Never");
-            switchTab(currentMode); // Refresh current view
+            switchTab(currentMode);
             if(!selectedID) generateAutoID();
         }
 
         function renderTable(data) {
             const body = document.getElementById('productBody');
             if(data.length === 0) {
-                body.innerHTML = "<tr><td colspan='2' style='text-align:center;'>No items found</td></tr>";
+                body.innerHTML = "<tr><td colspan='2' style='text-align:center; padding:20px;'>No items found</td></tr>";
                 return;
             }
             body.innerHTML = data.map(p => `
@@ -174,14 +182,12 @@
             `).join('');
         }
 
-        // 3. Camera Functions
+        // Camera Logic
         async function startCamera() {
-            const overlay = document.getElementById('camOverlay');
-            const video = document.getElementById('videoFeed');
-            overlay.style.display = "flex";
+            document.getElementById('camOverlay').style.display = "flex";
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                video.srcObject = stream;
+                document.getElementById('videoFeed').srcObject = stream;
             } catch(e) { alert("Camera Error"); stopCamera(); }
         }
 
@@ -193,50 +199,46 @@
         function takeSnapshot() {
             const video = document.getElementById('videoFeed');
             const canvas = document.getElementById('tempCanvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 300;
-            canvas.height = 300;
-            ctx.drawImage(video, 0, 0, 300, 300);
+            canvas.width = 300; canvas.height = 300;
+            canvas.getContext('2d').drawImage(video, 0, 0, 300, 300);
             document.getElementById('img').value = canvas.toDataURL('image/jpeg', 0.6);
             stopCamera();
         }
 
-        // 4. Product Actions
-        function generateAutoID() {
-            let id;
-            const checkData = allProducts.length > 0 ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
-            do { id = Math.floor(100000 + Math.random() * 900000); }
-            while (checkData.some(p => p.id == id));
-            document.getElementById('pID').value = id;
-        }
-
+        // Detail View Logic (MODIFIED)
         function showDetails(id) {
-            const checkData = currentMode === 'online' ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const checkData = (currentMode === 'online') ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
             const p = checkData.find(x => x.id == id);
             if(!p) return;
+            
             selectedID = id;
-            document.getElementById('mImg').src = p.img || "https://via.placeholder.com/150";
+            document.getElementById('mImg').src = (p.img && p.img.length > 10) ? p.img : "https://via.placeholder.com/300?text=No+Image";
             document.getElementById('mEn').innerText = p.en;
             document.getElementById('mUr').innerText = p.ur || "";
             document.getElementById('mPrice').innerText = "Rs. " + p.price;
             document.getElementById('mUnit').innerText = "Unit: " + (p.unit || "Piece");
-            document.getElementById('detailModal').style.display = "flex";
+            document.getElementById('mIDDisplay').innerText = "ID: " + p.id;
+
+            // Generate Barcode for the full page view
+            JsBarcode("#mBarcode", p.id, {
+                format: "CODE128",
+                width: 2,
+                height: 60,
+                displayValue: false
+            });
+
+            document.getElementById('detailModal').style.display = "block";
+            window.scrollTo(0, 0);
         }
 
         function closeModal() { document.getElementById('detailModal').style.display = "none"; }
 
-        function editCurrent() {
-            const checkData = currentMode === 'online' ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
-            const p = checkData.find(x => x.id == selectedID);
-            document.getElementById('pID').value = p.id;
-            document.getElementById('enName').value = p.en;
-            document.getElementById('urName').value = p.ur;
-            document.getElementById('price').value = p.price;
-            document.getElementById('unit').value = p.unit || "Piece";
-            document.getElementById('img').value = p.img;
-            document.getElementById('form-header').innerText = "Editing: " + p.en;
-            closeModal();
-            window.scrollTo(0,0);
+        function generateAutoID() {
+            let id;
+            const checkData = JSON.parse(localStorage.getItem('mart_data') || "[]");
+            do { id = Math.floor(100000 + Math.random() * 900000); }
+            while (checkData.some(p => p.id == id));
+            document.getElementById('pID').value = id;
         }
 
         async function saveToCloud() {
@@ -249,26 +251,37 @@
                 unit: document.getElementById('unit').value,
                 img: document.getElementById('img').value
             };
-            if(!data.en || !data.price) return alert("Fill Name and Price");
+            if(!data.en || !data.price) return alert("Enter Name and Price");
             document.getElementById('loading').style.display = "flex";
             try {
                 await fetch(API, { method: 'POST', body: JSON.stringify(data) });
                 resetForm();
                 loadData();
-            } catch(e) { 
-                alert("Save Failed - Check Internet"); 
-                document.getElementById('loading').style.display = "none";
-            }
+            } catch(e) { alert("Save Error"); document.getElementById('loading').style.display = "none"; }
+        }
+
+        function editCurrent() {
+            const checkData = (currentMode === 'online') ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const p = checkData.find(x => x.id == selectedID);
+            document.getElementById('pID').value = p.id;
+            document.getElementById('enName').value = p.en;
+            document.getElementById('urName').value = p.ur;
+            document.getElementById('price').value = p.price;
+            document.getElementById('unit').value = p.unit || "Piece";
+            document.getElementById('img').value = p.img;
+            document.getElementById('form-header').innerText = "Editing: " + p.en;
+            closeModal();
+            window.scrollTo(0,0);
         }
 
         async function deleteCurrent() {
-            if(!confirm("Delete this item?")) return;
+            if(!confirm("Are you sure to delete?")) return;
             document.getElementById('loading').style.display = "flex";
             try {
                 await fetch(API, { method: 'POST', body: JSON.stringify({action:'delete', id: selectedID}) });
                 closeModal();
                 loadData();
-            } catch(e) { alert("Delete Failed"); document.getElementById('loading').style.display = "none"; }
+            } catch(e) { alert("Delete Error"); document.getElementById('loading').style.display = "none"; }
         }
 
         function resetForm() {
@@ -283,7 +296,7 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             let x = 10, y = 10;
-            const dataToPrint = currentMode === 'online' ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const dataToPrint = (currentMode === 'online') ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
             
             dataToPrint.forEach(p => {
                 doc.setFontSize(7);
