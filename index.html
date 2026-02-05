@@ -4,16 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hammad Mart Scanner</title>
-    <link rel="manifest" href="manifest.json">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Top Header */
-        .header { padding: 15px; background: var(--card); text-align: center; border-bottom: 2px solid var(--accent); z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .mart-name { font-size: 24px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; text-transform: uppercase; }
-        
+        /* Header with Admin Button */
+        .header { 
+            padding: 15px; background: var(--card); 
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid var(--accent); z-index: 10; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3); 
+        }
+        .mart-name { font-size: 20px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-admin {
+            background: #334155; color: white; border: 1px solid #475569;
+            padding: 8px 15px; border-radius: 8px; font-weight: bold;
+            text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;
+        }
+
         /* Scanner Area */
         .scanner-container { flex: 1; position: relative; background: black; }
         #reader { width: 100% !important; height: 100% !important; border: none !important; }
@@ -21,7 +30,7 @@
         /* Result Popup */
         .result-overlay { 
             position: fixed; bottom: 0; left: 0; right: 0; top: 0;
-            background: rgba(15, 23, 42, 0.96); 
+            background: rgba(15, 23, 42, 0.98); 
             display: none; 
             flex-direction: column; align-items: center; justify-content: center;
             z-index: 20; padding: 20px;
@@ -29,39 +38,33 @@
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Product Image */
         .prod-img { 
-            width: 75%; 
-            max-width: 280px; 
-            aspect-ratio: 1/1; 
-            border-radius: 20px; 
-            border: 4px solid var(--accent); 
-            object-fit: cover; 
-            background: white; 
+            width: 70%; max-width: 280px; aspect-ratio: 1/1; 
+            border-radius: 20px; border: 4px solid var(--accent); 
+            object-fit: contain; background: white; 
             box-shadow: 0 10px 30px rgba(34, 197, 94, 0.2);
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .name-box { text-align: center; margin-bottom: 10px; width: 100%; }
         .p-en { font-size: 24px; font-weight: bold; color: white; margin-bottom: 5px; line-height: 1.2; }
         .p-ur { font-size: 28px; color: var(--accent); font-weight: 500; }
 
-        .price-tag { font-size: 60px; font-weight: 900; color: white; margin: 5px 0; text-shadow: 0 0 20px rgba(255, 255, 255, 0.2); }
-        .unit-tag { font-size: 16px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
+        .price-tag { font-size: 55px; font-weight: 900; color: white; margin: 5px 0; text-shadow: 0 0 20px rgba(255, 255, 255, 0.2); }
+        .unit-tag { font-size: 16px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 25px; }
 
         .btn-scan { 
-            width: 90%; max-width: 350px; background: var(--accent); color: white; border: none; 
-            padding: 18px; border-radius: 50px; font-size: 18px; font-weight: bold; 
+            width: 100%; max-width: 300px; background: var(--accent); color: white; border: none; 
+            padding: 16px; border-radius: 50px; font-size: 18px; font-weight: bold; 
             box-shadow: 0 5px 20px rgba(34, 197, 94, 0.4); cursor: pointer;
         }
-        
-        .mgr-link { position: absolute; bottom: 20px; color: #64748b; text-decoration: none; font-size: 12px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1 class="mart-name">Hammad Mart</h1>
+        <a href="manager.html" class="btn-admin">⚙️ ADMIN</a>
     </div>
 
     <div class="scanner-container">
@@ -80,57 +83,60 @@
         <div class="unit-tag" id="p-unit"></div>
         
         <button class="btn-scan" onclick="resetScanner()">SCAN NEXT ITEM</button>
-        <a href="manager.html" class="mgr-link">Open Manager</a>
     </div>
 
     <script>
-        // YAHAN APNA NAYA DEPLOYMENT URL PASTE KAREIN
+        // AAP KA DIYA HUA URL
         const API = "https://script.google.com/macros/s/AKfycbx_QoHQzoG7laQkuFHNCKWpMn2z-yPcTak-OJ4AnnRcmCdGBgDRdKJUngwLimgKcoFu1Q/exec";
 
         let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
         
         function onScanSuccess(decodedText) {
-            // Scanner ko stop karna taake multiple scans na hon
             html5QrcodeScanner.clear();
             
-            // UI Update
+            // Show Overlay & Waiting Animation
             document.getElementById('result').style.display = "flex";
-            document.getElementById('p-en').innerText = "Searching...";
+            document.getElementById('p-en').innerText = "Searching Item...";
             document.getElementById('p-ur').innerText = "";
             document.getElementById('p-price').innerText = "...";
+            document.getElementById('p-unit').innerText = "Please wait";
+            // Professional Loader GIF
             document.getElementById('p-img').src = "https://cdn.dribbble.com/users/765253/screenshots/2540865/loader.gif"; 
 
-            // API Call with trim() to remove extra spaces from Barcode
-            fetch(`${API}?action=getDetails&id=${decodedText.trim()}`)
+            // API Call
+            fetch(`${API}?action=getDetails&id=${encodeURIComponent(decodedText.trim())}`)
                 .then(res => res.json())
                 .then(data => {
                     if(!data.error) {
-                        document.getElementById('p-en').innerText = data.enName;
-                        document.getElementById('p-ur').innerText = data.urName || ""; 
+                        document.getElementById('p-en').innerText = data.en;
+                        document.getElementById('p-ur').innerText = data.ur || ""; 
                         document.getElementById('p-price').innerText = "Rs. " + data.price;
                         document.getElementById('p-unit').innerText = data.unit || "Per Item";
-                        document.getElementById('p-img').src = data.img || "https://via.placeholder.com/400?text=No+Image";
+                        // Agar image URL hai to wo dikhao, warna placeholder
+                        document.getElementById('p-img').src = (data.img && data.img.length > 5) 
+                            ? data.img 
+                            : "https://via.placeholder.com/400?text=No+Image";
                     } else {
+                        // Not Found
                         document.getElementById('p-en').innerText = "Item Not Found";
-                        document.getElementById('p-ur').innerText = "Item code: " + decodedText;
+                        document.getElementById('p-ur').innerText = "Code: " + decodedText;
                         document.getElementById('p-price').innerText = "---";
+                        document.getElementById('p-unit').innerText = "Check Manager App";
                         document.getElementById('p-img').src = "https://via.placeholder.com/400?text=Not+Found";
                     }
                 })
                 .catch(err => {
                     document.getElementById('p-en').innerText = "Network Error";
-                    console.error(err);
+                    document.getElementById('p-ur').innerText = "Try Again";
                 });
         }
 
         function resetScanner() {
             document.getElementById('result').style.display = "none";
-            // Page reload taake camera phir se active ho jaye
-            location.reload();
+            location.reload(); 
         }
 
         html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
 </html>
-
