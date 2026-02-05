@@ -1,246 +1,361 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hammad Mart Scanner</title>
+    <title>Hammad Mart - Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
-        body { 
-            font-family: 'Segoe UI', sans-serif; background: var(--bg); 
-            color: var(--text); margin: 0; display: flex; flex-direction: column; 
-            height: 100vh; overflow: hidden;
-        }
+        :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding-bottom: 80px; }
+        .nav-bar { background: var(--primary); padding: 15px; color: white; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; margin-right: 10px; }
+        .tabs { display: flex; background: var(--primary); }
+        .tab { flex: 1; padding: 15px; text-align: center; color: #94a3b8; cursor: pointer; font-weight: bold; }
+        .tab.active { color: var(--accent); border-bottom: 3px solid var(--accent); }
+        .container { max-width: 800px; margin: 15px auto; padding: 0 15px; }
+        .box { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; }
+        .btn { padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; color: white; }
+        .btn-save { background: var(--accent); }
+        .btn-sync { background: #3b82f6; margin-top: 10px; }
+        .btn-pdf { background: #f59e0b; margin-top: 15px; }
+        .btn-cam { background: #64748b; width: auto !important; margin-bottom: 10px; }
+        .btn-scan { background: #7c3aed; width: auto !important; margin-bottom: 10px; }
+        .sync-info { font-size: 12px; color: #64748b; text-align: center; margin-top: 5px; }
         
-        .header { 
-            padding: 15px; background: var(--card); 
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid var(--accent); z-index: 10;
-        }
-        .mart-name { font-size: 20px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
-        .admin-btn { background: #3b82f6; color: white; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-size: 14px; font-weight: 600; }
-
-        /* Search Styles */
-        .search-container { padding: 10px; background: var(--card); margin: 5px; border-radius: 12px; }
-        .search-input { 
-            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; 
-            background: #0f172a; color: white; box-sizing: border-box; outline: none;
-        }
-        .search-input:focus { border-color: var(--accent); }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+        .p-name-cell { font-weight: 600; color: #1e293b; }
+        .p-price-cell { color: var(--accent); font-weight: bold; text-align: right; }
         
-        .search-results { 
-            position: absolute; width: calc(100% - 30px); left: 15px; 
-            max-height: 300px; overflow-y: auto; background: var(--card); 
-            border-radius: 10px; z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            display: none; border: 1px solid #334155; margin-top: 5px;
-        }
-        .search-item {
-            display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #334155;
-            cursor: pointer;
-        }
-        .search-item:last-child { border-bottom: none; }
-        .search-item img { width: 45px; height: 45px; border-radius: 6px; object-fit: cover; margin-right: 12px; border: 1px solid #475569; }
-        .search-info { flex: 1; overflow: hidden; }
-        .search-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .search-sub { font-size: 12px; color: #94a3b8; }
-        .search-price { color: var(--accent); font-weight: bold; font-size: 14px; }
-
-        #reader-container { flex: 1; position: relative; display: flex; flex-direction: column; }
-        #reader { width: 100% !important; border: none !important; }
-        #reader__dashboard_section_csr button { background: var(--accent) !important; color: white !important; border-radius: 5px !important; padding: 8px !important; border: none !important; }
-
-        .result-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg); z-index: 5000; display: none; padding: 20px; box-sizing: border-box; overflow-y: auto;
-        }
-        .product-card { background: var(--card); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .product-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 15px; margin-bottom: 15px; background: white; }
-        .price-tag { font-size: 32px; font-weight: 800; color: var(--accent); margin: 10px 0; }
-        .en-name { font-size: 22px; font-weight: 700; margin-bottom: 5px; }
-        .ur-name { font-size: 24px; font-weight: 700; color: #3b82f6; margin-bottom: 15px; }
-        .detail-row { display: flex; justify-content: space-between; border-top: 1px solid #334155; padding: 10px 0; color: #94a3b8; }
-        .close-btn { background: #ef4444; color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: 700; margin-top: 20px; cursor: pointer; }
-
-        #loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.9); z-index: 6000; display: none;
-            justify-content: center; align-items: center; flex-direction: column;
-        }
-        .spinner { border: 4px solid #334155; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        /* FULL PAGE MODAL STYLE */
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index: 5000; overflow-y: auto; }
+        .modal-header { padding: 15px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 20px; text-align: center; }
+        .modal-img { width: 100%; max-width: 300px; height: 300px; object-fit: contain; border-radius: 15px; border: 1px solid #eee; margin-bottom: 15px; }
+        .barcode-container { background: #f8fafc; padding: 15px; border-radius: 10px; margin: 15px 0; }
+        #mBarcode { max-width: 100%; height: auto; }
+        
+        /* Overlays (Camera & Scanner) */
+        .full-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 6000; flex-direction: column; }
+        #videoFeed, #reader { width: 100%; height: 70%; object-fit: cover; }
+        .overlay-controls { height: 30%; background: #1e293b; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; }
+        
+        #loading { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; align-items:center; justify-content:center; flex-direction: column; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        #error-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ef4444; color: white; padding: 20px; border-radius: 15px; z-index: 7000; display: none; text-align: center; width: 80%; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1 class="mart-name">HAMMAD MART</h1>
-        <a href="manager.html" class="admin-btn">MANAGER</a>
+    <div id="loading">
+        <div style="border:4px solid #f3f3f3; border-top:4px solid var(--accent); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;"></div>
+        <p>Processing...</p>
     </div>
 
-    <div class="search-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search Name (English/Urdu)..." oninput="handleSearch(this.value)">
-        <div id="searchResults" class="search-results"></div>
-    </div>
-
-    <div id="reader-container">
+    <div id="scannerOverlay" class="full-overlay">
         <div id="reader"></div>
-    </div>
-
-    <div id="result" class="result-overlay">
-        <div class="product-card">
-            <img id="p-img" class="product-img" src="" alt="Product">
-            <div id="p-en" class="en-name"></div>
-            <div id="p-ur" class="ur-name"></div>
-            <div id="p-price" class="price-tag"></div>
-            <div class="detail-row">
-                <span>Unit/Size:</span>
-                <span id="p-unit"></span>
-            </div>
-            <div class="detail-row">
-                <span>Barcode:</span>
-                <span id="p-id"></span>
-            </div>
-            <button class="close-btn" onclick="closeResult()">TAP TO SCAN AGAIN</button>
+        <div class="overlay-controls">
+            <h3 style="color:white; margin:0;">Scan Product Barcode/QR</h3>
+            <button class="btn" style="background:transparent; border:1px solid white; width:150px;" onclick="stopScanner()">Cancel</button>
         </div>
     </div>
 
-    <div id="loading-overlay">
-        <div class="spinner"></div>
-        <p style="margin-top: 15px;">Finding Product...</p>
+    <div id="camOverlay" class="full-overlay">
+        <video id="videoFeed" autoplay playsinline></video>
+        <canvas id="tempCanvas" style="display:none;"></canvas>
+        <div class="overlay-controls">
+            <button id="snapBtn" class="btn" style="background:white; color:black; width:80px; height:80px; border-radius:50%;" onclick="takeSnapshot()">📸</button>
+            <button class="btn" style="background:transparent; border:1px solid white; width:150px;" onclick="stopCamera()">Cancel</button>
+        </div>
     </div>
 
-    <div id="error-popup">
-        <h3 style="margin: 0 0 10px 0;">NOT FOUND!</h3>
-        <p id="error-msg" style="margin: 0 0 15px 0;"></p>
-        <button onclick="hideError()" style="padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; background: white; color: #ef4444;">TRY AGAIN</button>
+    <div class="nav-bar">
+        <a href="index.html" class="back-btn">←</a>
+        <h2 style="margin:0; font-size: 18px;">Hammad Mart Manager</h2>
     </div>
+
+    <div class="tabs">
+        <div id="tab-online" class="tab active" onclick="switchTab('online')">ONLINE LIST</div>
+        <div id="tab-offline" class="tab" onclick="switchTab('offline')">OFFLINE</div>
+    </div>
+
+    <div class="container">
+        <div class="box">
+            <h3 id="form-header" style="margin-top:0;">Add New Product</h3>
+            
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="pID" placeholder="Product ID">
+                <button class="btn btn-scan" onclick="startScanner()" title="Scan Existing Barcode">🔍 SCAN</button>
+            </div>
+            <p style="font-size: 11px; color: gray; margin: -5px 0 10px 0;">(Leave blank for Auto-ID or click SCAN)</p>
+
+            <input type="text" id="enName" placeholder="English Name">
+            <input type="text" id="urName" placeholder="Urdu Name">
+            <input type="number" id="price" placeholder="Price">
+            
+            <select id="unit">
+                <option value="" disabled selected>Select Unit</option>
+                <option value="Kgs">Kgs</option>
+                <option value="Litters">Litters</option>
+                <option value="Bundle">Bundle</option>
+                <option value="Packet">Packet</option>
+                <option value="Bag">Bag</option>
+                <option value="Piece">Piece</option>
+            </select>
+
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="img" placeholder="Image URL / Data" style="margin-bottom:0;">
+                <button class="btn btn-cam" onclick="startCamera()">📸 PHOTO</button>
+            </div>
+            
+            <button class="btn btn-save" onclick="saveToCloud()">SAVE TO CLOUD</button>
+            <button class="btn btn-sync" onclick="loadData()">🔄 SYNC GOOGLE SHEET</button>
+            <div id="lastSync" class="sync-info">Last Update: Loading...</div>
+            <button class="btn btn-pdf" onclick="generatePDF()">📄 PRINT ALL BARCODE LABELS</button>
+        </div>
+
+        <div class="box" style="padding:0;">
+            <table id="productTable">
+                <tbody id="productBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="detailModal" class="modal">
+        <div class="modal-header">
+            <span style="font-weight:bold;">Product Details</span>
+            <span onclick="closeModal()" style="font-size: 28px; cursor: pointer;">&times;</span>
+        </div>
+        <div class="modal-body">
+            <img id="mImg" class="modal-img" src="">
+            
+            <div class="barcode-container">
+                <svg id="mBarcode"></svg>
+                <p id="mIDDisplay" style="margin:5px 0; color:#64748b; font-weight:bold;"></p>
+            </div>
+
+            <h1 id="mEn" style="margin:5px 0; font-size: 24px;"></h1>
+            <h3 id="mUr" style="color:gray; margin:0; font-weight: normal;"></h3>
+            <h1 id="mPrice" style="color:var(--accent); margin:15px 0; font-size: 32px;"></h1>
+            <p id="mUnit" style="font-size: 18px; color:#475569;"></p>
+            
+            <div style="display:flex; gap:10px; margin-top: 20px;">
+                <button class="btn" style="background:#3b82f6; flex:1;" onclick="editCurrent()">EDIT PRODUCT</button>
+                <button class="btn" style="background:#ef4444; flex:1;" onclick="deleteCurrent()">DELETE</button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="barcodeCanvas" style="display:none;"></canvas>
 
     <script>
-        // Use your existing Apps Script URL
-        const API_URL = "YOUR_GOOGLE_SCRIPT_URL_HERE"; 
+        const API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
+        let allProducts = [];
+        let selectedID = null;
+        let stream = null;
+        let html5QrScanner = null;
+        let currentMode = 'online';
 
-        const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-            fps: 10, 
-            qrbox: { width: 250, height: 250 },
-            rememberLastUsedCamera: true
-        });
-
-        html5QrcodeScanner.render(onScanSuccess);
-
-        function onScanSuccess(decodedText) {
-            processItem(decodedText);
-        }
-
-        async function processItem(barcode) {
-            document.getElementById('loading-overlay').style.display = 'flex';
-            
-            // Step 1: Check Online (if internet is available)
-            if (navigator.onLine) {
-                try {
-                    const response = await fetch(API_URL + "?id=" + barcode);
-                    const data = await response.json();
-                    if (data && data.id) {
-                        showProduct(data);
-                        return;
-                    }
-                } catch (e) {
-                    console.log("Online fetch failed, switching to local.");
-                }
-            }
-
-            // Step 2: Offline/Fallback Mode (Check Local Storage)
-            const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
-            const item = localData.find(p => p.id == barcode || p.pID == barcode);
-
-            if (item) {
-                showProduct(item);
-            } else {
-                showError("Barcode " + barcode + " is not in records.");
-            }
-        }
-
-        function handleSearch(query) {
-            const resultsDiv = document.getElementById('searchResults');
-            if (!query || query.length < 2) { 
-                resultsDiv.style.display = 'none'; 
-                return; 
-            }
-
-            const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
-            const filtered = localData.filter(p => {
-                const en = (p.enName || p.en || "").toLowerCase();
-                const ur = (p.urName || p.ur || "");
-                const code = (p.id || p.pID || "");
-                return en.includes(query.toLowerCase()) || ur.includes(query) || code.includes(query);
+        // 1. Scanner Functions (NEW)
+        function startScanner() {
+            document.getElementById('scannerOverlay').style.display = "flex";
+            html5QrScanner = new Html5Qrcode("reader");
+            html5QrScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText) => {
+                    document.getElementById('pID').value = decodedText;
+                    stopScanner();
+                },
+                (errorMessage) => { /* ignore errors */ }
+            ).catch(err => {
+                alert("Scanner Error: " + err);
+                stopScanner();
             });
+        }
 
-            if (filtered.length > 0) {
-                resultsDiv.innerHTML = "";
-                filtered.forEach(p => {
-                    const name = p.enName || p.en || "No Name";
-                    const urName = p.urName || p.ur || "";
-                    const price = p.price || p.pr || "0";
-                    const code = p.id || p.pID || "---";
-                    const img = (p.img && p.img.length > 10) ? p.img : "https://via.placeholder.com/50";
-
-                    const div = document.createElement('div');
-                    div.className = 'search-item';
-                    div.onclick = () => {
-                        showProduct(p);
-                        resultsDiv.style.display = 'none';
-                        document.getElementById('searchInput').value = "";
-                    };
-                    div.innerHTML = `
-                        <img src="${img}">
-                        <div class="search-info">
-                            <div class="search-name">${name}</div>
-                            <div class="search-sub">${urName} | ID: ${code}</div>
-                        </div>
-                        <div class="search-price">Rs.${price}</div>
-                    `;
-                    resultsDiv.appendChild(div);
+        function stopScanner() {
+            if (html5QrScanner) {
+                html5QrScanner.stop().then(() => {
+                    document.getElementById('scannerOverlay').style.display = "none";
                 });
-                resultsDiv.style.display = 'block';
             } else {
-                resultsDiv.style.display = 'none';
+                document.getElementById('scannerOverlay').style.display = "none";
             }
         }
 
-        function showProduct(data) {
-            document.getElementById('loading-overlay').style.display = 'none';
-            
-            // Handle both Local keys (pr, un, en) and API keys (price, unit, enName)
-            document.getElementById('p-en').innerText = data.enName || data.en || "No Name";
-            document.getElementById('p-ur').innerText = data.urName || data.ur || "";
-            document.getElementById('p-price').innerText = "Rs. " + (data.price || data.pr || "0");
-            document.getElementById('p-unit').innerText = (data.unit || data.un || "pc");
-            document.getElementById('p-id').innerText = data.id || data.pID || "N/A";
-            
-            const img = (data.img && data.img.length > 10) ? data.img : "https://via.placeholder.com/150?text=No+Image";
-            document.getElementById('p-img').src = img;
-            
-            document.getElementById('result').style.display = "block";
-            html5QrcodeScanner.pause();
+        // 2. Data Load & UI Functions
+        function switchTab(mode) {
+            currentMode = mode;
+            document.getElementById('tab-online').classList.toggle('active', mode === 'online');
+            document.getElementById('tab-offline').classList.toggle('active', mode === 'offline');
+            const dataToShow = (mode === 'offline') ? JSON.parse(localStorage.getItem('mart_data') || "[]") : allProducts;
+            renderTable(dataToShow);
         }
 
-        function showError(msg) {
-            document.getElementById('loading-overlay').style.display = 'none';
-            document.getElementById('error-msg').innerText = msg;
-            document.getElementById('error-popup').style.display = "block";
+        async function loadData() {
+            document.getElementById('loading').style.display = "flex";
+            try {
+                const res = await fetch(API + "?action=read");
+                allProducts = await res.json();
+                localStorage.setItem('mart_data', JSON.stringify(allProducts));
+                const now = new Date().toLocaleString();
+                localStorage.setItem('last_sync', now);
+                updateUI(now);
+            } catch(e) { 
+                allProducts = JSON.parse(localStorage.getItem('mart_data') || "[]");
+                updateUI(localStorage.getItem('last_sync'));
+            }
+            document.getElementById('loading').style.display = "none";
         }
 
-        function hideError() {
-            document.getElementById('error-popup').style.display = "none";
-            html5QrcodeScanner.resume();
+        function updateUI(time) {
+            document.getElementById('lastSync').innerText = "Last Update: " + (time || "Never");
+            switchTab(currentMode);
+            if(!document.getElementById('pID').value) generateAutoID();
         }
 
-        function closeResult() {
-            document.getElementById('result').style.display = "none";
-            html5QrcodeScanner.resume();
+        function renderTable(data) {
+            const body = document.getElementById('productBody');
+            if(data.length === 0) {
+                body.innerHTML = "<tr><td colspan='2' style='text-align:center; padding:20px;'>No items found</td></tr>";
+                return;
+            }
+            body.innerHTML = data.map(p => `
+                <tr onclick="showDetails('${p.id}')">
+                    <td class="p-name-cell">${p.en}<br><small>${p.id}</small></td>
+                    <td class="p-price-cell">Rs. ${p.price}</td>
+                </tr>
+            `).join('');
         }
+
+        // 3. Camera Functions
+        async function startCamera() {
+            document.getElementById('camOverlay').style.display = "flex";
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                document.getElementById('videoFeed').srcObject = stream;
+            } catch(e) { alert("Camera Error"); stopCamera(); }
+        }
+
+        function stopCamera() {
+            if(stream) stream.getTracks().forEach(t => t.stop());
+            document.getElementById('camOverlay').style.display = "none";
+        }
+
+        function takeSnapshot() {
+            const video = document.getElementById('videoFeed');
+            const canvas = document.getElementById('tempCanvas');
+            canvas.width = 300; canvas.height = 300;
+            canvas.getContext('2d').drawImage(video, 0, 0, 300, 300);
+            document.getElementById('img').value = canvas.toDataURL('image/jpeg', 0.6);
+            stopCamera();
+        }
+
+        // 4. Product Details (Full Page View)
+        function showDetails(id) {
+            const checkData = (currentMode === 'online') ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const p = checkData.find(x => x.id == id);
+            if(!p) return;
+            
+            selectedID = id;
+            document.getElementById('mImg').src = (p.img && p.img.length > 10) ? p.img : "https://via.placeholder.com/300?text=No+Image";
+            document.getElementById('mEn').innerText = p.en;
+            document.getElementById('mUr').innerText = p.ur || "";
+            document.getElementById('mPrice').innerText = "Rs. " + p.price;
+            document.getElementById('mUnit').innerText = "Unit: " + (p.unit || "Piece");
+            document.getElementById('mIDDisplay').innerText = "ID: " + p.id;
+
+            JsBarcode("#mBarcode", p.id, { format: "CODE128", width: 2, height: 60, displayValue: false });
+            document.getElementById('detailModal').style.display = "block";
+            window.scrollTo(0, 0);
+        }
+
+        function closeModal() { document.getElementById('detailModal').style.display = "none"; }
+
+        // 5. Actions
+        function generateAutoID() {
+            let id;
+            const checkData = JSON.parse(localStorage.getItem('mart_data') || "[]");
+            do { id = Math.floor(100000 + Math.random() * 900000); }
+            while (checkData.some(p => p.id == id));
+            document.getElementById('pID').value = id;
+        }
+
+        async function saveToCloud() {
+            const data = {
+                action: 'update',
+                id: document.getElementById('pID').value,
+                en: document.getElementById('enName').value,
+                ur: document.getElementById('urName').value,
+                price: document.getElementById('price').value,
+                unit: document.getElementById('unit').value,
+                img: document.getElementById('img').value
+            };
+            if(!data.id || !data.en || !data.price) return alert("Fill ID, Name and Price");
+            document.getElementById('loading').style.display = "flex";
+            try {
+                await fetch(API, { method: 'POST', body: JSON.stringify(data) });
+                resetForm();
+                loadData();
+            } catch(e) { alert("Save Error"); document.getElementById('loading').style.display = "none"; }
+        }
+
+        function editCurrent() {
+            const checkData = (currentMode === 'online') ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const p = checkData.find(x => x.id == selectedID);
+            document.getElementById('pID').value = p.id;
+            document.getElementById('enName').value = p.en;
+            document.getElementById('urName').value = p.ur;
+            document.getElementById('price').value = p.price;
+            document.getElementById('unit').value = p.unit || "Piece";
+            document.getElementById('img').value = p.img;
+            document.getElementById('form-header').innerText = "Editing: " + p.en;
+            closeModal();
+            window.scrollTo(0,0);
+        }
+
+        async function deleteCurrent() {
+            if(!confirm("Are you sure?")) return;
+            document.getElementById('loading').style.display = "flex";
+            try {
+                await fetch(API, { method: 'POST', body: JSON.stringify({action:'delete', id: selectedID}) });
+                closeModal();
+                loadData();
+            } catch(e) { alert("Delete Error"); document.getElementById('loading').style.display = "none"; }
+        }
+
+        function resetForm() {
+            selectedID = null;
+            ['pID', 'enName', 'urName', 'price', 'img'].forEach(i => document.getElementById(i).value = "");
+            document.getElementById('unit').value = "";
+            document.getElementById('form-header').innerText = "Add New Product";
+            generateAutoID();
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let x = 10, y = 10;
+            const dataToPrint = (currentMode === 'online') ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
+            
+            dataToPrint.forEach(p => {
+                doc.setFontSize(7);
+                doc.text(p.en.substring(0,20), x, y);
+                doc.text("Rs. " + p.price, x, y + 3);
+                const canvas = document.getElementById('barcodeCanvas');
+                JsBarcode(canvas, p.id, {format: "CODE128", height: 25, displayValue: false});
+                doc.addImage(canvas.toDataURL(), 'PNG', x, y + 4, 30, 12);
+                x += 40; if(x > 170) { x = 10; y += 25; }
+                if(y > 270) { doc.addPage(); y = 10; x = 10; }
+            });
+            doc.save("Barcodes.pdf");
+        }
+
+        window.onload = loadData;
     </script>
 </body>
 </html>
