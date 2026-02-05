@@ -1,53 +1,177 @@
-<div class="nav-bar">
-    <div class="page-title">Hammad Mart Manager</div>
-    <div style="text-align: right;">
-        <button onclick="syncDataToMobile()" style="background: var(--accent); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">
-            Update Offline Data 🔄
-        </button>
-        <div id="sync-time" style="font-size: 10px; color: #cbd5e1; margin-top: 5px;">Last Sync: Never</div>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hammad Mart - Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 0; margin: 0; padding-bottom: 80px;}
+        
+        /* Header */
+        .nav-bar { 
+            background: var(--primary); padding: 15px; color: white; 
+            display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .page-title { margin: 0; font-size: 18px; font-weight: 600; }
+        .sync-btn { background: var(--accent); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .last-sync { font-size: 10px; color: #cbd5e1; margin-top: 2px; }
+
+        .container { max-width: 800px; margin: 15px auto; padding: 0 15px; }
+        .box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; }
+        .btn-save { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 12px; overflow: hidden; }
+        th { background: #e2e8f0; padding: 12px; text-align: left; font-size: 14px; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .btn-edit { background: #3b82f6; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="loading">Processing... Please wait</div>
+
+    <div class="nav-bar">
+        <div>
+            <div class="page-title">Hammad Mart Manager</div>
+            <div id="sync-time" class="last-sync">Last Sync: Never</div>
+        </div>
+        <button class="sync-btn" onclick="syncToMobile()">UPDATE DATA 🔄</button>
     </div>
-</div>
 
-<script>
-    // URL wahi rahe ga jo aapne pehle lagaya tha
-    const API = "APNA_G_SCRIPT_URL_YAHAN_RAHNE_DEN"; 
+    <div class="container">
+        <div class="box">
+            <h3 id="form-header" style="margin-top:0">Add New Product</h3>
+            <input type="text" id="pID" placeholder="Scan or Type Barcode/ID">
+            <input type="text" id="enName" placeholder="English Name">
+            <input type="text" id="urName" placeholder="Urdu Name">
+            <input type="text" id="price" placeholder="Price (e.g. 150)">
+            <input type="text" id="unit" placeholder="Unit (e.g. 1kg / Per Piece)">
+            <input type="text" id="img" placeholder="Image URL (Optional)">
+            <button class="btn-save" onclick="saveData()">SAVE PRODUCT</button>
+            <button onclick="resetForm()" style="background:none; border:none; color:gray; width:100%; margin-top:10px; cursor:pointer">Clear Form</button>
+        </div>
 
-    // Mobile mein data save karne ka function
-    async function syncDataToMobile() {
-        const btn = event.target;
-        const originalText = btn.innerText;
-        btn.innerText = "Syncing...";
-        btn.disabled = true;
+        <div style="overflow-x: auto;">
+            <table id="productTable">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Price</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
 
-        try {
-            const response = await fetch(API + "?action=read");
-            const data = await response.json();
+    <script>
+        // YAHAN APNA GOOGLE SCRIPT URL PASTE KAREIN
+        const API = "APNA_G_SCRIPT_URL_YAHAN_RAHNE_DEN"; 
+        let allProducts = [];
+
+        // 1. Google Sheet se data laana aur list dikhana
+        async function loadData() {
+            document.getElementById('loading').style.display = "flex";
+            try {
+                const res = await fetch(API + "?action=read");
+                allProducts = await res.json();
+                renderTable(allProducts);
+            } catch (e) { alert("Error loading data!"); }
+            document.getElementById('loading').style.display = "none";
+        }
+
+        function renderTable(data) {
+            const body = document.getElementById('tableBody');
+            body.innerHTML = data.map(p => `
+                <tr>
+                    <td><b>${p.en}</b><br><small>${p.id}</small></td>
+                    <td>Rs. ${p.price}</td>
+                    <td><button class="btn-edit" onclick="editItem('${p.id}')">Edit</button></td>
+                </tr>
+            `).join('');
+        }
+
+        // 2. Offline Sync Function (Jo aapne manga tha)
+        async function syncToMobile() {
+            const btn = document.querySelector('.sync-btn');
+            btn.innerText = "Syncing...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(API + "?action=read");
+                const data = await res.json();
+                
+                // Mobile ki memory (LocalStorage) mein save karlo
+                localStorage.setItem('mart_offline_data', JSON.stringify(data));
+                
+                const now = new Date().toLocaleString();
+                localStorage.setItem('last_sync_date', now);
+                
+                updateSyncUI();
+                alert("Mubarak ho! Data mobile mein save ho gaya hai. Ab internet ke baghair bhi scanner chale ga.");
+            } catch (e) {
+                alert("Sync fail! Internet check karein.");
+            } finally {
+                btn.innerText = "UPDATE DATA 🔄";
+                btn.disabled = false;
+            }
+        }
+
+        function updateSyncUI() {
+            const time = localStorage.getItem('last_sync_date');
+            if(time) document.getElementById('sync-time').innerText = "Last Sync: " + time;
+        }
+
+        // 3. Save / Update Data
+        async function saveData() {
+            const id = document.getElementById('pID').value;
+            if(!id) return alert("Barcode zaroori hai!");
+
+            const exists = allProducts.some(p => p.id == id);
+            const action = exists ? 'update' : 'add';
+
+            const payload = {
+                action: action,
+                id: id,
+                en: document.getElementById('enName').value,
+                ur: document.getElementById('urName').value,
+                price: document.getElementById('price').value,
+                unit: document.getElementById('unit').value,
+                img: document.getElementById('img').value
+            };
             
-            // Local Storage mein save karna
-            localStorage.setItem('mart_products', JSON.stringify(data));
-            const now = new Date().toLocaleString();
-            localStorage.setItem('last_sync_time', now);
-            
+            document.getElementById('loading').style.display = "flex";
+            await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+            resetForm(); 
+            loadData(); // Table refresh karo
+        }
+
+        function editItem(id) {
+            const p = allProducts.find(item => item.id == id);
+            document.getElementById('pID').value = p.id;
+            document.getElementById('enName').value = p.en;
+            document.getElementById('urName').value = p.ur;
+            document.getElementById('price').value = p.price;
+            document.getElementById('unit').value = p.unit;
+            document.getElementById('img').value = p.img;
+            document.getElementById('form-header').innerText = "Edit Product";
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function resetForm() {
+            ['pID', 'enName', 'urName', 'price', 'unit', 'img'].forEach(id => document.getElementById(id).value = "");
+            document.getElementById('form-header').innerText = "Add New Product";
+        }
+
+        window.onload = () => {
+            loadData();
             updateSyncUI();
-            alert("Data Mobile mein save ho gaya hai! Ab aap internet ke baghair bhi scan kar sakte hain.");
-        } catch (error) {
-            alert("Sync fail! Internet check karein.");
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
-    }
-
-    function updateSyncUI() {
-        const time = localStorage.getItem('last_sync_time');
-        if(time) {
-            document.getElementById('sync-time').innerText = "Last Sync: " + time;
-        }
-    }
-
-    // Page load hote hi time dikhao
-    window.addEventListener('load', () => {
-        updateSyncUI();
-        loadData(); // Purana function
-    });
-</script>
+        };
+    </script>
+</body>
+</html>
