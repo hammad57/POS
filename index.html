@@ -4,45 +4,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hammad Mart Scanner</title>
+    <link rel="manifest" href="manifest.json">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        .header { padding: 15px; background: var(--card); text-align: center; border-bottom: 2px solid var(--accent); }
-        .mart-name { font-size: 24px; font-weight: 800; color: var(--accent); margin: 0; text-transform: uppercase; }
+        
+        /* Top Header */
+        .header { padding: 15px; background: var(--card); text-align: center; border-bottom: 2px solid var(--accent); z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .mart-name { font-size: 24px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; text-transform: uppercase; }
+        
+        /* Scanner Area */
         .scanner-container { flex: 1; position: relative; background: black; }
         #reader { width: 100% !important; height: 100% !important; border: none !important; }
-        .result-overlay { position: fixed; bottom: 0; left: 0; right: 0; top: 0; background: rgba(15, 23, 42, 0.96); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 20; padding: 20px; }
-        .prod-img { width: 75%; max-width: 280px; aspect-ratio: 1/1; border-radius: 20px; border: 4px solid var(--accent); object-fit: cover; background: white; margin-bottom: 15px; }
-        .p-en { font-size: 24px; font-weight: bold; color: white; margin-bottom: 5px; }
+        
+        /* Result Popup */
+        .result-overlay { 
+            position: fixed; bottom: 0; left: 0; right: 0; top: 0;
+            background: rgba(15, 23, 42, 0.96); 
+            display: none; 
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 20; padding: 20px;
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Product Image */
+        .prod-img { 
+            width: 75%; 
+            max-width: 280px; 
+            aspect-ratio: 1/1; 
+            border-radius: 20px; 
+            border: 4px solid var(--accent); 
+            object-fit: cover; 
+            background: white; 
+            box-shadow: 0 10px 30px rgba(34, 197, 94, 0.2);
+            margin-bottom: 15px;
+        }
+
+        .name-box { text-align: center; margin-bottom: 10px; width: 100%; }
+        .p-en { font-size: 24px; font-weight: bold; color: white; margin-bottom: 5px; line-height: 1.2; }
         .p-ur { font-size: 28px; color: var(--accent); font-weight: 500; }
-        .price-tag { font-size: 60px; font-weight: 900; color: white; margin: 5px 0; }
-        .unit-tag { font-size: 16px; color: #94a3b8; text-transform: uppercase; margin-bottom: 20px; }
-        .btn-scan { width: 90%; max-width: 350px; background: var(--accent); color: white; border: none; padding: 18px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; }
+
+        .price-tag { font-size: 60px; font-weight: 900; color: white; margin: 5px 0; text-shadow: 0 0 20px rgba(255, 255, 255, 0.2); }
+        .unit-tag { font-size: 16px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
+
+        .btn-scan { 
+            width: 90%; max-width: 350px; background: var(--accent); color: white; border: none; 
+            padding: 18px; border-radius: 50px; font-size: 18px; font-weight: bold; 
+            box-shadow: 0 5px 20px rgba(34, 197, 94, 0.4); cursor: pointer;
+        }
+        
+        .mgr-link { position: absolute; bottom: 20px; color: #64748b; text-decoration: none; font-size: 12px; }
     </style>
 </head>
 <body>
-    <div class="header"><h1 class="mart-name">Hammad Mart</h1></div>
-    <div class="scanner-container"><div id="reader"></div></div>
+
+    <div class="header">
+        <h1 class="mart-name">Hammad Mart</h1>
+    </div>
+
+    <div class="scanner-container">
+        <div id="reader"></div>
+    </div>
+
     <div id="result" class="result-overlay">
         <img id="p-img" class="prod-img" src="" alt="Product Image">
-        <div style="text-align: center;">
+        
+        <div class="name-box">
             <div class="p-en" id="p-en">Loading...</div>
             <div class="p-ur" id="p-ur">...</div>
         </div>
+
         <div class="price-tag" id="p-price">---</div>
         <div class="unit-tag" id="p-unit"></div>
+        
         <button class="btn-scan" onclick="resetScanner()">SCAN NEXT ITEM</button>
+        <a href="manager.html" class="mgr-link">Open Manager</a>
     </div>
 
     <script>
+        // YAHAN APNA NAYA DEPLOYMENT URL PASTE KAREIN
         const API = "https://script.google.com/macros/s/AKfycbx_QoHQzoG7laQkuFHNCKWpMn2z-yPcTak-OJ4AnnRcmCdGBgDRdKJUngwLimgKcoFu1Q/exec";
+
         let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
         
         function onScanSuccess(decodedText) {
+            // Scanner ko stop karna taake multiple scans na hon
             html5QrcodeScanner.clear();
-            document.getElementById('result').style.display = "flex";
             
+            // UI Update
+            document.getElementById('result').style.display = "flex";
+            document.getElementById('p-en').innerText = "Searching...";
+            document.getElementById('p-ur').innerText = "";
+            document.getElementById('p-price').innerText = "...";
+            document.getElementById('p-img').src = "https://cdn.dribbble.com/users/765253/screenshots/2540865/loader.gif"; 
+
+            // API Call with trim() to remove extra spaces from Barcode
             fetch(`${API}?action=getDetails&id=${decodedText.trim()}`)
                 .then(res => res.json())
                 .then(data => {
@@ -54,12 +112,25 @@
                         document.getElementById('p-img').src = data.img || "https://via.placeholder.com/400?text=No+Image";
                     } else {
                         document.getElementById('p-en').innerText = "Item Not Found";
+                        document.getElementById('p-ur').innerText = "Item code: " + decodedText;
                         document.getElementById('p-price').innerText = "---";
+                        document.getElementById('p-img').src = "https://via.placeholder.com/400?text=Not+Found";
                     }
-                }).catch(() => { document.getElementById('p-en').innerText = "Error Connecting"; });
+                })
+                .catch(err => {
+                    document.getElementById('p-en').innerText = "Network Error";
+                    console.error(err);
+                });
         }
-        function resetScanner() { location.reload(); }
+
+        function resetScanner() {
+            document.getElementById('result').style.display = "none";
+            // Page reload taake camera phir se active ho jaye
+            location.reload();
+        }
+
         html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
 </html>
+
