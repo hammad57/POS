@@ -121,8 +121,23 @@
         let allProducts = [];
         let selectedID = null;
         let stream = null;
+        let currentMode = 'online';
 
-        // 1. Load Data
+        // 1. Tab Switching Function (NEW)
+        function switchTab(mode) {
+            currentMode = mode;
+            document.getElementById('tab-online').classList.toggle('active', mode === 'online');
+            document.getElementById('tab-offline').classList.toggle('active', mode === 'offline');
+            
+            if(mode === 'offline') {
+                const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
+                renderTable(localData);
+            } else {
+                renderTable(allProducts);
+            }
+        }
+
+        // 2. Load Data
         async function loadData() {
             document.getElementById('loading').style.display = "flex";
             try {
@@ -140,13 +155,17 @@
         }
 
         function updateUI(time) {
-            document.getElementById('lastSync').innerText = "Last Update: " + time;
-            renderTable(allProducts);
+            document.getElementById('lastSync').innerText = "Last Update: " + (time || "Never");
+            switchTab(currentMode); // Refresh current view
             if(!selectedID) generateAutoID();
         }
 
         function renderTable(data) {
             const body = document.getElementById('productBody');
+            if(data.length === 0) {
+                body.innerHTML = "<tr><td colspan='2' style='text-align:center;'>No items found</td></tr>";
+                return;
+            }
             body.innerHTML = data.map(p => `
                 <tr onclick="showDetails('${p.id}')">
                     <td class="p-name-cell">${p.en}<br><small>${p.id}</small></td>
@@ -155,7 +174,7 @@
             `).join('');
         }
 
-        // 2. Camera Functions
+        // 3. Camera Functions
         async function startCamera() {
             const overlay = document.getElementById('camOverlay');
             const video = document.getElementById('videoFeed');
@@ -182,30 +201,33 @@
             stopCamera();
         }
 
-        // 3. Product Actions
+        // 4. Product Actions
         function generateAutoID() {
             let id;
+            const checkData = allProducts.length > 0 ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
             do { id = Math.floor(100000 + Math.random() * 900000); }
-            while (allProducts.some(p => p.id == id));
+            while (checkData.some(p => p.id == id));
             document.getElementById('pID').value = id;
         }
 
         function showDetails(id) {
-            const p = allProducts.find(x => x.id == id);
+            const checkData = currentMode === 'online' ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const p = checkData.find(x => x.id == id);
             if(!p) return;
             selectedID = id;
             document.getElementById('mImg').src = p.img || "https://via.placeholder.com/150";
             document.getElementById('mEn').innerText = p.en;
             document.getElementById('mUr').innerText = p.ur || "";
             document.getElementById('mPrice').innerText = "Rs. " + p.price;
-            document.getElementById('mUnit').innerText = "Unit: " + (p.unit || "pc");
+            document.getElementById('mUnit').innerText = "Unit: " + (p.unit || "Piece");
             document.getElementById('detailModal').style.display = "flex";
         }
 
         function closeModal() { document.getElementById('detailModal').style.display = "none"; }
 
         function editCurrent() {
-            const p = allProducts.find(x => x.id == selectedID);
+            const checkData = currentMode === 'online' ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const p = checkData.find(x => x.id == selectedID);
             document.getElementById('pID').value = p.id;
             document.getElementById('enName').value = p.en;
             document.getElementById('urName').value = p.ur;
@@ -229,17 +251,24 @@
             };
             if(!data.en || !data.price) return alert("Fill Name and Price");
             document.getElementById('loading').style.display = "flex";
-            await fetch(API, { method: 'POST', body: JSON.stringify(data) });
-            resetForm();
-            loadData();
+            try {
+                await fetch(API, { method: 'POST', body: JSON.stringify(data) });
+                resetForm();
+                loadData();
+            } catch(e) { 
+                alert("Save Failed - Check Internet"); 
+                document.getElementById('loading').style.display = "none";
+            }
         }
 
         async function deleteCurrent() {
             if(!confirm("Delete this item?")) return;
             document.getElementById('loading').style.display = "flex";
-            await fetch(API, { method: 'POST', body: JSON.stringify({action:'delete', id: selectedID}) });
-            closeModal();
-            loadData();
+            try {
+                await fetch(API, { method: 'POST', body: JSON.stringify({action:'delete', id: selectedID}) });
+                closeModal();
+                loadData();
+            } catch(e) { alert("Delete Failed"); document.getElementById('loading').style.display = "none"; }
         }
 
         function resetForm() {
@@ -254,7 +283,9 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             let x = 10, y = 10;
-            allProducts.forEach(p => {
+            const dataToPrint = currentMode === 'online' ? allProducts : JSON.parse(localStorage.getItem('mart_data') || "[]");
+            
+            dataToPrint.forEach(p => {
                 doc.setFontSize(7);
                 doc.text(p.en.substring(0,20), x, y);
                 doc.text("Rs. " + p.price, x, y + 3);
