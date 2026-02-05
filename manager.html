@@ -1,81 +1,176 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hammad Mart - Admin</title>
+    <title>Hammad Mart - Admin Panel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; padding: 15px; }
-        .box { background: white; padding: 20px; border-radius: 12px; max-width: 800px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin: 5px 0; }
-        .btn-save { background: #22c55e; color: white; }
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #1e293b; color: white; }
-        .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
+        :root { --primary: #1e293b; --accent: #22c55e; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 15px; }
+        .box { background: white; padding: 20px; border-radius: 12px; max-width: 900px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--accent); display: inline-block; }
+        
+        /* Form Styling */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        .full-width { grid-column: span 2; }
+        
+        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-save { background: var(--accent); color: white; width: 100%; margin-top: 10px; }
+        .btn-reset { background: #64748b; color: white; width: 100%; margin-top: 5px; }
+        
+        /* Table Styling */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th { background: var(--primary); color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; }
+        tr:hover { background: #f8fafc; }
+        
+        .img-preview { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+        .badge-price { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 5px; font-weight: bold; }
+        .btn-del { background: #fee2e2; color: #991b1b; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+        
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; }
     </style>
 </head>
 <body>
 
-    <div class="box">
-        <h2>🛒 Add Product</h2>
-        <input type="number" id="pID" placeholder="Product Barcode / ID">
-        <input type="text" id="enName" placeholder="English Name">
-        <input type="text" id="urName" placeholder="Urdu Name">
-        <input type="number" id="price" placeholder="Price (Rs.)">
-        <input type="text" id="unit" placeholder="Unit (e.g. 1kg)">
-        <input type="text" id="img" placeholder="Image URL">
-        <button class="btn btn-save" onclick="saveData()">SAVE PRODUCT</button>
-    </div>
+<div id="loading-overlay"><b>Loading... Please wait</b></div>
 
-    <div class="box" style="overflow-x: auto;">
-        <h3>Live Product List</h3>
+<div class="box">
+    <h2 id="form-title">🛒 Add New Product</h2>
+    <div class="form-grid">
+        <input type="number" id="pID" placeholder="Barcode / ID">
+        <input type="text" id="unit" placeholder="Unit (e.g. 1 Kg)">
+        <input type="text" id="enName" class="full-width" placeholder="Product Name (English)">
+        <input type="text" id="urName" class="full-width" placeholder="Product Name (Urdu)" dir="rtl">
+        <input type="number" id="price" placeholder="Price (Rs.)">
+        <input type="text" id="img" placeholder="Image URL">
+    </div>
+    <button class="btn btn-save" onclick="saveData()">SAVE PRODUCT</button>
+    <button class="btn btn-reset" onclick="resetForm()">CLEAR / NEW</button>
+</div>
+
+<div class="box">
+    <h3>Live Inventory (<span id="count">0</span> Items)</h3>
+    <input type="text" id="search" placeholder="Search by name or ID..." onkeyup="filterTable()" style="margin-bottom: 10px;">
+    
+    <div class="table-container">
         <table>
-            <thead><tr><th>ID</th><th>Img</th><th>Name</th><th>Price</th><th>Action</th></tr></thead>
-            <tbody id="table-body"></tbody>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Image</th>
+                    <th>Product Details (Click to Edit)</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                </tbody>
         </table>
     </div>
+</div>
 
-    <script>
-        const API = "https://script.google.com/macros/s/AKfycbx_QoHQzoG7laQkuFHNCKWpMn2z-yPcTak-OJ4AnnRcmCdGBgDRdKJUngwLimgKcoFu1Q/exec";
+<script>
+    const API = "https://script.google.com/macros/s/AKfycbx_QoHQzoG7laQkuFHNCKWpMn2z-yPcTak-OJ4AnnRcmCdGBgDRdKJUngwLimgKcoFu1Q/exec";
+    let allProducts = [];
 
-        function loadData() {
-            fetch(`${API}?action=read`)
-                .then(res => res.json())
-                .then(data => {
-                    const tbody = document.getElementById('table-body');
-                    tbody.innerHTML = data.map(p => `
-                        <tr>
-                            <td>${p.id}</td>
-                            <td><img src="${p.img}" class="img-preview" onerror="this.src='https://via.placeholder.com/50'"></td>
-                            <td>${p.en}<br><small>${p.ur}</small></td>
-                            <td>Rs. ${p.price}</td>
-                            <td><button style="background:red; color:white; border:none; padding:5px; border-radius:5px;" onclick="deleteItem('${p.id}')">Del</button></td>
-                        </tr>
-                    `).join('');
-                });
-        }
+    async function loadData() {
+        showLoading(true);
+        try {
+            const res = await fetch(`${API}?action=read`);
+            allProducts = await res.json();
+            renderTable(allProducts);
+        } catch (e) { alert("Error loading data!"); }
+        showLoading(false);
+    }
 
-        function saveData() {
-            const payload = {
-                action: 'add',
-                id: document.getElementById('pID').value,
-                en: document.getElementById('enName').value,
-                ur: document.getElementById('urName').value,
-                price: document.getElementById('price').value,
-                unit: document.getElementById('unit').value,
-                img: document.getElementById('img').value
-            };
-            fetch(API, { method: 'POST', body: JSON.stringify(payload) }).then(() => { alert("Saved!"); loadData(); });
-        }
+    function renderTable(data) {
+        const tbody = document.getElementById('table-body');
+        document.getElementById('count').innerText = data.length;
+        tbody.innerHTML = data.map(p => `
+            <tr>
+                <td onclick="editItem('${p.id}')"><b>${p.id}</b></td>
+                <td onclick="editItem('${p.id}')"><img src="${p.img || 'https://via.placeholder.com/50'}" class="img-preview"></td>
+                <td onclick="editItem('${p.id}')">
+                    <div style="font-weight:bold;">${p.en}</div>
+                    <div style="color: #666; font-size: 12px;">${p.ur || ''}</div>
+                </td>
+                <td onclick="editItem('${p.id}')"><span class="badge-price">Rs. ${p.price}</span><br><small>${p.unit || ''}</small></td>
+                <td><button class="btn-del" onclick="deleteItem('${p.id}')">Delete</button></td>
+            </tr>
+        `).join('');
+    }
 
-        function deleteItem(id) {
-            if(confirm("Delete it?")) {
-                fetch(API, { method: 'POST', body: JSON.stringify({action:'delete', id:id}) }).then(() => loadData());
-            }
-        }
+    function editItem(id) {
+        const p = allProducts.find(item => item.id == id);
+        if(!p) return;
+        
+        document.getElementById('form-title').innerText = "📝 Editing: " + p.en;
+        document.getElementById('pID').value = p.id;
+        document.getElementById('pID').readOnly = true;
+        document.getElementById('enName').value = p.en;
+        document.getElementById('urName').value = p.ur;
+        document.getElementById('price').value = p.price;
+        document.getElementById('unit').value = p.unit;
+        document.getElementById('img').value = p.img;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
-        window.onload = loadData;
-    </script>
+    async function saveData() {
+        const id = document.getElementById('pID').value;
+        if(!id) return alert("ID zaroori hai!");
+
+        showLoading(true);
+        const payload = {
+            action: 'add',
+            id: id,
+            en: document.getElementById('enName').value,
+            ur: document.getElementById('urName').value,
+            price: document.getElementById('price').value,
+            unit: document.getElementById('unit').value,
+            img: document.getElementById('img').value
+        };
+
+        await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+        resetForm();
+        loadData();
+    }
+
+    async function deleteItem(id) {
+        if(!confirm("Kya aap waqai is item ko delete karna chahte hain?")) return;
+        showLoading(true);
+        await fetch(API, { method: 'POST', body: JSON.stringify({action: 'delete', id: id}) });
+        loadData();
+    }
+
+    function filterTable() {
+        const val = document.getElementById('search').value.toLowerCase();
+        const filtered = allProducts.filter(p => 
+            p.en.toLowerCase().includes(val) || 
+            p.id.toString().includes(val) || 
+            (p.ur && p.ur.includes(val))
+        );
+        renderTable(filtered);
+    }
+
+    function resetForm() {
+        document.getElementById('form-title').innerText = "🛒 Add New Product";
+        document.getElementById('pID').value = "";
+        document.getElementById('pID').readOnly = false;
+        document.getElementById('enName').value = "";
+        document.getElementById('urName').value = "";
+        document.getElementById('price').value = "";
+        document.getElementById('unit').value = "";
+        document.getElementById('img').value = "";
+    }
+
+    function showLoading(show) {
+        document.getElementById('loading-overlay').style.display = show ? "flex" : "none";
+    }
+
+    window.onload = loadData;
+</script>
+
 </body>
 </html>
