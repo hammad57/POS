@@ -7,90 +7,60 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* Header with visible Admin Button */
-        .header { 
-            padding: 15px; background: var(--card); 
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid var(--accent); z-index: 100;
-        }
-        .mart-name { font-size: 18px; font-weight: 800; color: var(--accent); margin: 0; }
-        .admin-btn { 
-            background: #3b82f6; color: white; text-decoration: none; 
-            padding: 8px 15px; border-radius: 6px; font-size: 12px; font-weight: bold;
-        }
-
-        #reader { width: 100% !important; border: none !important; flex-grow: 1; }
-
-        .result-card { 
-            display: none; position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: var(--card); border-radius: 25px 25px 0 0; padding: 20px; 
-            box-sizing: border-box; z-index: 200; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); 
-        }
-        .product-img { width: 100%; max-height: 180px; object-fit: contain; border-radius: 12px; margin-bottom: 10px; background: white; }
-        .price-tag { font-size: 32px; font-weight: 800; color: var(--accent); margin: 5px 0; }
-        .btn-next { background: var(--accent); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 18px; font-weight: bold; margin-top: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
+        .header { padding: 15px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); }
+        .admin-btn { background: #3b82f6; color: white; text-decoration: none; padding: 8px 12px; border-radius: 5px; font-size: 12px; }
+        #reader { width: 100% !important; }
+        .result-card { display: none; position: fixed; bottom: 0; width: 100%; background: var(--card); padding: 20px; border-radius: 20px 20px 0 0; box-sizing: border-box; z-index: 100; }
+        .p-img { width: 100%; max-height: 150px; object-fit: contain; margin-bottom: 10px; }
+        .price { font-size: 30px; color: var(--accent); font-weight: bold; }
+        .btn-close { background: var(--accent); color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
-
     <div class="header">
-        <div class="mart-name">HAMMAD MART</div>
-        <a href="manager.html" class="admin-btn">ADMIN PANEL ⚙️</a>
+        <div style="font-weight: 800; color: var(--accent);">HAMMAD MART</div>
+        <a href="manager.html" class="admin-btn">ADMIN ⚙️</a>
     </div>
 
     <div id="reader"></div>
 
     <div id="result" class="result-card">
-        <img id="p-img" class="product-img" src="">
-        <h2 id="p-en" style="margin:0;"></h2>
-        <h3 id="p-ur" style="margin:5px 0; color: #94a3b8; font-weight: 400;"></h3>
-        <div class="price-tag" id="p-price"></div>
-        <div id="p-unit" style="color: var(--accent); font-weight: bold;"></div>
-        <button class="btn-next" onclick="resetScanner()">SCAN NEXT</button>
+        <img id="p-img" class="p-img" src="">
+        <h2 id="p-en" style="margin:0"></h2>
+        <h3 id="p-ur" style="color:#94a3b8; margin:5px 0"></h3>
+        <div class="price" id="p-price"></div>
+        <div id="p-unit"></div>
+        <button class="btn-close" onclick="document.getElementById('result').style.display='none'">SCAN NEXT</button>
     </div>
 
     <script>
-        // APNA URL YAHAN DALAIN
-        const API = "APNA_G_SCRIPT_URL_YAHAN_RAHNE_DEN";
-
-        const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-            fps: 20, qrbox: {width: 250, height: 250}, rememberLastUsedCamera: true 
-        });
+        const API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
 
         function onScanSuccess(decodedText) {
-            // Check Offline Data First
-            const localData = localStorage.getItem('mart_offline_data');
-            if (localData) {
-                const products = JSON.parse(localData);
-                const item = products.find(p => p.id.toString().trim() === decodedText.trim());
-                if (item) { return showProduct(item); }
+            // 1. Check Offline first
+            const local = localStorage.getItem('mart_data');
+            if(local) {
+                const products = JSON.parse(local);
+                const item = products.find(p => p.id == decodedText);
+                if(item) { showItem(item); return; }
             }
-
-            // If not offline, fetch from Internet
+            // 2. If not found, fetch Online
             fetch(API + "?action=getDetails&id=" + decodedText)
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.error) showProduct(data);
-                    else alert("Product not found!");
-                });
+                .then(r => r.json())
+                .then(data => { if(!data.error) showItem(data); });
         }
 
-        function showProduct(data) {
+        function showItem(data) {
             document.getElementById('result').style.display = "block";
-            document.getElementById('p-en').innerText = data.en || data.enName;
-            document.getElementById('p-ur').innerText = data.ur || data.urName || "";
-            document.getElementById('p-price').innerText = "Rs. " + (data.price || data.pr);
-            document.getElementById('p-unit').innerText = data.unit || data.un || "";
-            document.getElementById('p-img').src = (data.img && data.img.length > 5) ? data.img : "https://via.placeholder.com/400?text=No+Image";
+            document.getElementById('p-en').innerText = data.en;
+            document.getElementById('p-ur').innerText = data.ur;
+            document.getElementById('p-price').innerText = "Rs. " + data.price;
+            document.getElementById('p-unit').innerText = data.unit;
+            document.getElementById('p-img').src = data.img || "https://via.placeholder.com/150";
         }
 
-        function resetScanner() {
-            document.getElementById('result').style.display = "none";
-        }
-
-        html5QrcodeScanner.render(onScanSuccess);
+        new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }).render(onScanSuccess);
     </script>
 </body>
 </html>
