@@ -8,27 +8,26 @@
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        .header { padding: 15px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); }
-        .mart-name { font-size: 20px; font-weight: 800; color: var(--accent); margin: 0; }
+        .header { padding: 15px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); z-index: 10; }
+        .mart-name { font-size: 20px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
         .admin-btn { background: #3b82f6; color: white; text-decoration: none; padding: 8px 15px; border-radius: 6px; font-size: 13px; font-weight: bold; }
         
-        /* Search Box Styles */
         .search-container { padding: 10px; background: var(--card); position: relative; z-index: 100; }
         #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
+        
         #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; z-index: 200; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; cursor: pointer; }
         .search-item img { width: 45px; height: 45px; border-radius: 5px; object-fit: cover; background: white; }
         .search-item div { color: white; }
 
-        /* Scanner Area */
         #reader { width: 100% !important; flex-grow: 1; background: black; }
         
-        /* Result Card Pop-up */
         .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; box-sizing: border-box; z-index: 2000; text-align: center; animation: slideUp 0.3s ease-out; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .p-img { width: 200px; height: 200px; object-fit: contain; margin-bottom: 15px; border-radius: 15px; background: white; padding: 5px; }
-        .p-title { font-size: 26px; font-weight: bold; color: white; margin: 5px 0; }
-        .p-price { font-size: 45px; color: var(--accent); font-weight: 900; margin: 15px 0; }
+        .p-img { width: 180px; height: 180px; object-fit: contain; margin-bottom: 15px; border-radius: 15px; background: white; padding: 5px; }
+        .p-title { font-size: 24px; font-weight: bold; color: white; margin: 2px 0; }
+        .p-urdu { font-size: 28px; color: #94a3b8; margin-bottom: 10px; font-weight: bold; }
+        .p-price { font-size: 40px; color: var(--accent); font-weight: 900; margin: 10px 0; }
         .btn-close { background: var(--accent); color: white; border: none; width: 100%; padding: 18px; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
@@ -39,7 +38,7 @@
     </div>
     
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Type product name (e.g. Ghee)..." oninput="handleSearch()">
+        <input type="text" id="searchInput" placeholder="Search English or Urdu..." oninput="handleSearch()" onclick="closeResult()">
         <div id="searchDropdown"></div>
     </div>
 
@@ -48,9 +47,10 @@
     <div id="result" class="result-card">
         <img id="p-img" class="p-img" src="">
         <div id="p-en" class="p-title"></div>
+        <div id="p-ur" class="p-urdu"></div>
         <div id="p-price" class="p-price"></div>
-        <div id="p-unit" style="color: #94a3b8; margin-bottom: 20px; font-size: 18px;"></div>
-        <button class="btn-close" onclick="closeResult()">OK / SCAN NEXT 🔄</button>
+        <div id="p-unit" style="color: #94a3b8; margin-bottom: 15px;"></div>
+        <button class="btn-close" onclick="closeResult()">SCAN NEXT 🔄</button>
     </div>
 
     <script>
@@ -59,14 +59,17 @@
         function handleSearch() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
             const dropdown = document.getElementById('searchDropdown');
-            // Manager panel se save kiya hua data uthana
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
             
             dropdown.innerHTML = '';
             if (query.length < 1) { dropdown.style.display = 'none'; return; }
 
-            // "Ghee" search logic (Case-insensitive)
-            const matches = data.filter(p => p.en && p.en.toLowerCase().includes(query));
+            // Urdu aur English dono fields mein search karna
+            const matches = data.filter(p => {
+                const enMatch = p.en && p.en.toLowerCase().includes(query);
+                const urMatch = p.ur && p.ur.toLowerCase().includes(query);
+                return enMatch || urMatch;
+            });
 
             if (matches.length > 0) {
                 matches.forEach(p => {
@@ -74,10 +77,11 @@
                     item.className = 'search-item';
                     item.innerHTML = `
                         <img src="${p.img || 'https://via.placeholder.com/50'}">
-                        <div>
-                            <div style="font-weight:bold;">${p.en}</div>
-                            <div style="color:var(--accent);">Rs. ${p.price}</div>
+                        <div style="flex-grow:1">
+                            <div style="font-weight:bold;">${p.en || ''}</div>
+                            <div style="font-size:14px; color:#94a3b8;">${p.ur || ''}</div>
                         </div>
+                        <div style="color:var(--accent); font-weight:bold;">Rs.${p.price}</div>
                     `;
                     item.onclick = () => {
                         showProduct(p);
@@ -96,15 +100,14 @@
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
             const product = data.find(p => p.id == id);
             if (product) showProduct(product);
-            else alert("Product not found in Local Storage!");
         }
 
         function showProduct(p) {
-            // Screen par data set karna
-            document.getElementById('p-en').innerText = p.en;
-            document.getElementById('p-price').innerText = "Rs. " + p.price;
-            document.getElementById('p-unit').innerText = "Packing: " + (p.unit || "pc");
-            document.getElementById('p-img').src = (p.img && p.img.length > 10) ? p.img : "https://via.placeholder.com/150?text=No+Image";
+            document.getElementById('p-en').innerText = p.en || "No Name";
+            document.getElementById('p-ur').innerText = p.ur || "";
+            document.getElementById('p-price').innerText = "Rs. " + (p.price || "0");
+            document.getElementById('p-unit').innerText = "Unit: " + (p.unit || "pc");
+            document.getElementById('p-img').src = (p.img && p.img.length > 5) ? p.img : "https://via.placeholder.com/150?text=Hammad+Mart";
             
             document.getElementById('result').style.display = "block";
             scanner.pause();
@@ -112,7 +115,8 @@
 
         function closeResult() {
             document.getElementById('result').style.display = "none";
-            scanner.resume();
+            // Check if scanner is paused before resuming
+            try { scanner.resume(); } catch(e) {}
         }
 
         scanner.render(onScanSuccess);
