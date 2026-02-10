@@ -30,6 +30,7 @@
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
         .p-name-cell { font-weight: 600; color: #1e293b; }
         .p-price-cell { color: var(--accent); font-weight: bold; text-align: right; }
+        .p-purchase-info { font-size: 11px; color: #ef4444; } /* New: Styling for purchase price info in list */
         
         /* FULL PAGE MODAL STYLE */
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index: 5000; overflow-y: auto; }
@@ -94,7 +95,11 @@
 
             <input type="text" id="enName" placeholder="English Name">
             <input type="text" id="urName" placeholder="Urdu Name">
-            <input type="number" id="price" placeholder="Price">
+            
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="purchasePrice" placeholder="Purchase Price (Cost)">
+                <input type="number" id="price" placeholder="Sale Price (Retail)">
+            </div>
             
             <select id="unit">
                 <option value="" disabled selected>Select Unit</option>
@@ -139,8 +144,19 @@
 
             <h1 id="mEn" style="margin:5px 0; font-size: 24px;"></h1>
             <h3 id="mUr" style="color:gray; margin:0; font-weight: normal;"></h3>
-            <h1 id="mPrice" style="color:var(--accent); margin:15px 0; font-size: 32px;"></h1>
-            <p id="mUnit" style="font-size: 18px; color:#475569;"></p>
+            
+            <div style="display: flex; justify-content: center; gap: 20px; align-items: baseline;">
+                <div style="text-align: center;">
+                    <small style="color: gray;">Purchase</small>
+                    <h3 id="mPP" style="color: #ef4444; margin: 0;"></h3>
+                </div>
+                <div style="text-align: center;">
+                    <small style="color: gray;">Sale</small>
+                    <h1 id="mPrice" style="color: var(--accent); margin: 0; font-size: 32px;"></h1>
+                </div>
+            </div>
+
+            <p id="mUnit" style="font-size: 18px; color:#475569; margin-top: 10px;"></p>
             
             <div style="display:flex; gap:10px; margin-top: 20px;">
                 <button class="btn" style="background:#3b82f6; flex:1;" onclick="editCurrent()">EDIT PRODUCT</button>
@@ -159,7 +175,7 @@
         let html5QrScanner = null;
         let currentMode = 'online';
 
-        // 1. Scanner Functions (NEW)
+        // 1. Scanner Functions
         function startScanner() {
             document.getElementById('scannerOverlay').style.display = "flex";
             html5QrScanner = new Html5Qrcode("reader");
@@ -188,14 +204,6 @@
         }
 
         // 2. Data Load & UI Functions
-        function switchTab(mode) {
-            currentMode = mode;
-            document.getElementById('tab-online').classList.toggle('active', mode === 'online');
-            document.getElementById('tab-offline').classList.toggle('active', mode === 'offline');
-            const dataToShow = (mode === 'offline') ? JSON.parse(localStorage.getItem('mart_data') || "[]") : allProducts;
-            renderTable(dataToShow);
-        }
-
         async function loadData() {
             document.getElementById('loading').style.display = "flex";
             try {
@@ -218,6 +226,14 @@
             if(!document.getElementById('pID').value) generateAutoID();
         }
 
+        function switchTab(mode) {
+            currentMode = mode;
+            document.getElementById('tab-online').classList.toggle('active', mode === 'online');
+            document.getElementById('tab-offline').classList.toggle('active', mode === 'offline');
+            const dataToShow = (mode === 'offline') ? JSON.parse(localStorage.getItem('mart_data') || "[]") : allProducts;
+            renderTable(dataToShow);
+        }
+
         function renderTable(data) {
             const body = document.getElementById('productBody');
             if(data.length === 0) {
@@ -226,7 +242,11 @@
             }
             body.innerHTML = data.map(p => `
                 <tr onclick="showDetails('${p.id}')">
-                    <td class="p-name-cell">${p.en}<br><small>${p.id}</small></td>
+                    <td class="p-name-cell">
+                        ${p.en}<br>
+                        <small>${p.id}</small> 
+                        <span class="p-purchase-info">(P: ${p.pp || '0'})</span>
+                    </td>
                     <td class="p-price-cell">Rs. ${p.price}</td>
                 </tr>
             `).join('');
@@ -265,6 +285,7 @@
             document.getElementById('mImg').src = (p.img && p.img.length > 10) ? p.img : "https://via.placeholder.com/300?text=No+Image";
             document.getElementById('mEn').innerText = p.en;
             document.getElementById('mUr').innerText = p.ur || "";
+            document.getElementById('mPP').innerText = "Rs. " + (p.pp || "0");
             document.getElementById('mPrice').innerText = "Rs. " + p.price;
             document.getElementById('mUnit').innerText = "Unit: " + (p.unit || "Piece");
             document.getElementById('mIDDisplay').innerText = "ID: " + p.id;
@@ -291,6 +312,7 @@
                 id: document.getElementById('pID').value,
                 en: document.getElementById('enName').value,
                 ur: document.getElementById('urName').value,
+                pp: document.getElementById('purchasePrice').value, // New Field
                 price: document.getElementById('price').value,
                 unit: document.getElementById('unit').value,
                 img: document.getElementById('img').value
@@ -310,6 +332,7 @@
             document.getElementById('pID').value = p.id;
             document.getElementById('enName').value = p.en;
             document.getElementById('urName').value = p.ur;
+            document.getElementById('purchasePrice').value = p.pp || ""; // New
             document.getElementById('price').value = p.price;
             document.getElementById('unit').value = p.unit || "Piece";
             document.getElementById('img').value = p.img;
@@ -330,7 +353,7 @@
 
         function resetForm() {
             selectedID = null;
-            ['pID', 'enName', 'urName', 'price', 'img'].forEach(i => document.getElementById(i).value = "");
+            ['pID', 'enName', 'urName', 'purchasePrice', 'price', 'img'].forEach(i => document.getElementById(i).value = "");
             document.getElementById('unit').value = "";
             document.getElementById('form-header').innerText = "Add New Product";
             generateAutoID();
