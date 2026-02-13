@@ -7,50 +7,39 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; --blue: #3b82f6; --red: #ef4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* Header */
         .header { padding: 15px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); z-index: 10; }
         .mart-name { font-size: 18px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
         .nav-btns { display: flex; gap: 8px; }
         .btn { border: none; color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .admin-btn { background: var(--blue); }
-        .order-btn { background: #f59e0b; } /* Orange color for Order */
+        .order-btn { background: #f59e0b; }
         .active-nav { outline: 2px solid white; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
-
-        /* Views */
         .view { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
         .hidden { display: none !important; }
-
-        /* Search & Scanner Style (Same as original) */
         .search-container { padding: 10px; background: var(--card); position: relative; z-index: 100; }
         #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
         #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; z-index: 200; }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; }
         #reader { width: 100% !important; background: black; }
-
-        /* Order Page Styles */
         .order-container { padding: 15px; }
         .order-input-card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; }
         .input-group { margin-bottom: 10px; }
-        .input-group label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
         .order-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
         .add-btn { width: 100%; background: var(--accent); color: white; padding: 12px; border-radius: 8px; font-weight: bold; border: none; margin-top: 5px; }
-        
         .demand-list-card { background: white; color: black; border-radius: 12px; padding: 15px; margin-top: 10px; }
         .demand-table { width: 100%; border-collapse: collapse; color: #1e293b; }
         .demand-table th { text-align: left; border-bottom: 2px solid #e2e8f0; padding: 8px; font-size: 14px; }
         .demand-table td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .delete-btn { color: var(--red); background: none; border: none; font-weight: bold; font-size: 16px; }
-
-        .share-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .delete-btn { color: var(--red); background: none; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .share-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px; }
         .btn-share-img { background: #6366f1; }
         .btn-share-pdf { background: #ef4444; }
-
-        /* Result Card (Original) */
         .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); }
         .p-img { width: 150px; height: 150px; object-fit: contain; background: white; border-radius: 10px; }
         .btn-close { background: var(--accent); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 18px; font-weight: bold; margin-top: 15px; }
@@ -98,8 +87,7 @@
                             <th class="no-export" style="text-align:right">Action</th>
                         </tr>
                     </thead>
-                    <tbody id="orderListBody">
-                        </tbody>
+                    <tbody id="orderListBody"></tbody>
                 </table>
                 <p id="empty-msg" style="text-align:center; color:#94a3b8; padding:20px;">No items in demand list.</p>
             </div>
@@ -120,7 +108,12 @@
     </div>
 
     <script>
-        // --- Navigation Logic ---
+        // --- Firebase Config ---
+        const firebaseConfig = { databaseURL: "https://mydata-a44fc-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // --- Navigation ---
         function switchView(view) {
             if(view === 'scanner') {
                 document.getElementById('scanner-view').classList.remove('hidden');
@@ -134,11 +127,11 @@
                 document.getElementById('nav-scanner').classList.remove('active-nav');
                 document.getElementById('nav-order').classList.add('active-nav');
                 scanner.pause();
-                renderOrders();
+                listenToOrders();
             }
         }
 
-        // --- Original Scanner & Search Logic ---
+        // --- Scanner & Search ---
         const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
         scanner.render(onScanSuccess);
 
@@ -181,60 +174,57 @@
             try { scanner.resume(); } catch(e) {}
         }
 
-        // --- New Order System Logic ---
-        let orders = JSON.parse(localStorage.getItem('hammad_orders')) || [];
-
-        function renderOrders() {
-            const listBody = document.getElementById('orderListBody');
-            const emptyMsg = document.getElementById('empty-msg');
-            listBody.innerHTML = '';
-            
-            if(orders.length === 0) {
-                emptyMsg.style.display = 'block';
-            } else {
+        // --- Realtime Order Logic ---
+        function listenToOrders() {
+            db.ref('orders').on('value', (snapshot) => {
+                const listBody = document.getElementById('orderListBody');
+                const emptyMsg = document.getElementById('empty-msg');
+                listBody.innerHTML = '';
+                const data = snapshot.val();
+                if(!data) {
+                    emptyMsg.style.display = 'block';
+                    return;
+                }
                 emptyMsg.style.display = 'none';
-                orders.forEach((item, index) => {
+                Object.keys(data).forEach((key) => {
+                    const item = data[key];
                     listBody.innerHTML += `
                         <tr>
                             <td>${item.name}</td>
                             <td>${item.qty}</td>
                             <td class="no-export" style="text-align:right">
-                                <button class="delete-btn" onclick="deleteOrder(${index})">✕</button>
+                                <button class="delete-btn" onclick="deleteOrder('${key}')">✕</button>
                             </td>
                         </tr>
                     `;
                 });
-            }
-            localStorage.setItem('hammad_orders', JSON.stringify(orders));
+            });
         }
 
         function addToOrder() {
             const name = document.getElementById('ordName').value;
             const qty = document.getElementById('ordQty').value;
             if(name && qty) {
-                orders.push({name, qty});
+                db.ref('orders').push({ name, qty });
                 document.getElementById('ordName').value = '';
                 document.getElementById('ordQty').value = '';
-                renderOrders();
             } else {
                 alert("Please enter both Item Name and Quantity!");
             }
         }
 
-        function deleteOrder(index) {
+        function deleteOrder(key) {
             if(confirm("Delete this item?")) {
-                orders.splice(index, 1);
-                renderOrders();
+                db.ref('orders/' + key).remove();
             }
         }
 
-        // --- Export Logic ---
+        // --- Export ---
         async function exportImage() {
             const el = document.getElementById('export-area');
-            // Hide delete buttons during export
-            document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
+            document.querySelectorAll('.no-export').forEach(e => e.style.display = 'none');
             const canvas = await html2canvas(el);
-            document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '1');
+            document.querySelectorAll('.no-export').forEach(e => e.style.display = 'table-cell');
             const link = document.createElement('a');
             link.download = 'Hammad_Mart_Demand.png';
             link.href = canvas.toDataURL();
@@ -244,22 +234,15 @@
         function exportPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
+            document.querySelectorAll('.no-export').forEach(e => e.style.display = 'none');
             html2canvas(document.getElementById('export-area')).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
-                const imgProps = doc.getImageProperties(imgData);
                 const pdfWidth = doc.internal.pageSize.getWidth();
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
                 doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
                 doc.save("Hammad_Mart_Demand.pdf");
-                document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '1');
+                document.querySelectorAll('.no-export').forEach(e => e.style.display = 'table-cell');
             });
-        }
-    </script>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
         }
     </script>
 </body>
