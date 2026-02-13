@@ -16,12 +16,11 @@
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; --blue: #3b82f6; --red: #ef4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Header Styling */
         .header { padding: 15px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); z-index: 10; }
         .mart-name { font-size: 18px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
         
         .nav-btns { display: flex; gap: 8px; }
-        .btn { border: none; color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn { border: none; color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; display: inline-block; }
         .admin-btn { background: var(--blue); }
         .order-btn { background: #f59e0b; }
         .active-nav { outline: 2px solid white; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
@@ -29,33 +28,21 @@
         .view { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
         .hidden { display: none !important; }
 
-        /* Scanner & Search */
         .search-container { padding: 10px; background: var(--card); position: relative; z-index: 100; }
         #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
         #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; z-index: 200; }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; }
         #reader { width: 100% !important; background: black; }
 
-        /* Order Section */
-        .order-container { padding: 15px; }
-        .order-input-card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; }
-        .order-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; margin-bottom: 10px; }
-        .add-btn { width: 100%; background: var(--accent); color: white; padding: 12px; border-radius: 8px; font-weight: bold; border: none; }
-
-        .demand-list-card { background: white; color: black; border-radius: 12px; padding: 15px; margin-top: 10px; }
-        .demand-table { width: 100%; border-collapse: collapse; color: #1e293b; }
-        .demand-table th { text-align: left; border-bottom: 2px solid #e2e8f0; padding: 8px; font-size: 14px; }
-        .demand-table td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .delete-btn { color: var(--red); background: none; border: none; font-weight: bold; font-size: 18px; cursor: pointer; }
-
-        /* Share Buttons */
-        .share-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px;}
-        .btn-share-img { background: #6366f1; }
-        .btn-share-pdf { background: #ef4444; }
-
-        /* Result Popup */
         .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); }
         .p-img { width: 130px; height: 130px; object-fit: contain; background: white; border-radius: 10px; }
+
+        /* Order View Table Styles */
+        .order-container { padding: 15px; }
+        table { width: 100%; border-collapse: collapse; background: white; color: black; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #eee; }
+        .delete-btn { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -63,8 +50,8 @@
     <div class="header">
         <div class="mart-name">HAMMAD MART</div>
         <div class="nav-btns">
-            <button onclick="switchView('scanner')" id="nav-scanner" class="btn order-btn active-nav">SCANNER</button>
-            <button onclick="switchView('order')" id="nav-order" class="btn order-btn">ORDERS</button>
+            <button id="nav-scan" onclick="switchView('scanner')" class="btn order-btn active-nav">SCANNER</button>
+            <a href="https://hammad57.github.io/POS/order.html" class="btn order-btn">ORDERS 📦</a>
             <a href="manager.html" class="btn admin-btn">ADMIN ⚙️</a>
         </div>
     </div>
@@ -78,34 +65,24 @@
     </div>
 
     <div id="order-view" class="view hidden">
-        <div class="order-container">
-            <div class="order-input-card">
-                <h3 style="margin:0 0 10px 0; color:var(--accent)">Add New Demand</h3>
-                <input type="text" id="ordName" placeholder="Item Name (e.g. Sugar)" class="order-input">
-                <input type="text" id="ordQty" placeholder="Quantity (e.g. 50 kg)" class="order-input">
-                <button class="add-btn" onclick="addToOrder()">+ ADD TO LIST (LIVE)</button>
+        <div class="order-container" id="export-area">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="margin:0;">Current Orders</h2>
+                <div class="no-export">
+                    <button onclick="exportImage()" class="btn" style="background:var(--blue); font-size:10px;">IMG</button>
+                    <button onclick="exportPDF()" class="btn" style="background:var(--red); font-size:10px;">PDF</button>
+                </div>
             </div>
-
-            <div id="export-area" class="demand-list-card">
-                <h2 style="text-align:center; margin:0 0 10px 0; font-size:18px;">Hammad Mart Demand List</h2>
-                <table class="demand-table">
-                    <thead>
-                        <tr>
-                            <th>Item Name</th>
-                            <th>Qty</th>
-                            <th class="no-export" style="text-align:right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="orderListBody">
-                        </tbody>
-                </table>
-                <p id="empty-msg" style="text-align:center; color:#94a3b8; padding:20px;">Loading List...</p>
-            </div>
-
-            <div class="share-section">
-                <button class="btn btn-share-img" onclick="exportImage()">Share as Image</button>
-                <button class="btn btn-share-pdf" onclick="exportPDF()">Share as PDF</button>
-            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th class="no-export">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="order-list"></tbody>
+            </table>
         </div>
     </div>
 
@@ -118,105 +95,36 @@
     </div>
 
     <script>
-        // --- 1. FIREBASE CONFIGURATION (LIVE) ---
+        // --- 1. Firebase Config ---
         const firebaseConfig = {
-            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/"
+            apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
+            authDomain: "own-live-steam-web.firebaseapp.com",
+            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com", 
+            projectId: "own-live-steam-web",
+            storageBucket: "own-live-steam-web.appspot.com",
+            messagingSenderId: "931557929949",
+            appId: "1:931557929949:web:e2b28c8644369e8f49646b"
         };
-        // Initialize Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // --- 2. NAVIGATION & LIVE LISTENER ---
-        let isListening = false;
-
+        // --- 2. Navigation ---
         function switchView(view) {
+            document.getElementById('scanner-view').classList.add('hidden');
+            document.getElementById('order-view').classList.add('hidden');
+            document.getElementById('nav-scan').classList.remove('active-nav');
+            
             if(view === 'scanner') {
                 document.getElementById('scanner-view').classList.remove('hidden');
-                document.getElementById('order-view').classList.add('hidden');
-                document.getElementById('nav-scanner').classList.add('active-nav');
-                document.getElementById('nav-order').classList.remove('active-nav');
-                try { scanner.resume(); } catch(e){}
-            } else {
-                document.getElementById('scanner-view').classList.add('hidden');
+                document.getElementById('nav-scan').classList.add('active-nav');
+            } else if(view === 'order') {
                 document.getElementById('order-view').classList.remove('hidden');
-                document.getElementById('nav-scanner').classList.remove('active-nav');
-                document.getElementById('nav-order').classList.add('active-nav');
-                scanner.pause();
-                
-                // Jab Order Tab khule, to Live Listener start karo
-                startLiveOrders();
             }
         }
 
-        // --- 3. LIVE ORDERS LOGIC (The Magic Part) ---
-        function startLiveOrders() {
-            if(isListening) return; // Agar pehle se chal raha hai to dubara na chalaye
-            isListening = true;
-
-            const listBody = document.getElementById('orderListBody');
-            const emptyMsg = document.getElementById('empty-msg');
-
-            // '.on' ka matlab hai ye musalsal dekhta rahega k koi change aya?
-            db.ref('orders').on('value', (snapshot) => {
-                listBody.innerHTML = ''; // Pehle list saaf karein
-                const data = snapshot.val();
-
-                if(!data) {
-                    emptyMsg.style.display = 'block';
-                    emptyMsg.innerText = "No items in demand list.";
-                    return;
-                }
-
-                emptyMsg.style.display = 'none';
-                
-                // Data loop kar k table mein bharein
-                Object.keys(data).forEach((key) => {
-                    const item = data[key];
-                    listBody.innerHTML += `
-                        <tr>
-                            <td>${item.name}</td>
-                            <td>${item.qty}</td>
-                            <td class="no-export" style="text-align:right">
-                                <button class="delete-btn" onclick="deleteOrder('${key}')">✕</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            });
-        }
-
-        function addToOrder() {
-            const name = document.getElementById('ordName').value;
-            const qty = document.getElementById('ordQty').value;
-            
-            if(name && qty) {
-                // Firebase pay data bhejein
-                db.ref('orders').push({
-                    name: name,
-                    qty: qty,
-                    timestamp: Date.now()
-                });
-                
-                // Fields khali karein
-                document.getElementById('ordName').value = '';
-                document.getElementById('ordQty').value = '';
-            } else {
-                alert("Please enter both Name and Quantity!");
-            }
-        }
-
-        function deleteOrder(key) {
-            if(confirm("Delete this item permanently?")) {
-                db.ref('orders/' + key).remove();
-            }
-        }
-
-        // --- 4. SCANNER & SEARCH (Offline Data) ---
+        // --- 3. Scanner Logic ---
         const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
         scanner.render((id) => {
-            // Product data LocalStorage se uthayein (jo Admin page se sync hua tha)
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
             const product = data.find(p => p.id == id);
             if (product) showProduct(product);
@@ -227,11 +135,8 @@
             const dropdown = document.getElementById('searchDropdown');
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
             dropdown.innerHTML = '';
-            
             if (query.length < 1) { dropdown.style.display = 'none'; return; }
-            
             const matches = data.filter(p => (p.en && p.en.toLowerCase().includes(query)) || (p.ur && p.ur.toLowerCase().includes(query)));
-            
             if (matches.length > 0) {
                 matches.forEach(p => {
                     const item = document.createElement('div');
@@ -258,14 +163,32 @@
             try { scanner.resume(); } catch(e) {}
         }
 
-        // --- 5. EXPORT TOOLS ---
+        // --- 4. Order Management (Firebase) ---
+        function loadOrders() {
+            db.ref('orders').on('value', (snap) => {
+                const list = document.getElementById('order-list');
+                list.innerHTML = '';
+                snap.forEach((child) => {
+                    const val = child.val();
+                    list.innerHTML += `<tr>
+                        <td>${val.itemName}</td>
+                        <td>${val.quantity}</td>
+                        <td class="no-export"><button class="delete-btn" onclick="deleteOrder('${child.key}')">🗑️</button></td>
+                    </tr>`;
+                });
+            });
+        }
+        function deleteOrder(id) { if(confirm('Delete?')) db.ref('orders/'+id).remove(); }
+        loadOrders();
+
+        // --- 5. Export Tools ---
         async function exportImage() {
             const el = document.getElementById('export-area');
             document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
             const canvas = await html2canvas(el);
             document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '1');
             const link = document.createElement('a');
-            link.download = 'Hammad_Mart_Demand.png';
+            link.download = 'Demand_List.png';
             link.href = canvas.toDataURL();
             link.click();
         }
@@ -280,11 +203,10 @@
                 const pdfWidth = doc.internal.pageSize.getWidth();
                 const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
                 doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                doc.save("Hammad_Mart_Demand.pdf");
+                doc.save("Demand_List.pdf");
                 document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '1');
             });
         }
     </script>
 </body>
 </html>
-
