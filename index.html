@@ -3,47 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hammad Mart Scanner & Order</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <title>Hammad Mart Scanner & Realtime Order</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; --blue: #3b82f6; --red: #ef4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
         .header { padding: 15px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); z-index: 10; }
         .mart-name { font-size: 18px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
+        
         .nav-btns { display: flex; gap: 8px; }
         .btn { border: none; color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .admin-btn { background: var(--blue); }
         .order-btn { background: #f59e0b; }
         .active-nav { outline: 2px solid white; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
+
         .view { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
         .hidden { display: none !important; }
+
+        /* Search Section */
         .search-container { padding: 10px; background: var(--card); position: relative; z-index: 100; }
         #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
         #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; z-index: 200; }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; }
+
         #reader { width: 100% !important; background: black; }
+
+        /* Order Section */
         .order-container { padding: 15px; }
         .order-input-card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; }
-        .input-group { margin-bottom: 10px; }
-        .order-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
-        .add-btn { width: 100%; background: var(--accent); color: white; padding: 12px; border-radius: 8px; font-weight: bold; border: none; margin-top: 5px; }
+        .order-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; margin-bottom: 10px; }
+        .add-btn { width: 100%; background: var(--accent); color: white; padding: 12px; border-radius: 8px; font-weight: bold; border: none; }
+
         .demand-list-card { background: white; color: black; border-radius: 12px; padding: 15px; margin-top: 10px; }
         .demand-table { width: 100%; border-collapse: collapse; color: #1e293b; }
-        .demand-table th { text-align: left; border-bottom: 2px solid #e2e8f0; padding: 8px; font-size: 14px; }
-        .demand-table td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .delete-btn { color: var(--red); background: none; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
-        .share-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px;}
-        .btn-share-img { background: #6366f1; }
-        .btn-share-pdf { background: #ef4444; }
+        .demand-table th, .demand-table td { text-align: left; padding: 10px; border-bottom: 1px solid #f1f5f9; }
+        .delete-btn { color: var(--red); background: none; border: none; font-weight: bold; font-size: 18px; cursor: pointer; }
+
+        /* Result Card */
         .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); }
-        .p-img { width: 150px; height: 150px; object-fit: contain; background: white; border-radius: 10px; }
-        .btn-close { background: var(--accent); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 18px; font-weight: bold; margin-top: 15px; }
+        .p-img { width: 130px; height: 130px; object-fit: contain; background: white; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -69,12 +75,8 @@
         <div class="order-container">
             <div class="order-input-card">
                 <h3 style="margin:0 0 10px 0; color:var(--accent)">Add New Demand</h3>
-                <div class="input-group">
-                    <input type="text" id="ordName" placeholder="Item Name" class="order-input">
-                </div>
-                <div class="input-group">
-                    <input type="text" id="ordQty" placeholder="Quantity" class="order-input">
-                </div>
+                <input type="text" id="ordName" placeholder="Item Name (e.g. Sugar)" class="order-input">
+                <input type="text" id="ordQty" placeholder="Quantity (e.g. 50 kg)" class="order-input">
                 <button class="add-btn" onclick="addToOrder()">+ ADD TO LIST</button>
             </div>
 
@@ -93,9 +95,9 @@
                 <p id="empty-msg" style="text-align:center; color:#94a3b8; padding:20px;">No items in demand list.</p>
             </div>
 
-            <div class="share-section">
-                <button class="btn btn-share-img" onclick="exportImage()">Share as Image</button>
-                <button class="btn btn-share-pdf" onclick="exportPDF()">Share as PDF</button>
+            <div style="display: flex; gap:10px; margin-top:15px; padding-bottom: 20px;">
+                <button class="btn" style="background:#6366f1; flex:1;" onclick="exportImage()">Share Image</button>
+                <button class="btn" style="background:#ef4444; flex:1;" onclick="exportPDF()">Share PDF</button>
             </div>
         </div>
     </div>
@@ -103,19 +105,19 @@
     <div id="result" class="result-card">
         <img id="p-img" class="p-img" src="">
         <div id="p-en" style="font-size:20px; font-weight:bold; margin-top:10px;"></div>
-        <div id="p-ur" style="font-size:24px; color:#94a3b8;"></div>
         <div id="p-price" style="font-size:35px; color:var(--accent); font-weight:900;"></div>
-        <button class="btn-close" onclick="closeResult()">SCAN NEXT 🔄</button>
+        <button class="btn" style="background:var(--accent); width:100%; padding:15px; border-radius:12px; font-size:18px; margin-top:15px;" onclick="closeResult()">SCAN NEXT 🔄</button>
     </div>
 
     <script>
-        // --- Naya Firebase Config ---
+        // --- Firebase Config (Updated URL) ---
         const firebaseConfig = {
             databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // --- Navigation Logic ---
         function switchView(view) {
             if(view === 'scanner') {
                 document.getElementById('scanner-view').classList.remove('hidden');
@@ -129,63 +131,27 @@
                 document.getElementById('nav-scanner').classList.remove('active-nav');
                 document.getElementById('nav-order').classList.add('active-nav');
                 scanner.pause();
-                listenToOrders(); 
+                listenToOrders(); // Starts Realtime Listener
             }
         }
 
-        const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
-        scanner.render(onScanSuccess);
-
-        function onScanSuccess(id) {
-            const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
-            const product = data.find(p => p.id == id);
-            if (product) showProduct(product);
-        }
-
-        function handleSearch() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const dropdown = document.getElementById('searchDropdown');
-            const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
-            dropdown.innerHTML = '';
-            if (query.length < 1) { dropdown.style.display = 'none'; return; }
-            const matches = data.filter(p => (p.en && p.en.toLowerCase().includes(query)) || (p.ur && p.ur.toLowerCase().includes(query)));
-            if (matches.length > 0) {
-                matches.forEach(p => {
-                    const item = document.createElement('div');
-                    item.className = 'search-item';
-                    item.innerHTML = `<img src="${p.img || 'https://via.placeholder.com/50'}" width="40"> <div><b>${p.en}</b><br><small>${p.ur}</small></div> <div style="margin-left:auto; color:var(--accent)">Rs.${p.price}</div>`;
-                    item.onclick = () => { showProduct(p); dropdown.style.display = 'none'; document.getElementById('searchInput').value = ''; };
-                    dropdown.appendChild(item);
-                });
-                dropdown.style.display = 'block';
-            } else { dropdown.style.display = 'none'; }
-        }
-
-        function showProduct(p) {
-            document.getElementById('p-en').innerText = p.en || "No Name";
-            document.getElementById('p-ur').innerText = p.ur || "";
-            document.getElementById('p-price').innerText = "Rs. " + (p.price || "0");
-            document.getElementById('p-img').src = (p.img && p.img.length > 5) ? p.img : "https://via.placeholder.com/150?text=No+Image";
-            document.getElementById('result').style.display = "block";
-            scanner.pause();
-        }
-
-        function closeResult() {
-            document.getElementById('result').style.display = "none";
-            try { scanner.resume(); } catch(e) {}
-        }
-
-        // --- Firebase Realtime Database Logic ---
+        // --- Firebase Realtime Listener ---
+        let isListening = false;
         function listenToOrders() {
+            if(isListening) return;
+            isListening = true;
+            
             db.ref('orders').on('value', (snapshot) => {
                 const listBody = document.getElementById('orderListBody');
                 const emptyMsg = document.getElementById('empty-msg');
                 listBody.innerHTML = '';
                 const data = snapshot.val();
+
                 if(!data) {
                     emptyMsg.style.display = 'block';
                     return;
                 }
+
                 emptyMsg.style.display = 'none';
                 Object.keys(data).forEach((key) => {
                     const item = data[key];
@@ -206,11 +172,11 @@
             const name = document.getElementById('ordName').value;
             const qty = document.getElementById('ordQty').value;
             if(name && qty) {
-                db.ref('orders').push({ name, qty }); 
+                db.ref('orders').push({ name, qty });
                 document.getElementById('ordName').value = '';
                 document.getElementById('ordQty').value = '';
             } else {
-                alert("Please enter Item Name and Quantity!");
+                alert("Please enter Name and Qty!");
             }
         }
 
@@ -220,11 +186,53 @@
             }
         }
 
+        // --- Scanner & Search Logic ---
+        const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
+        scanner.render((id) => {
+            const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const product = data.find(p => p.id == id);
+            if (product) showProduct(product);
+        });
+
+        function handleSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const dropdown = document.getElementById('searchDropdown');
+            const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
+            dropdown.innerHTML = '';
+            if (query.length < 1) { dropdown.style.display = 'none'; return; }
+            
+            const matches = data.filter(p => p.en && p.en.toLowerCase().includes(query));
+            if (matches.length > 0) {
+                matches.forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = 'search-item';
+                    item.innerHTML = `<div><b>${p.en}</b></div> <div style="margin-left:auto; color:var(--accent)">Rs.${p.price}</div>`;
+                    item.onclick = () => { showProduct(p); dropdown.style.display = 'none'; document.getElementById('searchInput').value = ''; };
+                    dropdown.appendChild(item);
+                });
+                dropdown.style.display = 'block';
+            } else { dropdown.style.display = 'none'; }
+        }
+
+        function showProduct(p) {
+            document.getElementById('p-en').innerText = p.en;
+            document.getElementById('p-price').innerText = "Rs. " + p.price;
+            document.getElementById('p-img').src = (p.img && p.img.length > 5) ? p.img : "https://via.placeholder.com/150?text=No+Image";
+            document.getElementById('result').style.display = "block";
+            scanner.pause();
+        }
+
+        function closeResult() {
+            document.getElementById('result').style.display = "none";
+            try { scanner.resume(); } catch(e) {}
+        }
+
+        // --- Export Logic ---
         async function exportImage() {
             const el = document.getElementById('export-area');
-            document.querySelectorAll('.no-export').forEach(e => e.style.display = 'none');
+            document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
             const canvas = await html2canvas(el);
-            document.querySelectorAll('.no-export').forEach(e => e.style.display = 'table-cell');
+            document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '1');
             const link = document.createElement('a');
             link.download = 'Demand_List.png';
             link.href = canvas.toDataURL();
@@ -234,14 +242,12 @@
         function exportPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            document.querySelectorAll('.no-export').forEach(e => e.style.display = 'none');
+            document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
             html2canvas(document.getElementById('export-area')).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
-                const pdfWidth = doc.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                doc.addImage(imgData, 'PNG', 10, 10, 190, 0);
                 doc.save("Demand_List.pdf");
-                document.querySelectorAll('.no-export').forEach(e => e.style.display = 'table-cell');
+                document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '1');
             });
         }
     </script>
