@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hammad Mart Scanner & Realtime Order</title>
+    <title>Hammad Mart Scanner & Live Orders</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -16,6 +16,7 @@
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; --blue: #3b82f6; --red: #ef4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
+        /* Header Styling */
         .header { padding: 15px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); z-index: 10; }
         .mart-name { font-size: 18px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
         
@@ -28,12 +29,11 @@
         .view { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
         .hidden { display: none !important; }
 
-        /* Search Section */
+        /* Scanner & Search */
         .search-container { padding: 10px; background: var(--card); position: relative; z-index: 100; }
         #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
         #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; z-index: 200; }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; }
-
         #reader { width: 100% !important; background: black; }
 
         /* Order Section */
@@ -44,10 +44,16 @@
 
         .demand-list-card { background: white; color: black; border-radius: 12px; padding: 15px; margin-top: 10px; }
         .demand-table { width: 100%; border-collapse: collapse; color: #1e293b; }
-        .demand-table th, .demand-table td { text-align: left; padding: 10px; border-bottom: 1px solid #f1f5f9; }
+        .demand-table th { text-align: left; border-bottom: 2px solid #e2e8f0; padding: 8px; font-size: 14px; }
+        .demand-table td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
         .delete-btn { color: var(--red); background: none; border: none; font-weight: bold; font-size: 18px; cursor: pointer; }
 
-        /* Result Card */
+        /* Share Buttons */
+        .share-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px;}
+        .btn-share-img { background: #6366f1; }
+        .btn-share-pdf { background: #ef4444; }
+
+        /* Result Popup */
         .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); }
         .p-img { width: 130px; height: 130px; object-fit: contain; background: white; border-radius: 10px; }
     </style>
@@ -77,7 +83,7 @@
                 <h3 style="margin:0 0 10px 0; color:var(--accent)">Add New Demand</h3>
                 <input type="text" id="ordName" placeholder="Item Name (e.g. Sugar)" class="order-input">
                 <input type="text" id="ordQty" placeholder="Quantity (e.g. 50 kg)" class="order-input">
-                <button class="add-btn" onclick="addToOrder()">+ ADD TO LIST</button>
+                <button class="add-btn" onclick="addToOrder()">+ ADD TO LIST (LIVE)</button>
             </div>
 
             <div id="export-area" class="demand-list-card">
@@ -90,14 +96,15 @@
                             <th class="no-export" style="text-align:right">Action</th>
                         </tr>
                     </thead>
-                    <tbody id="orderListBody"></tbody>
+                    <tbody id="orderListBody">
+                        </tbody>
                 </table>
-                <p id="empty-msg" style="text-align:center; color:#94a3b8; padding:20px;">No items in demand list.</p>
+                <p id="empty-msg" style="text-align:center; color:#94a3b8; padding:20px;">Loading List...</p>
             </div>
 
-            <div style="display: flex; gap:10px; margin-top:15px; padding-bottom: 20px;">
-                <button class="btn" style="background:#6366f1; flex:1;" onclick="exportImage()">Share Image</button>
-                <button class="btn" style="background:#ef4444; flex:1;" onclick="exportPDF()">Share PDF</button>
+            <div class="share-section">
+                <button class="btn btn-share-img" onclick="exportImage()">Share as Image</button>
+                <button class="btn btn-share-pdf" onclick="exportPDF()">Share as PDF</button>
             </div>
         </div>
     </div>
@@ -105,19 +112,25 @@
     <div id="result" class="result-card">
         <img id="p-img" class="p-img" src="">
         <div id="p-en" style="font-size:20px; font-weight:bold; margin-top:10px;"></div>
+        <div id="p-ur" style="font-size:24px; color:#94a3b8;"></div>
         <div id="p-price" style="font-size:35px; color:var(--accent); font-weight:900;"></div>
-        <button class="btn" style="background:var(--accent); width:100%; padding:15px; border-radius:12px; font-size:18px; margin-top:15px;" onclick="closeResult()">SCAN NEXT 🔄</button>
+        <button class="btn" style="background:var(--accent); width:100%; padding:15px; border-radius:12px; font-size:18px; margin-top:15px; font-weight:bold;" onclick="closeResult()">SCAN NEXT 🔄</button>
     </div>
 
     <script>
-        // --- Firebase Config (Updated URL) ---
+        // --- 1. FIREBASE CONFIGURATION (LIVE) ---
         const firebaseConfig = {
             databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/"
         };
-        firebase.initializeApp(firebaseConfig);
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.database();
 
-        // --- Navigation Logic ---
+        // --- 2. NAVIGATION & LIVE LISTENER ---
+        let isListening = false;
+
         function switchView(view) {
             if(view === 'scanner') {
                 document.getElementById('scanner-view').classList.remove('hidden');
@@ -131,28 +144,34 @@
                 document.getElementById('nav-scanner').classList.remove('active-nav');
                 document.getElementById('nav-order').classList.add('active-nav');
                 scanner.pause();
-                listenToOrders(); // Starts Realtime Listener
+                
+                // Jab Order Tab khule, to Live Listener start karo
+                startLiveOrders();
             }
         }
 
-        // --- Firebase Realtime Listener ---
-        let isListening = false;
-        function listenToOrders() {
-            if(isListening) return;
+        // --- 3. LIVE ORDERS LOGIC (The Magic Part) ---
+        function startLiveOrders() {
+            if(isListening) return; // Agar pehle se chal raha hai to dubara na chalaye
             isListening = true;
-            
+
+            const listBody = document.getElementById('orderListBody');
+            const emptyMsg = document.getElementById('empty-msg');
+
+            // '.on' ka matlab hai ye musalsal dekhta rahega k koi change aya?
             db.ref('orders').on('value', (snapshot) => {
-                const listBody = document.getElementById('orderListBody');
-                const emptyMsg = document.getElementById('empty-msg');
-                listBody.innerHTML = '';
+                listBody.innerHTML = ''; // Pehle list saaf karein
                 const data = snapshot.val();
 
                 if(!data) {
                     emptyMsg.style.display = 'block';
+                    emptyMsg.innerText = "No items in demand list.";
                     return;
                 }
 
                 emptyMsg.style.display = 'none';
+                
+                // Data loop kar k table mein bharein
                 Object.keys(data).forEach((key) => {
                     const item = data[key];
                     listBody.innerHTML += `
@@ -171,24 +190,33 @@
         function addToOrder() {
             const name = document.getElementById('ordName').value;
             const qty = document.getElementById('ordQty').value;
+            
             if(name && qty) {
-                db.ref('orders').push({ name, qty });
+                // Firebase pay data bhejein
+                db.ref('orders').push({
+                    name: name,
+                    qty: qty,
+                    timestamp: Date.now()
+                });
+                
+                // Fields khali karein
                 document.getElementById('ordName').value = '';
                 document.getElementById('ordQty').value = '';
             } else {
-                alert("Please enter Name and Qty!");
+                alert("Please enter both Name and Quantity!");
             }
         }
 
         function deleteOrder(key) {
-            if(confirm("Delete this item?")) {
+            if(confirm("Delete this item permanently?")) {
                 db.ref('orders/' + key).remove();
             }
         }
 
-        // --- Scanner & Search Logic ---
+        // --- 4. SCANNER & SEARCH (Offline Data) ---
         const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
         scanner.render((id) => {
+            // Product data LocalStorage se uthayein (jo Admin page se sync hua tha)
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
             const product = data.find(p => p.id == id);
             if (product) showProduct(product);
@@ -199,14 +227,16 @@
             const dropdown = document.getElementById('searchDropdown');
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
             dropdown.innerHTML = '';
+            
             if (query.length < 1) { dropdown.style.display = 'none'; return; }
             
-            const matches = data.filter(p => p.en && p.en.toLowerCase().includes(query));
+            const matches = data.filter(p => (p.en && p.en.toLowerCase().includes(query)) || (p.ur && p.ur.toLowerCase().includes(query)));
+            
             if (matches.length > 0) {
                 matches.forEach(p => {
                     const item = document.createElement('div');
                     item.className = 'search-item';
-                    item.innerHTML = `<div><b>${p.en}</b></div> <div style="margin-left:auto; color:var(--accent)">Rs.${p.price}</div>`;
+                    item.innerHTML = `<img src="${p.img || 'https://via.placeholder.com/50'}" width="40"> <div><b>${p.en}</b><br><small>${p.ur}</small></div> <div style="margin-left:auto; color:var(--accent)">Rs.${p.price}</div>`;
                     item.onclick = () => { showProduct(p); dropdown.style.display = 'none'; document.getElementById('searchInput').value = ''; };
                     dropdown.appendChild(item);
                 });
@@ -215,8 +245,9 @@
         }
 
         function showProduct(p) {
-            document.getElementById('p-en').innerText = p.en;
-            document.getElementById('p-price').innerText = "Rs. " + p.price;
+            document.getElementById('p-en').innerText = p.en || "No Name";
+            document.getElementById('p-ur').innerText = p.ur || "";
+            document.getElementById('p-price').innerText = "Rs. " + (p.price || "0");
             document.getElementById('p-img').src = (p.img && p.img.length > 5) ? p.img : "https://via.placeholder.com/150?text=No+Image";
             document.getElementById('result').style.display = "block";
             scanner.pause();
@@ -227,14 +258,14 @@
             try { scanner.resume(); } catch(e) {}
         }
 
-        // --- Export Logic ---
+        // --- 5. EXPORT TOOLS ---
         async function exportImage() {
             const el = document.getElementById('export-area');
             document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
             const canvas = await html2canvas(el);
             document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '1');
             const link = document.createElement('a');
-            link.download = 'Demand_List.png';
+            link.download = 'Hammad_Mart_Demand.png';
             link.href = canvas.toDataURL();
             link.click();
         }
@@ -245,8 +276,11 @@
             document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
             html2canvas(document.getElementById('export-area')).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
-                doc.addImage(imgData, 'PNG', 10, 10, 190, 0);
-                doc.save("Demand_List.pdf");
+                const imgProps = doc.getImageProperties(imgData);
+                const pdfWidth = doc.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                doc.save("Hammad_Mart_Demand.pdf");
                 document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '1');
             });
         }
