@@ -21,7 +21,7 @@
         .mart-name { font-size: 18px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
         
         .nav-btns { display: flex; gap: 8px; }
-        .btn { border: none; color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; display: inline-block; }
+        .btn { border: none; color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .admin-btn { background: var(--blue); }
         .order-btn { background: #f59e0b; }
         .active-nav { outline: 2px solid white; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
@@ -36,6 +36,23 @@
         .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; }
         #reader { width: 100% !important; background: black; }
 
+        /* Order Section */
+        .order-container { padding: 15px; }
+        .order-input-card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; }
+        .order-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; margin-bottom: 10px; }
+        .add-btn { width: 100%; background: var(--accent); color: white; padding: 12px; border-radius: 8px; font-weight: bold; border: none; }
+
+        .demand-list-card { background: white; color: black; border-radius: 12px; padding: 15px; margin-top: 10px; }
+        .demand-table { width: 100%; border-collapse: collapse; color: #1e293b; }
+        .demand-table th { text-align: left; border-bottom: 2px solid #e2e8f0; padding: 8px; font-size: 14px; }
+        .demand-table td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        .delete-btn { color: var(--red); background: none; border: none; font-weight: bold; font-size: 18px; cursor: pointer; }
+
+        /* Share Buttons */
+        .share-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px;}
+        .btn-share-img { background: #6366f1; }
+        .btn-share-pdf { background: #ef4444; }
+
         /* Result Popup */
         .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); }
         .p-img { width: 130px; height: 130px; object-fit: contain; background: white; border-radius: 10px; }
@@ -46,7 +63,8 @@
     <div class="header">
         <div class="mart-name">HAMMAD MART</div>
         <div class="nav-btns">
-            <a href="https://hammad57.github.io/POS/order.html" class="btn order-btn">ORDERS 📦</a>
+            <button onclick="switchView('scanner')" id="nav-scanner" class="btn order-btn active-nav">SCANNER</button>
+            <button onclick="switchView('order')" id="nav-order" class="btn order-btn">ORDERS</button>
             <a href="manager.html" class="btn admin-btn">ADMIN ⚙️</a>
         </div>
     </div>
@@ -59,6 +77,38 @@
         <div id="reader"></div>
     </div>
 
+    <div id="order-view" class="view hidden">
+        <div class="order-container">
+            <div class="order-input-card">
+                <h3 style="margin:0 0 10px 0; color:var(--accent)">Add New Demand</h3>
+                <input type="text" id="ordName" placeholder="Item Name (e.g. Sugar)" class="order-input">
+                <input type="text" id="ordQty" placeholder="Quantity (e.g. 50 kg)" class="order-input">
+                <button class="add-btn" onclick="addToOrder()">+ ADD TO LIST (LIVE)</button>
+            </div>
+
+            <div id="export-area" class="demand-list-card">
+                <h2 style="text-align:center; margin:0 0 10px 0; font-size:18px;">Hammad Mart Demand List</h2>
+                <table class="demand-table">
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Qty</th>
+                            <th class="no-export" style="text-align:right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderListBody">
+                        </tbody>
+                </table>
+                <p id="empty-msg" style="text-align:center; color:#94a3b8; padding:20px;">Loading List...</p>
+            </div>
+
+            <div class="share-section">
+                <button class="btn btn-share-img" onclick="exportImage()">Share as Image</button>
+                <button class="btn btn-share-pdf" onclick="exportPDF()">Share as PDF</button>
+            </div>
+        </div>
+    </div>
+
     <div id="result" class="result-card">
         <img id="p-img" class="p-img" src="">
         <div id="p-en" style="font-size:20px; font-weight:bold; margin-top:10px;"></div>
@@ -68,9 +118,105 @@
     </div>
 
     <script>
-        // --- 1. SCANNER & SEARCH (Offline Data) ---
+        // --- 1. FIREBASE CONFIGURATION (LIVE) ---
+        const firebaseConfig = {
+            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/"
+        };
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        // --- 2. NAVIGATION & LIVE LISTENER ---
+        let isListening = false;
+
+        function switchView(view) {
+            if(view === 'scanner') {
+                document.getElementById('scanner-view').classList.remove('hidden');
+                document.getElementById('order-view').classList.add('hidden');
+                document.getElementById('nav-scanner').classList.add('active-nav');
+                document.getElementById('nav-order').classList.remove('active-nav');
+                try { scanner.resume(); } catch(e){}
+            } else {
+                document.getElementById('scanner-view').classList.add('hidden');
+                document.getElementById('order-view').classList.remove('hidden');
+                document.getElementById('nav-scanner').classList.remove('active-nav');
+                document.getElementById('nav-order').classList.add('active-nav');
+                scanner.pause();
+                
+                // Jab Order Tab khule, to Live Listener start karo
+                startLiveOrders();
+            }
+        }
+
+        // --- 3. LIVE ORDERS LOGIC (The Magic Part) ---
+        function startLiveOrders() {
+            if(isListening) return; // Agar pehle se chal raha hai to dubara na chalaye
+            isListening = true;
+
+            const listBody = document.getElementById('orderListBody');
+            const emptyMsg = document.getElementById('empty-msg');
+
+            // '.on' ka matlab hai ye musalsal dekhta rahega k koi change aya?
+            db.ref('orders').on('value', (snapshot) => {
+                listBody.innerHTML = ''; // Pehle list saaf karein
+                const data = snapshot.val();
+
+                if(!data) {
+                    emptyMsg.style.display = 'block';
+                    emptyMsg.innerText = "No items in demand list.";
+                    return;
+                }
+
+                emptyMsg.style.display = 'none';
+                
+                // Data loop kar k table mein bharein
+                Object.keys(data).forEach((key) => {
+                    const item = data[key];
+                    listBody.innerHTML += `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td>${item.qty}</td>
+                            <td class="no-export" style="text-align:right">
+                                <button class="delete-btn" onclick="deleteOrder('${key}')">✕</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+
+        function addToOrder() {
+            const name = document.getElementById('ordName').value;
+            const qty = document.getElementById('ordQty').value;
+            
+            if(name && qty) {
+                // Firebase pay data bhejein
+                db.ref('orders').push({
+                    name: name,
+                    qty: qty,
+                    timestamp: Date.now()
+                });
+                
+                // Fields khali karein
+                document.getElementById('ordName').value = '';
+                document.getElementById('ordQty').value = '';
+            } else {
+                alert("Please enter both Name and Quantity!");
+            }
+        }
+
+        function deleteOrder(key) {
+            if(confirm("Delete this item permanently?")) {
+                db.ref('orders/' + key).remove();
+            }
+        }
+
+        // --- 4. SCANNER & SEARCH (Offline Data) ---
         const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
         scanner.render((id) => {
+            // Product data LocalStorage se uthayein (jo Admin page se sync hua tha)
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
             const product = data.find(p => p.id == id);
             if (product) showProduct(product);
@@ -111,6 +257,34 @@
             document.getElementById('result').style.display = "none";
             try { scanner.resume(); } catch(e) {}
         }
+
+        // --- 5. EXPORT TOOLS ---
+        async function exportImage() {
+            const el = document.getElementById('export-area');
+            document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
+            const canvas = await html2canvas(el);
+            document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '1');
+            const link = document.createElement('a');
+            link.download = 'Hammad_Mart_Demand.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
+            html2canvas(document.getElementById('export-area')).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgProps = doc.getImageProperties(imgData);
+                const pdfWidth = doc.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                doc.save("Hammad_Mart_Demand.pdf");
+                document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '1');
+            });
+        }
     </script>
 </body>
 </html>
+
