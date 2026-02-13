@@ -43,15 +43,14 @@
         .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); }
         .p-img { width: 130px; height: 130px; object-fit: contain; background: white; border-radius: 10px; }
 
-        /* Order View Table Styles */
         .order-container { padding: 15px; }
         table { width: 100%; border-collapse: collapse; background: white; color: black; border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background: #eee; }
         .delete-btn { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
         
-        /* Sync Loading Overlay */
         #sync-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -60,8 +59,6 @@
         <div style="border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite;"></div>
         <p>Syncing Data Please Wait...</p>
     </div>
-
-    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
 
     <div class="header">
         <div class="mart-name">HAMMAD MART</div>
@@ -90,13 +87,7 @@
                 </div>
             </div>
             <table>
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Qty</th>
-                        <th class="no-export">Action</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Item</th><th>Qty</th><th class="no-export">Action</th></tr></thead>
                 <tbody id="order-list"></tbody>
             </table>
         </div>
@@ -124,11 +115,12 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // --- 2. Auto Sync Logic (First Time Only) ---
+        // --- 2. Corrected Auto Sync (No Loop) ---
         function autoSyncData() {
-            const localData = localStorage.getItem('mart_data');
-            // Agar local storage khali hai toh auto sync karo
-            if (!localData || localData === "[]") {
+            const isSynced = localStorage.getItem('initial_sync_done');
+            
+            // Sirf tab sync karega agar pehli baar ho ya flag na ho
+            if (isSynced !== 'true') {
                 document.getElementById('sync-overlay').style.display = 'flex';
                 db.ref('products').once('value', (snapshot) => {
                     const products = [];
@@ -136,9 +128,12 @@
                         products.push({ id: child.key, ...child.val() });
                     });
                     localStorage.setItem('mart_data', JSON.stringify(products));
+                    localStorage.setItem('initial_sync_done', 'true'); // Flag set kar diya
                     document.getElementById('sync-overlay').style.display = 'none';
-                    alert("Data Synced Successfully!");
-                    location.reload(); // Refresh to apply changes
+                    console.log("Auto sync completed.");
+                }).catch(err => {
+                    console.error("Sync Error:", err);
+                    document.getElementById('sync-overlay').style.display = 'none';
                 });
             }
         }
@@ -149,7 +144,6 @@
             document.getElementById('scanner-view').classList.add('hidden');
             document.getElementById('order-view').classList.add('hidden');
             document.getElementById('nav-scan').classList.remove('active-nav');
-            
             if(view === 'scanner') {
                 document.getElementById('scanner-view').classList.remove('hidden');
                 document.getElementById('nav-scan').classList.add('active-nav');
@@ -199,25 +193,19 @@
             try { scanner.resume(); } catch(e) {}
         }
 
-        // --- 5. Order Management (Firebase) ---
         function loadOrders() {
             db.ref('orders').on('value', (snap) => {
                 const list = document.getElementById('order-list');
                 list.innerHTML = '';
                 snap.forEach((child) => {
                     const val = child.val();
-                    list.innerHTML += `<tr>
-                        <td>${val.itemName}</td>
-                        <td>${val.quantity}</td>
-                        <td class="no-export"><button class="delete-btn" onclick="deleteOrder('${child.key}')">🗑️</button></td>
-                    </tr>`;
+                    list.innerHTML += `<tr><td>${val.itemName}</td><td>${val.quantity}</td><td class="no-export"><button class="delete-btn" onclick="deleteOrder('${child.key}')">🗑️</button></td></tr>`;
                 });
             });
         }
         function deleteOrder(id) { if(confirm('Delete?')) db.ref('orders/'+id).remove(); }
         loadOrders();
 
-        // --- 6. Export Tools ---
         async function exportImage() {
             const el = document.getElementById('export-area');
             document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
