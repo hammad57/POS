@@ -70,10 +70,10 @@
             <div class="order-input-card">
                 <h3 style="margin:0 0 10px 0; color:var(--accent)">Add New Demand</h3>
                 <div class="input-group">
-                    <input type="text" id="ordName" placeholder="Item Name (e.g. Sugar)" class="order-input">
+                    <input type="text" id="ordName" placeholder="Item Name" class="order-input">
                 </div>
                 <div class="input-group">
-                    <input type="text" id="ordQty" placeholder="Quantity (e.g. 20kg or 5 boxes)" class="order-input">
+                    <input type="text" id="ordQty" placeholder="Quantity" class="order-input">
                 </div>
                 <button class="add-btn" onclick="addToOrder()">+ ADD TO LIST</button>
             </div>
@@ -109,14 +109,13 @@
     </div>
 
     <script>
-        // --- Firebase Configuration ---
+        // --- Naya Firebase Config ---
         const firebaseConfig = {
-            databaseURL: "https://mydata-a44fc-default-rtdb.firebaseio.com/"
+            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // --- Navigation Logic ---
         function switchView(view) {
             if(view === 'scanner') {
                 document.getElementById('scanner-view').classList.remove('hidden');
@@ -130,11 +129,10 @@
                 document.getElementById('nav-scanner').classList.remove('active-nav');
                 document.getElementById('nav-order').classList.add('active-nav');
                 scanner.pause();
-                listenToOrders(); // Firebase listener start
+                listenToOrders(); 
             }
         }
 
-        // --- Scanner & Search Logic ---
         const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
         scanner.render(onScanSuccess);
 
@@ -177,19 +175,17 @@
             try { scanner.resume(); } catch(e) {}
         }
 
-        // --- Firebase Order System Logic ---
+        // --- Firebase Realtime Database Logic ---
         function listenToOrders() {
             db.ref('orders').on('value', (snapshot) => {
                 const listBody = document.getElementById('orderListBody');
                 const emptyMsg = document.getElementById('empty-msg');
                 listBody.innerHTML = '';
-                
                 const data = snapshot.val();
                 if(!data) {
                     emptyMsg.style.display = 'block';
                     return;
                 }
-
                 emptyMsg.style.display = 'none';
                 Object.keys(data).forEach((key) => {
                     const item = data[key];
@@ -210,28 +206,27 @@
             const name = document.getElementById('ordName').value;
             const qty = document.getElementById('ordQty').value;
             if(name && qty) {
-                db.ref('orders').push({ name, qty }); // Direct to Firebase
+                db.ref('orders').push({ name, qty }); 
                 document.getElementById('ordName').value = '';
                 document.getElementById('ordQty').value = '';
             } else {
-                alert("Please enter both Item Name and Quantity!");
+                alert("Please enter Item Name and Quantity!");
             }
         }
 
         function deleteOrder(key) {
             if(confirm("Delete this item?")) {
-                db.ref('orders/' + key).remove(); // Delete from Firebase
+                db.ref('orders/' + key).remove();
             }
         }
 
-        // --- Export Logic ---
         async function exportImage() {
             const el = document.getElementById('export-area');
             document.querySelectorAll('.no-export').forEach(e => e.style.display = 'none');
             const canvas = await html2canvas(el);
             document.querySelectorAll('.no-export').forEach(e => e.style.display = 'table-cell');
             const link = document.createElement('a');
-            link.download = 'Hammad_Mart_Demand.png';
+            link.download = 'Demand_List.png';
             link.href = canvas.toDataURL();
             link.click();
         }
@@ -245,7 +240,7 @@
                 const pdfWidth = doc.internal.pageSize.getWidth();
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
                 doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                doc.save("Hammad_Mart_Demand.pdf");
+                doc.save("Demand_List.pdf");
                 document.querySelectorAll('.no-export').forEach(e => e.style.display = 'table-cell');
             });
         }
