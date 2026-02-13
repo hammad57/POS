@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Hammad Mart">
-    <meta name="apple-mobile-web-app-title" content="Hammad Mart">
     <meta name="theme-color" content="#0f172a">
     
     <title>Hammad Mart Scanner & Live Orders</title>
@@ -47,17 +47,17 @@
         table { width: 100%; border-collapse: collapse; background: white; color: black; border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background: #eee; }
-        .delete-btn { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
         
-        #sync-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        #sync-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div id="sync-overlay">
-        <div style="border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite;"></div>
-        <p>Syncing Data Please Wait...</p>
+        <div class="spinner"></div>
+        <p>Syncing Data... Please Wait</p>
     </div>
 
     <div class="header">
@@ -80,7 +80,7 @@
     <div id="order-view" class="view hidden">
         <div class="order-container" id="export-area">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h2 style="margin:0;">Current Orders</h2>
+                <h2 style="margin:0; color: black;">Current Orders</h2>
                 <div class="no-export">
                     <button onclick="exportImage()" class="btn" style="background:var(--blue); font-size:10px;">IMG</button>
                     <button onclick="exportPDF()" class="btn" style="background:var(--red); font-size:10px;">PDF</button>
@@ -102,7 +102,7 @@
     </div>
 
     <script>
-        // --- 1. Firebase Config ---
+        // --- Firebase Config ---
         const firebaseConfig = {
             apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
             authDomain: "own-live-steam-web.firebaseapp.com",
@@ -115,12 +115,10 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // --- 2. Corrected Auto Sync (No Loop) ---
+        // --- Optimized Auto Sync (One Time Only) ---
         function autoSyncData() {
             const isSynced = localStorage.getItem('initial_sync_done');
-            
-            // Sirf tab sync karega agar pehli baar ho ya flag na ho
-            if (isSynced !== 'true') {
+            if (!isSynced) {
                 document.getElementById('sync-overlay').style.display = 'flex';
                 db.ref('products').once('value', (snapshot) => {
                     const products = [];
@@ -128,18 +126,21 @@
                         products.push({ id: child.key, ...child.val() });
                     });
                     localStorage.setItem('mart_data', JSON.stringify(products));
-                    localStorage.setItem('initial_sync_done', 'true'); // Flag set kar diya
+                    localStorage.setItem('initial_sync_done', 'true'); // Flag set
                     document.getElementById('sync-overlay').style.display = 'none';
-                    console.log("Auto sync completed.");
-                }).catch(err => {
-                    console.error("Sync Error:", err);
-                    document.getElementById('sync-overlay').style.display = 'none';
+                    console.log("Sync Complete");
                 });
             }
         }
         window.onload = autoSyncData;
 
-        // --- 3. Navigation ---
+        // --- PWA Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+            .then(() => console.log("Service Worker Registered"));
+        }
+
+        // --- Navigation ---
         function switchView(view) {
             document.getElementById('scanner-view').classList.add('hidden');
             document.getElementById('order-view').classList.add('hidden');
@@ -152,7 +153,7 @@
             }
         }
 
-        // --- 4. Scanner Logic ---
+        // --- Scanner & Search ---
         const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
         scanner.render((id) => {
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
@@ -193,19 +194,21 @@
             try { scanner.resume(); } catch(e) {}
         }
 
+        // --- Orders ---
         function loadOrders() {
             db.ref('orders').on('value', (snap) => {
                 const list = document.getElementById('order-list');
                 list.innerHTML = '';
                 snap.forEach((child) => {
                     const val = child.val();
-                    list.innerHTML += `<tr><td>${val.itemName}</td><td>${val.quantity}</td><td class="no-export"><button class="delete-btn" onclick="deleteOrder('${child.key}')">🗑️</button></td></tr>`;
+                    list.innerHTML += `<tr><td>${val.itemName}</td><td>${val.quantity}</td><td class="no-export"><button style="background:red; color:white; border:none; padding:5px 10px; border-radius:4px;" onclick="deleteOrder('${child.key}')">🗑️</button></td></tr>`;
                 });
             });
         }
         function deleteOrder(id) { if(confirm('Delete?')) db.ref('orders/'+id).remove(); }
         loadOrders();
 
+        // --- Export ---
         async function exportImage() {
             const el = document.getElementById('export-area');
             document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
