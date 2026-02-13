@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hammad Mart Scanner</title>
+    <title>Hammad Mart Scanner & Live Orders</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; --blue: #3b82f6; --red: #ef4444; }
@@ -19,20 +24,20 @@
         .btn { border: none; color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; display: inline-block; }
         .admin-btn { background: var(--blue); }
         .order-btn { background: #f59e0b; }
-        .order-btn:hover { background: #d97706; }
-        
-        .view { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .active-nav { outline: 2px solid white; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
 
-        /* Search Section */
+        .view { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .hidden { display: none !important; }
+
+        /* Scanner & Search */
         .search-container { padding: 10px; background: var(--card); position: relative; z-index: 100; }
         #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
         #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; z-index: 200; }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; }
+        #reader { width: 100% !important; background: black; }
 
-        #reader { width: 100% !important; background: black; flex-grow: 1; }
-
-        /* Result Card */
-        .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); box-sizing: border-box; }
+        /* Result Popup */
+        .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); }
         .p-img { width: 130px; height: 130px; object-fit: contain; background: white; border-radius: 10px; }
     </style>
 </head>
@@ -57,23 +62,18 @@
     <div id="result" class="result-card">
         <img id="p-img" class="p-img" src="">
         <div id="p-en" style="font-size:20px; font-weight:bold; margin-top:10px;"></div>
+        <div id="p-ur" style="font-size:24px; color:#94a3b8;"></div>
         <div id="p-price" style="font-size:35px; color:var(--accent); font-weight:900;"></div>
-        <button class="btn" style="background:var(--accent); width:100%; padding:15px; border-radius:12px; font-size:18px; margin-top:15px;" onclick="closeResult()">SCAN NEXT 🔄</button>
+        <button class="btn" style="background:var(--accent); width:100%; padding:15px; border-radius:12px; font-size:18px; margin-top:15px; font-weight:bold;" onclick="closeResult()">SCAN NEXT 🔄</button>
     </div>
 
     <script>
-        // --- Scanner & Search Logic ---
-        // LocalStorage se data uthayega jo Manager page ne save kiya tha
-        
+        // --- 1. SCANNER & SEARCH (Offline Data) ---
         const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
         scanner.render((id) => {
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
             const product = data.find(p => p.id == id);
-            if (product) {
-                showProduct(product);
-            } else {
-                alert("Product not found! ID: " + id);
-            }
+            if (product) showProduct(product);
         });
 
         function handleSearch() {
@@ -81,14 +81,16 @@
             const dropdown = document.getElementById('searchDropdown');
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
             dropdown.innerHTML = '';
+            
             if (query.length < 1) { dropdown.style.display = 'none'; return; }
             
-            const matches = data.filter(p => p.en && p.en.toLowerCase().includes(query));
+            const matches = data.filter(p => (p.en && p.en.toLowerCase().includes(query)) || (p.ur && p.ur.toLowerCase().includes(query)));
+            
             if (matches.length > 0) {
                 matches.forEach(p => {
                     const item = document.createElement('div');
                     item.className = 'search-item';
-                    item.innerHTML = `<div><b>${p.en}</b></div> <div style="margin-left:auto; color:var(--accent)">Rs.${p.price}</div>`;
+                    item.innerHTML = `<img src="${p.img || 'https://via.placeholder.com/50'}" width="40"> <div><b>${p.en}</b><br><small>${p.ur}</small></div> <div style="margin-left:auto; color:var(--accent)">Rs.${p.price}</div>`;
                     item.onclick = () => { showProduct(p); dropdown.style.display = 'none'; document.getElementById('searchInput').value = ''; };
                     dropdown.appendChild(item);
                 });
@@ -97,8 +99,9 @@
         }
 
         function showProduct(p) {
-            document.getElementById('p-en').innerText = p.en;
-            document.getElementById('p-price').innerText = "Rs. " + p.price;
+            document.getElementById('p-en').innerText = p.en || "No Name";
+            document.getElementById('p-ur').innerText = p.ur || "";
+            document.getElementById('p-price').innerText = "Rs. " + (p.price || "0");
             document.getElementById('p-img').src = (p.img && p.img.length > 5) ? p.img : "https://via.placeholder.com/150?text=No+Image";
             document.getElementById('result').style.display = "block";
             scanner.pause();
