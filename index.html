@@ -7,6 +7,7 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
@@ -37,7 +38,7 @@
         .demand-table th { text-align: left; border-bottom: 2px solid #e2e8f0; padding: 8px; font-size: 14px; }
         .demand-table td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
         .delete-btn { color: var(--red); background: none; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
-        .share-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px; }
+        .share-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px;}
         .btn-share-img { background: #6366f1; }
         .btn-share-pdf { background: #ef4444; }
         .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); }
@@ -108,12 +109,14 @@
     </div>
 
     <script>
-        // --- Firebase Config ---
-        const firebaseConfig = { databaseURL: "https://mydata-a44fc-default-rtdb.firebaseio.com/" };
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            databaseURL: "https://mydata-a44fc-default-rtdb.firebaseio.com/"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // --- Navigation ---
+        // --- Navigation Logic ---
         function switchView(view) {
             if(view === 'scanner') {
                 document.getElementById('scanner-view').classList.remove('hidden');
@@ -127,11 +130,11 @@
                 document.getElementById('nav-scanner').classList.remove('active-nav');
                 document.getElementById('nav-order').classList.add('active-nav');
                 scanner.pause();
-                listenToOrders();
+                listenToOrders(); // Firebase listener start
             }
         }
 
-        // --- Scanner & Search ---
+        // --- Scanner & Search Logic ---
         const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
         scanner.render(onScanSuccess);
 
@@ -174,17 +177,19 @@
             try { scanner.resume(); } catch(e) {}
         }
 
-        // --- Realtime Order Logic ---
+        // --- Firebase Order System Logic ---
         function listenToOrders() {
             db.ref('orders').on('value', (snapshot) => {
                 const listBody = document.getElementById('orderListBody');
                 const emptyMsg = document.getElementById('empty-msg');
                 listBody.innerHTML = '';
+                
                 const data = snapshot.val();
                 if(!data) {
                     emptyMsg.style.display = 'block';
                     return;
                 }
+
                 emptyMsg.style.display = 'none';
                 Object.keys(data).forEach((key) => {
                     const item = data[key];
@@ -205,7 +210,7 @@
             const name = document.getElementById('ordName').value;
             const qty = document.getElementById('ordQty').value;
             if(name && qty) {
-                db.ref('orders').push({ name, qty });
+                db.ref('orders').push({ name, qty }); // Direct to Firebase
                 document.getElementById('ordName').value = '';
                 document.getElementById('ordQty').value = '';
             } else {
@@ -215,11 +220,11 @@
 
         function deleteOrder(key) {
             if(confirm("Delete this item?")) {
-                db.ref('orders/' + key).remove();
+                db.ref('orders/' + key).remove(); // Delete from Firebase
             }
         }
 
-        // --- Export ---
+        // --- Export Logic ---
         async function exportImage() {
             const el = document.getElementById('export-area');
             document.querySelectorAll('.no-export').forEach(e => e.style.display = 'none');
