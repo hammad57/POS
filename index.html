@@ -37,7 +37,7 @@
         .search-container { padding: 10px; background: var(--card); position: relative; z-index: 100; }
         #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
         #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; z-index: 200; }
-        .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; }
+        .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; cursor: pointer; }
         #reader { width: 100% !important; background: black; border-radius: 0 0 20px 20px; overflow: hidden; }
 
         .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); box-sizing: border-box; }
@@ -52,7 +52,6 @@
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Install Button Style */
         #install-prompt { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 10px 20px; border-radius: 50px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,255,0,0.4); z-index: 3000; cursor: pointer; border:none; }
     </style>
 </head>
@@ -62,7 +61,7 @@
 
     <div id="sync-overlay">
         <div class="spinner"></div>
-        <p>Syncing Data... Please Wait</p>
+        <p>Syncing Sheet Data...</p>
     </div>
 
     <div class="header">
@@ -76,7 +75,7 @@
 
     <div id="scanner-view" class="view">
         <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Search Item..." oninput="handleSearch()" onclick="closeResult()">
+            <input type="text" id="searchInput" placeholder="Search Item (English/Urdu)..." oninput="handleSearch()" onclick="closeResult()">
             <div id="searchDropdown"></div>
         </div>
         <div id="reader"></div>
@@ -107,7 +106,8 @@
     </div>
 
     <script>
-        // --- Firebase Config ---
+        // --- Configuration [cite: 2, 11] ---
+        const SHEET_API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
         const firebaseConfig = {
             apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
             authDomain: "own-live-steam-web.firebaseapp.com",
@@ -120,7 +120,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // --- PWA Install Logic ---
+        // --- PWA & Install logic [cite: 2] ---
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -131,97 +131,76 @@
         async function installApp() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    deferredPrompt = null;
-                    document.getElementById('install-prompt').style.display = 'none';
-                }
+                deferredPrompt = null;
+                document.getElementById('install-prompt').style.display = 'none';
             }
         }
 
-        // --- Optimized Auto Sync ---
-        function autoSyncData() {
-            // Check if we have data in LocalStorage to load immediately
-            const cachedData = localStorage.getItem('mart_data');
+        // --- Data Sync logic  ---
+        function syncFromSheet() {
+            const overlay = document.getElementById('sync-overlay');
+            const localData = localStorage.getItem('mart_data');
             
-            // If offline or data exists, don't block UI. Sync in background.
-            if (!cachedData) {
-                document.getElementById('sync-overlay').style.display = 'flex';
-            }
+            if (!localData) overlay.style.display = 'flex';
 
-            db.ref('products').once('value', (snapshot) => {
-                const products = [];
-                snapshot.forEach((child) => {
-                    products.push({ id: child.key, ...child.val() });
+            fetch(SHEET_API + "?action=read")
+                .then(res => res.json())
+                .then(data => {
+                    localStorage.setItem('mart_data', JSON.stringify(data));
+                    overlay.style.display = 'none';
+                    console.log("Sheet Data Synced");
+                })
+                .catch(err => {
+                    console.log("Offline Mode Active");
+                    overlay.style.display = 'none';
                 });
-                localStorage.setItem('mart_data', JSON.stringify(products));
-                document.getElementById('sync-overlay').style.display = 'none';
-                console.log("Sync Complete");
-            }).catch(err => {
-                console.log("Offline mode: ", err);
-                document.getElementById('sync-overlay').style.display = 'none';
-            });
         }
-        window.onload = autoSyncData;
+        window.onload = syncFromSheet;
 
-        // --- Service Worker Registration ---
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-            .then(() => console.log("Service Worker Registered"))
-            .catch(err => console.log("SW Fail", err));
+            navigator.serviceWorker.register('sw.js').then(() => console.log("SW Registered"));
         }
 
-        // --- Navigation ---
-        function switchView(view) {
-            document.getElementById('scanner-view').classList.add('hidden');
-            document.getElementById('order-view').classList.add('hidden');
-            document.getElementById('nav-scan').classList.remove('active-nav');
-            if(view === 'scanner') {
-                document.getElementById('scanner-view').classList.remove('hidden');
-                document.getElementById('nav-scan').classList.add('active-nav');
-                // Restart scanner if needed
-                try { scanner.resume(); } catch(e){}
-            } else if(view === 'order') {
-                document.getElementById('order-view').classList.remove('hidden');
-            }
-        }
-
-        // --- Scanner & Search (Fix applied here) ---
+        // --- Scanner & Search [cite: 2, 11] ---
         const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250, aspectRatio: 1.0 });
         
         scanner.render((decodedText) => {
-            // Clean the ID (remove spaces)
             const cleanId = String(decodedText).trim();
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
-            
-            // Loose comparison (==) handles string/number mismatch, but we trim first
+            // Match based on Google Sheet ID 
             const product = data.find(p => String(p.id).trim() == cleanId);
             
             if (product) {
                 showProduct(product);
             } else {
-                // Optional: Play a beep for error
                 alert("Product Not Found! ID: " + cleanId);
-                // Pause briefly to avoid spamming alerts
                 scanner.pause(true);
                 setTimeout(() => scanner.resume(), 2000);
             }
-        }, (error) => {
-            // Scanning... ignore errors
         });
 
         function handleSearch() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
             const dropdown = document.getElementById('searchDropdown');
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
+            
             dropdown.innerHTML = '';
             if (query.length < 1) { dropdown.style.display = 'none'; return; }
-            const matches = data.filter(p => (p.en && p.en.toLowerCase().includes(query)) || (p.ur && p.ur.toLowerCase().includes(query)));
+
+            // Partial matching for English and Urdu 
+            const matches = data.filter(p => 
+                (p.en && p.en.toLowerCase().includes(query)) || 
+                (p.ur && p.ur.toLowerCase().includes(query))
+            );
+
             if (matches.length > 0) {
                 matches.forEach(p => {
                     const item = document.createElement('div');
                     item.className = 'search-item';
-                    item.innerHTML = `<img src="${p.img || 'https://via.placeholder.com/50'}" width="40"> <div><b>${p.en}</b><br><small>${p.ur}</small></div> <div style="margin-left:auto; color:var(--accent)">Rs.${p.price}</div>`;
+                    item.innerHTML = `
+                        <img src="${p.img || 'https://via.placeholder.com/50'}" width="40"> 
+                        <div style="flex:1"><b>${p.en}</b><br><small>${p.ur || ''}</small></div> 
+                        <div style="color:var(--accent); font-weight:bold;">Rs.${p.price}</div>`;
                     item.onclick = () => { showProduct(p); dropdown.style.display = 'none'; document.getElementById('searchInput').value = ''; };
                     dropdown.appendChild(item);
                 });
@@ -233,7 +212,7 @@
             document.getElementById('p-en').innerText = p.en || "No Name";
             document.getElementById('p-ur').innerText = p.ur || "";
             document.getElementById('p-price').innerText = "Rs. " + (p.price || "0");
-            document.getElementById('p-img').src = (p.img && p.img.length > 5) ? p.img : "https://via.placeholder.com/150?text=No+Image";
+            document.getElementById('p-img').src = (p.img && p.img.length > 20) ? p.img : "https://via.placeholder.com/150?text=No+Image";
             
             document.getElementById('result').style.display = "block";
             try { scanner.pause(true); } catch(e) {}
@@ -244,7 +223,12 @@
             try { scanner.resume(); } catch(e) {}
         }
 
-        // --- Orders ---
+        function switchView(view) {
+            document.getElementById('scanner-view').classList.toggle('hidden', view !== 'scanner');
+            document.getElementById('order-view').classList.toggle('hidden', view !== 'order');
+        }
+
+        // --- Firebase Orders [cite: 2] ---
         function loadOrders() {
             db.ref('orders').on('value', (snap) => {
                 const list = document.getElementById('order-list');
@@ -260,12 +244,9 @@
         function deleteOrder(id) { if(confirm('Delete?')) db.ref('orders/'+id).remove(); }
         loadOrders();
 
-        // --- Export ---
         async function exportImage() {
             const el = document.getElementById('export-area');
-            document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
             const canvas = await html2canvas(el);
-            document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '1');
             const link = document.createElement('a');
             link.download = 'Demand_List.png';
             link.href = canvas.toDataURL();
@@ -275,15 +256,10 @@
         function exportPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '0');
             html2canvas(document.getElementById('export-area')).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
-                const imgProps = doc.getImageProperties(imgData);
-                const pdfWidth = doc.internal.pageSize.getWidth();
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                doc.addImage(imgData, 'PNG', 10, 10, 190, 0);
                 doc.save("Demand_List.pdf");
-                document.querySelectorAll('.no-export').forEach(e => e.style.opacity = '1');
             });
         }
     </script>
