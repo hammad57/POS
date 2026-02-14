@@ -38,9 +38,9 @@
         #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
         #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; z-index: 200; }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; }
-        #reader { width: 100% !important; background: black; }
+        #reader { width: 100% !important; background: black; border-radius: 0 0 20px 20px; overflow: hidden; }
 
-        .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); }
+        .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); box-sizing: border-box; }
         .p-img { width: 130px; height: 130px; object-fit: contain; background: white; border-radius: 10px; }
 
         .order-container { padding: 15px; }
@@ -51,9 +51,14 @@
         #sync-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Install Button Style */
+        #install-prompt { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 10px 20px; border-radius: 50px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,255,0,0.4); z-index: 3000; cursor: pointer; border:none; }
     </style>
 </head>
 <body>
+
+    <button id="install-prompt" onclick="installApp()">📲 Install App</button>
 
     <div id="sync-overlay">
         <div class="spinner"></div>
@@ -64,7 +69,7 @@
         <div class="mart-name">HAMMAD MART</div>
         <div class="nav-btns">
             <button id="nav-scan" onclick="switchView('scanner')" class="btn order-btn active-nav">SCANNER</button>
-            <a href="https://hammad57.github.io/POS/order.html" class="btn order-btn">ORDERS 📦</a>
+            <a href="order.html" class="btn order-btn">ORDERS 📦</a>
             <a href="manager.html" class="btn admin-btn">ADMIN ⚙️</a>
         </div>
     </div>
@@ -115,29 +120,55 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // --- Optimized Auto Sync (One Time Only) ---
-        function autoSyncData() {
-            const isSynced = localStorage.getItem('initial_sync_done');
-            if (!isSynced) {
-                document.getElementById('sync-overlay').style.display = 'flex';
-                db.ref('products').once('value', (snapshot) => {
-                    const products = [];
-                    snapshot.forEach((child) => {
-                        products.push({ id: child.key, ...child.val() });
-                    });
-                    localStorage.setItem('mart_data', JSON.stringify(products));
-                    localStorage.setItem('initial_sync_done', 'true'); // Flag set
-                    document.getElementById('sync-overlay').style.display = 'none';
-                    console.log("Sync Complete");
-                });
+        // --- PWA Install Logic ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-prompt').style.display = 'block';
+        });
+
+        async function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    deferredPrompt = null;
+                    document.getElementById('install-prompt').style.display = 'none';
+                }
             }
+        }
+
+        // --- Optimized Auto Sync ---
+        function autoSyncData() {
+            // Check if we have data in LocalStorage to load immediately
+            const cachedData = localStorage.getItem('mart_data');
+            
+            // If offline or data exists, don't block UI. Sync in background.
+            if (!cachedData) {
+                document.getElementById('sync-overlay').style.display = 'flex';
+            }
+
+            db.ref('products').once('value', (snapshot) => {
+                const products = [];
+                snapshot.forEach((child) => {
+                    products.push({ id: child.key, ...child.val() });
+                });
+                localStorage.setItem('mart_data', JSON.stringify(products));
+                document.getElementById('sync-overlay').style.display = 'none';
+                console.log("Sync Complete");
+            }).catch(err => {
+                console.log("Offline mode: ", err);
+                document.getElementById('sync-overlay').style.display = 'none';
+            });
         }
         window.onload = autoSyncData;
 
-        // --- PWA Service Worker Registration ---
+        // --- Service Worker Registration ---
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
-            .then(() => console.log("Service Worker Registered"));
+            .then(() => console.log("Service Worker Registered"))
+            .catch(err => console.log("SW Fail", err));
         }
 
         // --- Navigation ---
@@ -148,17 +179,35 @@
             if(view === 'scanner') {
                 document.getElementById('scanner-view').classList.remove('hidden');
                 document.getElementById('nav-scan').classList.add('active-nav');
+                // Restart scanner if needed
+                try { scanner.resume(); } catch(e){}
             } else if(view === 'order') {
                 document.getElementById('order-view').classList.remove('hidden');
             }
         }
 
-        // --- Scanner & Search ---
-        const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
-        scanner.render((id) => {
+        // --- Scanner & Search (Fix applied here) ---
+        const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250, aspectRatio: 1.0 });
+        
+        scanner.render((decodedText) => {
+            // Clean the ID (remove spaces)
+            const cleanId = String(decodedText).trim();
             const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
-            const product = data.find(p => p.id == id);
-            if (product) showProduct(product);
+            
+            // Loose comparison (==) handles string/number mismatch, but we trim first
+            const product = data.find(p => String(p.id).trim() == cleanId);
+            
+            if (product) {
+                showProduct(product);
+            } else {
+                // Optional: Play a beep for error
+                alert("Product Not Found! ID: " + cleanId);
+                // Pause briefly to avoid spamming alerts
+                scanner.pause(true);
+                setTimeout(() => scanner.resume(), 2000);
+            }
+        }, (error) => {
+            // Scanning... ignore errors
         });
 
         function handleSearch() {
@@ -185,8 +234,9 @@
             document.getElementById('p-ur').innerText = p.ur || "";
             document.getElementById('p-price').innerText = "Rs. " + (p.price || "0");
             document.getElementById('p-img').src = (p.img && p.img.length > 5) ? p.img : "https://via.placeholder.com/150?text=No+Image";
+            
             document.getElementById('result').style.display = "block";
-            scanner.pause();
+            try { scanner.pause(true); } catch(e) {}
         }
 
         function closeResult() {
@@ -199,10 +249,12 @@
             db.ref('orders').on('value', (snap) => {
                 const list = document.getElementById('order-list');
                 list.innerHTML = '';
-                snap.forEach((child) => {
-                    const val = child.val();
-                    list.innerHTML += `<tr><td>${val.itemName}</td><td>${val.quantity}</td><td class="no-export"><button style="background:red; color:white; border:none; padding:5px 10px; border-radius:4px;" onclick="deleteOrder('${child.key}')">🗑️</button></td></tr>`;
-                });
+                if(snap.exists()){
+                    snap.forEach((child) => {
+                        const val = child.val();
+                        list.innerHTML += `<tr><td>${val.itemName}</td><td>${val.quantity}</td><td class="no-export"><button style="background:red; color:white; border:none; padding:5px 10px; border-radius:4px;" onclick="deleteOrder('${child.key}')">🗑️</button></td></tr>`;
+                    });
+                }
             });
         }
         function deleteOrder(id) { if(confirm('Delete?')) db.ref('orders/'+id).remove(); }
