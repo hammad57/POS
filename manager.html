@@ -11,7 +11,6 @@
         :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; --red: #ef4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding-bottom: 80px; }
         
-        /* Non-Blocking Loading Notification */
         #loading { 
             position: fixed; 
             bottom: 20px; 
@@ -53,7 +52,6 @@
         .btn-secondary { background: #64748b; color: white; }
         .btn:active { transform: scale(0.98); }
 
-        /* Product List Styles */
         .product-item { display: flex; align-items: center; padding: 15px; background: white; border-bottom: 1px solid #f1f5f9; gap: 12px; }
         .product-img { width: 50px; height: 50px; object-fit: contain; background: #f8fafc; border-radius: 8px; }
         .product-info { flex: 1; }
@@ -68,6 +66,12 @@
         .search-box { position: sticky; top: 115px; z-index: 90; background: var(--light); padding: 10px 0; }
         
         #reader { width: 100%; border-radius: 15px; overflow: hidden; display: none; margin-bottom: 15px; }
+
+        /* Camera Preview Style */
+        #camera-preview { width: 100%; border-radius: 10px; display: none; margin-top: 10px; background: #000; }
+        #capture-btn { display: none; background: #ef4444; margin-top: 10px; }
+        #img-preview-container { margin-top: 10px; display: none; text-align: center; }
+        #img-preview-container img { max-width: 100px; border-radius: 8px; border: 2px solid var(--accent); }
     </style>
 </head>
 <body>
@@ -105,7 +109,7 @@
             </div>
 
             <div class="form-group">
-                <label>Urdu Name (Urdu Keyboard Support)</label>
+                <label>Urdu Name</label>
                 <input type="text" id="urName" placeholder="مثال: چینی" dir="rtl">
             </div>
 
@@ -131,8 +135,20 @@
             </div>
 
             <div class="form-group">
-                <label>Image URL (Optional)</label>
-                <input type="text" id="img" placeholder="https://image-link.com">
+                <label>Product Image</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="img" placeholder="URL or Captured Data">
+                    <button class="btn btn-secondary" onclick="startCamera()" style="white-space:nowrap; padding: 10px;">📷 Take Photo</button>
+                </div>
+                
+                <video id="camera-preview" autoplay playsinline></video>
+                <button id="capture-btn" class="btn" onclick="capturePhoto()">SURE! CAPTURE NOW 📸</button>
+                <canvas id="photo-canvas" style="display:none;"></canvas>
+                
+                <div id="img-preview-container">
+                    <p style="font-size:11px; margin:5px 0;">Preview:</p>
+                    <img id="img-preview" src="">
+                </div>
             </div>
 
             <button class="btn btn-primary" onclick="saveProduct()">SAVE PRODUCT ✓</button>
@@ -144,8 +160,7 @@
         <div class="search-box">
             <input type="text" id="listSearch" placeholder="Search by name or ID..." oninput="filterList()">
         </div>
-        <div class="card" style="padding:0; overflow:hidden;" id="product-list">
-            </div>
+        <div class="card" style="padding:0; overflow:hidden;" id="product-list"></div>
         
         <div style="margin-top:20px;">
             <button class="btn btn-primary" style="background:#3b82f6;" onclick="generatePDF()">Download Barcode PDF 🖨️</button>
@@ -158,11 +173,63 @@
         let allProducts = [];
         let selectedID = null;
         let scanner = null;
+        let stream = null;
+
+        // --- Camera Logic ---
+        async function startCamera() {
+            const video = document.getElementById('camera-preview');
+            const captureBtn = document.getElementById('capture-btn');
+            
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" }, 
+                    audio: false 
+                });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                captureBtn.style.display = 'block';
+            } catch (err) {
+                alert("Camera access denied or not available.");
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('camera-preview');
+            const canvas = document.getElementById('photo-canvas');
+            const imgInput = document.getElementById('img');
+            const preview = document.getElementById('img-preview');
+            const previewContainer = document.getElementById('img-preview-container');
+
+            // Set canvas size to video size
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw image to canvas
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to Base64 (Compressed to 0.7 quality to save space in Sheet)
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+            imgInput.value = dataUrl;
+            preview.src = dataUrl;
+            previewContainer.style.display = 'block';
+
+            // Stop camera
+            stopCamera();
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('camera-preview').style.display = 'none';
+            document.getElementById('capture-btn').style.display = 'none';
+        }
 
         // --- Tab Switching ---
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            if (event) event.currentTarget.classList.add('active');
             
             if(tab === 'add') {
                 document.getElementById('add-view').style.display = 'block';
@@ -190,7 +257,6 @@
             }
         }
 
-        // --- Background Loader Toggle ---
         function showLoader(text) {
             document.getElementById('loading-text').innerText = text;
             document.getElementById('loading').style.display = 'flex';
@@ -199,7 +265,6 @@
             document.getElementById('loading').style.display = 'none';
         }
 
-        // --- CRUD Operations ---
         async function loadData() {
             showLoader("Refreshing List...");
             try {
@@ -208,7 +273,6 @@
                 localStorage.setItem('mart_data', JSON.stringify(allProducts));
                 renderList(allProducts);
             } catch(e) {
-                console.log("Offline or Error");
                 const local = localStorage.getItem('mart_data');
                 if(local) renderList(JSON.parse(local));
             } finally {
@@ -248,30 +312,25 @@
 
             if(!data.id || !data.en || !data.price) { alert("ID, Name and Price are required!"); return; }
 
-            // Step 1: Show background loader
             showLoader("Saving to Sheet...");
-            
-            // Step 2: Clear form immediately so user can keep working
+            stopCamera();
             resetForm();
             
-            // Step 3: Send data in background
             try {
                 await fetch(SHEET_API, {
                     method: "POST",
                     body: JSON.stringify(data)
                 });
-                console.log("Product Saved Successfully");
-                loadData(); // Background refresh
+                loadData();
             } catch(e) {
-                alert("Network Error! Product might not have saved.");
+                alert("Network Error!");
             } finally {
                 hideLoader();
             }
         }
 
         async function deleteProduct(id) {
-            if(!confirm("Are you sure you want to delete this?")) return;
-            
+            if(!confirm("Are you sure?")) return;
             showLoader("Deleting Item...");
             try {
                 await fetch(SHEET_API, {
@@ -295,6 +354,11 @@
                 document.getElementById('unit').value = p.unit || "kg";
                 document.getElementById('img').value = p.img || "";
                 
+                if(p.img) {
+                    document.getElementById('img-preview').src = p.img;
+                    document.getElementById('img-preview-container').style.display = 'block';
+                }
+
                 document.getElementById('form-header').innerText = "Update Product";
                 switchTab('add');
             }
@@ -305,6 +369,8 @@
             ['pID', 'enName', 'urName', 'purchasePrice', 'price', 'img'].forEach(i => document.getElementById(i).value = "");
             document.getElementById('unit').value = "kg";
             document.getElementById('form-header').innerText = "Add New Product";
+            document.getElementById('img-preview-container').style.display = 'none';
+            stopCamera();
         }
 
         function filterList() {
@@ -317,35 +383,29 @@
             renderList(filtered);
         }
 
-        // --- PDF Generation ---
         function generatePDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             let x = 10, y = 10;
-            
             showLoader("Preparing PDF...");
             
             allProducts.forEach((p, index) => {
                 doc.setFontSize(8);
                 doc.text(p.en.substring(0, 20), x, y);
                 doc.text("Rs. " + p.price, x, y + 3);
-                
                 const canvas = document.getElementById('barcodeCanvas');
                 try {
                     JsBarcode(canvas, p.id, {format: "CODE128", height: 25, displayValue: false});
                     doc.addImage(canvas.toDataURL(), 'PNG', x, y + 4, 30, 10);
-                } catch(err) { console.error("Barcode Error", err); }
-
+                } catch(err) {}
                 x += 40;
                 if(x > 170) { x = 10; y += 25; }
                 if(y > 270) { doc.addPage(); y = 10; }
             });
-            
-            doc.save("Hammad_Mart_Barcodes.pdf");
+            doc.save("Barcodes.pdf");
             hideLoader();
         }
 
-        // Initial Load
         window.onload = loadData;
     </script>
 </body>
