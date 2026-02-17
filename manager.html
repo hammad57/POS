@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hammad Mart - Manager (Background Sync)</title>
+    <title>Hammad Mart - Manager (Professional PDF)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
         :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; --red: #ef4444; }
@@ -67,11 +68,14 @@
         
         #reader { width: 100%; border-radius: 15px; overflow: hidden; display: none; margin-bottom: 15px; }
 
-        /* Camera Preview Style */
+        /* Camera Styles */
         #camera-preview { width: 100%; border-radius: 10px; display: none; margin-top: 10px; background: #000; }
         #capture-btn { display: none; background: #ef4444; margin-top: 10px; }
         #img-preview-container { margin-top: 10px; display: none; text-align: center; }
         #img-preview-container img { max-width: 100px; border-radius: 8px; border: 2px solid var(--accent); }
+        
+        /* Hidden QR Helper */
+        #qr-helper { display: none; }
     </style>
 </head>
 <body>
@@ -142,7 +146,7 @@
                 </div>
                 
                 <video id="camera-preview" autoplay playsinline></video>
-                <button id="capture-btn" class="btn" onclick="capturePhoto()">SURE! CAPTURE NOW 📸</button>
+                <button id="capture-btn" class="btn btn-primary" onclick="capturePhoto()">SURE! CAPTURE NOW 📸</button>
                 <canvas id="photo-canvas" style="display:none;"></canvas>
                 
                 <div id="img-preview-container">
@@ -163,9 +167,8 @@
         <div class="card" style="padding:0; overflow:hidden;" id="product-list"></div>
         
         <div style="margin-top:20px;">
-            <button class="btn btn-primary" style="background:#3b82f6;" onclick="generatePDF()">Download Barcode PDF 🖨️</button>
-            <canvas id="barcodeCanvas" style="display:none;"></canvas>
-        </div>
+            <button class="btn btn-primary" style="background:#3b82f6; width:100%;" onclick="generateProfessionalPDF()">Download Catalog PDF (Images + QR) 🖨️</button>
+            <div id="qr-helper"></div> </div>
     </div>
 
     <script>
@@ -175,62 +178,43 @@
         let scanner = null;
         let stream = null;
 
-        // --- Camera Logic ---
+        // --- Camera System ---
         async function startCamera() {
             const video = document.getElementById('camera-preview');
             const captureBtn = document.getElementById('capture-btn');
-            
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" }, 
-                    audio: false 
-                });
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
                 video.srcObject = stream;
                 video.style.display = 'block';
                 captureBtn.style.display = 'block';
-            } catch (err) {
-                alert("Camera access denied or not available.");
-            }
+            } catch (err) { alert("Camera not accessible."); }
         }
 
         function capturePhoto() {
             const video = document.getElementById('camera-preview');
             const canvas = document.getElementById('photo-canvas');
-            const imgInput = document.getElementById('img');
-            const preview = document.getElementById('img-preview');
-            const previewContainer = document.getElementById('img-preview-container');
-
-            // Set canvas size to video size
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            
-            // Draw image to canvas
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            // Convert to Base64 (Compressed to 0.7 quality to save space in Sheet)
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-            imgInput.value = dataUrl;
-            preview.src = dataUrl;
-            previewContainer.style.display = 'block';
-
-            // Stop camera
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+            document.getElementById('img').value = dataUrl;
+            document.getElementById('img-preview').src = dataUrl;
+            document.getElementById('img-preview-container').style.display = 'block';
             stopCamera();
         }
 
         function stopCamera() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
+            if (stream) stream.getTracks().forEach(t => t.stop());
             document.getElementById('camera-preview').style.display = 'none';
             document.getElementById('capture-btn').style.display = 'none';
         }
 
-        // --- Tab Switching ---
+        // --- Tabs & UI ---
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            if (event) event.currentTarget.classList.add('active');
-            
+            if(event) event.currentTarget.classList.add('active');
             if(tab === 'add') {
                 document.getElementById('add-view').style.display = 'block';
                 document.getElementById('list-view').style.display = 'none';
@@ -241,30 +225,13 @@
             }
         }
 
-        // --- Scanner Logic ---
-        function toggleScanner() {
-            const readerDiv = document.getElementById('reader');
-            if(readerDiv.style.display === 'block') {
-                scanner.clear();
-                readerDiv.style.display = 'none';
-            } else {
-                readerDiv.style.display = 'block';
-                scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-                scanner.render((id) => {
-                    document.getElementById('pID').value = id;
-                    toggleScanner();
-                });
-            }
-        }
-
         function showLoader(text) {
             document.getElementById('loading-text').innerText = text;
             document.getElementById('loading').style.display = 'flex';
         }
-        function hideLoader() {
-            document.getElementById('loading').style.display = 'none';
-        }
+        function hideLoader() { document.getElementById('loading').style.display = 'none'; }
 
+        // --- CRUD ---
         async function loadData() {
             showLoader("Refreshing List...");
             try {
@@ -275,9 +242,7 @@
             } catch(e) {
                 const local = localStorage.getItem('mart_data');
                 if(local) renderList(JSON.parse(local));
-            } finally {
-                hideLoader();
-            }
+            } finally { hideLoader(); }
         }
 
         function renderList(data) {
@@ -288,7 +253,7 @@
                     <div class="product-info">
                         <h4>${p.en}</h4>
                         <p>${p.ur || ''}</p>
-                        <span class="price-tag">Rs. ${p.price}</span> <small style="color:#94a3b8">(${p.id})</small>
+                        <span class="price-tag">Rs. ${p.price}</span>
                     </div>
                     <div class="action-btns">
                         <button class="edit-btn" onclick="editProduct('${p.id}')">✏️</button>
@@ -309,36 +274,13 @@
                 unit: document.getElementById('unit').value,
                 img: document.getElementById('img').value
             };
-
-            if(!data.id || !data.en || !data.price) { alert("ID, Name and Price are required!"); return; }
-
-            showLoader("Saving to Sheet...");
-            stopCamera();
+            if(!data.id || !data.en || !data.price) { alert("Required fields missing!"); return; }
+            showLoader("Saving...");
             resetForm();
-            
             try {
-                await fetch(SHEET_API, {
-                    method: "POST",
-                    body: JSON.stringify(data)
-                });
+                await fetch(SHEET_API, { method: "POST", body: JSON.stringify(data) });
                 loadData();
-            } catch(e) {
-                alert("Network Error!");
-            } finally {
-                hideLoader();
-            }
-        }
-
-        async function deleteProduct(id) {
-            if(!confirm("Are you sure?")) return;
-            showLoader("Deleting Item...");
-            try {
-                await fetch(SHEET_API, {
-                    method: "POST",
-                    body: JSON.stringify({action: "delete", id: id})
-                });
-                loadData();
-            } catch(e) { alert("Delete Failed"); }
+            } catch(e) { alert("Error saving"); }
             finally { hideLoader(); }
         }
 
@@ -353,12 +295,10 @@
                 document.getElementById('price').value = p.price;
                 document.getElementById('unit').value = p.unit || "kg";
                 document.getElementById('img').value = p.img || "";
-                
                 if(p.img) {
                     document.getElementById('img-preview').src = p.img;
                     document.getElementById('img-preview-container').style.display = 'block';
                 }
-
                 document.getElementById('form-header').innerText = "Update Product";
                 switchTab('add');
             }
@@ -368,41 +308,111 @@
             selectedID = null;
             ['pID', 'enName', 'urName', 'purchasePrice', 'price', 'img'].forEach(i => document.getElementById(i).value = "");
             document.getElementById('unit').value = "kg";
-            document.getElementById('form-header').innerText = "Add New Product";
             document.getElementById('img-preview-container').style.display = 'none';
+            document.getElementById('form-header').innerText = "Add New Product";
             stopCamera();
         }
 
         function filterList() {
             const q = document.getElementById('listSearch').value.toLowerCase();
             const filtered = allProducts.filter(p => 
-                p.en.toLowerCase().includes(q) || 
-                (p.ur && p.ur.toLowerCase().includes(q)) || 
-                p.id.toString().includes(q)
+                p.en.toLowerCase().includes(q) || p.id.toString().includes(q)
             );
             renderList(filtered);
         }
 
-        function generatePDF() {
+        function toggleScanner() {
+            const readerDiv = document.getElementById('reader');
+            if(readerDiv.style.display === 'block') {
+                scanner.clear();
+                readerDiv.style.display = 'none';
+            } else {
+                readerDiv.style.display = 'block';
+                scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+                scanner.render((id) => {
+                    document.getElementById('pID').value = id;
+                    toggleScanner();
+                });
+            }
+        }
+
+        // --- Professional PDF System ---
+        async function generateProfessionalPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            let x = 10, y = 10;
-            showLoader("Preparing PDF...");
+            const qrHelper = document.getElementById('qr-helper');
             
-            allProducts.forEach((p, index) => {
-                doc.setFontSize(8);
-                doc.text(p.en.substring(0, 20), x, y);
-                doc.text("Rs. " + p.price, x, y + 3);
-                const canvas = document.getElementById('barcodeCanvas');
-                try {
-                    JsBarcode(canvas, p.id, {format: "CODE128", height: 25, displayValue: false});
-                    doc.addImage(canvas.toDataURL(), 'PNG', x, y + 4, 30, 10);
-                } catch(err) {}
-                x += 40;
-                if(x > 170) { x = 10; y += 25; }
-                if(y > 270) { doc.addPage(); y = 10; }
-            });
-            doc.save("Barcodes.pdf");
+            showLoader("Creating Catalog PDF...");
+
+            let x = 10;
+            let y = 10;
+            const cardWidth = 60;
+            const cardHeight = 85;
+            const margin = 5;
+
+            for (let i = 0; i < allProducts.length; i++) {
+                const p = allProducts[i];
+
+                // 1. Draw Border Box
+                doc.setDrawColor(200, 200, 200);
+                doc.rect(x, y, cardWidth, cardHeight);
+
+                // 2. Add Product Image
+                if (p.img) {
+                    try {
+                        doc.addImage(p.img, 'JPEG', x + 5, y + 5, 50, 35);
+                    } catch(e) {
+                        doc.setFontSize(8);
+                        doc.text("[No Image]", x + 20, y + 20);
+                    }
+                } else {
+                    doc.setFontSize(8);
+                    doc.text("[No Image]", x + 20, y + 20);
+                }
+
+                // 3. Add Name & Price
+                doc.setFontSize(10);
+                doc.setTextColor(30, 41, 59); // Dark blue color
+                doc.setFont(undefined, 'bold');
+                doc.text(p.en.substring(0, 22), x + 5, y + 45);
+                
+                doc.setFontSize(11);
+                doc.setTextColor(34, 197, 94); // Green color
+                doc.text("Rs. " + p.price, x + 5, y + 52);
+
+                // 4. Generate & Add QR Code
+                qrHelper.innerHTML = "";
+                new QRCode(qrHelper, { text: p.id.toString(), width: 100, height: 100 });
+                
+                // Small delay to ensure QR is rendered in DOM
+                await new Promise(r => setTimeout(r, 50));
+                const qrCanvas = qrHelper.querySelector('canvas');
+                if(qrCanvas) {
+                    const qrImage = qrCanvas.toDataURL("image/png");
+                    doc.addImage(qrImage, 'PNG', x + 17, y + 55, 25, 25);
+                }
+                
+                doc.setFontSize(7);
+                doc.setTextColor(100, 116, 139);
+                doc.setFont(undefined, 'normal');
+                doc.text("ID: " + p.id, x + 22, y + 82);
+
+                // Grid Logic: 3 Columns
+                x += cardWidth + margin;
+                if (x > 180) {
+                    x = 10;
+                    y += cardHeight + margin;
+                }
+
+                // Page Break Logic: After 3 rows (9 items)
+                if (y > 250 && i < allProducts.length - 1) {
+                    doc.addPage();
+                    y = 10;
+                    x = 10;
+                }
+            }
+
+            doc.save("Hammad_Mart_Catalog.pdf");
             hideLoader();
         }
 
