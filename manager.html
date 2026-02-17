@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hammad Mart - Manager (Professional PDF)</title>
+    <title>Hammad Mart - Manager (Barcode System)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
         :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; --red: #ef4444; }
@@ -68,14 +67,11 @@
         
         #reader { width: 100%; border-radius: 15px; overflow: hidden; display: none; margin-bottom: 15px; }
 
-        /* Camera Styles */
+        /* Camera UI */
         #camera-preview { width: 100%; border-radius: 10px; display: none; margin-top: 10px; background: #000; }
         #capture-btn { display: none; background: #ef4444; margin-top: 10px; }
         #img-preview-container { margin-top: 10px; display: none; text-align: center; }
         #img-preview-container img { max-width: 100px; border-radius: 8px; border: 2px solid var(--accent); }
-        
-        /* Hidden QR Helper */
-        #qr-helper { display: none; }
     </style>
 </head>
 <body>
@@ -167,8 +163,9 @@
         <div class="card" style="padding:0; overflow:hidden;" id="product-list"></div>
         
         <div style="margin-top:20px;">
-            <button class="btn btn-primary" style="background:#3b82f6; width:100%;" onclick="generateProfessionalPDF()">Download Catalog PDF (Images + QR) 🖨️</button>
-            <div id="qr-helper"></div> </div>
+            <button class="btn btn-primary" style="background:#3b82f6; width:100%;" onclick="generateBarcodePDF()">Download Barcode Catalog PDF 🖨️</button>
+            <canvas id="barcodeCanvasHelper" style="display:none;"></canvas>
+        </div>
     </div>
 
     <script>
@@ -178,16 +175,16 @@
         let scanner = null;
         let stream = null;
 
-        // --- Camera System ---
+        // --- Camera Management ---
         async function startCamera() {
             const video = document.getElementById('camera-preview');
-            const captureBtn = document.getElementById('capture-btn');
+            const btn = document.getElementById('capture-btn');
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
                 video.srcObject = stream;
                 video.style.display = 'block';
-                captureBtn.style.display = 'block';
-            } catch (err) { alert("Camera not accessible."); }
+                btn.style.display = 'block';
+            } catch (err) { alert("Camera Error: " + err); }
         }
 
         function capturePhoto() {
@@ -195,9 +192,7 @@
             const canvas = document.getElementById('photo-canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
+            canvas.getContext('2d').drawImage(video, 0, 0);
             const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
             document.getElementById('img').value = dataUrl;
             document.getElementById('img-preview').src = dataUrl;
@@ -211,7 +206,7 @@
             document.getElementById('capture-btn').style.display = 'none';
         }
 
-        // --- Tabs & UI ---
+        // --- Basic UI Logic ---
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             if(event) event.currentTarget.classList.add('active');
@@ -231,9 +226,8 @@
         }
         function hideLoader() { document.getElementById('loading').style.display = 'none'; }
 
-        // --- CRUD ---
         async function loadData() {
-            showLoader("Refreshing List...");
+            showLoader("Loading items...");
             try {
                 const res = await fetch(SHEET_API + "?action=read");
                 allProducts = await res.json();
@@ -252,7 +246,6 @@
                     <img class="product-img" src="${p.img || 'https://via.placeholder.com/50'}">
                     <div class="product-info">
                         <h4>${p.en}</h4>
-                        <p>${p.ur || ''}</p>
                         <span class="price-tag">Rs. ${p.price}</span>
                     </div>
                     <div class="action-btns">
@@ -274,13 +267,13 @@
                 unit: document.getElementById('unit').value,
                 img: document.getElementById('img').value
             };
-            if(!data.id || !data.en || !data.price) { alert("Required fields missing!"); return; }
+            if(!data.id || !data.en || !data.price) { alert("ID, Name, and Price are required!"); return; }
             showLoader("Saving...");
             resetForm();
             try {
                 await fetch(SHEET_API, { method: "POST", body: JSON.stringify(data) });
                 loadData();
-            } catch(e) { alert("Error saving"); }
+            } catch(e) { alert("Failed to save."); }
             finally { hideLoader(); }
         }
 
@@ -306,8 +299,7 @@
 
         function resetForm() {
             selectedID = null;
-            ['pID', 'enName', 'urName', 'purchasePrice', 'price', 'img'].forEach(i => document.getElementById(i).value = "");
-            document.getElementById('unit').value = "kg";
+            ['pID', 'enName', 'urName', 'purchasePrice', 'price', 'img'].forEach(id => document.getElementById(id).value = "");
             document.getElementById('img-preview-container').style.display = 'none';
             document.getElementById('form-header').innerText = "Add New Product";
             stopCamera();
@@ -315,104 +307,84 @@
 
         function filterList() {
             const q = document.getElementById('listSearch').value.toLowerCase();
-            const filtered = allProducts.filter(p => 
-                p.en.toLowerCase().includes(q) || p.id.toString().includes(q)
-            );
+            const filtered = allProducts.filter(p => p.en.toLowerCase().includes(q) || p.id.toString().includes(q));
             renderList(filtered);
         }
 
         function toggleScanner() {
-            const readerDiv = document.getElementById('reader');
-            if(readerDiv.style.display === 'block') {
-                scanner.clear();
-                readerDiv.style.display = 'none';
+            const div = document.getElementById('reader');
+            if(div.style.display === 'block') {
+                scanner.clear(); div.style.display = 'none';
             } else {
-                readerDiv.style.display = 'block';
+                div.style.display = 'block';
                 scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-                scanner.render((id) => {
-                    document.getElementById('pID').value = id;
-                    toggleScanner();
-                });
+                scanner.render((id) => { document.getElementById('pID').value = id; toggleScanner(); });
             }
         }
 
-        // --- Professional PDF System ---
-        async function generateProfessionalPDF() {
+        // --- Barcode PDF System (No Price Written) ---
+        async function generateBarcodePDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const qrHelper = document.getElementById('qr-helper');
+            const canvas = document.getElementById('barcodeCanvasHelper');
             
-            showLoader("Creating Catalog PDF...");
+            showLoader("Generating Barcodes...");
 
             let x = 10;
-            let y = 10;
+            let y = 15;
             const cardWidth = 60;
-            const cardHeight = 85;
+            const cardHeight = 70; // Adjusted height (no price space needed)
             const margin = 5;
 
             for (let i = 0; i < allProducts.length; i++) {
                 const p = allProducts[i];
 
-                // 1. Draw Border Box
-                doc.setDrawColor(200, 200, 200);
+                // Card Border
+                doc.setDrawColor(220);
                 doc.rect(x, y, cardWidth, cardHeight);
 
-                // 2. Add Product Image
+                // 1. Product Image
                 if (p.img) {
                     try {
-                        doc.addImage(p.img, 'JPEG', x + 5, y + 5, 50, 35);
-                    } catch(e) {
-                        doc.setFontSize(8);
-                        doc.text("[No Image]", x + 20, y + 20);
-                    }
-                } else {
-                    doc.setFontSize(8);
-                    doc.text("[No Image]", x + 20, y + 20);
+                        doc.addImage(p.img, 'JPEG', x + 5, y + 5, 50, 30);
+                    } catch(e) { doc.text("[No Image]", x + 20, y + 20); }
                 }
 
-                // 3. Add Name & Price
+                // 2. Product Name (BOLD)
                 doc.setFontSize(10);
-                doc.setTextColor(30, 41, 59); // Dark blue color
                 doc.setFont(undefined, 'bold');
-                doc.text(p.en.substring(0, 22), x + 5, y + 45);
-                
-                doc.setFontSize(11);
-                doc.setTextColor(34, 197, 94); // Green color
-                doc.text("Rs. " + p.price, x + 5, y + 52);
+                doc.setTextColor(40);
+                doc.text(p.en.substring(0, 25), x + 5, y + 42);
 
-                // 4. Generate & Add QR Code
-                qrHelper.innerHTML = "";
-                new QRCode(qrHelper, { text: p.id.toString(), width: 100, height: 100 });
-                
-                // Small delay to ensure QR is rendered in DOM
-                await new Promise(r => setTimeout(r, 50));
-                const qrCanvas = qrHelper.querySelector('canvas');
-                if(qrCanvas) {
-                    const qrImage = qrCanvas.toDataURL("image/png");
-                    doc.addImage(qrImage, 'PNG', x + 17, y + 55, 25, 25);
-                }
-                
-                doc.setFontSize(7);
-                doc.setTextColor(100, 116, 139);
-                doc.setFont(undefined, 'normal');
-                doc.text("ID: " + p.id, x + 22, y + 82);
+                // 3. Barcode (This will show the price when scanned in system)
+                try {
+                    JsBarcode(canvas, p.id, {
+                        format: "CODE128",
+                        width: 2,
+                        height: 40,
+                        displayValue: true, // Shows ID below barcode
+                        fontSize: 14
+                    });
+                    const barcodeImg = canvas.toDataURL("image/png");
+                    doc.addImage(barcodeImg, 'PNG', x + 5, y + 45, 50, 20);
+                } catch(err) { console.error(err); }
 
-                // Grid Logic: 3 Columns
+                // Grid Math (3 columns)
                 x += cardWidth + margin;
                 if (x > 180) {
                     x = 10;
                     y += cardHeight + margin;
                 }
 
-                // Page Break Logic: After 3 rows (9 items)
-                if (y > 250 && i < allProducts.length - 1) {
+                // New Page if space ends
+                if (y > 240 && i < allProducts.length - 1) {
                     doc.addPage();
-                    y = 10;
+                    y = 15;
                     x = 10;
                 }
             }
 
-            doc.save("Hammad_Mart_Catalog.pdf");
+            doc.save("Hammad_Mart_Barcodes.pdf");
             hideLoader();
         }
 
