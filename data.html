@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Data - Hammad Mart</title>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 500px; margin: auto; background: var(--card); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .btn-sync { background: var(--accent); color: white; border: none; padding: 15px 30px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+        .btn-sync:active { transform: scale(0.95); }
+        .status-box { margin-top: 20px; padding: 15px; border-radius: 10px; background: rgba(255,255,255,0.05); font-size: 14px; }
+        .back-btn { display: inline-block; margin-top: 20px; color: #94a3b8; text-decoration: none; }
+        .item-count { font-size: 40px; font-weight: 900; color: var(--accent); display: block; margin: 10px 0; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: none; margin: 10px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2 style="color: var(--accent);">🔄 Offline Data Sync</h2>
+        <p>Jab internet on ho, niche diye gaye button ko dabayein taake sara data mobile mein save ho jaye.</p>
+        
+        <div class="status-box">
+            <span>Total Saved Products:</span>
+            <span id="productCount" class="item-count">0</span>
+            <span id="lastSync">Last Sync: Never</span>
+        </div>
+
+        <div class="loader" id="loader"></div>
+        <button class="btn-sync" onclick="fetchAndSaveData()">FETCH DATA NOW 📥</button>
+        
+        <a href="index.html" class="back-btn">← Back to Scanner</a>
+    </div>
+
+    <script>
+        const SHEET_API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
+
+        // Page load par check karein kitna data pehle se save hai
+        window.onload = updateUI;
+
+        function updateUI() {
+            const localData = localStorage.getItem('mart_data');
+            const lastSync = localStorage.getItem('last_sync_time');
+            
+            if (localData) {
+                const data = JSON.parse(localData);
+                document.getElementById('productCount').innerText = data.length;
+            }
+            if (lastSync) {
+                document.getElementById('lastSync').innerText = "Last Sync: " + lastSync;
+            }
+        }
+
+        async function fetchAndSaveData() {
+            const loader = document.getElementById('loader');
+            const btn = document.querySelector('.btn-sync');
+            
+            loader.style.display = 'block';
+            btn.disabled = true;
+            btn.innerText = "Syncing...";
+
+            try {
+                const response = await fetch(SHEET_API + "?action=read");
+                const data = await response.json();
+
+                if (data && data.length > 0) {
+                    // LocalStorage mein save krna
+                    localStorage.setItem('mart_data', JSON.stringify(data));
+                    
+                    // Time save krna
+                    const now = new Date().toLocaleString();
+                    localStorage.setItem('last_sync_time', now);
+                    
+                    alert("✅ " + data.length + " Products saved for offline use!");
+                    updateUI();
+                }
+            } catch (error) {
+                alert("❌ Error: Check internet connection!");
+                console.error(error);
+            } finally {
+                loader.style.display = 'none';
+                btn.disabled = false;
+                btn.innerText = "FETCH DATA NOW 📥";
+            }
+        }
+    </script>
+</body>
+</html>
