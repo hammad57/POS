@@ -1,9 +1,11 @@
-const cacheName = 'mart-v4-final';
+const cacheName = 'mart-v6-hybrid';
 const assets = [
   './',
   './index.html',
+  './Data.html',      // Added
   './manager.html',
   './order.html',
+  './Saler.html',     // Added
   './manifest.json',
   'https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js',
   'https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js',
@@ -14,16 +16,35 @@ const assets = [
   'https://cdn.tailwindcss.com'
 ];
 
+// Install Service Worker and Cache Assets
 self.addEventListener('install', e => {
   self.skipWaiting();
-  e.waitUntil(caches.open(cacheName).then(cache => cache.addAll(assets)));
+  e.waitUntil(
+    caches.open(cacheName).then(cache => {
+      console.log('Caching assets...');
+      return cache.addAll(assets);
+    })
+  );
 });
 
+// Activate and Clean Old Caches
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => k !== cacheName && caches.delete(k)))));
+  e.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.map(key => {
+          if (key !== cacheName) {
+            console.log('Removing old cache:', key);
+            return caches.delete(key);
+          }
+        })
+      );
+    })
+  );
   return self.clients.claim();
 });
 
+// Fetch Strategy: Network First, Fallback to Cache
 self.addEventListener('fetch', e => {
   e.respondWith(
     fetch(e.request)
