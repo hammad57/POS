@@ -9,11 +9,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0f172a">
     
-    <title>Hammad Mart Scanner & Live Orders</title>
+    <title>Hammad Mart - Hybrid Scanner</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -29,6 +28,7 @@
         .btn { border: none; color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; display: inline-block; }
         .admin-btn { background: var(--blue); }
         .order-btn { background: #f59e0b; }
+        .sync-btn { background: #8b5cf6; }
         .active-nav { outline: 2px solid white; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
 
         .view { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
@@ -38,6 +38,8 @@
         #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
         #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; z-index: 200; }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; cursor: pointer; }
+        .status-msg { padding: 10px; font-size: 12px; text-align: center; color: #94a3b8; }
+
         #reader { width: 100% !important; background: black; border-radius: 0 0 20px 20px; overflow: hidden; }
 
         .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); box-sizing: border-box; }
@@ -47,10 +49,6 @@
         table { width: 100%; border-collapse: collapse; background: white; color: black; border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background: #eee; }
-        
-        #sync-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         #install-prompt { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 10px 20px; border-radius: 50px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,255,0,0.4); z-index: 3000; cursor: pointer; border:none; }
     </style>
@@ -59,14 +57,10 @@
 
     <button id="install-prompt" onclick="installApp()">📲 Install App</button>
 
-    <div id="sync-overlay">
-        <div class="spinner"></div>
-        <p>Syncing Sheet Data...</p>
-    </div>
-
     <div class="header">
         <div class="mart-name">HAMMAD MART</div>
         <div class="nav-btns">
+            <a href="Data.html" class="btn sync-btn">DATA 🔄</a>
             <button id="nav-scan" onclick="switchView('scanner')" class="btn order-btn active-nav">SCANNER</button>
             <a href="order.html" class="btn order-btn">ORDERS 📦</a>
             <a href="manager.html" class="btn admin-btn">ADMIN ⚙️</a>
@@ -106,7 +100,6 @@
     </div>
 
     <script>
-        // --- Configuration [cite: 2, 11] ---
         const SHEET_API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
         const firebaseConfig = {
             apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
@@ -120,81 +113,83 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // --- PWA & Install logic [cite: 2] ---
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('install-prompt').style.display = 'block';
-        });
-
-        async function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt = null;
-                document.getElementById('install-prompt').style.display = 'none';
+        window.onload = () => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').then(() => console.log("SW Registered"));
             }
+        };
+
+        // --- Hybrid Search Logic ---
+        async function fetchOnlineData() {
+            try {
+                const res = await fetch(SHEET_API + "?action=read");
+                const data = await res.json();
+                if (data) localStorage.setItem('mart_data', JSON.stringify(data));
+                return data;
+            } catch (e) { return null; }
         }
 
-        // --- Data Sync logic  ---
-        function syncFromSheet() {
-            const overlay = document.getElementById('sync-overlay');
-            const localData = localStorage.getItem('mart_data');
-            
-            if (!localData) overlay.style.display = 'flex';
-
-            fetch(SHEET_API + "?action=read")
-                .then(res => res.json())
-                .then(data => {
-                    localStorage.setItem('mart_data', JSON.stringify(data));
-                    overlay.style.display = 'none';
-                    console.log("Sheet Data Synced");
-                })
-                .catch(err => {
-                    console.log("Offline Mode Active");
-                    overlay.style.display = 'none';
-                });
-        }
-        window.onload = syncFromSheet;
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(() => console.log("SW Registered"));
-        }
-
-        // --- Scanner & Search [cite: 2, 11] ---
         const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250, aspectRatio: 1.0 });
         
-        scanner.render((decodedText) => {
+        scanner.render(async (decodedText) => {
             const cleanId = String(decodedText).trim();
-            const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
-            // Match based on Google Sheet ID 
-            const product = data.find(p => String(p.id).trim() == cleanId);
+            let data = JSON.parse(localStorage.getItem('mart_data') || "[]");
+            let product = data.find(p => String(p.id).trim() == cleanId);
             
             if (product) {
                 showProduct(product);
             } else {
-                alert("Product Not Found! ID: " + cleanId);
-                scanner.pause(true);
-                setTimeout(() => scanner.resume(), 2000);
+                // Not in local? Try Online
+                console.log("Searching online...");
+                data = await fetchOnlineData();
+                product = data ? data.find(p => String(p.id).trim() == cleanId) : null;
+                
+                if (product) showProduct(product);
+                else {
+                    alert("Product Not Found Offline or Online!");
+                    scanner.pause(true);
+                    setTimeout(() => scanner.resume(), 2000);
+                }
             }
         });
 
+        let searchTimeout;
         function handleSearch() {
+            clearTimeout(searchTimeout);
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
             const dropdown = document.getElementById('searchDropdown');
-            const data = JSON.parse(localStorage.getItem('mart_data') || "[]");
-            
-            dropdown.innerHTML = '';
             if (query.length < 1) { dropdown.style.display = 'none'; return; }
 
-            // Partial matching for English and Urdu 
-            const matches = data.filter(p => 
+            const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const matches = localData.filter(p => 
                 (p.en && p.en.toLowerCase().includes(query)) || 
                 (p.ur && p.ur.toLowerCase().includes(query))
             );
 
-            if (matches.length > 0) {
-                matches.forEach(p => {
+            renderDropdown(matches);
+
+            // Agar local mein kuch na mily, to online check karo (delay ke sath taake API pe bojh na paray)
+            if (matches.length === 0) {
+                dropdown.innerHTML = '<div class="status-msg">Searching online...</div>';
+                dropdown.style.display = 'block';
+                searchTimeout = setTimeout(async () => {
+                    const onlineData = await fetchOnlineData();
+                    if (onlineData) {
+                        const onlineMatches = onlineData.filter(p => 
+                            (p.en && p.en.toLowerCase().includes(query)) || 
+                            (p.ur && p.ur.toLowerCase().includes(query))
+                        );
+                        renderDropdown(onlineMatches);
+                    }
+                }, 800);
+            }
+        }
+
+        function renderDropdown(items) {
+            const dropdown = document.getElementById('searchDropdown');
+            dropdown.innerHTML = '';
+            if (items.length > 0) {
+                items.forEach(p => {
                     const item = document.createElement('div');
                     item.className = 'search-item';
                     item.innerHTML = `
@@ -205,7 +200,9 @@
                     dropdown.appendChild(item);
                 });
                 dropdown.style.display = 'block';
-            } else { dropdown.style.display = 'none'; }
+            } else {
+                dropdown.innerHTML = '<div class="status-msg">No results found.</div>';
+            }
         }
 
         function showProduct(p) {
@@ -213,7 +210,6 @@
             document.getElementById('p-ur').innerText = p.ur || "";
             document.getElementById('p-price').innerText = "Rs. " + (p.price || "0");
             document.getElementById('p-img').src = (p.img && p.img.length > 20) ? p.img : "https://via.placeholder.com/150?text=No+Image";
-            
             document.getElementById('result').style.display = "block";
             try { scanner.pause(true); } catch(e) {}
         }
@@ -228,7 +224,7 @@
             document.getElementById('order-view').classList.toggle('hidden', view !== 'order');
         }
 
-        // --- Firebase Orders [cite: 2] ---
+        // --- Orders Management ---
         function loadOrders() {
             db.ref('orders').on('value', (snap) => {
                 const list = document.getElementById('order-list');
