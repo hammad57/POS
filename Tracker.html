@@ -3,45 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Route Tracker - HTML Only</title>
+    <title>3-Second Route Tracker</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; display: flex; flex-direction: column; height: 100vh; }
-        
-        header { background: #1a73e8; color: white; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #1a73e8; color: white; padding: 10px; text-align: center; }
         #map { flex-grow: 1; width: 100%; }
-
-        .controls { padding: 20px; background: white; border-top: 2px solid #ddd; text-align: center; display: flex; justify-content: center; gap: 10px; }
-
-        button { padding: 12px 24px; font-size: 16px; font-weight: bold; border: none; border-radius: 50px; cursor: pointer; transition: 0.3s; color: white; text-transform: uppercase; }
-        
-        #startBtn { background: #28a745; box-shadow: 0 4px #1e7e34; }
-        #startBtn:active { transform: translateY(2px); box-shadow: 0 2px #1e7e34; }
-        #startBtn:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
-
-        #stopBtn { background: #dc3545; box-shadow: 0 4px #a71d2a; }
-        #stopBtn:active { transform: translateY(2px); box-shadow: 0 2px #a71d2a; }
-
-        .status-bar { background: #333; color: #00ff00; font-family: monospace; font-size: 12px; padding: 5px; text-align: center; }
+        .controls { padding: 15px; background: white; text-align: center; display: flex; justify-content: center; gap: 10px; border-top: 1px solid #ccc; }
+        button { padding: 12px 20px; font-size: 14px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; color: white; }
+        #startBtn { background: #28a745; }
+        #stopBtn { background: #dc3545; }
+        #clearBtn { background: #6c757d; }
+        .status-bar { background: #333; color: #00ff00; font-family: monospace; font-size: 11px; padding: 5px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h2>📍 My Live Journey Tracker</h2>
-    </header>
-
-    <div class="status-bar" id="status">Status: Ready to Start</div>
-
+    <header><h3>📍 Fast Live Tracker</h3></header>
+    <div class="status-bar" id="status">Status: Ready</div>
     <div id="map"></div>
 
     <div class="controls">
-        <button id="startBtn" onclick="startTracking()">Start Tracking</button>
-        <button id="stopBtn" onclick="stopTracking()">Stop & View Route</button>
+        <button id="startBtn" onclick="startTracking()">Start</button>
+        <button id="stopBtn" onclick="stopTracking()">Stop</button>
+        <button id="clearBtn" onclick="clearData()">Clear</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -51,96 +39,70 @@
         let routeCoordinates = [];
         let watchID = null;
 
-        // 1. Map ko initialize karna (Default Pakistan View)
+        // Map setup
         map = L.map('map').setView([30.3753, 69.3451], 5);
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        // Khali line (polyline) pehle se bana kar rakhna
-        polyline = L.polyline([], {color: '#1a73e8', weight: 6, opacity: 0.8}).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        polyline = L.polyline([], {color: '#ff4444', weight: 5}).addTo(map);
 
         function startTracking() {
-            if (!navigator.geolocation) {
-                alert("Afsos! Aapka browser GPS support nahi karta.");
-                return;
-            }
+            if (watchID) return; // Pehle se chal raha ho to dubara start na ho
 
-            document.getElementById('startBtn').disabled = true;
-            updateStatus("Searching for GPS Signal...");
-
-            // Tracking options
-            const geoOptions = {
+            document.getElementById('status').innerText = "Status: Locating...";
+            
+            // Geolocation options for 3-second responsiveness
+            const options = {
                 enableHighAccuracy: true,
-                maximumAge: 0,
-                timeout: 15000
+                maximumAge: 0,        // Purani location use na kare
+                timeout: 3000         // Har 3 second mein update ki koshish kare
             };
 
-            watchID = navigator.geolocation.watchPosition(success, error, geoOptions);
-        }
+            watchID = navigator.geolocation.watchPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const currentPos = [lat, lng];
 
-        function success(position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            const currentPos = [lat, lng];
+                    document.getElementById('status').innerText = `Live: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                    
+                    routeCoordinates.push(currentPos);
+                    
+                    // Live UI Updates
+                    if (routeCoordinates.length === 1) map.setView(currentPos, 18);
+                    
+                    if (!marker) {
+                        marker = L.circleMarker(currentPos, {radius: 8, color: 'blue', fillColor: 'white', fillOpacity: 1}).addTo(map);
+                    } else {
+                        marker.setLatLng(currentPos);
+                    }
 
-            updateStatus(`Tracking: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-            
-            // Route data save karna
-            routeCoordinates.push(currentPos);
-            
-            // Pehli baar location milte hi zoom karna
-            if (routeCoordinates.length === 1) {
-                map.setView(currentPos, 17);
-            }
-
-            // Blue Dot (Current Location) marker update karna
-            if (!marker) {
-                marker = L.circleMarker(currentPos, {
-                    radius: 10,
-                    color: '#fff',
-                    fillColor: '#1a73e8',
-                    fillOpacity: 1,
-                    weight: 3
-                }).addTo(map);
-            } else {
-                marker.setLatLng(currentPos);
-            }
-
-            // Line ko live draw karna
-            polyline.setLatLngs(routeCoordinates);
-            
-            // Map ko current marker ke sath move karna
-            map.panTo(currentPos);
-        }
-
-        function error(err) {
-            console.warn(`ERROR(${err.code}): ${err.message}`);
-            if (err.code === 1) {
-                alert("Please allow location access to use the tracker.");
-            } else if (err.code === 3) {
-                updateStatus("GPS Timeout. Still trying...");
-            }
+                    polyline.setLatLngs(routeCoordinates);
+                    map.panTo(currentPos); // Screen ko sath sath move karega
+                },
+                (err) => {
+                    document.getElementById('status').innerText = "Error: " + err.message;
+                },
+                options
+            );
         }
 
         function stopTracking() {
-            if (watchID !== null) {
+            if (watchID) {
                 navigator.geolocation.clearWatch(watchID);
                 watchID = null;
-                document.getElementById('startBtn').disabled = false;
-                updateStatus("Tracking Stopped.");
-                
-                if (routeCoordinates.length > 0) {
-                    // Pura route screen par fit kar dena
-                    map.fitBounds(polyline.getBounds());
-                    alert("Safar Mukammal! Aapka route screen par hai.");
-                }
+                document.getElementById('status').innerText = "Status: Stopped.";
+                if (routeCoordinates.length > 0) map.fitBounds(polyline.getBounds());
             }
         }
 
-        function updateStatus(msg) {
-            document.getElementById('status').innerText = "Status: " + msg;
+        function clearData() {
+            stopTracking();
+            routeCoordinates = [];
+            polyline.setLatLngs([]);
+            if (marker) {
+                map.removeLayer(marker);
+                marker = null;
+            }
+            document.getElementById('status').innerText = "Status: Data Cleared.";
         }
     </script>
 </body>
