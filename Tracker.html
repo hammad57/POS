@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Route Tracker - HTML Only</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; display: flex; flex-direction: column; height: 100vh; }
+        
+        header { background: #1a73e8; color: white; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
+        #map { flex-grow: 1; width: 100%; }
+
+        .controls { padding: 20px; background: white; border-top: 2px solid #ddd; text-align: center; display: flex; justify-content: center; gap: 10px; }
+
+        button { padding: 12px 24px; font-size: 16px; font-weight: bold; border: none; border-radius: 50px; cursor: pointer; transition: 0.3s; color: white; text-transform: uppercase; }
+        
+        #startBtn { background: #28a745; box-shadow: 0 4px #1e7e34; }
+        #startBtn:active { transform: translateY(2px); box-shadow: 0 2px #1e7e34; }
+        #startBtn:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+
+        #stopBtn { background: #dc3545; box-shadow: 0 4px #a71d2a; }
+        #stopBtn:active { transform: translateY(2px); box-shadow: 0 2px #a71d2a; }
+
+        .status-bar { background: #333; color: #00ff00; font-family: monospace; font-size: 12px; padding: 5px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h2>📍 My Live Journey Tracker</h2>
+    </header>
+
+    <div class="status-bar" id="status">Status: Ready to Start</div>
+
+    <div id="map"></div>
+
+    <div class="controls">
+        <button id="startBtn" onclick="startTracking()">Start Tracking</button>
+        <button id="stopBtn" onclick="stopTracking()">Stop & View Route</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        let map, marker, polyline;
+        let routeCoordinates = [];
+        let watchID = null;
+
+        // 1. Map ko initialize karna (Default Pakistan View)
+        map = L.map('map').setView([30.3753, 69.3451], 5);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Khali line (polyline) pehle se bana kar rakhna
+        polyline = L.polyline([], {color: '#1a73e8', weight: 6, opacity: 0.8}).addTo(map);
+
+        function startTracking() {
+            if (!navigator.geolocation) {
+                alert("Afsos! Aapka browser GPS support nahi karta.");
+                return;
+            }
+
+            document.getElementById('startBtn').disabled = true;
+            updateStatus("Searching for GPS Signal...");
+
+            // Tracking options
+            const geoOptions = {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 15000
+            };
+
+            watchID = navigator.geolocation.watchPosition(success, error, geoOptions);
+        }
+
+        function success(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const currentPos = [lat, lng];
+
+            updateStatus(`Tracking: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+            
+            // Route data save karna
+            routeCoordinates.push(currentPos);
+            
+            // Pehli baar location milte hi zoom karna
+            if (routeCoordinates.length === 1) {
+                map.setView(currentPos, 17);
+            }
+
+            // Blue Dot (Current Location) marker update karna
+            if (!marker) {
+                marker = L.circleMarker(currentPos, {
+                    radius: 10,
+                    color: '#fff',
+                    fillColor: '#1a73e8',
+                    fillOpacity: 1,
+                    weight: 3
+                }).addTo(map);
+            } else {
+                marker.setLatLng(currentPos);
+            }
+
+            // Line ko live draw karna
+            polyline.setLatLngs(routeCoordinates);
+            
+            // Map ko current marker ke sath move karna
+            map.panTo(currentPos);
+        }
+
+        function error(err) {
+            console.warn(`ERROR(${err.code}): ${err.message}`);
+            if (err.code === 1) {
+                alert("Please allow location access to use the tracker.");
+            } else if (err.code === 3) {
+                updateStatus("GPS Timeout. Still trying...");
+            }
+        }
+
+        function stopTracking() {
+            if (watchID !== null) {
+                navigator.geolocation.clearWatch(watchID);
+                watchID = null;
+                document.getElementById('startBtn').disabled = false;
+                updateStatus("Tracking Stopped.");
+                
+                if (routeCoordinates.length > 0) {
+                    // Pura route screen par fit kar dena
+                    map.fitBounds(polyline.getBounds());
+                    alert("Safar Mukammal! Aapka route screen par hai.");
+                }
+            }
+        }
+
+        function updateStatus(msg) {
+            document.getElementById('status').innerText = "Status: " + msg;
+        }
+    </script>
+</body>
+</html>
