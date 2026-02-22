@@ -3,34 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fast 3s Red Line Tracker</title>
+    <title>Advanced GPS Tracker</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; }
-        header { background: #d32f2f; color: white; padding: 12px; text-align: center; font-size: 1.2rem; font-weight: bold; }
-        #map { flex-grow: 1; width: 100%; border-bottom: 2px solid #ccc; }
-        .controls { padding: 15px; background: white; text-align: center; display: flex; justify-content: center; gap: 10px; }
-        button { padding: 12px 25px; font-size: 16px; font-weight: bold; border: none; border-radius: 50px; cursor: pointer; color: white; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        #startBtn { background: #2e7d32; }
-        #stopBtn { background: #c62828; }
-        #clearBtn { background: #546e7a; }
-        button:active { transform: scale(0.95); }
-        .status-bar { background: #212121; color: #00e676; font-family: 'Courier New', monospace; font-size: 12px; padding: 6px; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #1a73e8; color: white; padding: 12px; text-align: center; font-weight: bold; }
+        
+        #map { flex: 2; width: 100%; border-bottom: 2px solid #ccc; }
+        
+        .history-section { flex: 1; background: white; overflow-y: auto; padding: 15px; border-top: 5px solid #1a73e8; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .delete-btn { background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .view-btn { background: #1a73e8; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; margin-right: 5px; }
+
+        .controls { padding: 15px; background: #fff; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+        button { padding: 10px 20px; font-size: 14px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; color: white; }
+        #startBtn { background: #28a745; }
+        #stopBtn { background: #dc3545; }
+        #clearBtn { background: #6c757d; }
+        
+        .status-bar { background: #212121; color: #00e676; font-family: monospace; font-size: 11px; padding: 5px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <header>Live Movement Tracker</header>
-    <div class="status-bar" id="status">Status: GPS Ready</div>
+    <header>Live Tracker & History</header>
+    <div class="status-bar" id="status">Status: Ready</div>
+    
     <div id="map"></div>
 
     <div class="controls">
         <button id="startBtn" onclick="startTracking()">Start</button>
-        <button id="stopBtn" onclick="stopTracking()">Stop</button>
-        <button id="clearBtn" onclick="clearData()">Clear</button>
+        <button id="stopBtn" onclick="stopTracking()">Stop & Save</button>
+        <button id="clearBtn" onclick="clearCurrent()">Clear Map</button>
+    </div>
+
+    <div class="history-section">
+        <h4 style="margin-bottom: 10px;">Saved Journeys</h4>
+        <div id="history-list"></div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -40,69 +53,55 @@
         let routeCoordinates = [];
         let watchID = null;
 
-        // Map Setup
-        map = L.map('map').setView([30.3753, 69.3451], 5);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        // 1. Map Layers (Normal and Satellite)
+        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' });
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
+        });
 
-        // Red Line Setup
-        polyline = L.polyline([], {
-            color: '#ff0000', // Red Line
-            weight: 6, 
-            opacity: 0.9,
-            smoothFactor: 1
-        }).addTo(map);
+        map = L.map('map', {
+            center: [30.3753, 69.3451],
+            zoom: 5,
+            layers: [streetLayer] // Default layer
+        });
+
+        // Layer Switcher (Satellite View Option)
+        const baseMaps = {
+            "Normal View": streetLayer,
+            "Satellite View": satelliteLayer
+        };
+        L.control.layers(baseMaps).addTo(map);
+
+        polyline = L.polyline([], {color: '#ff0000', weight: 6}).addTo(map);
+
+        // Load history on startup
+        window.onload = loadHistory;
 
         function startTracking() {
             if (watchID) return;
-
-            updateStatus("Searching for precise location...");
-
-            const options = {
-                enableHighAccuracy: true, // Sabse behtareen GPS accuracy
-                maximumAge: 0,           // Cached data use nahi hoga
-                timeout: 5000            // Har 5 sec mein signal lazmi check karega
-            };
+            routeCoordinates = [];
+            polyline.setLatLngs([]);
+            updateStatus("Tracking started... Move around!");
 
             watchID = navigator.geolocation.watchPosition(
                 (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    const accuracy = position.coords.accuracy;
-                    const currentPos = [lat, lng];
-
-                    updateStatus(`Live Tracking: ${lat.toFixed(6)}, ${lng.toFixed(6)} (Acc: ${accuracy.toFixed(1)}m)`);
+                    const pos = [position.coords.latitude, position.coords.longitude];
+                    routeCoordinates.push(pos);
                     
-                    // Nayi location ko list mein dalna
-                    routeCoordinates.push(currentPos);
+                    if (routeCoordinates.length === 1) map.setView(pos, 18);
                     
-                    // Live UI Updates
-                    if (routeCoordinates.length === 1) {
-                        map.setView(currentPos, 19); // Bohat nazdeek zoom
-                    }
-
-                    // Marker update (Blue point)
                     if (!marker) {
-                        marker = L.circleMarker(currentPos, {
-                            radius: 8, 
-                            color: '#fff', 
-                            fillColor: '#007bff', 
-                            fillOpacity: 1,
-                            weight: 2
-                        }).addTo(map);
+                        marker = L.circleMarker(pos, {radius: 8, color: 'blue', fillColor: 'white', fillOpacity: 1}).addTo(map);
                     } else {
-                        marker.setLatLng(currentPos);
+                        marker.setLatLng(pos);
                     }
 
-                    // Red Line drawing
                     polyline.setLatLngs(routeCoordinates);
-                    
-                    // Map ko movement ke sath move karna
-                    map.panTo(currentPos);
+                    map.panTo(pos);
+                    updateStatus(`Live: ${pos[0].toFixed(5)}, ${pos[1].toFixed(5)}`);
                 },
-                (err) => {
-                    updateStatus("Error: " + err.message);
-                },
-                options
+                (err) => updateStatus("Error: " + err.message),
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
             );
         }
 
@@ -110,20 +109,64 @@
             if (watchID) {
                 navigator.geolocation.clearWatch(watchID);
                 watchID = null;
-                updateStatus("Tracking Stopped.");
-                if (routeCoordinates.length > 0) map.fitBounds(polyline.getBounds());
+                updateStatus("Tracking Saved to History.");
+                
+                if (routeCoordinates.length > 1) {
+                    saveToHistory(routeCoordinates);
+                }
             }
         }
 
-        function clearData() {
-            stopTracking();
-            routeCoordinates = [];
+        // History Management
+        function saveToHistory(coords) {
+            const history = JSON.parse(localStorage.getItem('tripHistory') || '[]');
+            const newTrip = {
+                id: Date.now(),
+                date: new Date().toLocaleString(),
+                data: coords
+            };
+            history.unshift(newTrip); // Add to start
+            localStorage.setItem('tripHistory', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('tripHistory') || '[]');
+            const listDiv = document.getElementById('history-list');
+            listDiv.innerHTML = '';
+
+            history.forEach(trip => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <span>${trip.date}</span>
+                    <div>
+                        <button class="view-btn" onclick='viewHistory(${JSON.stringify(trip.data)})'>View</button>
+                        <button class="delete-btn" onclick='deleteHistory(${trip.id})'>X</button>
+                    </div>
+                `;
+                listDiv.appendChild(item);
+            });
+        }
+
+        function viewHistory(coords) {
+            clearCurrent();
+            polyline.setLatLngs(coords);
+            map.fitBounds(polyline.getBounds());
+            updateStatus("Viewing saved trip.");
+        }
+
+        function deleteHistory(id) {
+            let history = JSON.parse(localStorage.getItem('tripHistory') || '[]');
+            history = history.filter(trip => trip.id !== id);
+            localStorage.setItem('tripHistory', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function clearCurrent() {
             polyline.setLatLngs([]);
-            if (marker) {
-                map.removeLayer(marker);
-                marker = null;
-            }
-            updateStatus("Data Cleared.");
+            if (marker) { map.removeLayer(marker); marker = null; }
+            updateStatus("Map Cleared.");
         }
 
         function updateStatus(msg) {
