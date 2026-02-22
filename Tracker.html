@@ -3,46 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced GPS Tracker</title>
+    <title>Detail Journey Tracker</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; }
-        header { background: #1a73e8; color: white; padding: 12px; text-align: center; font-weight: bold; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f8f9fa; display: flex; flex-direction: column; height: 100vh; }
         
-        #map { flex: 2; width: 100%; border-bottom: 2px solid #ccc; }
+        header { background: #004a99; color: white; padding: 12px; text-align: center; font-size: 1.1rem; }
         
-        .history-section { flex: 1; background: white; overflow-y: auto; padding: 15px; border-top: 5px solid #1a73e8; }
-        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
-        .delete-btn { background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
-        .view-btn { background: #1a73e8; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; margin-right: 5px; }
-
-        .controls { padding: 15px; background: #fff; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-        button { padding: 10px 20px; font-size: 14px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; color: white; }
+        #map { flex: 2; width: 100%; border-bottom: 3px solid #004a99; }
+        
+        .history-panel { flex: 1; background: white; overflow-y: auto; padding: 10px; border-top: 2px solid #ddd; }
+        .history-item { display: flex; justify-content: space-between; background: #f1f1f1; padding: 10px; margin-bottom: 5px; border-radius: 5px; align-items: center; }
+        
+        .controls { padding: 10px; background: #fff; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        button { padding: 12px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
         #startBtn { background: #28a745; }
         #stopBtn { background: #dc3545; }
         #clearBtn { background: #6c757d; }
         
-        .status-bar { background: #212121; color: #00e676; font-family: monospace; font-size: 11px; padding: 5px; text-align: center; }
+        .status-bar { background: #222; color: #00ff00; font-size: 12px; padding: 4px; text-align: center; font-family: monospace; }
+        .btn-v { background: #007bff; padding: 5px 10px; border-radius: 4px; border: none; color: white; margin-right: 5px; cursor: pointer; }
+        .btn-d { background: #ff4444; padding: 5px 10px; border-radius: 4px; border: none; color: white; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <header>Live Tracker & History</header>
-    <div class="status-bar" id="status">Status: Ready</div>
+    <header>Real-Time Detail Tracker</header>
+    <div class="status-bar" id="status">Ready to Track</div>
     
     <div id="map"></div>
 
     <div class="controls">
-        <button id="startBtn" onclick="startTracking()">Start</button>
+        <button id="startBtn" onclick="startTracking()">Start Tracking</button>
         <button id="stopBtn" onclick="stopTracking()">Stop & Save</button>
-        <button id="clearBtn" onclick="clearCurrent()">Clear Map</button>
+        <button id="clearBtn" onclick="clearMap()">Clear Screen</button>
     </div>
 
-    <div class="history-section">
-        <h4 style="margin-bottom: 10px;">Saved Journeys</h4>
+    <div class="history-panel">
+        <h3 style="font-size: 14px; margin-bottom: 8px;">History Log:</h3>
         <div id="history-list"></div>
     </div>
 
@@ -53,54 +54,62 @@
         let routeCoordinates = [];
         let watchID = null;
 
-        // 1. Map Layers (Normal and Satellite)
-        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' });
-        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
+        // --- Layers ---
+        // 1. OSM Standard (Best for Road Names & Shops)
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
         });
 
+        // 2. Google Satellite Hybrid (Real view with Labels)
+        const satelliteLayer = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains:['mt0','mt1','mt2','mt3'],
+            attribution: '© Google Maps'
+        });
+
+        // Map Initialize
         map = L.map('map', {
             center: [30.3753, 69.3451],
-            zoom: 5,
-            layers: [streetLayer] // Default layer
+            zoom: 13,
+            layers: [osmLayer] // Default detail view
         });
 
-        // Layer Switcher (Satellite View Option)
+        // Layer Switcher
         const baseMaps = {
-            "Normal View": streetLayer,
-            "Satellite View": satelliteLayer
+            "Detail Street View": osmLayer,
+            "Satellite (Hybrid)": satelliteLayer
         };
         L.control.layers(baseMaps).addTo(map);
 
-        polyline = L.polyline([], {color: '#ff0000', weight: 6}).addTo(map);
+        polyline = L.polyline([], {color: '#ff0000', weight: 6, opacity: 0.9}).addTo(map);
 
-        // Load history on startup
-        window.onload = loadHistory;
+        window.onload = displayHistory;
 
         function startTracking() {
             if (watchID) return;
             routeCoordinates = [];
             polyline.setLatLngs([]);
-            updateStatus("Tracking started... Move around!");
+            updateStatus("GPS Active... Move now!");
 
             watchID = navigator.geolocation.watchPosition(
-                (position) => {
-                    const pos = [position.coords.latitude, position.coords.longitude];
-                    routeCoordinates.push(pos);
+                (pos) => {
+                    const latlng = [pos.coords.latitude, pos.coords.longitude];
+                    routeCoordinates.push(latlng);
                     
-                    if (routeCoordinates.length === 1) map.setView(pos, 18);
+                    if (routeCoordinates.length === 1) map.setView(latlng, 18);
                     
                     if (!marker) {
-                        marker = L.circleMarker(pos, {radius: 8, color: 'blue', fillColor: 'white', fillOpacity: 1}).addTo(map);
+                        marker = L.circleMarker(latlng, {radius: 9, color: 'white', fillColor: '#007bff', fillOpacity: 1, weight: 3}).addTo(map);
                     } else {
-                        marker.setLatLng(pos);
+                        marker.setLatLng(latlng);
                     }
 
                     polyline.setLatLngs(routeCoordinates);
-                    map.panTo(pos);
-                    updateStatus(`Live: ${pos[0].toFixed(5)}, ${pos[1].toFixed(5)}`);
+                    map.panTo(latlng);
+                    updateStatus(`Tracking: ${latlng[0].toFixed(5)}, ${latlng[1].toFixed(5)}`);
                 },
-                (err) => updateStatus("Error: " + err.message),
+                (err) => updateStatus("GPS Error: " + err.message),
                 { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
             );
         }
@@ -109,69 +118,55 @@
             if (watchID) {
                 navigator.geolocation.clearWatch(watchID);
                 watchID = null;
-                updateStatus("Tracking Saved to History.");
-                
-                if (routeCoordinates.length > 1) {
-                    saveToHistory(routeCoordinates);
-                }
+                updateStatus("Trip Saved!");
+                if (routeCoordinates.length > 1) saveTrip(routeCoordinates);
             }
         }
 
-        // History Management
-        function saveToHistory(coords) {
-            const history = JSON.parse(localStorage.getItem('tripHistory') || '[]');
-            const newTrip = {
-                id: Date.now(),
-                date: new Date().toLocaleString(),
-                data: coords
-            };
-            history.unshift(newTrip); // Add to start
-            localStorage.setItem('tripHistory', JSON.stringify(history));
-            loadHistory();
+        // --- History Logic ---
+        function saveTrip(coords) {
+            let trips = JSON.parse(localStorage.getItem('my_trips') || '[]');
+            const tripObj = { id: Date.now(), time: new Date().toLocaleString(), data: coords };
+            trips.unshift(tripObj);
+            localStorage.setItem('my_trips', JSON.stringify(trips));
+            displayHistory();
         }
 
-        function loadHistory() {
-            const history = JSON.parse(localStorage.getItem('tripHistory') || '[]');
-            const listDiv = document.getElementById('history-list');
-            listDiv.innerHTML = '';
-
-            history.forEach(trip => {
-                const item = document.createElement('div');
-                item.className = 'history-item';
-                item.innerHTML = `
-                    <span>${trip.date}</span>
+        function displayHistory() {
+            const trips = JSON.parse(localStorage.getItem('my_trips') || '[]');
+            const list = document.getElementById('history-list');
+            list.innerHTML = trips.map(t => `
+                <div class="history-item">
+                    <span>${t.time}</span>
                     <div>
-                        <button class="view-btn" onclick='viewHistory(${JSON.stringify(trip.data)})'>View</button>
-                        <button class="delete-btn" onclick='deleteHistory(${trip.id})'>X</button>
+                        <button class="btn-v" onclick='viewTrip(${JSON.stringify(t.data)})'>View</button>
+                        <button class="btn-d" onclick='deleteTrip(${t.id})'>X</button>
                     </div>
-                `;
-                listDiv.appendChild(item);
-            });
+                </div>
+            `).join('');
         }
 
-        function viewHistory(coords) {
-            clearCurrent();
-            polyline.setLatLngs(coords);
+        function viewTrip(data) {
+            clearMap();
+            polyline.setLatLngs(data);
             map.fitBounds(polyline.getBounds());
-            updateStatus("Viewing saved trip.");
+            updateStatus("Viewing Saved Trip");
         }
 
-        function deleteHistory(id) {
-            let history = JSON.parse(localStorage.getItem('tripHistory') || '[]');
-            history = history.filter(trip => trip.id !== id);
-            localStorage.setItem('tripHistory', JSON.stringify(history));
-            loadHistory();
+        function deleteTrip(id) {
+            let trips = JSON.parse(localStorage.getItem('my_trips') || '[]');
+            trips = trips.filter(t => t.id !== id);
+            localStorage.setItem('my_trips', JSON.stringify(trips));
+            displayHistory();
         }
 
-        function clearCurrent() {
+        function clearMap() {
             polyline.setLatLngs([]);
             if (marker) { map.removeLayer(marker); marker = null; }
-            updateStatus("Map Cleared.");
+            updateStatus("Map Cleared");
         }
 
-        function updateStatus(msg) {
-            document.getElementById('status').innerText = "Status: " + msg;
-        }
+        function updateStatus(m) { document.getElementById('status').innerText = "Status: " + m; }
     </script>
 </body>
 </html>
