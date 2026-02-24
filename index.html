@@ -21,18 +21,25 @@
         :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; --blue: #3b82f6; --red: #ef4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        .header { padding: 15px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); z-index: 10; }
-        .mart-name { font-size: 18px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; }
+        /* Header Styling */
+        .header { padding: 15px; background: var(--card); display: flex; align-items: center; border-bottom: 2px solid var(--accent); z-index: 10; gap: 15px; }
+        .menu-toggle { font-size: 24px; cursor: pointer; color: var(--accent); background: none; border: none; }
+        .mart-name { font-size: 18px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; flex-grow: 1; text-align: center; margin-right: 30px; }
         
-        .nav-btns { display: flex; gap: 8px; }
-        .btn { border: none; color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; display: inline-block; }
-        .admin-btn { background: var(--blue); }
-        .order-btn { background: #f59e0b; }
-        .sync-btn { background: #8b5cf6; }
-        /* C Panel Button Style */
-        .cpanel-btn { background: #10b981; } 
-        .active-nav { outline: 2px solid white; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        /* Side Slide Menu Styling */
+        .side-menu { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card); z-index: 3000; transition: 0.3s ease; box-shadow: 5px 0 15px rgba(0,0,0,0.5); padding-top: 20px; }
+        .side-menu.open { left: 0; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; z-index: 2999; }
+        .menu-overlay.show { display: block; }
+        
+        .menu-header { padding: 20px; border-bottom: 1px solid #334155; margin-bottom: 10px; }
+        .menu-header h3 { margin: 0; color: var(--accent); font-size: 20px; }
 
+        .side-menu a, .side-menu button { display: flex; align-items: center; gap: 15px; width: 100%; padding: 15px 20px; color: white; text-decoration: none; border: none; background: none; font-size: 16px; text-align: left; cursor: pointer; border-bottom: 1px solid #1e293b; transition: 0.2s; box-sizing: border-box; }
+        .side-menu a:hover, .side-menu button:hover { background: #334155; }
+        .side-menu .icon { font-size: 20px; width: 25px; text-align: center; }
+
+        /* View & Other Styles */
         .view { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
         .hidden { display: none !important; }
 
@@ -59,15 +66,32 @@
 
     <button id="install-prompt" onclick="installApp()">📲 Install App</button>
 
+    <div class="menu-overlay" id="overlay" onclick="toggleMenu()"></div>
+
     <div class="header">
+        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
         <div class="mart-name">HAMMAD MART</div>
-        <div class="nav-btns">
-            <a href="https://hammad57.github.io/POS/dashboard.html" class="btn cpanel-btn">C PANEL 🖥️</a>
-            <a href="https://hammad57.github.io/POS/data.html" class="btn sync-btn">DATA 🔄</a>
-            <button id="nav-scan" onclick="switchView('scanner')" class="btn order-btn active-nav">SCANNER</button>
-            <a href="order.html" class="btn order-btn">ORDERS 📦</a>
-            <a href="manager.html" class="btn admin-btn">ADMIN ⚙️</a>
+    </div>
+
+    <div class="side-menu" id="sideMenu">
+        <div class="menu-header">
+            <h3>Navigation</h3>
         </div>
+        <button onclick="switchView('scanner'); toggleMenu();">
+            <span class="icon">📷</span> SCANNER
+        </button>
+        <a href="https://hammad57.github.io/POS/dashboard.html">
+            <span class="icon">🖥️</span> C PANEL
+        </a>
+        <a href="https://hammad57.github.io/POS/data.html">
+            <span class="icon">🔄</span> DATA SYNC
+        </a>
+        <a href="order.html">
+            <span class="icon">📦</span> ORDERS
+        </a>
+        <a href="manager.html">
+            <span class="icon">⚙️</span> ADMIN PANEL
+        </a>
     </div>
 
     <div id="scanner-view" class="view">
@@ -93,7 +117,7 @@
         <div id="p-en" style="font-size:22px; font-weight:bold; color:white;"></div>
         <div id="p-ur" style="font-size:26px; color:#94a3b8; margin: 5px 0;"></div>
         <div id="p-price" style="font-size:40px; color:var(--accent); font-weight:900;"></div>
-        <button class="btn" style="background:var(--accent); width:100%; padding:15px; border-radius:12px; font-size:18px; margin-top:15px;" onclick="closeResult()">CONTINUE SCANNING 🔄</button>
+        <button class="btn" style="background:var(--accent); width:100%; padding:15px; border-radius:12px; font-size:18px; color:white; border:none; margin-top:15px; cursor:pointer;" onclick="closeResult()">CONTINUE SCANNING 🔄</button>
     </div>
 
     <script>
@@ -110,6 +134,14 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+
+        // --- Menu Logic ---
+        function toggleMenu() {
+            const menu = document.getElementById('sideMenu');
+            const overlay = document.getElementById('overlay');
+            menu.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
 
         window.onload = () => {
             if ('serviceWorker' in navigator) {
@@ -141,7 +173,6 @@
             if (product) {
                 showProduct(product);
             } else {
-                // Not in memory? Search Online immediately
                 const onlineData = await fetchOnlineData();
                 product = onlineData ? onlineData.find(p => String(p.id).trim() == cleanId) : null;
                 
@@ -171,7 +202,6 @@
 
             renderDropdown(localMatches);
 
-            // If no local matches, search online after a short delay
             if (localMatches.length === 0) {
                 dropdown.innerHTML = '<div class="status-msg">Searching online... 🔍</div>';
                 dropdown.style.display = 'block';
