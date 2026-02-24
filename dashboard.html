@@ -32,7 +32,7 @@
 
     <nav class="bg-slate-900 text-white p-4 shadow-xl flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center space-x-6">
-            <a href="https://hammad57.github.io/POS/index.html" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full flex items-center font-medium transition-all shadow-lg active:scale-95">
+            <a href="https://hammad57.github.io/POS/index.html" target="_self" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full flex items-center font-medium transition-all shadow-lg active:scale-95">
                 <i class="fas fa-house-chimney mr-2"></i> Home
             </a>
             <div class="h-8 w-[1px] bg-slate-700 hidden md:block"></div>
@@ -93,7 +93,6 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 1. Icon Mapping Logic (Ye function naam dekh kar icon decide karta hy)
         function getIconClass(name) {
             const n = name.toLowerCase();
             if (n.includes('order') || n.includes('cart') || n.includes('buy')) return 'fa-basket-shopping';
@@ -106,10 +105,9 @@
             if (n.includes('food') || n.includes('menu')) return 'fa-utensils';
             if (n.includes('print')) return 'fa-print';
             
-            return 'fa-shapes'; // Default icon
+            return 'fa-shapes';
         }
 
-        // Modal Controls
         function toggleModal(show) {
             const modal = document.getElementById('addModal');
             modal.classList.toggle('hidden', !show);
@@ -119,7 +117,6 @@
             }
         }
 
-        // Save Data
         function saveToFirebase() {
             const name = document.getElementById('itemName').value;
             const link = document.getElementById('itemLink').value;
@@ -134,9 +131,9 @@
             }
         }
 
-        // Render Icons in Real-time
         database.ref('pos_icons').on('value', (snapshot) => {
             const grid = document.getElementById('dashboard-grid');
+            // Hum "New Module" button ko mehfooz rakhte hain
             const addButton = grid.firstElementChild.outerHTML;
             grid.innerHTML = addButton;
 
@@ -144,8 +141,9 @@
                 const data = childSnapshot.val();
                 const iconType = getIconClass(data.name);
                 
+                // TAB FIX: Yahan 'target="_blank"' ko hata kar 'target="_self"' kar diya hy
                 const iconHtml = `
-                    <a href="${data.link}" target="_blank" class="icon-card rounded-3xl p-6 flex flex-col items-center justify-center text-center">
+                    <a href="${data.link}" target="_self" class="icon-card rounded-3xl p-6 flex flex-col items-center justify-center text-center">
                         <div class="icon-wrapper w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl flex items-center justify-center mb-4 shadow-md shadow-indigo-100">
                             <i class="fas ${iconType} text-2xl"></i>
                         </div>
