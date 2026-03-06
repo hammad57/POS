@@ -2,15 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1200"> 
     <title>Expense & Income Tracker Pro</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        body { background-color: #f4f7f6; padding: 20px; font-family: 'Segoe UI', sans-serif; }
+        /* Force desktop width for all devices */
+        body { 
+            background-color: #f4f7f6; 
+            padding: 20px; 
+            font-family: 'Segoe UI', sans-serif; 
+            min-width: 1200px; /* Laptop view width */
+            overflow-x: auto; 
+        }
+        
         .summary-card { border-radius: 12px; color: white; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-height: 100px; }
         .bg-income { background: linear-gradient(45deg, #28a745, #85d36e); }
         .bg-expense { background: linear-gradient(45deg, #dc3545, #ff6b6b); }
@@ -19,19 +28,22 @@
         .bg-total-inc { background: linear-gradient(45deg, #20c997, #26af94); }
         .bg-total-exp { background: linear-gradient(45deg, #fd7e14, #f8a059); }
         
-        /* Floating Add Button - Moved to Right */
+        /* Floating Add Button - Right Side */
         .fab-add {
-            position: fixed; right: 30px; bottom: 30px; width: 60px; height: 60px;
+            position: fixed; right: 40px; bottom: 40px; width: 70px; height: 70px;
             border-radius: 50%; background: #0d6efd; color: white;
             display: flex; align-items: center; justify-content: center;
-            font-size: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-size: 35px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             cursor: pointer; z-index: 1000; transition: 0.3s;
         }
-        .fab-add:hover { transform: scale(1.1); background: #0b5ed7; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+        .fab-add:hover { transform: scale(1.1); background: #0b5ed7; }
 
         .chart-container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
-        .chart-wrapper { position: relative; height: 350px; width: 100%; margin-bottom: 20px; }
-        .detail-box { background: #fff3cd; border-left: 5px solid #ffca2c; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 0.95rem; max-height: 250px; overflow-y: auto; }
+        .chart-wrapper { position: relative; height: 380px; width: 100%; margin-bottom: 20px; }
+        .detail-box { background: #fff3cd; border-left: 5px solid #ffca2c; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 1rem; max-height: 250px; overflow-y: auto; }
+        
+        /* Table styles for Desktop Look */
+        .table { font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -40,31 +52,31 @@
     <i class="bi bi-plus-lg"></i>
 </div>
 
-<div class="container-fluid">
-    <h2 class="text-center mb-4 fw-bold text-dark"><i class="bi bi-wallet2"></i> Smart Financial Tracker</h2>
+<div class="container-fluid" style="width: 1200px; margin: 0 auto;">
+    <h2 class="text-center mb-4 fw-bold text-dark"><i class="bi bi-wallet2"></i> Financial Tracker (Desktop View)</h2>
 
     <div class="row text-center mb-4">
-        <div class="col-md-2 col-sm-4"><div class="summary-card bg-total-inc"><h6>Total Income</h6><h3 id="totalIncVal">0</h3></div></div>
-        <div class="col-md-2 col-sm-4"><div class="summary-card bg-total-exp"><h6>Total Expense</h6><h3 id="totalExpVal">0</h3></div></div>
-        <div class="col-md-2 col-sm-4"><div class="summary-card bg-income"><h6>Daily Profit</h6><h3 id="dailyVal">0</h3></div></div>
-        <div class="col-md-2 col-sm-4"><div class="summary-card bg-expense"><h6>Weekly Profit</h6><h3 id="weeklyVal">0</h3></div></div>
-        <div class="col-md-2 col-sm-4"><div class="summary-card bg-profit"><h6>Monthly Profit</h6><h3 id="monthlyVal">0</h3></div></div>
-        <div class="col-md-2 col-sm-4"><div class="summary-card bg-balance"><h6>Yearly Profit</h6><h3 id="yearlyVal">0</h3></div></div>
+        <div class="col-2"><div class="summary-card bg-total-inc"><h6>Total Income</h6><h3 id="totalIncVal">0</h3></div></div>
+        <div class="col-2"><div class="summary-card bg-total-exp"><h6>Total Expense</h6><h3 id="totalExpVal">0</h3></div></div>
+        <div class="col-2"><div class="summary-card bg-income"><h6>Daily Profit</h6><h3 id="dailyVal">0</h3></div></div>
+        <div class="col-2"><div class="summary-card bg-expense"><h6>Weekly Profit</h6><h3 id="weeklyVal">0</h3></div></div>
+        <div class="col-2"><div class="summary-card bg-profit"><h6>Monthly Profit</h6><h3 id="monthlyVal">0</h3></div></div>
+        <div class="col-2"><div class="summary-card bg-balance"><h6>Yearly Profit</h6><h3 id="yearlyVal">0</h3></div></div>
     </div>
 
     <div class="row justify-content-center">
-        <div class="col-md-11">
+        <div class="col-12">
             <ul class="nav nav-pills mb-3 shadow-sm bg-white p-2 rounded">
                 <li class="nav-item"><button class="nav-link active" onclick="setMode('All')">All Tracking</button></li>
-                <li class="nav-item"><button class="nav-link" onclick="setMode('Income')">Income</button></li>
-                <li class="nav-item"><button class="nav-link" onclick="setMode('Expense')">Expense</button></li>
+                <li class="nav-item"><button class="nav-link" onclick="setMode('Income')">Only Income</button></li>
+                <li class="nav-item"><button class="nav-link" onclick="setMode('Expense')">Only Expense</button></li>
             </ul>
 
             <div class="chart-container" id="pdfArea">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 id="chartTitle" class="fw-bold">Financial Analytics</h5>
                     <div class="d-flex gap-2">
-                        <input type="date" id="filterDate" class="form-control form-control-sm" style="width:160px;">
+                        <input type="date" id="filterDate" class="form-control form-control-sm" style="width:180px;">
                         <button class="btn btn-sm btn-primary" onclick="updateUI()"><i class="bi bi-search"></i> Load Data</button>
                         <button class="btn btn-sm btn-light border" onclick="clearFilter()">Reset</button>
                         <button class="btn btn-sm btn-outline-danger" onclick="downloadPDF()"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
@@ -94,7 +106,7 @@
 
 <div class="modal fade" id="entryModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content" style="width: 500px;">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title fw-bold" id="modalTitle">Add New Entry</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -140,15 +152,10 @@
     let currentMode = 'All';
     const bModal = new bootstrap.Modal(document.getElementById('entryModal'));
 
-    // Helper: Format Date to "01 Mar 2026"
     function formatFriendlyDate(dateStr) {
         if(!dateStr) return "";
-        const dateObj = new Date(dateStr);
-        return dateObj.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-        });
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
     window.setMode = (mode) => {
@@ -205,8 +212,6 @@
         filtered.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(t => {
             let rowColor = t.type === 'Income' ? 'text-success' : 'text-danger';
             if(t.type === 'Income') viewInc += t.amount; else viewExp += t.amount;
-
-            // Using Friendly Date here
             const displayDate = formatFriendlyDate(t.date);
 
             tbody.innerHTML += `<tr>
@@ -228,7 +233,7 @@
         });
 
         summaryHeader.innerHTML = `Summary -> Total Income: $${viewInc.toFixed(2)} | Total Expense: $${viewExp.toFixed(2)}`;
-        detailTxt.innerHTML = summaryStr || "Koi records nahi milay.";
+        detailTxt.innerHTML = summaryStr || "Records not found.";
         calculateProfits(filterD);
         renderChart(labels, incData, expData);
     }
@@ -241,14 +246,12 @@
         transactions.forEach(t => {
             const tDate = new Date(t.date);
             const val = t.type === 'Income' ? t.amount : -t.amount;
-            
             if (!selectedDate) {
                 if(t.type === 'Income') cardInc += t.amount; else cardExp += t.amount;
             } else if (t.date === selectedDate) {
                 if(t.type === 'Income') cardInc += t.amount; else cardExp += t.amount;
             }
-
-            const diff = Math.floor((new Date() - tDate) / (86400000));
+            const diff = Math.floor((new Date() - tDate) / 86400000);
             if (t.date === (selectedDate || todayStr)) dTotal += val;
             if (diff >= 0 && diff < 7) wTotal += val;
             if (tDate.getMonth() === new Date().getMonth()) mTotal += val;
@@ -266,7 +269,6 @@
     function renderChart(labels, inc, exp) {
         const ctx = document.getElementById('myChart');
         if(myChart) myChart.destroy();
-        
         myChart = new Chart(ctx, {
             type: 'bar',
             data: { 
@@ -276,11 +278,7 @@
                     { label: 'Expense', data: exp, backgroundColor: '#dc3545', borderRadius: 5 }
                 ] 
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'top' } }
-            }
+            options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
@@ -294,7 +292,7 @@
         bModal.show();
     };
 
-    window.deleteEntry = (id) => { if(confirm("Kya aap delete karna chahte hain?")) remove(ref(db, 'transactions/'+id)); };
+    window.deleteEntry = (id) => { if(confirm("Delete?")) remove(ref(db, 'transactions/'+id)); };
     window.downloadPDF = () => { html2pdf().from(document.getElementById('pdfArea')).save(); };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
