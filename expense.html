@@ -31,7 +31,6 @@
         .chart-container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .detail-box { background: #fff3cd; border-left: 6px solid #ffc107; padding: 20px; border-radius: 10px; margin-top: 20px; }
         .income-logic-area { background: #f8fff9; border: 2px dashed #28a745; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        #pdfReport { display: none; }
     </style>
 </head>
 <body>
@@ -138,9 +137,12 @@
     let filterDate = null;
     let myChart = null;
     const modalObj = new bootstrap.Modal(document.getElementById('entryModal'));
-    const getToday = () => new Date().toISOString().split('T')[0];
 
-    document.getElementById('filterDate').value = getToday();
+    // --- Helper: Date Format Function ---
+    function formatDateDisplay(dateStr) {
+        const options = { day: '2-digit', month: 'short', year: 'numeric' };
+        return new Date(dateStr).toLocaleDateString('en-GB', options);
+    }
 
     onValue(dbRef, (snap) => {
         allData = [];
@@ -152,63 +154,59 @@
         const tbody = document.getElementById('dataTable');
         tbody.innerHTML = '';
         
-        // Filter logic for Table & Chart
+        // Sorting: Ascending (Oldest to Newest)
         let filtered = allData.filter(t => {
             const matchesType = (currentTab === 'All' || t.type === currentTab);
             const matchesDate = (!filterDate || t.date === filterDate);
             return matchesType && matchesDate;
-        }).sort((a,b) => new Date(b.date) - new Date(a.date));
+        }).sort((a,b) => new Date(a.date) - new Date(b.date));
 
         let summaryHTML = "";
         filtered.forEach(t => {
             const isInc = t.type === 'Income';
+            const displayDate = formatDateDisplay(t.date); // Use Formatted Date
+
             tbody.innerHTML += `<tr>
-                <td>${t.date}</td>
+                <td>${displayDate}</td>
                 <td><span class="badge ${isInc?'bg-success':'bg-danger'}">${t.type}</span></td>
                 <td class="fw-bold">${t.amount.toFixed(2)}</td>
                 <td>${t.remarks}</td>
                 <td><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.id}')"><i class="bi bi-trash"></i></button></td>
             </tr>`;
-            summaryHTML += `• <b>${t.date}</b>: ${t.type} of $${t.amount.toFixed(2)} (${t.remarks})<br>`;
+            
+            summaryHTML += `• <b>${displayDate}</b>: ${t.type} of $${t.amount.toFixed(2)} (${t.remarks})<br>`;
         });
 
         document.getElementById('detailList').innerHTML = summaryHTML || "No transactions found.";
-        
-        // Update Cards and Chart
         updateCalculations(filterDate); 
         initChart(filtered);
     }
 
-    // --- NEW LOGIC: Date-wise Card Calculations ---
     function updateCalculations(selectedDate) {
         let displayInc = 0, displayExp = 0, totalBal = 0;
-        
-        // Calculate Total Balance (Always overall)
         allData.forEach(t => { totalBal += (t.type === 'Income' ? t.amount : -t.amount); });
-
-        // Calculate Card Values based on Filter Date
         allData.forEach(t => {
             if (!selectedDate || t.date === selectedDate) {
                 if(t.type === 'Income') displayInc += t.amount;
                 else displayExp += t.amount;
             }
         });
-
         document.getElementById('totalIncVal').innerText = displayInc.toFixed(2);
         document.getElementById('totalExpVal').innerText = displayExp.toFixed(2);
-        document.getElementById('dailyVal').innerText = (displayInc - displayExp).toFixed(2); // Daily Profit = Inc - Exp
+        document.getElementById('dailyVal').innerText = (displayInc - displayExp).toFixed(2);
         document.getElementById('balanceVal').innerText = totalBal.toFixed(2);
         
-        document.getElementById('sumHeader').innerText = `View: ${selectedDate || 'All'} | Income: $${displayInc.toFixed(2)} | Expense: $${displayExp.toFixed(2)}`;
+        const headerDate = selectedDate ? formatDateDisplay(selectedDate) : 'All Days';
+        document.getElementById('sumHeader').innerText = `View: ${headerDate} | Income: $${displayInc.toFixed(2)} | Expense: $${displayExp.toFixed(2)}`;
     }
 
     window.initChart = (data) => {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(myChart) myChart.destroy();
         const sorted = [...data].sort((a,b) => new Date(a.date) - new Date(b.date));
-        const labels = [...new Set(sorted.map(d => d.date))];
-        const incs = labels.map(l => sorted.filter(d => d.date === l && d.type === 'Income').reduce((s,c) => s+c.amount,0));
-        const exps = labels.map(l => sorted.filter(d => d.date === l && d.type === 'Expense').reduce((s,c) => s+c.amount,0));
+        const labels = [...new Set(sorted.map(d => formatDateDisplay(d.date)))];
+        const incs = labels.map(l => sorted.filter(d => formatDateDisplay(d.date) === l && d.type === 'Income').reduce((s,c) => s+c.amount,0));
+        const exps = labels.map(l => sorted.filter(d => formatDateDisplay(d.date) === l && d.type === 'Expense').reduce((s,c) => s+c.amount,0));
 
         myChart = new Chart(ctx, {
             type: 'bar',
@@ -235,7 +233,7 @@
 
     window.openModal = () => {
         document.getElementById('entryForm').reset();
-        document.getElementById('entryDate').value = getToday();
+        document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
         toggleForm();
         modalObj.show();
     };
@@ -244,13 +242,12 @@
         const type = document.getElementById('entryType').value;
         const incArea = document.getElementById('incomeLogic');
         const amtContainer = document.getElementById('amtContainer');
-        const remLabel = document.getElementById('remLabel');
         if(type === 'Income') {
-            incArea.style.display = 'block'; amtContainer.style.display = 'none'; remLabel.innerText = "Remarks";
+            incArea.style.display = 'block'; amtContainer.style.display = 'none';
             document.getElementById('openBal').value = (parseFloat(document.getElementById('balanceVal').innerText) || 0).toFixed(2);
         } else {
             incArea.style.display = 'none'; amtContainer.style.display = 'block';
-            document.getElementById('amtLabel').innerText = "Amount Expended"; remLabel.innerText = "Expense Detail";
+            document.getElementById('amtLabel').innerText = "Amount Expended";
         }
     };
 
@@ -273,10 +270,7 @@
         modalObj.hide();
     };
 
-    window.downloadPDF = () => {
-        const element = document.getElementById('summarySection');
-        html2pdf().from(element).save('Summary.pdf');
-    };
+    window.downloadPDF = () => { html2pdf().from(document.getElementById('summarySection')).save('Summary.pdf'); };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
