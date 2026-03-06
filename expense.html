@@ -29,6 +29,7 @@
 
         .chart-container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .income-logic-area { background: #f8fff9; border: 2px dashed #28a745; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        .table thead th { vertical-align: middle; text-align: center; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -65,12 +66,13 @@
         <div class="table-responsive mt-5">
             <h4 class="fw-bold mb-3 text-secondary">Financial Summary Report</h4>
             <table class="table table-bordered align-middle shadow-sm bg-white" id="summaryTable">
-                <thead class="table-dark text-center">
+                <thead class="table-dark">
                     <tr>
                         <th>Date</th>
-                        <th>Total Income</th>
-                        <th>Total Expense</th>
-                        <th>Daily Profit</th>
+                        <th>Opening Balance</th>
+                        <th>Income</th>
+                        <th>Expense</th>
+                        <th>Current Balance</th>
                         <th>Income/Expense Summary (Remarks)</th>
                         <th>Action</th>
                     </tr>
@@ -143,6 +145,7 @@
         const summaryBody = document.getElementById('summaryTableBody');
         summaryBody.innerHTML = '';
         
+        // 1. Group data by date
         const grouped = {};
         allData.forEach(t => {
             if (!grouped[t.date]) { grouped[t.date] = { income: 0, expense: 0, items: [] }; }
@@ -151,36 +154,44 @@
             grouped[t.date].items.push(t);
         });
 
+        // 2. Sort dates to calculate running balance
         const sortedDates = Object.keys(grouped).sort((a,b) => new Date(a) - new Date(b));
+        
+        let runningBalance = 0;
 
-        sortedDates.forEach(date => {
-            if (filterDate && date !== filterDate) return;
+        sortedDates.forEach((date) => {
             const data = grouped[date];
-            const profit = data.income - data.expense;
+            const openingBalForDay = runningBalance;
+            const currentDayClosing = openingBalForDay + data.income - data.expense;
             
-            // Logic: Filter out empty remarks and clean labels
-            let remarksList = data.items
-                .filter(item => item.remarks && item.remarks.trim() !== "" && item.remarks.toLowerCase() !== "n/a")
-                .map(item => `<b>${item.type}:</b> ${item.remarks}`)
-                .join(' | ');
+            // Apply filter only for display, but keep calculation for running balance
+            if (!filterDate || date === filterDate) {
+                let remarksList = data.items
+                    .filter(item => item.remarks && item.remarks.trim() !== "" && item.remarks.toLowerCase() !== "n/a")
+                    .map(item => `<b>${item.type}:</b> ${item.remarks}`)
+                    .join(' | ');
 
-            let actionButtons = data.items.map(item => `
-                <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
-                    <span class="badge ${item.type==='Income'?'bg-success':'bg-danger'}" style="width:60px;">${item.amount}</span>
-                    <button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editEntry('${item.id}')"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteEntry('${item.id}')"><i class="bi bi-trash"></i></button>
-                </div>
-            `).join('');
+                let actionButtons = data.items.map(item => `
+                    <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
+                        <span class="badge ${item.type==='Income'?'bg-success':'bg-danger'}" style="min-width:55px;">${item.amount}</span>
+                        <button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editEntry('${item.id}')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteEntry('${item.id}')"><i class="bi bi-trash"></i></button>
+                    </div>
+                `).join('');
 
-            summaryBody.innerHTML += `
-                <tr>
-                    <td class="text-center fw-bold">${formatDateDisplay(date)}</td>
-                    <td class="text-center text-success fw-bold">${data.income.toFixed(2)}</td>
-                    <td class="text-center text-danger fw-bold">${data.expense.toFixed(2)}</td>
-                    <td class="text-center ${profit >= 0 ? 'text-primary' : 'text-danger'} fw-bold">${profit.toFixed(2)}</td>
-                    <td class="small">${remarksList}</td>
-                    <td>${actionButtons}</td>
-                </tr>`;
+                summaryBody.innerHTML += `
+                    <tr>
+                        <td class="text-center fw-bold small">${formatDateDisplay(date)}</td>
+                        <td class="text-center fw-bold text-muted">${openingBalForDay.toFixed(2)}</td>
+                        <td class="text-center text-success fw-bold">${data.income.toFixed(2)}</td>
+                        <td class="text-center text-danger fw-bold">${data.expense.toFixed(2)}</td>
+                        <td class="text-center text-primary fw-bold">${currentDayClosing.toFixed(2)}</td>
+                        <td class="small">${remarksList}</td>
+                        <td>${actionButtons}</td>
+                    </tr>`;
+            }
+            
+            runningBalance = currentDayClosing; // Update for next day
         });
 
         updateCalculations(filterDate);
@@ -209,7 +220,7 @@
             document.getElementById('entryType').value = entry.type;
             document.getElementById('entryDate').value = entry.date;
             document.getElementById('entryAmount').value = entry.amount;
-            document.getElementById('entryRemarks').value = (entry.remarks === "N/A") ? "" : entry.remarks;
+            document.getElementById('entryRemarks').value = (entry.remarks === "N/A" || !entry.remarks) ? "" : entry.remarks;
             toggleForm();
             modalObj.show();
         }
