@@ -12,9 +12,8 @@
     
     <style>
         body { background-color: #f0f2f5; padding: 20px; font-family: 'Segoe UI', sans-serif; min-width: 1200px; }
-        .main-wrapper { width: 1100px; margin: 0 auto; }
+        .main-wrapper { width: 1150px; margin: 0 auto; }
         .summary-card { border-radius: 15px; color: white; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); cursor: pointer; transition: 0.3s; }
-        .summary-card:hover { transform: scale(1.05); filter: brightness(1.1); }
         .bg-income { background: linear-gradient(45deg, #2ecc71, #27ae60); }
         .bg-expense { background: linear-gradient(45deg, #e74c3c, #c0392b); }
         .bg-profit { background: linear-gradient(45deg, #3498db, #2980b9); }
@@ -29,7 +28,6 @@
         }
 
         .chart-container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .detail-box { background: #fff3cd; border-left: 6px solid #ffc107; padding: 20px; border-radius: 10px; margin-top: 20px; }
         .income-logic-area { background: #f8fff9; border: 2px dashed #28a745; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
     </style>
 </head>
@@ -41,18 +39,10 @@
     <h2 class="text-center mb-4 fw-bold"><i class="bi bi-bank"></i> Smart Financial Tracker</h2>
 
     <div class="row text-center mb-4">
-        <div class="col-3" onclick="updateView('Income')">
-            <div class="summary-card bg-income"><h6>Total Income</h6><h2 id="totalIncVal">0</h2></div>
-        </div>
-        <div class="col-3" onclick="updateView('Expense')">
-            <div class="summary-card bg-expense"><h6>Total Expense</h6><h2 id="totalExpVal">0</h2></div>
-        </div>
-        <div class="col-3" onclick="updateView('All')">
-            <div class="summary-card bg-profit"><h6>Daily Profit</h6><h2 id="dailyVal">0</h2></div>
-        </div>
-        <div class="col-3" onclick="updateView('All')">
-            <div class="summary-card bg-balance"><h6>Total Balance</h6><h2 id="balanceVal">0</h2></div>
-        </div>
+        <div class="col-3" onclick="updateView('Income')"><div class="summary-card bg-income"><h6>Total Income</h6><h2 id="totalIncVal">0</h2></div></div>
+        <div class="col-3" onclick="updateView('Expense')"><div class="summary-card bg-expense"><h6>Total Expense</h6><h2 id="totalExpVal">0</h2></div></div>
+        <div class="col-3" onclick="updateView('All')"><div class="summary-card bg-profit"><h6>Daily Profit</h6><h2 id="dailyVal">0</h2></div></div>
+        <div class="col-3" onclick="updateView('All')"><div class="summary-card bg-balance"><h6>Total Balance</h6><h2 id="balanceVal">0</h2></div></div>
     </div>
 
     <div class="chart-container">
@@ -72,17 +62,20 @@
 
         <div style="height: 350px; width: 100%;"><canvas id="mainChart"></canvas></div>
 
-        <div id="summarySection" class="detail-box">
-            <h5 class="fw-bold text-primary border-bottom pb-2" id="sumHeader">Financial Summary</h5>
-            <div id="detailList" class="mt-2">Loading data...</div>
-        </div>
-
-        <div class="table-responsive mt-4">
-            <table class="table table-hover align-middle shadow-sm bg-white rounded">
-                <thead class="table-dark">
-                    <tr><th>Date</th><th>Type</th><th>Amount</th><th>Details/Remarks</th><th>Action</th></tr>
+        <div class="table-responsive mt-5">
+            <h4 class="fw-bold mb-3 text-secondary">Financial Summary Report</h4>
+            <table class="table table-bordered align-middle shadow-sm bg-white" id="summaryTable">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>Date</th>
+                        <th>Total Income</th>
+                        <th>Total Expense</th>
+                        <th>Daily Profit</th>
+                        <th>Income/Expense Summary (Remarks)</th>
+                        <th>Action</th>
+                    </tr>
                 </thead>
-                <tbody id="dataTable"></tbody>
+                <tbody id="summaryTableBody"></tbody>
             </table>
         </div>
     </div>
@@ -92,11 +85,12 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold">Nayi Entry Karein</h5>
+                <h5 class="modal-title fw-bold" id="modalTitle">Nayi Entry Karein</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="entryForm">
+                    <input type="hidden" id="editKey">
                     <div class="mb-3">
                         <label class="fw-bold">Type</label>
                         <select id="entryType" class="form-select" onchange="toggleForm()" required>
@@ -108,10 +102,10 @@
                     <div id="incomeLogic" class="income-logic-area">
                         <div class="mb-2"><label class="small fw-bold text-muted">Opening Balance</label><input type="number" id="openBal" class="form-control bg-light" readonly></div>
                         <div class="mb-2"><label class="fw-bold">Today Balance</label><input type="number" id="todayBal" class="form-control" oninput="calcIncome()"></div>
-                        <div class="mb-0"><label class="small fw-bold text-success">Total Income (Profit)</label><input type="number" id="calcInc" class="form-control bg-light fw-bold" readonly></div>
+                        <div class="mb-0"><label class="small fw-bold text-success">Net Profit</label><input type="number" id="calcInc" class="form-control bg-light fw-bold" readonly></div>
                     </div>
                     <div class="mb-3" id="amtContainer"><label class="fw-bold" id="amtLabel">Amount</label><input type="number" id="entryAmount" class="form-control" step="0.01"></div>
-                    <div class="mb-3"><label class="fw-bold" id="remLabel">Remarks</label><textarea id="entryRemarks" class="form-control" rows="2"></textarea></div>
+                    <div class="mb-3"><label class="fw-bold">Remarks</label><textarea id="entryRemarks" class="form-control" rows="2" placeholder="Details yahan likhein..."></textarea></div>
                     <button type="submit" class="btn btn-primary w-100 fw-bold py-2">Save Record</button>
                 </form>
             </div>
@@ -121,13 +115,9 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-    const firebaseConfig = {
-      databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
-      projectId: "own-live-steam-web"
-    };
-
+    const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/", projectId: "own-live-steam-web" };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const dbRef = ref(db, 'transactions');
@@ -138,11 +128,10 @@
     let myChart = null;
     const modalObj = new bootstrap.Modal(document.getElementById('entryModal'));
 
-    // --- Helper: Date Format Function ---
-    function formatDateDisplay(dateStr) {
+    const formatDateDisplay = (dateStr) => {
         const options = { day: '2-digit', month: 'short', year: 'numeric' };
         return new Date(dateStr).toLocaleDateString('en-GB', options);
-    }
+    };
 
     onValue(dbRef, (snap) => {
         allData = [];
@@ -151,54 +140,82 @@
     });
 
     window.refreshUI = function() {
-        const tbody = document.getElementById('dataTable');
-        tbody.innerHTML = '';
+        const summaryBody = document.getElementById('summaryTableBody');
+        summaryBody.innerHTML = '';
         
-        // Sorting: Ascending (Oldest to Newest)
-        let filtered = allData.filter(t => {
-            const matchesType = (currentTab === 'All' || t.type === currentTab);
-            const matchesDate = (!filterDate || t.date === filterDate);
-            return matchesType && matchesDate;
-        }).sort((a,b) => new Date(a.date) - new Date(b.date));
-
-        let summaryHTML = "";
-        filtered.forEach(t => {
-            const isInc = t.type === 'Income';
-            const displayDate = formatDateDisplay(t.date); // Use Formatted Date
-
-            tbody.innerHTML += `<tr>
-                <td>${displayDate}</td>
-                <td><span class="badge ${isInc?'bg-success':'bg-danger'}">${t.type}</span></td>
-                <td class="fw-bold">${t.amount.toFixed(2)}</td>
-                <td>${t.remarks}</td>
-                <td><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.id}')"><i class="bi bi-trash"></i></button></td>
-            </tr>`;
-            
-            summaryHTML += `• <b>${displayDate}</b>: ${t.type} of $${t.amount.toFixed(2)} (${t.remarks})<br>`;
+        const grouped = {};
+        allData.forEach(t => {
+            if (!grouped[t.date]) { grouped[t.date] = { income: 0, expense: 0, items: [] }; }
+            if (t.type === 'Income') grouped[t.date].income += t.amount;
+            else grouped[t.date].expense += t.amount;
+            grouped[t.date].items.push(t);
         });
 
-        document.getElementById('detailList').innerHTML = summaryHTML || "No transactions found.";
-        updateCalculations(filterDate); 
-        initChart(filtered);
+        const sortedDates = Object.keys(grouped).sort((a,b) => new Date(a) - new Date(b));
+
+        sortedDates.forEach(date => {
+            if (filterDate && date !== filterDate) return;
+            const data = grouped[date];
+            const profit = data.income - data.expense;
+            
+            // Logic: Filter out empty remarks and clean labels
+            let remarksList = data.items
+                .filter(item => item.remarks && item.remarks.trim() !== "" && item.remarks.toLowerCase() !== "n/a")
+                .map(item => `<b>${item.type}:</b> ${item.remarks}`)
+                .join(' | ');
+
+            let actionButtons = data.items.map(item => `
+                <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                    <span class="badge ${item.type==='Income'?'bg-success':'bg-danger'}" style="width:60px;">${item.amount}</span>
+                    <button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editEntry('${item.id}')"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteEntry('${item.id}')"><i class="bi bi-trash"></i></button>
+                </div>
+            `).join('');
+
+            summaryBody.innerHTML += `
+                <tr>
+                    <td class="text-center fw-bold">${formatDateDisplay(date)}</td>
+                    <td class="text-center text-success fw-bold">${data.income.toFixed(2)}</td>
+                    <td class="text-center text-danger fw-bold">${data.expense.toFixed(2)}</td>
+                    <td class="text-center ${profit >= 0 ? 'text-primary' : 'text-danger'} fw-bold">${profit.toFixed(2)}</td>
+                    <td class="small">${remarksList}</td>
+                    <td>${actionButtons}</td>
+                </tr>`;
+        });
+
+        updateCalculations(filterDate);
+        initChart(allData.filter(t => !filterDate || t.date === filterDate));
     }
 
     function updateCalculations(selectedDate) {
-        let displayInc = 0, displayExp = 0, totalBal = 0;
-        allData.forEach(t => { totalBal += (t.type === 'Income' ? t.amount : -t.amount); });
-        allData.forEach(t => {
+        let dInc = 0, dExp = 0, tBal = 0;
+        allData.forEach(t => { 
+            tBal += (t.type === 'Income' ? t.amount : -t.amount); 
             if (!selectedDate || t.date === selectedDate) {
-                if(t.type === 'Income') displayInc += t.amount;
-                else displayExp += t.amount;
+                if(t.type === 'Income') dInc += t.amount; else dExp += t.amount;
             }
         });
-        document.getElementById('totalIncVal').innerText = displayInc.toFixed(2);
-        document.getElementById('totalExpVal').innerText = displayExp.toFixed(2);
-        document.getElementById('dailyVal').innerText = (displayInc - displayExp).toFixed(2);
-        document.getElementById('balanceVal').innerText = totalBal.toFixed(2);
-        
-        const headerDate = selectedDate ? formatDateDisplay(selectedDate) : 'All Days';
-        document.getElementById('sumHeader').innerText = `View: ${headerDate} | Income: $${displayInc.toFixed(2)} | Expense: $${displayExp.toFixed(2)}`;
+        document.getElementById('totalIncVal').innerText = dInc.toFixed(2);
+        document.getElementById('totalExpVal').innerText = dExp.toFixed(2);
+        document.getElementById('dailyVal').innerText = (dInc - dExp).toFixed(2);
+        document.getElementById('balanceVal').innerText = tBal.toFixed(2);
     }
+
+    window.editEntry = (id) => {
+        const entry = allData.find(i => i.id === id);
+        if (entry) {
+            document.getElementById('modalTitle').innerText = "Update Record";
+            document.getElementById('editKey').value = entry.id;
+            document.getElementById('entryType').value = entry.type;
+            document.getElementById('entryDate').value = entry.date;
+            document.getElementById('entryAmount').value = entry.amount;
+            document.getElementById('entryRemarks').value = (entry.remarks === "N/A") ? "" : entry.remarks;
+            toggleForm();
+            modalObj.show();
+        }
+    };
+
+    window.deleteEntry = (id) => { if(confirm("Delete this entry?")) remove(ref(db, 'transactions/'+id)); };
 
     window.initChart = (data) => {
         const ctx = document.getElementById('mainChart').getContext('2d');
@@ -207,7 +224,6 @@
         const labels = [...new Set(sorted.map(d => formatDateDisplay(d.date)))];
         const incs = labels.map(l => sorted.filter(d => formatDateDisplay(d.date) === l && d.type === 'Income').reduce((s,c) => s+c.amount,0));
         const exps = labels.map(l => sorted.filter(d => formatDateDisplay(d.date) === l && d.type === 'Expense').reduce((s,c) => s+c.amount,0));
-
         myChart = new Chart(ctx, {
             type: 'bar',
             data: { labels: labels, datasets: [
@@ -220,19 +236,19 @@
 
     window.updateView = (tab) => {
         currentTab = tab;
-        document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active', 'btn-primary'));
-        document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.add('btn-outline-primary'));
-        const activeBtn = tab === 'All' ? 'btnAll' : (tab === 'Income' ? 'btnInc' : 'btnExp');
-        if(document.getElementById(activeBtn)) document.getElementById(activeBtn).classList.replace('btn-outline-primary', 'btn-primary');
+        document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.replace('btn-primary', 'btn-outline-primary'));
+        const btnId = tab === 'All' ? 'btnAll' : (tab === 'Income' ? 'btnInc' : 'btnExp');
+        document.getElementById(btnId).classList.replace('btn-outline-primary', 'btn-primary');
         refreshUI();
     };
 
     window.applyFilter = () => { filterDate = document.getElementById('filterDate').value; refreshUI(); };
     window.resetFilter = () => { filterDate = null; refreshUI(); };
-    window.deleteEntry = (id) => { if(confirm("Are you sure?")) remove(ref(db, 'transactions/'+id)); };
-
+    
     window.openModal = () => {
         document.getElementById('entryForm').reset();
+        document.getElementById('editKey').value = "";
+        document.getElementById('modalTitle').innerText = "Nayi Entry Karein";
         document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
         toggleForm();
         modalObj.show();
@@ -254,23 +270,27 @@
     window.calcIncome = () => {
         const ob = parseFloat(document.getElementById('openBal').value) || 0;
         const tb = parseFloat(document.getElementById('todayBal').value) || 0;
-        const diff = tb - ob;
-        document.getElementById('calcInc').value = diff.toFixed(2);
-        document.getElementById('entryAmount').value = diff;
+        document.getElementById('calcInc').value = (tb - ob).toFixed(2);
+        document.getElementById('entryAmount').value = (tb - ob);
     };
 
     document.getElementById('entryForm').onsubmit = (e) => {
         e.preventDefault();
-        push(dbRef, {
+        const key = document.getElementById('editKey').value;
+        const data = {
             type: document.getElementById('entryType').value,
             date: document.getElementById('entryDate').value,
             amount: parseFloat(document.getElementById('entryAmount').value),
-            remarks: document.getElementById('entryRemarks').value || "N/A"
-        });
+            remarks: document.getElementById('entryRemarks').value || ""
+        };
+        key ? set(ref(db, 'transactions/'+key), data) : push(dbRef, data);
         modalObj.hide();
     };
 
-    window.downloadPDF = () => { html2pdf().from(document.getElementById('summarySection')).save('Summary.pdf'); };
+    window.downloadPDF = () => { 
+        const element = document.getElementById('summaryTable');
+        html2pdf().from(element).save('Finance_Summary.pdf');
+    };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
