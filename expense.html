@@ -19,7 +19,8 @@
         .bg-income { background: linear-gradient(45deg, #2ecc71, #27ae60); }
         .bg-expense { background: linear-gradient(45deg, #e74c3c, #c0392b); }
         .bg-profit { background: linear-gradient(45deg, #3498db, #2980b9); }
-        .bg-balance { background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+        .bg-today-inc { background: linear-gradient(45deg, #20c997, #1aa179); }
+        .bg-today-exp { background: linear-gradient(45deg, #fd7e14, #e36a0b); }
         
         .fab-add {
             position: fixed; right: 50px; bottom: 50px; width: 90px; height: 90px;
@@ -34,7 +35,6 @@
         .income-logic-area { background: #f8fff9; border: 2px dashed #28a745; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
         .table thead th { vertical-align: middle; text-align: center; font-size: 14px; }
 
-        /* Scrollbar Styling */
         .chart-wrapper { overflow-x: auto; overflow-y: hidden; padding-bottom: 15px; margin-top: 15px; }
         .chart-wrapper::-webkit-scrollbar { height: 12px; }
         .chart-wrapper::-webkit-scrollbar-track { background: #e9ecef; border-radius: 6px; }
@@ -50,11 +50,14 @@
     <h2 class="text-center mb-4 fw-bold"><i class="bi bi-bank"></i> Smart Financial Tracker</h2>
 
     <div class="row text-center mb-4">
-        <div class="col-3" onclick="updateView('Income')"><div class="summary-card bg-income"><h6>Total Income</h6><h2 id="totalIncVal">0</h2></div></div>
-        <div class="col-3" onclick="updateView('Expense')"><div class="summary-card bg-expense"><h6>Total Expense</h6><h2 id="totalExpVal">0</h2></div></div>
-        <div class="col-3" onclick="updateView('All')"><div class="summary-card bg-profit"><h6>Daily Profit</h6><h2 id="dailyVal">0</h2></div></div>
-        <div class="col-3" onclick="updateView('All')"><div class="summary-card bg-balance"><h6>Total Balance</h6><h2 id="balanceVal">0</h2></div></div>
+        <div class="col" onclick="updateView('Income')"><div class="summary-card bg-income"><h6>Total Income</h6><h2 id="totalIncVal">0</h2></div></div>
+        <div class="col" onclick="updateView('Expense')"><div class="summary-card bg-expense"><h6>Total Expense</h6><h2 id="totalExpVal">0</h2></div></div>
+        <div class="col" onclick="updateView('All')"><div class="summary-card bg-profit"><h6>Daily Profit</h6><h2 id="dailyVal">0</h2></div></div>
+        <div class="col" onclick="updateView('Income')"><div class="summary-card bg-today-inc"><h6>Today Income</h6><h2 id="todayIncVal">0</h2></div></div>
+        <div class="col" onclick="updateView('Expense')"><div class="summary-card bg-today-exp"><h6>Today Expense</h6><h2 id="todayExpVal">0</h2></div></div>
     </div>
+    
+    <span id="balanceVal" style="display: none;">0</span>
 
     <div class="chart-container">
         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
@@ -129,7 +132,7 @@
                     <div id="incomeLogic" class="income-logic-area">
                         <div class="mb-2"><label class="small fw-bold text-muted">Opening Balance</label><input type="number" id="openBal" class="form-control bg-light" readonly></div>
                         <div class="mb-2"><label class="fw-bold">Today Balance</label><input type="number" id="todayBal" class="form-control" oninput="calcIncome()"></div>
-                        <div class="mb-0"><label class="small fw-bold text-success">Net Profit</label><input type="number" id="calcInc" class="form-control bg-light fw-bold" readonly></div>
+                        <div class="mb-0"><label class="small fw-bold text-success">Amount (Income)</label><input type="number" id="calcInc" class="form-control bg-light fw-bold" readonly></div>
                     </div>
                     <div class="mb-3" id="amtContainer"><label class="fw-bold" id="amtLabel">Amount</label><input type="number" id="entryAmount" class="form-control" step="0.01"></div>
                     <div class="mb-3"><label class="fw-bold">Remarks</label><textarea id="entryRemarks" class="form-control" rows="2" placeholder="Details yahan likhein..."></textarea></div>
@@ -144,7 +147,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-    // Register Chart DataLabels Plugin
     Chart.register(ChartDataLabels);
 
     const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/", projectId: "own-live-steam-web" };
@@ -157,6 +159,9 @@
     let filterDate = null;
     let myChart = null;
     const modalObj = new bootstrap.Modal(document.getElementById('entryModal'));
+
+    // Set Default Current Date in Filter input field
+    document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
 
     const formatDateDisplay = (dateStr) => {
         const options = { day: '2-digit', month: 'short', year: 'numeric' };
@@ -233,16 +238,35 @@
 
     function updateCalculations(selectedDate) {
         let dInc = 0, dExp = 0, tBal = 0;
+        let todayInc = 0, todayExp = 0;
+        let lastDate = "";
+
+        // Find the most recent date in the records
+        if (allData.length > 0) {
+            const sortedDates = [...new Set(allData.map(t => t.date))].sort((a,b) => new Date(a) - new Date(b));
+            lastDate = sortedDates[sortedDates.length - 1]; 
+        }
+
         allData.forEach(t => { 
             tBal += (t.type === 'Income' ? t.amount : -t.amount); 
+            
             if (!selectedDate || t.date === selectedDate) {
                 if(t.type === 'Income') dInc += t.amount; else dExp += t.amount;
             }
+            
+            // Calculate Income/Expense only for the "last date"
+            if (t.date === lastDate) {
+                if(t.type === 'Income') todayInc += t.amount; else todayExp += t.amount;
+            }
         });
+
         document.getElementById('totalIncVal').innerText = dInc.toFixed(2);
         document.getElementById('totalExpVal').innerText = dExp.toFixed(2);
         document.getElementById('dailyVal').innerText = (dInc - dExp).toFixed(2);
-        document.getElementById('balanceVal').innerText = tBal.toFixed(2);
+        document.getElementById('balanceVal').innerText = tBal.toFixed(2); // Hidden field updated safely
+        
+        document.getElementById('todayIncVal').innerText = todayInc.toFixed(2);
+        document.getElementById('todayExpVal').innerText = todayExp.toFixed(2);
     }
 
     window.editEntry = (id) => {
@@ -270,15 +294,10 @@
         const incs = labels.map(l => sorted.filter(d => formatDateDisplay(d.date) === l && d.type === 'Income').reduce((s,c) => s+c.amount,0));
         const exps = labels.map(l => sorted.filter(d => formatDateDisplay(d.date) === l && d.type === 'Expense').reduce((s,c) => s+c.amount,0));
         
-        // Slide / Width Logic
         const chartBox = document.getElementById('chartBox');
-        if (labels.length > 5) {
-            chartBox.style.width = (labels.length * 15) + '%'; 
-        } else {
-            chartBox.style.width = '100%';
-        }
+        if (labels.length > 5) { chartBox.style.width = (labels.length * 15) + '%'; } 
+        else { chartBox.style.width = '100%'; }
 
-        // Shape Selection Logic
         const shape = document.getElementById('chartShape') ? document.getElementById('chartShape').value : 'bar';
         let chartType = 'bar';
         let isArea = false;
@@ -291,22 +310,18 @@
         else { chartType = shape; }
 
         let datasetsArray = [];
-        
         if (currentTab === 'All' || currentTab === 'Income') {
             datasetsArray.push({ 
                 label: 'Income', data: incs, 
                 backgroundColor: isArea ? 'rgba(46, 204, 113, 0.4)' : '#2ecc71', 
-                borderColor: '#2ecc71', fill: isArea, borderWidth: 2, tension: 0.3,
-                stepped: stepped
+                borderColor: '#2ecc71', fill: isArea, borderWidth: 2, tension: 0.3, stepped: stepped
             });
         }
-        
         if (currentTab === 'All' || currentTab === 'Expense') {
             datasetsArray.push({ 
                 label: 'Expense', data: exps, 
                 backgroundColor: isArea ? 'rgba(231, 76, 60, 0.4)' : '#e74c3c', 
-                borderColor: '#e74c3c', fill: isArea, borderWidth: 2, tension: 0.3,
-                stepped: stepped
+                borderColor: '#e74c3c', fill: isArea, borderWidth: 2, tension: 0.3, stepped: stepped
             });
         }
 
@@ -314,15 +329,11 @@
             type: chartType,
             data: { labels: labels, datasets: datasetsArray },
             options: { 
-                responsive: true, maintainAspectRatio: false,
-                indexAxis: indexAxis,
+                responsive: true, maintainAspectRatio: false, indexAxis: indexAxis,
                 plugins: {
                     datalabels: {
-                        color: '#333',
-                        font: { weight: 'bold', size: 11 },
-                        anchor: 'end',
-                        align: 'end',
-                        formatter: (value) => { return value > 0 ? value : ''; } // Sirf wo values show karein jo 0 se bari hain
+                        color: '#333', font: { weight: 'bold', size: 11 }, anchor: 'end', align: 'end',
+                        formatter: (value) => { return value > 0 ? value : ''; }
                     }
                 },
                 scales: (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea' || chartType === 'radar') ? {} : { 
@@ -366,10 +377,9 @@
     };
 
     window.calcIncome = () => {
-        const ob = parseFloat(document.getElementById('openBal').value) || 0;
         const tb = parseFloat(document.getElementById('todayBal').value) || 0;
-        document.getElementById('calcInc').value = (tb - ob).toFixed(2);
-        document.getElementById('entryAmount').value = (tb - ob);
+        document.getElementById('calcInc').value = tb.toFixed(2);
+        document.getElementById('entryAmount').value = tb;
     };
 
     document.getElementById('entryForm').onsubmit = (e) => {
