@@ -44,6 +44,7 @@
 
         .bank-card-mini { min-width: 190px; border-left: 5px solid var(--accent-blue); padding: 15px; }
         .bank-card-mini .bal-amt { font-size: 1.1rem; font-weight: 700; color: var(--accent-blue); }
+        .bank-card-mini .acc-num { font-size: 0.75rem; color: #636e72; margin-top: -5px; display: block; }
 
         .grad-balance { background: linear-gradient(145deg, #0984e3, #0056b3); color: white; }
         .grad-income { background: linear-gradient(145deg, #00b894, #008967); color: white; }
@@ -103,13 +104,7 @@
         <div class="table-responsive">
             <table class="table align-middle">
                 <thead class="table-light">
-                    <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Remarks</th>
-                        <th class="text-center">Actions</th>
-                    </tr>
+                    <tr><th>Date</th><th>Type</th><th>Amount</th><th>Remarks</th><th class="text-center">Actions</th></tr>
                 </thead>
                 <tbody id="transactionBody"></tbody>
             </table>
@@ -121,11 +116,18 @@
 
 <div class="modal fade" id="bankModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 p-3">
-            <h5 class="fw-bold mb-3">Add New Bank</h5>
+        <div class="modal-content rounded-4 p-4 shadow-lg border-0">
+            <h5 class="fw-bold mb-3 text-primary">Add New Bank</h5>
             <form id="bankForm">
-                <input type="text" id="newBankName" class="form-control mb-3" placeholder="Bank Name" required>
-                <button type="submit" class="btn btn-primary w-100">Save Bank</button>
+                <div class="mb-3">
+                    <label class="small fw-bold">Bank Name</label>
+                    <input type="text" id="newBankName" class="form-control" placeholder="e.g. HBL, Easypaisa" required>
+                </div>
+                <div class="mb-4">
+                    <label class="small fw-bold">Bank Account Number</label>
+                    <input type="text" id="newBankNumber" class="form-control" placeholder="e.g. 0342xxxxxxx">
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow">Save Bank Account</button>
             </form>
         </div>
     </div>
@@ -133,16 +135,16 @@
 
 <div class="modal fade" id="entryModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 p-4">
-            <h5 class="fw-bold mb-4" id="modalTitle">New Transaction</h5>
+        <div class="modal-content rounded-4 p-4 shadow-lg border-0">
+            <h5 class="fw-bold mb-4 text-primary" id="modalTitle">New Transaction</h5>
             <form id="entryForm">
                 <input type="hidden" id="editKey">
                 <div class="mb-3"><label class="small fw-bold">Select Bank</label><select id="entryBank" class="form-select" required></select></div>
                 <div class="mb-3"><label class="small fw-bold">Type</label><select id="entryType" class="form-select"><option value="Income">Income</option><option value="Expense">Expense</option></select></div>
                 <div class="mb-3"><label class="small fw-bold">Amount</label><input type="number" id="entryAmt" class="form-control" required></div>
                 <div class="mb-3"><label class="small fw-bold">Date</label><input type="date" id="entryDate" class="form-control" required></div>
-                <div class="mb-4"><label class="small fw-bold">Remarks / Detail</label><textarea id="entryRemarks" class="form-control" rows="2" placeholder="Transaction details..."></textarea></div>
-                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Save Record</button>
+                <div class="mb-4"><label class="small fw-bold">Remarks / Detail</label><textarea id="entryRemarks" class="form-control" rows="2" placeholder="Details..."></textarea></div>
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow">Save Record</button>
             </form>
         </div>
     </div>
@@ -188,7 +190,12 @@
         container.innerHTML = '';
         allBanks.forEach(bank => {
             const balance = allTransactions.filter(t => t.bankId === bank.id).reduce((s, t) => s + (t.type === 'Income' ? parseFloat(t.amount) : -parseFloat(t.amount)), 0);
-            container.innerHTML += `<div class="card-3d bank-card-mini" onclick="selectBank('${bank.id}')"><h6>${bank.name}</h6><div class="bal-amt">Rs. ${balance.toLocaleString()}</div></div>`;
+            container.innerHTML += `
+                <div class="card-3d bank-card-mini" onclick="selectBank('${bank.id}')">
+                    <h6>${bank.name}</h6>
+                    <span class="acc-num">${bank.number || '---'}</span>
+                    <div class="bal-amt">Rs. ${balance.toLocaleString()}</div>
+                </div>`;
         });
         document.getElementById('entryBank').innerHTML = allBanks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
     }
@@ -283,8 +290,12 @@
     window.openBankModal = () => bModal.show();
     document.getElementById('bankForm').onsubmit = (e) => {
         e.preventDefault();
-        push(ref(db, 'bank_accounts'), { name: document.getElementById('newBankName').value });
+        push(ref(db, 'bank_accounts'), { 
+            name: document.getElementById('newBankName').value,
+            number: document.getElementById('newBankNumber').value
+        });
         bModal.hide();
+        document.getElementById('bankForm').reset();
     };
 
     window.updateView = (v) => { currentFilter = v; initChart(); };
