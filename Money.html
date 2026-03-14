@@ -75,7 +75,7 @@
             <i class="bi bi-safe2-fill text-primary" style="font-size: 3rem;"></i>
         </div>
         <h2 class="fw-bold mb-2">Money Vault <span class="text-primary">3D Pro</span></h2>
-        <p class="text-muted mb-5 small">Session expires automatically after 30 minutes. Login with Gmail to continue.</p>
+        <p class="text-muted mb-5 small">Secure your financial data. Session expires automatically after 30 minutes.</p>
         
         <button id="googleLoginBtn" class="btn google-btn-custom rounded-pill py-3 px-4 fw-bold w-100 d-flex align-items-center justify-content-center gap-3 shadow">
             <i class="bi bi-google"></i> Sign in with Google
@@ -208,7 +208,7 @@
     const eModal = new bootstrap.Modal(document.getElementById('entryModal'));
     const tModal = new bootstrap.Modal(document.getElementById('transferModal'));
 
-    // Authentication Logic
+    // --- Authentication Logic ---
     const showApp = () => { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('appContent').style.display = 'block'; };
     const showLogin = () => { document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; };
 
@@ -219,16 +219,21 @@
         });
     };
 
-    // Check Redirect on load
+    // 1. Check Redirect Result when page loads
     getRedirectResult(auth).then((result) => {
-        if (result) localStorage.setItem('vault_login_time', Date.now());
-    }).catch((e) => alert("Login Error: " + e.message));
+        if (result) {
+            localStorage.setItem('vault_login_time', Date.now());
+        }
+    }).catch((e) => {
+        console.error("Redirect Result Error:", e);
+    });
 
+    // 2. Monitor Auth State
     onAuthStateChanged(auth, (user) => {
         if (user) {
             const loginTime = localStorage.getItem('vault_login_time');
             if (loginTime && (Date.now() - parseInt(loginTime) > SESSION_LIMIT)) {
-                alert("Session Expired!");
+                alert("Session Expired! Please login again.");
                 handleLogout();
             } else {
                 showApp();
@@ -238,10 +243,11 @@
         }
     });
 
+    // 3. Login Trigger (Using Redirect for Mobile Compatibility)
     document.getElementById('googleLoginBtn').onclick = () => signInWithRedirect(auth, provider);
     document.getElementById('logoutBtn').onclick = () => confirm("Logout?") && handleLogout();
 
-    // Data Sync Logic
+    // --- Data Sync & UI Logic ---
     onValue(ref(db, 'bank_accounts'), (snap) => {
         allBanks = [];
         snap.forEach(c => { allBanks.push({ id: c.key, ...c.val() }); });
@@ -333,7 +339,7 @@
     };
 
     window.openTransferModal = () => { document.getElementById('transferDate').value = new Date().toISOString().split('T')[0]; tModal.show(); };
-    window.deleteEntry = (bId, tId) => confirm("Delete?") && remove(ref(db, `bank_transactions/${bId}/${tId}`));
+    window.deleteEntry = (bId, tId) => confirm("Delete record?") && remove(ref(db, `bank_transactions/${bId}/${tId}`));
     window.openBankModal = () => bModal.show();
     window.openTransactionModal = () => { document.getElementById('entryForm').reset(); document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; eModal.show(); };
     
