@@ -30,10 +30,10 @@
 
         body { background-color: var(--bg-body); font-family: 'Poppins', sans-serif; color: var(--text-color); padding: 25px; transition: 0.3s; }
         
-        /* NEW: Login Screen specific styles */
+        /* Login Screen styling */
         #loginScreen { min-height: 90vh; display: flex; align-items: center; justify-content: center; }
-        .google-btn-custom { background: var(--card-main); color: var(--text-color); border: 2px solid #ea4335; transition: 0.3s; }
-        .google-btn-custom:hover { background: #ea4335; color: white; transform: translateY(-3px); }
+        .google-btn-custom { background: #ea4335; color: white; border: none; transition: 0.3s; }
+        .google-btn-custom:hover { background: #d33828; transform: translateY(-3px); }
 
         .main-container { width: 1150px; margin: 0 auto; }
 
@@ -75,13 +75,10 @@
             <i class="bi bi-safe2-fill text-primary" style="font-size: 3rem;"></i>
         </div>
         <h2 class="fw-bold mb-2">Money Vault <span class="text-primary">3D Pro</span></h2>
-        <p class="text-muted mb-5 small">Secure your financial data. Session expires automatically after 30 minutes of inactivity.</p>
+        <p class="text-muted mb-5 small">Session expires automatically after 30 minutes. Login with Gmail to continue.</p>
         
-        <button id="googleLoginBtn" class="btn google-btn-custom rounded-pill py-3 px-4 fw-bold w-100 d-flex align-items-center justify-content-center gap-3 shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-google" viewBox="0 0 16 16">
-                <path d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.689 7.689 0 0 1 5.352 2.082l-2.284 2.284A4.347 4.347 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.792 4.792 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.702 3.702 0 0 0 1.599-2.431H8v-3.08h7.545z"/>
-            </svg>
-            Sign in with Google
+        <button id="googleLoginBtn" class="btn google-btn-custom rounded-pill py-3 px-4 fw-bold w-100 d-flex align-items-center justify-content-center gap-3 shadow">
+            <i class="bi bi-google"></i> Sign in with Google
         </button>
     </div>
 </div>
@@ -106,7 +103,7 @@
                     <option value="light">☀️ Light</option>
                     <option value="dark">🌙 Dark</option>
                 </select>
-                <button id="logoutBtn" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
+                <button id="logoutBtn" class="btn btn-danger rounded-pill px-3 shadow-sm">
                     <i class="bi bi-box-arrow-right"></i>
                 </button>
             </div>
@@ -140,9 +137,10 @@
             </div>
         </div>
     </div>
-
     <button class="fab-btn" onclick="openTransactionModal()"><i class="bi bi-plus-lg"></i></button>
-</div> <div class="modal fade" id="bankModal" tabindex="-1">
+</div>
+
+<div class="modal fade" id="bankModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 p-4 border-0">
             <h5 class="fw-bold mb-3">Add New Bank</h5>
@@ -158,10 +156,10 @@
 <div class="modal fade" id="transferModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 p-4 border-0">
-            <h5 class="fw-bold mb-4 text-warning"><i class="bi bi-arrow-left-right me-2"></i>Inter-Bank Transfer</h5>
+            <h5 class="fw-bold mb-4 text-warning">Inter-Bank Transfer</h5>
             <form id="transferForm">
-                <div class="mb-3"><label class="small fw-bold">From Bank (Paisa Nikalega)</label><select id="fromBank" class="form-select" required></select></div>
-                <div class="mb-3"><label class="small fw-bold">To Bank (Paisa Jayega)</label><select id="toBank" class="form-select" required></select></div>
+                <div class="mb-3"><label class="small fw-bold">From Bank</label><select id="fromBank" class="form-select" required></select></div>
+                <div class="mb-3"><label class="small fw-bold">To Bank</label><select id="toBank" class="form-select" required></select></div>
                 <div class="mb-3"><label class="small fw-bold">Amount</label><input type="number" id="transferAmt" class="form-control" required></div>
                 <div class="mb-3"><label class="small fw-bold">Date</label><input type="date" id="transferDate" class="form-control" required></div>
                 <button type="submit" class="btn btn-warning w-100 py-2 fw-bold">Transfer Now</button>
@@ -190,19 +188,15 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-    
-    // NEW: Import Authentication modules
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
     Chart.register(ChartDataLabels);
     const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/", projectId: "own-live-steam-web" };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    
-    // NEW: Initialize Auth
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
-    const SESSION_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+    const SESSION_LIMIT = 30 * 60 * 1000; // 30 mins
 
     let allBanks = [];
     let allTransactions = [];
@@ -214,60 +208,40 @@
     const eModal = new bootstrap.Modal(document.getElementById('entryModal'));
     const tModal = new bootstrap.Modal(document.getElementById('transferModal'));
 
-    // NEW: Session & Auth Logic
-    function handleLogout(showMsg = false) {
+    // Authentication Logic
+    const showApp = () => { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('appContent').style.display = 'block'; };
+    const showLogin = () => { document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; };
+
+    const handleLogout = () => {
         signOut(auth).then(() => {
-            localStorage.removeItem('money_vault_login_time');
-            if(showMsg) alert("Session Expired! Please login again.");
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('appContent').style.display = 'none';
+            localStorage.removeItem('vault_login_time');
+            showLogin();
         });
-    }
+    };
 
-    function checkSessionTime() {
-        const lastTime = localStorage.getItem('money_vault_login_time');
-        if (lastTime && (Date.now() - parseInt(lastTime) > SESSION_DURATION)) {
-            handleLogout(true);
-        }
-    }
-
-    // Check session every 1 minute in the background
-    setInterval(checkSessionTime, 60000);
+    // Check Redirect on load
+    getRedirectResult(auth).then((result) => {
+        if (result) localStorage.setItem('vault_login_time', Date.now());
+    }).catch((e) => alert("Login Error: " + e.message));
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            const lastTime = localStorage.getItem('money_vault_login_time');
-            if (!lastTime || (Date.now() - parseInt(lastTime) > SESSION_DURATION)) {
-                // User opened file after 30 mins
-                handleLogout(true);
+            const loginTime = localStorage.getItem('vault_login_time');
+            if (loginTime && (Date.now() - parseInt(loginTime) > SESSION_LIMIT)) {
+                alert("Session Expired!");
+                handleLogout();
             } else {
-                // Valid Session - Show App
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('appContent').style.display = 'block';
+                showApp();
             }
         } else {
-            // Not logged in
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('appContent').style.display = 'none';
+            showLogin();
         }
     });
 
-    document.getElementById('googleLoginBtn').addEventListener('click', () => {
-        signInWithPopup(auth, provider).then((result) => {
-            localStorage.setItem('money_vault_login_time', Date.now()); // Save time
-            console.log("Welcome,", result.user.displayName);
-        }).catch((error) => {
-            console.error("Login Error: ", error);
-        });
-    });
+    document.getElementById('googleLoginBtn').onclick = () => signInWithRedirect(auth, provider);
+    document.getElementById('logoutBtn').onclick = () => confirm("Logout?") && handleLogout();
 
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        if(confirm("Are you sure you want to logout?")) {
-            handleLogout(false);
-        }
-    });
-
-    // EXISTING LOGIC STARTS HERE
+    // Data Sync Logic
     onValue(ref(db, 'bank_accounts'), (snap) => {
         allBanks = [];
         snap.forEach(c => { allBanks.push({ id: c.key, ...c.val() }); });
@@ -298,9 +272,7 @@
                 </div>`;
         });
         const options = allBanks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-        document.getElementById('entryBank').innerHTML = options;
-        document.getElementById('fromBank').innerHTML = options;
-        document.getElementById('toBank').innerHTML = options;
+        ['entryBank', 'fromBank', 'toBank'].forEach(id => document.getElementById(id).innerHTML = options);
     }
 
     function updateSummary() {
@@ -327,12 +299,7 @@
                     { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 20 }
                 ]
             },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: {
-                    datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' }, formatter: (v) => v > 0 ? 'Rs.' + v : '' }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } } }
         });
     };
 
@@ -348,7 +315,6 @@
                 <td>Rs. ${t.amount}</td>
                 <td>${t.remarks || '---'}</td>
                 <td class="text-center">
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button>
                     <button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button>
                 </td>
             </tr>`).join('');
@@ -360,24 +326,14 @@
         const to = document.getElementById('toBank').value;
         const amt = document.getElementById('transferAmt').value;
         const dt = document.getElementById('transferDate').value;
-        const fromName = allBanks.find(b => b.id === from).name;
-        const toName = allBanks.find(b => b.id === to).name;
-
         if(from === to) return alert("Select different banks!");
-
-        push(ref(db, `bank_transactions/${from}`), { type: 'Expense', amount: amt, date: dt, remarks: `Transfer To ${toName}` });
-        push(ref(db, `bank_transactions/${to}`), { type: 'Income', amount: amt, date: dt, remarks: `Transfer From ${fromName}` });
-        
+        push(ref(db, `bank_transactions/${from}`), { type: 'Expense', amount: amt, date: dt, remarks: `To ${allBanks.find(b=>b.id===to).name}` });
+        push(ref(db, `bank_transactions/${to}`), { type: 'Income', amount: amt, date: dt, remarks: `From ${allBanks.find(b=>b.id===from).name}` });
         tModal.hide();
-        document.getElementById('transferForm').reset();
     };
 
-    window.openTransferModal = () => {
-        document.getElementById('transferDate').value = new Date().toISOString().split('T')[0];
-        tModal.show();
-    };
-
-    window.deleteEntry = (bId, tId) => { if(confirm("Delete record?")) remove(ref(db, `bank_transactions/${bId}/${tId}`)); };
+    window.openTransferModal = () => { document.getElementById('transferDate').value = new Date().toISOString().split('T')[0]; tModal.show(); };
+    window.deleteEntry = (bId, tId) => confirm("Delete?") && remove(ref(db, `bank_transactions/${bId}/${tId}`));
     window.openBankModal = () => bModal.show();
     window.openTransactionModal = () => { document.getElementById('entryForm').reset(); document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; eModal.show(); };
     
@@ -389,9 +345,7 @@
 
     document.getElementById('entryForm').onsubmit = (e) => {
         e.preventDefault();
-        const bId = document.getElementById('entryBank').value;
-        const data = { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value };
-        push(ref(db, `bank_transactions/${bId}`), data);
+        push(ref(db, `bank_transactions/${document.getElementById('entryBank').value}`), { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value });
         eModal.hide();
     };
 
