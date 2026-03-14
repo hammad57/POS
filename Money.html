@@ -29,12 +29,6 @@
         }
 
         body { background-color: var(--bg-body); font-family: 'Poppins', sans-serif; color: var(--text-color); padding: 25px; transition: 0.3s; }
-        
-        /* Login Screen styling */
-        #loginScreen { min-height: 90vh; display: flex; align-items: center; justify-content: center; }
-        .google-btn-custom { background: #ea4335; color: white; border: none; transition: 0.3s; }
-        .google-btn-custom:hover { background: #d33828; transform: translateY(-3px); }
-
         .main-container { width: 1150px; margin: 0 auto; }
 
         .card-3d {
@@ -69,76 +63,58 @@
 </head>
 <body data-theme="light">
 
-<div id="loginScreen">
-    <div class="card-3d text-center p-5" style="max-width: 450px; width: 100%;">
-        <div class="mb-4">
-            <i class="bi bi-safe2-fill text-primary" style="font-size: 3rem;"></i>
+<div class="main-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="https://hammad57.github.io/POS/index.html" class="card-3d p-2 rounded-circle" style="width:50px; height:50px; display:flex; align-items:center; justify-content:center; text-decoration:none;">
+                <i class="bi bi-house-door-fill text-primary fs-4"></i>
+            </a>
+            <h2 class="fw-bold mb-0">Money Vault <span class="text-primary">3D Pro</span></h2>
         </div>
-        <h2 class="fw-bold mb-2">Money Vault <span class="text-primary">3D Pro</span></h2>
-        <p class="text-muted mb-5 small">Secure your financial data. Session expires automatically after 30 minutes.</p>
-        
-        <button id="googleLoginBtn" class="btn google-btn-custom rounded-pill py-3 px-4 fw-bold w-100 d-flex align-items-center justify-content-center gap-3 shadow">
-            <i class="bi bi-google"></i> Sign in with Google
-        </button>
+        <div class="d-flex gap-3">
+            <button class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm" onclick="openTransferModal()">
+                <i class="bi bi-arrow-left-right me-2"></i> Transfer
+            </button>
+            <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="openBankModal()">
+                <i class="bi bi-plus-circle me-2"></i> Add Bank
+            </button>
+            <select class="form-select border-0 shadow-sm rounded-pill" style="width: 130px;" onchange="changeTheme(this.value)">
+                <option value="light">☀️ Light</option>
+                <option value="dark">🌙 Dark</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4" onclick="updateView('All')"><div class="card-3d grad-balance"><h6>Total Balance</h6><h2 id="totalBalance">Rs. 0</h2></div></div>
+        <div class="col-md-4" onclick="updateView('Income')"><div class="card-3d grad-income"><h6>Total Income</h6><h2 id="totalIncome">Rs. 0</h2></div></div>
+        <div class="col-md-4" onclick="updateView('Expense')"><div class="card-3d grad-expense"><h6>Total Expense</h6><h2 id="totalExpense">Rs. 0</h2></div></div>
+    </div>
+
+    <h5 class="fw-bold mb-3"><i class="bi bi-wallet2 me-2"></i>Bank Accounts</h5>
+    <div id="bankCardsContainer" class="d-flex flex-wrap gap-3 mb-5"></div>
+
+    <div class="chart-wrapper mb-5">
+        <div style="height: 380px;"><canvas id="mainChart"></canvas></div>
+    </div>
+
+    <div class="card-3d p-4" id="bankDetailSection" style="display:none;">
+        <div class="d-flex justify-content-between mb-4">
+            <h4 id="selectedBankTitle" class="fw-bold text-primary m-0">History</h4>
+            <button class="btn btn-sm btn-light border rounded-pill" onclick="closeHistory()">Close</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr><th>Date</th><th>Type</th><th>Amount</th><th>Remarks</th><th class="text-center">Actions</th></tr>
+                </thead>
+                <tbody id="transactionBody"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
-<div id="appContent" style="display: none;">
-    <div class="main-container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div class="d-flex align-items-center gap-3">
-                <a href="https://hammad57.github.io/POS/index.html" class="card-3d p-2 rounded-circle" style="width:50px; height:50px; display:flex; align-items:center; justify-content:center; text-decoration:none;">
-                    <i class="bi bi-house-door-fill text-primary fs-4"></i>
-                </a>
-                <h2 class="fw-bold mb-0">Money Vault <span class="text-primary">3D Pro</span></h2>
-            </div>
-            <div class="d-flex gap-3">
-                <button class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm" onclick="openTransferModal()">
-                    <i class="bi bi-arrow-left-right me-2"></i> Transfer
-                </button>
-                <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="openBankModal()">
-                    <i class="bi bi-plus-circle me-2"></i> Add Bank
-                </button>
-                <select class="form-select border-0 shadow-sm rounded-pill" style="width: 130px;" onchange="changeTheme(this.value)">
-                    <option value="light">☀️ Light</option>
-                    <option value="dark">🌙 Dark</option>
-                </select>
-                <button id="logoutBtn" class="btn btn-danger rounded-pill px-3 shadow-sm">
-                    <i class="bi bi-box-arrow-right"></i>
-                </button>
-            </div>
-        </div>
-
-        <div class="row g-4 mb-5">
-            <div class="col-md-4" onclick="updateView('All')"><div class="card-3d grad-balance"><h6>Total Balance</h6><h2 id="totalBalance">Rs. 0</h2></div></div>
-            <div class="col-md-4" onclick="updateView('Income')"><div class="card-3d grad-income"><h6>Total Income</h6><h2 id="totalIncome">Rs. 0</h2></div></div>
-            <div class="col-md-4" onclick="updateView('Expense')"><div class="card-3d grad-expense"><h6>Total Expense</h6><h2 id="totalExpense">Rs. 0</h2></div></div>
-        </div>
-
-        <h5 class="fw-bold mb-3"><i class="bi bi-wallet2 me-2"></i>Bank Accounts</h5>
-        <div id="bankCardsContainer" class="d-flex flex-wrap gap-3 mb-5"></div>
-
-        <div class="chart-wrapper mb-5">
-            <div style="height: 380px;"><canvas id="mainChart"></canvas></div>
-        </div>
-
-        <div class="card-3d p-4" id="bankDetailSection" style="display:none;">
-            <div class="d-flex justify-content-between mb-4">
-                <h4 id="selectedBankTitle" class="fw-bold text-primary m-0">History</h4>
-                <button class="btn btn-sm btn-light border rounded-pill" onclick="closeHistory()">Close</button>
-            </div>
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead class="table-light">
-                        <tr><th>Date</th><th>Type</th><th>Amount</th><th>Remarks</th><th class="text-center">Actions</th></tr>
-                    </thead>
-                    <tbody id="transactionBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <button class="fab-btn" onclick="openTransactionModal()"><i class="bi bi-plus-lg"></i></button>
-</div>
+<button class="fab-btn" onclick="openTransactionModal()"><i class="bi bi-plus-lg"></i></button>
 
 <div class="modal fade" id="bankModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -156,10 +132,10 @@
 <div class="modal fade" id="transferModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 p-4 border-0">
-            <h5 class="fw-bold mb-4 text-warning">Inter-Bank Transfer</h5>
+            <h5 class="fw-bold mb-4 text-warning"><i class="bi bi-arrow-left-right me-2"></i>Inter-Bank Transfer</h5>
             <form id="transferForm">
-                <div class="mb-3"><label class="small fw-bold">From Bank</label><select id="fromBank" class="form-select" required></select></div>
-                <div class="mb-3"><label class="small fw-bold">To Bank</label><select id="toBank" class="form-select" required></select></div>
+                <div class="mb-3"><label class="small fw-bold">From Bank (Paisa Nikalega)</label><select id="fromBank" class="form-select" required></select></div>
+                <div class="mb-3"><label class="small fw-bold">To Bank (Paisa Jayega)</label><select id="toBank" class="form-select" required></select></div>
                 <div class="mb-3"><label class="small fw-bold">Amount</label><input type="number" id="transferAmt" class="form-control" required></div>
                 <div class="mb-3"><label class="small fw-bold">Date</label><input type="date" id="transferDate" class="form-control" required></div>
                 <button type="submit" class="btn btn-warning w-100 py-2 fw-bold">Transfer Now</button>
@@ -188,15 +164,11 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-    import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
     Chart.register(ChartDataLabels);
     const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/", projectId: "own-live-steam-web" };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-    const SESSION_LIMIT = 30 * 60 * 1000; // 30 mins
 
     let allBanks = [];
     let allTransactions = [];
@@ -208,46 +180,6 @@
     const eModal = new bootstrap.Modal(document.getElementById('entryModal'));
     const tModal = new bootstrap.Modal(document.getElementById('transferModal'));
 
-    // --- Authentication Logic ---
-    const showApp = () => { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('appContent').style.display = 'block'; };
-    const showLogin = () => { document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; };
-
-    const handleLogout = () => {
-        signOut(auth).then(() => {
-            localStorage.removeItem('vault_login_time');
-            showLogin();
-        });
-    };
-
-    // 1. Check Redirect Result when page loads
-    getRedirectResult(auth).then((result) => {
-        if (result) {
-            localStorage.setItem('vault_login_time', Date.now());
-        }
-    }).catch((e) => {
-        console.error("Redirect Result Error:", e);
-    });
-
-    // 2. Monitor Auth State
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            const loginTime = localStorage.getItem('vault_login_time');
-            if (loginTime && (Date.now() - parseInt(loginTime) > SESSION_LIMIT)) {
-                alert("Session Expired! Please login again.");
-                handleLogout();
-            } else {
-                showApp();
-            }
-        } else {
-            showLogin();
-        }
-    });
-
-    // 3. Login Trigger (Using Redirect for Mobile Compatibility)
-    document.getElementById('googleLoginBtn').onclick = () => signInWithRedirect(auth, provider);
-    document.getElementById('logoutBtn').onclick = () => confirm("Logout?") && handleLogout();
-
-    // --- Data Sync & UI Logic ---
     onValue(ref(db, 'bank_accounts'), (snap) => {
         allBanks = [];
         snap.forEach(c => { allBanks.push({ id: c.key, ...c.val() }); });
@@ -278,7 +210,9 @@
                 </div>`;
         });
         const options = allBanks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-        ['entryBank', 'fromBank', 'toBank'].forEach(id => document.getElementById(id).innerHTML = options);
+        document.getElementById('entryBank').innerHTML = options;
+        document.getElementById('fromBank').innerHTML = options;
+        document.getElementById('toBank').innerHTML = options;
     }
 
     function updateSummary() {
@@ -305,7 +239,12 @@
                     { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 20 }
                 ]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } } }
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' }, formatter: (v) => v > 0 ? 'Rs.' + v : '' }
+                }
+            }
         });
     };
 
@@ -321,6 +260,7 @@
                 <td>Rs. ${t.amount}</td>
                 <td>${t.remarks || '---'}</td>
                 <td class="text-center">
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button>
                     <button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button>
                 </td>
             </tr>`).join('');
@@ -332,14 +272,24 @@
         const to = document.getElementById('toBank').value;
         const amt = document.getElementById('transferAmt').value;
         const dt = document.getElementById('transferDate').value;
+        const fromName = allBanks.find(b => b.id === from).name;
+        const toName = allBanks.find(b => b.id === to).name;
+
         if(from === to) return alert("Select different banks!");
-        push(ref(db, `bank_transactions/${from}`), { type: 'Expense', amount: amt, date: dt, remarks: `To ${allBanks.find(b=>b.id===to).name}` });
-        push(ref(db, `bank_transactions/${to}`), { type: 'Income', amount: amt, date: dt, remarks: `From ${allBanks.find(b=>b.id===from).name}` });
+
+        push(ref(db, `bank_transactions/${from}`), { type: 'Expense', amount: amt, date: dt, remarks: `Transfer To ${toName}` });
+        push(ref(db, `bank_transactions/${to}`), { type: 'Income', amount: amt, date: dt, remarks: `Transfer From ${fromName}` });
+        
         tModal.hide();
+        document.getElementById('transferForm').reset();
     };
 
-    window.openTransferModal = () => { document.getElementById('transferDate').value = new Date().toISOString().split('T')[0]; tModal.show(); };
-    window.deleteEntry = (bId, tId) => confirm("Delete record?") && remove(ref(db, `bank_transactions/${bId}/${tId}`));
+    window.openTransferModal = () => {
+        document.getElementById('transferDate').value = new Date().toISOString().split('T')[0];
+        tModal.show();
+    };
+
+    window.deleteEntry = (bId, tId) => { if(confirm("Delete record?")) remove(ref(db, `bank_transactions/${bId}/${tId}`)); };
     window.openBankModal = () => bModal.show();
     window.openTransactionModal = () => { document.getElementById('entryForm').reset(); document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; eModal.show(); };
     
@@ -351,7 +301,9 @@
 
     document.getElementById('entryForm').onsubmit = (e) => {
         e.preventDefault();
-        push(ref(db, `bank_transactions/${document.getElementById('entryBank').value}`), { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value });
+        const bId = document.getElementById('entryBank').value;
+        const data = { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value };
+        push(ref(db, `bank_transactions/${bId}`), data);
         eModal.hide();
     };
 
