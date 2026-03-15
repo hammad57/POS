@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.3, shrink-to-fit=no">
-    <title>3D Money Vault Pro | Advanced Edition</title>
+    <title>3D Money Vault Pro | Professional Edition</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -19,6 +19,7 @@
             --text-color: #2d3436;
             --shadow-3d: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
             --accent-blue: #0984e3;
+            --blue-3d-grad: linear-gradient(145deg, #0984e3, #0056b3);
         }
 
         [data-theme="dark"] {
@@ -42,16 +43,57 @@
         }
         .card-3d:hover { transform: translateY(-5px); }
 
+        /* Bank Cards */
         .bank-card-mini { min-width: 190px; border-left: 5px solid var(--accent-blue); padding: 15px; }
         .bank-card-mini .bal-amt { font-size: 1.1rem; font-weight: 700; color: var(--accent-blue); }
         .bank-card-mini .acc-num { font-size: 0.75rem; color: #636e72; display: block; }
 
-        .grad-balance { background: linear-gradient(145deg, #0984e3, #0056b3); color: white; }
+        .grad-balance { background: var(--blue-3d-grad); color: white; }
         .grad-income { background: linear-gradient(145deg, #00b894, #008967); color: white; }
         .grad-expense { background: linear-gradient(145deg, #d63031, #a91e1e); color: white; }
 
-        .chart-wrapper { background: var(--card-main); border-radius: 25px; padding: 25px; box-shadow: var(--shadow-3d); }
+        /* Professional History Section */
+        .history-card { overflow: hidden; padding: 0 !important; cursor: default; }
+        .history-header-3d {
+            background: var(--blue-3d-grad);
+            color: white;
+            padding: 18px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .history-stats-bar {
+            padding: 15px 25px;
+            background: rgba(9, 132, 227, 0.04);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .stat-btn-box {
+            background: none; border: none; padding: 0 20px;
+            font-weight: 800; cursor: pointer; transition: 0.2s;
+            text-align: left;
+        }
+        .stat-btn-box:hover { transform: scale(1.05); opacity: 0.8; }
+        .stat-btn-box.active { border-bottom: 3px solid var(--accent-blue); }
 
+        .inc-text { color: #000000; font-size: 1.5rem; }
+        .exp-text { color: #d63031; font-size: 1.5rem; }
+        .adj-text { color: #0984e3; font-size: 1.5rem; }
+        [data-theme="dark"] .inc-text { color: #ffffff; }
+
+        .table-custom thead th {
+            background: #f8f9fa;
+            color: #636e72;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            padding: 15px;
+            border-bottom: 2px solid #edf2f7;
+        }
+        [data-theme="dark"] .table-custom thead th { background: #34495e; color: #ecf0f1; border-color: #2c3e50; }
+
+        .chart-wrapper { background: var(--card-main); border-radius: 25px; padding: 25px; box-shadow: var(--shadow-3d); }
         .fab-btn {
             position: fixed; bottom: 40px; right: 40px;
             width: 75px; height: 75px; border-radius: 50%;
@@ -59,20 +101,6 @@
             font-size: 35px; box-shadow: 0 10px 25px rgba(9, 132, 227, 0.4);
             z-index: 1000; transition: 0.3s;
         }
-
-        /* Clickable Stats Styling */
-        .stat-filter-btn {
-            background: none; border: none; padding: 0 15px;
-            font-weight: 800; cursor: pointer; transition: 0.2s;
-        }
-        .stat-filter-btn:hover { opacity: 0.6; transform: scale(1.05); }
-        .stat-filter-btn.active { text-decoration: underline; transform: scale(1.08); }
-        
-        .inc-large { color: #000000; font-size: 1.5rem; }
-        .exp-large { color: #d63031; font-size: 1.5rem; }
-        .adj-large { color: #0984e3; font-size: 1.5rem; }
-        
-        [data-theme="dark"] .inc-large { color: #ffffff; }
     </style>
 </head>
 <body data-theme="light">
@@ -112,22 +140,27 @@
         <div style="height: 380px;"><canvas id="mainChart"></canvas></div>
     </div>
 
-    <div class="card-3d p-4" id="bankDetailSection" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div class="d-flex align-items-center gap-4">
-                <h4 id="selectedBankTitle" class="fw-bold text-primary m-0">History</h4>
-                <div id="bankSpecificStats" class="d-flex align-items-center">
-                    </div>
-            </div>
-            <button class="btn btn-sm btn-light border rounded-pill" onclick="closeHistory()">Close</button>
+    <div class="card-3d history-card mb-5" id="bankDetailSection" style="display:none;">
+        <div class="history-header-3d">
+            <h4 id="selectedBankTitle" class="fw-bold m-0"><i class="bi bi-clock-history me-2"></i>History</h4>
+            <button class="btn btn-link text-white p-0" onclick="closeHistory()"><i class="bi bi-x-circle-fill fs-3"></i></button>
         </div>
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead class="table-light">
-                    <tr><th>Date</th><th>Type</th><th>Amount</th><th>Remarks</th><th class="text-center">Actions</th></tr>
-                </thead>
-                <tbody id="transactionBody"></tbody>
-            </table>
+        
+        <div class="history-stats-bar d-flex align-items-center">
+            <button onclick="filterLocalHistory('Income')" id="statInc" class="stat-btn-box inc-text">Income: Rs. 0</button>
+            <button onclick="filterLocalHistory('Expense')" id="statExp" class="stat-btn-box exp-text">Expense: Rs. 0</button>
+            <button onclick="filterLocalHistory('Adjustment')" id="statAdj" class="stat-btn-box adj-text">Adjustment: Rs. 0</button>
+        </div>
+
+        <div class="p-4">
+            <div class="table-responsive">
+                <table class="table table-custom align-middle">
+                    <thead>
+                        <tr><th>Date</th><th>Type</th><th>Amount</th><th>Remarks</th><th class="text-center">Actions</th></tr>
+                    </thead>
+                    <tbody id="transactionBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -191,7 +224,7 @@
     let allBanks = [];
     let allTransactions = [];
     let currentFilter = 'All';
-    let historyFilter = 'All'; // To handle table filtering
+    let historyFilter = 'All';
     let myChart = null;
     let selectedBankId = null;
 
@@ -253,22 +286,22 @@
         const bank = allBanks.find(b => b.id === id);
         let bankTrans = allTransactions.filter(t => t.bankId === id);
         
-        // Stats Calculation
         const bInc = bankTrans.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
         const bExp = bankTrans.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
         const bAdj = bankTrans.filter(t => t.type.includes('Adjustment')).reduce((s, t) => s + parseFloat(t.amount), 0);
 
         document.getElementById('bankDetailSection').style.display = 'block';
-        document.getElementById('selectedBankTitle').innerText = bank.name + " History";
+        document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bank.name} History`;
         
-        // Clickable Stats with Custom Colors and Large Font
-        document.getElementById('bankSpecificStats').innerHTML = `
-            <button onclick="filterLocalHistory('Income')" class="stat-filter-btn inc-large ${historyFilter==='Income'?'active':''}">Income: Rs. ${bInc.toLocaleString()}</button>
-            <button onclick="filterLocalHistory('Expense')" class="stat-filter-btn exp-large ${historyFilter==='Expense'?'active':''}">Expense: Rs. ${bExp.toLocaleString()}</button>
-            <button onclick="filterLocalHistory('Adjustment')" class="stat-filter-btn adj-large ${historyFilter==='Adjustment'?'active':''}">Adjustment: Rs. ${bAdj.toLocaleString()}</button>
-        `;
+        // Update Stats Buttons
+        document.getElementById('statInc').innerText = `Income: Rs. ${bInc.toLocaleString()}`;
+        document.getElementById('statExp').innerText = `Expense: Rs. ${bExp.toLocaleString()}`;
+        document.getElementById('statAdj').innerText = `Adjustment: Rs. ${bAdj.toLocaleString()}`;
 
-        // Apply Local Filter
+        document.getElementById('statInc').classList.toggle('active', historyFilter === 'Income');
+        document.getElementById('statExp').classList.toggle('active', historyFilter === 'Expense');
+        document.getElementById('statAdj').classList.toggle('active', historyFilter === 'Adjustment');
+
         if(historyFilter !== 'All') {
             bankTrans = bankTrans.filter(t => historyFilter === 'Adjustment' ? t.type.includes('Adjustment') : t.type === historyFilter);
         }
