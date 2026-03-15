@@ -59,6 +59,7 @@
             font-size: 35px; box-shadow: 0 10px 25px rgba(9, 132, 227, 0.4);
             z-index: 1000; transition: 0.3s;
         }
+        .text-adjustment { color: #f39c12 !important; } /* Orange color for adjustments */
     </style>
 </head>
 <body data-theme="light">
@@ -201,7 +202,12 @@
         const container = document.getElementById('bankCardsContainer');
         container.innerHTML = '';
         allBanks.forEach(bank => {
-            const balance = allTransactions.filter(t => t.bankId === bank.id).reduce((s, t) => s + (t.type === 'Income' ? parseFloat(t.amount) : -parseFloat(t.amount)), 0);
+            const balance = allTransactions.filter(t => t.bankId === bank.id).reduce((s, t) => {
+                const amt = parseFloat(t.amount);
+                if(t.type === 'Income' || t.type === 'Adjustment In') return s + amt;
+                if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
+                return s;
+            }, 0);
             container.innerHTML += `
                 <div class="card-3d bank-card-mini" onclick="selectBank('${bank.id}')">
                     <h6>${bank.name}</h6>
@@ -216,17 +222,25 @@
     }
 
     function updateSummary() {
+        // Sirf asli Income aur Expense count hon gy, Adjustment nahi.
         let tI = allTransactions.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
         let tE = allTransactions.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
+        
+        // Total Balance k liye Adjustment In/Out ko bhee calculation mein lena hoga taa-k net result 0 rahay
+        let totalAdjustIn = allTransactions.filter(t => t.type === 'Adjustment In').reduce((s, t) => s + parseFloat(t.amount), 0);
+        let totalAdjustOut = allTransactions.filter(t => t.type === 'Adjustment Out').reduce((s, t) => s + parseFloat(t.amount), 0);
+
         document.getElementById('totalIncome').innerText = `Rs. ${tI.toLocaleString()}`;
         document.getElementById('totalExpense').innerText = `Rs. ${tE.toLocaleString()}`;
-        document.getElementById('totalBalance').innerText = `Rs. ${(tI - tE).toLocaleString()}`;
+        document.getElementById('totalBalance').innerText = `Rs. ${(tI + totalAdjustIn - tE - totalAdjustOut).toLocaleString()}`;
     }
 
     window.initChart = () => {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(myChart) myChart.destroy();
-        const dates = [...new Set(allTransactions.map(t => t.date))].sort();
+        
+        // Chart mein sirf Income aur Expense show hon gy, Adjustments nahi
+        const dates = [...new Set(allTransactions.filter(t => t.type === 'Income' || t.type === 'Expense').map(t => t.date))].sort();
         const incData = dates.map(d => allTransactions.filter(t => t.date === d && t.type === 'Income').reduce((s, c) => s + parseFloat(c.amount), 0));
         const expData = dates.map(d => allTransactions.filter(t => t.date === d && t.type === 'Expense').reduce((s, c) => s + parseFloat(c.amount), 0));
 
@@ -253,17 +267,25 @@
         const bank = allBanks.find(b => b.id === id);
         document.getElementById('bankDetailSection').style.display = 'block';
         document.getElementById('selectedBankTitle').innerText = bank.name + " History";
-        document.getElementById('transactionBody').innerHTML = allTransactions.filter(t => t.bankId === id).map(t => `
+        document.getElementById('transactionBody').innerHTML = allTransactions.filter(t => t.bankId === id).map(t => {
+            let typeClass = '';
+            let displayType = t.type;
+            
+            if(t.type === 'Income' || t.type === 'Adjustment In') typeClass = 'text-success';
+            if(t.type === 'Expense' || t.type === 'Adjustment Out') typeClass = 'text-danger';
+            if(t.type.includes('Adjustment')) displayType = 'Adjustment';
+
+            return `
             <tr>
                 <td>${t.date}</td>
-                <td class="${t.type==='Income'?'text-success':'text-danger'} fw-bold">${t.type}</td>
-                <td>Rs. ${t.amount}</td>
+                <td class="${typeClass} fw-bold">${displayType}</td>
+                <td>Rs. ${parseFloat(t.amount).toLocaleString()}</td>
                 <td>${t.remarks || '---'}</td>
                 <td class="text-center">
                     <button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button>
                     <button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button>
                 </td>
-            </tr>`).join('');
+            </tr>`}).join('');
     };
 
     document.getElementById('transferForm').onsubmit = (e) => {
@@ -277,8 +299,9 @@
 
         if(from === to) return alert("Select different banks!");
 
-        push(ref(db, `bank_transactions/${from}`), { type: 'Expense', amount: amt, date: dt, remarks: `Transfer To ${toName}` });
-        push(ref(db, `bank_transactions/${to}`), { type: 'Income', amount: amt, date: dt, remarks: `Transfer From ${fromName}` });
+        // Ab yeh Expense/Income ki bajaye Adjustment Out/In ke tor par save hoga
+        push(ref(db, `bank_transactions/${from}`), { type: 'Adjustment Out', amount: amt, date: dt, remarks: `Transfer To ${toName}` });
+        push(ref(db, `bank_transactions/${to}`), { type: 'Adjustment In', amount: amt, date: dt, remarks: `Transfer From ${fromName}` });
         
         tModal.hide();
         document.getElementById('transferForm').reset();
