@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.3, shrink-to-fit=no"> 
-    <title>Loan & Debt Manager 3D Pro</title>
+    <title>Loan & Debt Manager 3D Pro | Sync Edition</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -18,35 +18,23 @@
             --border-color: rgba(255, 255, 255, 0.5);
         }
 
-        body { 
-            background: var(--bg-body); 
-            color: var(--text-color); 
-            padding: 20px; 
-            font-family: 'Poppins', sans-serif; 
-            min-width: 1200px; 
-        }
+        body { background: var(--bg-body); color: var(--text-color); padding: 20px; font-family: 'Poppins', sans-serif; min-width: 1200px; }
         .main-wrapper { width: 1150px; margin: 0 auto; }
         
         .summary-card { 
             border-radius: 20px; color: white; padding: 25px 15px; margin-bottom: 20px; 
-            box-shadow: 0 15px 25px rgba(0,0,0,0.2); transition: 0.3s; cursor: pointer; height: 140px;
+            box-shadow: 0 15px 25px rgba(0,0,0,0.2); transition: 0.3s; height: 140px;
             display: flex; flex-direction: column; justify-content: center;
         }
-        .summary-card:hover { transform: translateY(-5px); }
         
         .bg-vault { background: linear-gradient(135deg, #0984e3, #0056b3); }
         .bg-given { background: linear-gradient(135deg, #6a11cb, #2575fc); }
         .bg-taken { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
         .bg-balance { background: linear-gradient(135deg, #00b09b, #96c93d); }
 
-        .glass-panel { 
-            background: var(--container-bg); padding: 30px; border-radius: 25px; 
-            box-shadow: var(--shadow-3d); border: 1px solid var(--border-color); 
-        }
-
-        .table-custom { border-radius: 15px; overflow: hidden; box-shadow: var(--shadow-3d); margin-top: 20px;}
+        .glass-panel { background: var(--container-bg); padding: 30px; border-radius: 25px; box-shadow: var(--shadow-3d); border: 1px solid var(--border-color); }
+        .table-custom { border-radius: 15px; overflow: hidden; box-shadow: var(--shadow-3d); margin-top: 20px; background: white; }
         .table-custom thead { background: #2c3e50; color: white; }
-        .table-custom tbody tr:hover { background: rgba(0,0,0,0.02); }
 
         .fab-add {
             position: fixed; right: 50px; bottom: 50px; width: 80px; height: 80px;
@@ -54,70 +42,40 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 40px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); border: none; z-index: 1000;
         }
+        .sync-badge { font-size: 0.7rem; vertical-align: middle; margin-left: 5px; }
     </style>
 </head>
 <body>
 
 <div class="main-wrapper">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold"><i class="bi bi-person-video2 me-2 text-primary"></i>Loan & User Manager</h2>
+        <h2 class="fw-bold"><i class="bi bi- arrow-left-right me-2 text-primary"></i>Loan & Wallet Sync</h2>
         <div class="d-flex gap-2">
-            <button class="btn btn-dark fw-bold px-4 shadow-sm" onclick="openUserModal()">
-                <i class="bi bi-person-plus-fill me-2"></i>Add New User
-            </button>
+            <button class="btn btn-dark fw-bold px-4 shadow-sm" onclick="openUserModal()">+ Add New Person</button>
         </div>
     </div>
 
     <div class="row text-center mb-4">
-        <div class="col">
-            <div class="summary-card bg-vault">
-                <h6>Live Vault Balance</h6>
-                <h2 id="bankBalanceDisplay">Rs. 0</h2>
-            </div>
-        </div>
-        <div class="col">
-            <div class="summary-card bg-given">
-                <h6>Total Given (Lena Hai)</h6>
-                <h2 id="totalGiven">0</h2>
-            </div>
-        </div>
-        <div class="col">
-            <div class="summary-card bg-taken">
-                <h6>Total Taken (Dena Hai)</h6>
-                <h2 id="totalTaken">0</h2>
-            </div>
-        </div>
-        <div class="col">
-            <div class="summary-card bg-balance">
-                <h6>Net Loan Balance</h6>
-                <h2 id="netPosition">0</h2>
-            </div>
-        </div>
+        <div class="col"><div class="summary-card bg-vault"><h6>Live Vault Balance (Money.html)</h6><h2 id="bankBalanceDisplay">Rs. 0</h2></div></div>
+        <div class="col"><div class="summary-card bg-given"><h6>Total Given (Assets)</h6><h2 id="totalGiven">0</h2></div></div>
+        <div class="col"><div class="summary-card bg-taken"><h6>Total Taken (Liabilities)</h6><h2 id="totalTaken">0</h2></div></div>
+        <div class="col"><div class="summary-card bg-balance"><h6>Net Loan Position</h6><h2 id="netPosition">0</h2></div></div>
     </div>
 
     <div class="glass-panel">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h4 class="fw-bold m-0"><i class="bi bi-clock-history me-2"></i>Recent Loan Transactions</h4>
-            <div class="d-flex gap-2">
-                <input type="date" id="filterDate" class="form-control shadow-sm" style="width: 180px;">
-                <button class="btn btn-primary shadow-sm" onclick="applyFilter()">Filter</button>
-                <button class="btn btn-secondary shadow-sm" onclick="resetFilter()">View All</button>
-            </div>
-        </div>
-
+        <h4 class="fw-bold mb-4"><i class="bi bi-list-check me-2"></i>Transaction Ledger</h4>
         <table class="table table-custom align-middle">
             <thead class="text-center">
                 <tr>
                     <th>Date</th>
-                    <th>User / Person</th>
-                    <th>Entry Type</th>
+                    <th>Person Name</th>
+                    <th>Type</th>
                     <th>Remarks</th>
                     <th class="text-end">Amount</th>
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody id="loanTableBody">
-                </tbody>
+            <tbody id="loanTableBody"></tbody>
         </table>
     </div>
 </div>
@@ -127,14 +85,10 @@
 <div class="modal fade" id="userModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 20px;">
-            <div class="modal-header bg-dark text-white" style="border-radius: 20px 20px 0 0;">
-                <h5 class="modal-title">Create New Loan User</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
+            <div class="modal-header"><h5>Add New User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body p-4">
-                <label class="fw-bold mb-1">Person Name</label>
-                <input type="text" id="userName" class="form-control mb-3" placeholder="Enter Full Name">
-                <button class="btn btn-primary w-100 fw-bold py-2" onclick="saveUser()">Save Person</button>
+                <input type="text" id="userName" class="form-control mb-3" placeholder="Enter Name">
+                <button class="btn btn-primary w-100" onclick="saveUser()">Save User</button>
             </div>
         </div>
     </div>
@@ -143,10 +97,7 @@
 <div class="modal fade" id="loanModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 20px;">
-            <div class="modal-header bg-primary text-white" style="border-radius: 20px 20px 0 0;">
-                <h5 class="modal-title">New Loan/Debt Transaction</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
+            <div class="modal-header bg-primary text-white"><h5>New Transaction & Bank Sync</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
             <div class="modal-body p-4">
                 <form id="loanForm">
                     <div class="mb-3">
@@ -155,18 +106,24 @@
                     </div>
                     <div class="mb-3">
                         <label class="fw-bold">Transaction Type</label>
-                        <select id="loanType" class="form-select" required>
-                            <option value="Opening Balance">Opening Balance</option>
-                            <option value="Loan Given">Loan Given (Udhaar Diya)</option>
-                            <option value="Loan Taken">Loan Taken (Udhaar Liya)</option>
-                            <option value="Repayment Received">Repayment Received (Wapsi Mili)</option>
-                            <option value="Repayment Paid">Repayment Paid (Wapsi Ki)</option>
+                        <select id="loanType" class="form-select" required onchange="toggleBankSelect()">
+                            <option value="Opening Balance">Opening Balance (No Bank Sync)</option>
+                            <option value="Loan Given">Loan Given (Deduct from Bank)</option>
+                            <option value="Loan Taken">Loan Taken (Add to Bank)</option>
+                            <option value="Repayment Received">Repayment Received (Add to Bank)</option>
+                            <option value="Repayment Paid">Repayment Paid (Deduct from Bank)</option>
                         </select>
                     </div>
-                    <div class="mb-3"><label class="fw-bold">Date</label><input type="date" id="loanDate" class="form-control" required></div>
-                    <div class="mb-3"><label class="fw-bold">Amount</label><input type="number" id="loanAmount" class="form-control" step="0.01" required></div>
-                    <div class="mb-4"><label class="fw-bold">Remarks / Details</label><textarea id="loanRemarks" class="form-control" rows="2"></textarea></div>
-                    <button type="submit" class="btn btn-success w-100 fw-bold py-3">Save Loan Record</button>
+                    <div class="mb-3" id="bankSelectDiv">
+                        <label class="fw-bold text-primary">Select Bank for Auto-Sync</label>
+                        <select id="syncBank" class="form-select border-primary"></select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label class="fw-bold">Date</label><input type="date" id="loanDate" class="form-control" required></div>
+                        <div class="col-md-6 mb-3"><label class="fw-bold">Amount</label><input type="number" id="loanAmount" class="form-control" required></div>
+                    </div>
+                    <div class="mb-3"><label class="fw-bold">Remarks</label><textarea id="loanRemarks" class="form-control" rows="2"></textarea></div>
+                    <button type="submit" class="btn btn-success w-100 fw-bold py-2">Save & Sync Balance</button>
                 </form>
             </div>
         </div>
@@ -175,26 +132,21 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-    const firebaseConfig = { 
-        databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/", 
-        projectId: "own-live-steam-web" 
-    };
+    const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/", projectId: "own-live-steam-web" };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
     const uModal = new bootstrap.Modal(document.getElementById('userModal'));
     const lModal = new bootstrap.Modal(document.getElementById('loanModal'));
-    let selectedFilterDate = null;
 
-    // --- LIVE SYNC: BANK BALANCE FROM MONEY.HTML ---
-    // Money.html bank_transactions node se data fetch karke total balance calculate karna
+    // --- 1. LIVE BANK BALANCE & BANK LIST ---
     onValue(ref(db, 'bank_transactions'), (snapshot) => {
         let total = 0;
-        snapshot.forEach((bankNode) => {
-            bankNode.forEach((transNode) => {
-                const t = transNode.val();
+        snapshot.forEach(bankNode => {
+            bankNode.forEach(tNode => {
+                const t = tNode.val();
                 const amt = parseFloat(t.amount) || 0;
                 if (t.type === 'Income' || t.type === 'Adjustment In') total += amt;
                 else if (t.type === 'Expense' || t.type === 'Adjustment Out') total -= amt;
@@ -203,110 +155,96 @@
         document.getElementById('bankBalanceDisplay').innerText = "Rs. " + total.toLocaleString();
     });
 
-    // --- LOAD USERS ---
-    onValue(ref(db, 'loan_users'), (snapshot) => {
-        const select = document.getElementById('userSelect');
-        select.innerHTML = '<option value="">-- Choose User --</option>';
+    onValue(ref(db, 'bank_accounts'), (snapshot) => {
+        const syncBank = document.getElementById('syncBank');
+        syncBank.innerHTML = '';
         snapshot.forEach(child => {
-            const user = child.val();
-            select.innerHTML += `<option value="${user.name}">${user.name}</option>`;
+            syncBank.innerHTML += `<option value="${child.key}">${child.val().name}</option>`;
         });
     });
 
-    // --- LOAD TRANSACTIONS ---
-    onValue(ref(db, 'loan_transactions'), (snapshot) => {
-        renderTable(snapshot);
+    // --- 2. USERS & TABLE RENDER ---
+    onValue(ref(db, 'loan_users'), (snapshot) => {
+        const select = document.getElementById('userSelect');
+        select.innerHTML = '<option value="">-- Select Person --</option>';
+        snapshot.forEach(c => { select.innerHTML += `<option value="${c.val().name}">${c.val().name}</option>`; });
     });
 
-    function renderTable(snapshot) {
+    onValue(ref(db, 'loan_transactions'), (snapshot) => {
         const body = document.getElementById('loanTableBody');
         body.innerHTML = '';
-        let totalG = 0; // Assets / Lena Hai
-        let totalT = 0; // Liabilities / Dena Hai
-
+        let tg = 0, tt = 0;
         const entries = [];
-        snapshot.forEach(child => { entries.push({ id: child.key, ...child.val() }); });
-        
-        // Sorting by Date (Newest first)
+        snapshot.forEach(c => { entries.push({id: c.key, ...c.val()}); });
         entries.sort((a,b) => new Date(b.date) - new Date(a.date));
 
         entries.forEach(t => {
-            if (selectedFilterDate && t.date !== selectedFilterDate) return;
-
-            // Logic: Given, Repayment Paid (Outflow) are "Lena Hai" / Taken, Received (Inflow) are "Dena Hai"
             const isAsset = (t.type === 'Loan Given' || t.type === 'Repayment Paid' || (t.type === 'Opening Balance' && t.amount > 0));
             const amt = parseFloat(t.amount) || 0;
-            
-            if (isAsset) totalG += Math.abs(amt);
-            else totalT += Math.abs(amt);
+            if(isAsset) tg += amt; else tt += Math.abs(amt);
 
             body.innerHTML += `
-                <tr>
-                    <td class="text-center">${t.date}</td>
-                    <td class="fw-bold">${t.user}</td>
-                    <td class="text-center"><span class="badge ${isAsset ? 'bg-primary' : 'bg-danger'} shadow-sm">${t.type}</span></td>
-                    <td class="small">${t.remarks || '-'}</td>
-                    <td class="text-end fw-bold text-${isAsset ? 'primary' : 'danger'}">${amt.toFixed(2)}</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteEntry('${t.id}')">
-                            <i class="bi bi-trash3-fill"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
+                <tr class="text-center">
+                    <td>${t.date}</td>
+                    <td class="fw-bold text-start">${t.user}</td>
+                    <td><span class="badge ${isAsset ? 'bg-primary' : 'bg-danger'}">${t.type}</span></td>
+                    <td class="text-muted small">${t.remarks || '-'}</td>
+                    <td class="text-end fw-bold">${amt.toFixed(2)}</td>
+                    <td><button class="btn btn-sm btn-outline-danger border-0" onclick="deleteEntry('${t.id}')"><i class="bi bi-trash3"></i></button></td>
+                </tr>`;
         });
+        document.getElementById('totalGiven').innerText = tg.toLocaleString();
+        document.getElementById('totalTaken').innerText = tt.toLocaleString();
+        document.getElementById('netPosition').innerText = (tg - tt).toLocaleString();
+    });
 
-        document.getElementById('totalGiven').innerText = totalG.toFixed(2);
-        document.getElementById('totalTaken').innerText = totalT.toFixed(2);
-        document.getElementById('netPosition').innerText = (totalG - totalT).toFixed(2);
-    }
+    // --- 3. FORM SUBMISSION WITH SYNC ---
+    document.getElementById('loanForm').onsubmit = (e) => {
+        e.preventDefault();
+        const type = document.getElementById('loanType').value;
+        const amt = parseFloat(document.getElementById('loanAmount').value);
+        const person = document.getElementById('userSelect').value;
+        const date = document.getElementById('loanDate').value;
+        const bankId = document.getElementById('syncBank').value;
+        const remarks = document.getElementById('loanRemarks').value;
 
-    // --- ACTIONS ---
-    window.saveUser = () => {
-        const name = document.getElementById('userName').value.trim();
-        if (name) {
-            push(ref(db, 'loan_users'), { name: name });
-            document.getElementById('userName').value = '';
-            uModal.hide();
+        // Save Loan Record
+        push(ref(db, 'loan_transactions'), { user: person, type, date, amount: amt, remarks });
+
+        // SYNC WITH MONEY.HTML (bank_transactions)
+        let syncType = "";
+        if (type === 'Loan Given' || type === 'Repayment Paid') syncType = "Adjustment Out";
+        if (type === 'Loan Taken' || type === 'Repayment Received') syncType = "Adjustment In";
+
+        if (syncType !== "") {
+            push(ref(db, `bank_transactions/${bankId}`), {
+                type: syncType,
+                amount: amt,
+                date: date,
+                remarks: `Loan Sync: ${type} (${person}) - ${remarks}`
+            });
         }
+
+        lModal.hide();
+    };
+
+    window.toggleBankSelect = () => {
+        const type = document.getElementById('loanType').value;
+        document.getElementById('bankSelectDiv').style.display = (type === 'Opening Balance') ? 'none' : 'block';
+    };
+
+    window.saveUser = () => {
+        const name = document.getElementById('userName').value;
+        if(name) { push(ref(db, 'loan_users'), { name }); uModal.hide(); }
     };
 
     window.openUserModal = () => uModal.show();
     window.openLoanModal = () => {
-        document.getElementById('loanForm').reset();
         document.getElementById('loanDate').value = new Date().toISOString().split('T')[0];
+        toggleBankSelect();
         lModal.show();
     };
-
-    document.getElementById('loanForm').onsubmit = (e) => {
-        e.preventDefault();
-        const data = {
-            user: document.getElementById('userSelect').value,
-            type: document.getElementById('loanType').value,
-            date: document.getElementById('loanDate').value,
-            amount: parseFloat(document.getElementById('loanAmount').value),
-            remarks: document.getElementById('loanRemarks').value
-        };
-        push(ref(db, 'loan_transactions'), data);
-        lModal.hide();
-    };
-
-    window.deleteEntry = (id) => {
-        if (confirm("Kya aap waqai is entry ko delete karna chahte hain?")) {
-            remove(ref(db, 'loan_transactions/' + id));
-        }
-    };
-
-    window.applyFilter = () => {
-        selectedFilterDate = document.getElementById('filterDate').value;
-        onValue(ref(db, 'loan_transactions'), renderTable, { onlyOnce: true });
-    };
-
-    window.resetFilter = () => {
-        selectedFilterDate = null;
-        document.getElementById('filterDate').value = '';
-        onValue(ref(db, 'loan_transactions'), renderTable, { onlyOnce: true });
-    };
+    window.deleteEntry = (id) => { if(confirm("Delete this?")) remove(ref(db, 'loan_transactions/'+id)); };
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
