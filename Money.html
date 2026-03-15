@@ -59,8 +59,20 @@
             font-size: 35px; box-shadow: 0 10px 25px rgba(9, 132, 227, 0.4);
             z-index: 1000; transition: 0.3s;
         }
-        .bank-stat-badge { font-size: 0.85rem; padding: 5px 15px; border-radius: 50px; background: rgba(0,0,0,0.05); }
-        [data-theme="dark"] .bank-stat-badge { background: rgba(255,255,255,0.1); }
+
+        /* Clickable Stats Styling */
+        .stat-filter-btn {
+            background: none; border: none; padding: 0 15px;
+            font-weight: 800; cursor: pointer; transition: 0.2s;
+        }
+        .stat-filter-btn:hover { opacity: 0.6; transform: scale(1.05); }
+        .stat-filter-btn.active { text-decoration: underline; transform: scale(1.08); }
+        
+        .inc-large { color: #000000; font-size: 1.5rem; }
+        .exp-large { color: #d63031; font-size: 1.5rem; }
+        .adj-large { color: #0984e3; font-size: 1.5rem; }
+        
+        [data-theme="dark"] .inc-large { color: #ffffff; }
     </style>
 </head>
 <body data-theme="light">
@@ -101,10 +113,10 @@
     </div>
 
     <div class="card-3d p-4" id="bankDetailSection" style="display:none;">
-        <div class="d-flex justify-content-between align-items-start mb-4">
-            <div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-4">
                 <h4 id="selectedBankTitle" class="fw-bold text-primary m-0">History</h4>
-                <div id="bankSpecificStats" class="mt-2 d-flex gap-2 flex-wrap">
+                <div id="bankSpecificStats" class="d-flex align-items-center">
                     </div>
             </div>
             <button class="btn btn-sm btn-light border rounded-pill" onclick="closeHistory()">Close</button>
@@ -140,8 +152,8 @@
         <div class="modal-content rounded-4 p-4 border-0">
             <h5 class="fw-bold mb-4 text-warning"><i class="bi bi-arrow-left-right me-2"></i>Inter-Bank Transfer</h5>
             <form id="transferForm">
-                <div class="mb-3"><label class="small fw-bold">From Bank (Paisa Nikalega)</label><select id="fromBank" class="form-select" required></select></div>
-                <div class="mb-3"><label class="small fw-bold">To Bank (Paisa Jayega)</label><select id="toBank" class="form-select" required></select></div>
+                <div class="mb-3"><label class="small fw-bold">From Bank</label><select id="fromBank" class="form-select" required></select></div>
+                <div class="mb-3"><label class="small fw-bold">To Bank</label><select id="toBank" class="form-select" required></select></div>
                 <div class="mb-3"><label class="small fw-bold">Amount</label><input type="number" id="transferAmt" class="form-control" required></div>
                 <div class="mb-3"><label class="small fw-bold">Date</label><input type="date" id="transferDate" class="form-control" required></div>
                 <button type="submit" class="btn btn-warning w-100 py-2 fw-bold">Transfer Now</button>
@@ -179,6 +191,7 @@
     let allBanks = [];
     let allTransactions = [];
     let currentFilter = 'All';
+    let historyFilter = 'All'; // To handle table filtering
     let myChart = null;
     let selectedBankId = null;
 
@@ -187,16 +200,13 @@
     const tModal = new bootstrap.Modal(document.getElementById('transferModal'));
 
     onValue(ref(db, 'bank_accounts'), (snap) => {
-        allBanks = [];
-        snap.forEach(c => { allBanks.push({ id: c.key, ...c.val() }); });
+        allBanks = []; snap.forEach(c => { allBanks.push({ id: c.key, ...c.val() }); });
         renderBanks();
     });
 
     onValue(ref(db, 'bank_transactions'), (snap) => {
         allTransactions = [];
-        snap.forEach(bNode => {
-            bNode.forEach(tNode => { allTransactions.push({ id: tNode.key, bankId: bNode.key, ...tNode.val() }); });
-        });
+        snap.forEach(bNode => { bNode.forEach(tNode => { allTransactions.push({ id: tNode.key, bankId: bNode.key, ...tNode.val() }); }); });
         renderBanks();
         updateSummary();
         initChart();
@@ -213,28 +223,20 @@
                 if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
                 return s;
             }, 0);
-            container.innerHTML += `
-                <div class="card-3d bank-card-mini" onclick="selectBank('${bank.id}')">
-                    <h6>${bank.name}</h6>
-                    <span class="acc-num">${bank.number || '---'}</span>
-                    <div class="bal-amt">Rs. ${balance.toLocaleString()}</div>
-                </div>`;
+            container.innerHTML += `<div class="card-3d bank-card-mini" onclick="resetHistoryFilter(); selectBank('${bank.id}')"><h6>${bank.name}</h6><span class="acc-num">${bank.number || '---'}</span><div class="bal-amt">Rs. ${balance.toLocaleString()}</div></div>`;
         });
         const options = allBanks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-        document.getElementById('entryBank').innerHTML = options;
-        document.getElementById('fromBank').innerHTML = options;
-        document.getElementById('toBank').innerHTML = options;
+        document.getElementById('entryBank').innerHTML = options; document.getElementById('fromBank').innerHTML = options; document.getElementById('toBank').innerHTML = options;
     }
 
     function updateSummary() {
         let tI = allTransactions.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
         let tE = allTransactions.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
-        let totalAdjustIn = allTransactions.filter(t => t.type === 'Adjustment In').reduce((s, t) => s + parseFloat(t.amount), 0);
-        let totalAdjustOut = allTransactions.filter(t => t.type === 'Adjustment Out').reduce((s, t) => s + parseFloat(t.amount), 0);
-
+        let tAdjIn = allTransactions.filter(t => t.type === 'Adjustment In').reduce((s, t) => s + parseFloat(t.amount), 0);
+        let tAdjOut = allTransactions.filter(t => t.type === 'Adjustment Out').reduce((s, t) => s + parseFloat(t.amount), 0);
         document.getElementById('totalIncome').innerText = `Rs. ${tI.toLocaleString()}`;
         document.getElementById('totalExpense').innerText = `Rs. ${tE.toLocaleString()}`;
-        document.getElementById('totalBalance').innerText = `Rs. ${(tI + totalAdjustIn - tE - totalAdjustOut).toLocaleString()}`;
+        document.getElementById('totalBalance').innerText = `Rs. ${(tI + tAdjIn - tE - tAdjOut).toLocaleString()}`;
     }
 
     window.initChart = () => {
@@ -243,111 +245,69 @@
         const dates = [...new Set(allTransactions.filter(t => t.type === 'Income' || t.type === 'Expense').map(t => t.date))].sort();
         const incData = dates.map(d => allTransactions.filter(t => t.date === d && t.type === 'Income').reduce((s, c) => s + parseFloat(c.amount), 0));
         const expData = dates.map(d => allTransactions.filter(t => t.date === d && t.type === 'Expense').reduce((s, c) => s + parseFloat(c.amount), 0));
-
-        myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: dates,
-                datasets: [
-                    { label: 'Income', data: incData, backgroundColor: '#00b894', borderRadius: 8, hidden: currentFilter === 'Expense', barThickness: 20 },
-                    { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 20 }
-                ]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: {
-                    datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' }, formatter: (v) => v > 0 ? 'Rs.' + v : '' }
-                }
-            }
-        });
+        myChart = new Chart(ctx, { type: 'bar', data: { labels: dates, datasets: [{ label: 'Income', data: incData, backgroundColor: '#00b894', borderRadius: 8, hidden: currentFilter === 'Expense', barThickness: 20 }, { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 20 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' }, formatter: (v) => v > 0 ? 'Rs.' + v : '' } } } });
     };
 
     window.selectBank = (id) => {
         selectedBankId = id;
         const bank = allBanks.find(b => b.id === id);
-        const bankTrans = allTransactions.filter(t => t.bankId === id);
+        let bankTrans = allTransactions.filter(t => t.bankId === id);
         
-        // Specific Bank calculations
+        // Stats Calculation
         const bInc = bankTrans.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
         const bExp = bankTrans.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
-        const bAdjIn = bankTrans.filter(t => t.type === 'Adjustment In').reduce((s, t) => s + parseFloat(t.amount), 0);
-        const bAdjOut = bankTrans.filter(t => t.type === 'Adjustment Out').reduce((s, t) => s + parseFloat(t.amount), 0);
-        const bNetAdj = bAdjIn - bAdjOut;
+        const bAdj = bankTrans.filter(t => t.type.includes('Adjustment')).reduce((s, t) => s + parseFloat(t.amount), 0);
 
         document.getElementById('bankDetailSection').style.display = 'block';
         document.getElementById('selectedBankTitle').innerText = bank.name + " History";
         
-        // Display calculations next to title
+        // Clickable Stats with Custom Colors and Large Font
         document.getElementById('bankSpecificStats').innerHTML = `
-            <div class="bank-stat-badge text-success fw-bold">Income: Rs. ${bInc.toLocaleString()}</div>
-            <div class="bank-stat-badge text-danger fw-bold">Expense: Rs. ${bExp.toLocaleString()}</div>
-            <div class="bank-stat-badge text-warning fw-bold">Adjustment: Rs. ${bNetAdj.toLocaleString()}</div>
+            <button onclick="filterLocalHistory('Income')" class="stat-filter-btn inc-large ${historyFilter==='Income'?'active':''}">Income: Rs. ${bInc.toLocaleString()}</button>
+            <button onclick="filterLocalHistory('Expense')" class="stat-filter-btn exp-large ${historyFilter==='Expense'?'active':''}">Expense: Rs. ${bExp.toLocaleString()}</button>
+            <button onclick="filterLocalHistory('Adjustment')" class="stat-filter-btn adj-large ${historyFilter==='Adjustment'?'active':''}">Adjustment: Rs. ${bAdj.toLocaleString()}</button>
         `;
 
-        document.getElementById('transactionBody').innerHTML = bankTrans.map(t => {
-            let typeClass = '';
-            let displayType = t.type;
-            if(t.type === 'Income' || t.type === 'Adjustment In') typeClass = 'text-success';
-            if(t.type === 'Expense' || t.type === 'Adjustment Out') typeClass = 'text-danger';
-            if(t.type.includes('Adjustment')) displayType = 'Adjustment';
+        // Apply Local Filter
+        if(historyFilter !== 'All') {
+            bankTrans = bankTrans.filter(t => historyFilter === 'Adjustment' ? t.type.includes('Adjustment') : t.type === historyFilter);
+        }
 
-            return `
-            <tr>
-                <td>${t.date}</td>
-                <td class="${typeClass} fw-bold">${displayType}</td>
-                <td>Rs. ${parseFloat(t.amount).toLocaleString()}</td>
-                <td>${t.remarks || '---'}</td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button>
-                </td>
-            </tr>`}).join('');
+        document.getElementById('transactionBody').innerHTML = bankTrans.map(t => {
+            let tCls = (t.type === 'Income' || t.type === 'Adjustment In') ? 'text-success' : 'text-danger';
+            return `<tr><td>${t.date}</td><td class="${tCls} fw-bold">${t.type.replace('Adjustment ','')}</td><td>Rs. ${parseFloat(t.amount).toLocaleString()}</td><td>${t.remarks || '---'}</td><td class="text-center"><button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button></td></tr>`
+        }).join('');
     };
+
+    window.filterLocalHistory = (type) => {
+        historyFilter = (historyFilter === type) ? 'All' : type;
+        window.selectBank(selectedBankId);
+    };
+
+    window.resetHistoryFilter = () => { historyFilter = 'All'; };
 
     document.getElementById('transferForm').onsubmit = (e) => {
         e.preventDefault();
-        const from = document.getElementById('fromBank').value;
-        const to = document.getElementById('toBank').value;
-        const amt = document.getElementById('transferAmt').value;
-        const dt = document.getElementById('transferDate').value;
-        const fromName = allBanks.find(b => b.id === from).name;
-        const toName = allBanks.find(b => b.id === to).name;
-
+        const from = document.getElementById('fromBank').value; const to = document.getElementById('toBank').value;
+        const amt = document.getElementById('transferAmt').value; const dt = document.getElementById('transferDate').value;
+        const fromName = allBanks.find(b => b.id === from).name; const toName = allBanks.find(b => b.id === to).name;
         if(from === to) return alert("Select different banks!");
-
         push(ref(db, `bank_transactions/${from}`), { type: 'Adjustment Out', amount: amt, date: dt, remarks: `Transfer To ${toName}` });
         push(ref(db, `bank_transactions/${to}`), { type: 'Adjustment In', amount: amt, date: dt, remarks: `Transfer From ${fromName}` });
-        
-        tModal.hide();
-        document.getElementById('transferForm').reset();
+        tModal.hide(); document.getElementById('transferForm').reset();
     };
 
-    window.openTransferModal = () => {
-        document.getElementById('transferDate').value = new Date().toISOString().split('T')[0];
-        tModal.show();
-    };
-
+    window.openTransferModal = () => { document.getElementById('transferDate').value = new Date().toISOString().split('T')[0]; tModal.show(); };
     window.deleteEntry = (bId, tId) => { if(confirm("Delete record?")) remove(ref(db, `bank_transactions/${bId}/${tId}`)); };
     window.openBankModal = () => bModal.show();
     window.openTransactionModal = () => { document.getElementById('entryForm').reset(); document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; eModal.show(); };
     
-    document.getElementById('bankForm').onsubmit = (e) => {
-        e.preventDefault();
-        push(ref(db, 'bank_accounts'), { name: document.getElementById('newBankName').value, number: document.getElementById('newBankNumber').value });
-        bModal.hide();
-    };
-
-    document.getElementById('entryForm').onsubmit = (e) => {
-        e.preventDefault();
-        const bId = document.getElementById('entryBank').value;
-        const data = { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value };
-        push(ref(db, `bank_transactions/${bId}`), data);
-        eModal.hide();
-    };
+    document.getElementById('bankForm').onsubmit = (e) => { e.preventDefault(); push(ref(db, 'bank_accounts'), { name: document.getElementById('newBankName').value, number: document.getElementById('newBankNumber').value }); bModal.hide(); };
+    document.getElementById('entryForm').onsubmit = (e) => { e.preventDefault(); const bId = document.getElementById('entryBank').value; const data = { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value }; push(ref(db, `bank_transactions/${bId}`), data); eModal.hide(); };
 
     window.updateView = (v) => { currentFilter = v; initChart(); };
     window.changeTheme = (v) => { document.body.setAttribute('data-theme', v); initChart(); };
-    window.closeHistory = () => { document.getElementById('bankDetailSection').style.display = 'none'; selectedBankId = null; };
+    window.closeHistory = () => { document.getElementById('bankDetailSection').style.display = 'none'; selectedBankId = null; historyFilter = 'All'; };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
