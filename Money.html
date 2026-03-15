@@ -32,15 +32,7 @@
         body { background-color: var(--bg-body); font-family: 'Poppins', sans-serif; color: var(--text-color); padding: 25px; transition: 0.3s; }
         .main-container { width: 1150px; margin: 0 auto; }
 
-        .card-3d {
-            background: var(--card-main);
-            border-radius: 20px;
-            box-shadow: var(--shadow-3d);
-            border: none;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            padding: 20px;
-            cursor: pointer;
-        }
+        .card-3d { background: var(--card-main); border-radius: 20px; box-shadow: var(--shadow-3d); border: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 20px; cursor: pointer; }
         .card-3d:hover { transform: translateY(-5px); }
 
         .bank-card-mini { min-width: 190px; border-left: 5px solid var(--accent-blue); padding: 15px; }
@@ -52,16 +44,7 @@
         .grad-expense { background: linear-gradient(145deg, #d63031, #a91e1e); color: white; }
 
         .history-card { overflow: hidden; padding: 0 !important; cursor: default; }
-        .history-header-3d {
-            background: var(--blue-3d-grad);
-            color: white;
-            padding: 18px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        
+        .history-header-3d { background: var(--blue-3d-grad); color: white; padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .history-filter-bar { padding: 15px 25px; background: rgba(9, 132, 227, 0.08); display: flex; gap: 20px; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); }
         .filter-input-group { display: flex; align-items: center; gap: 10px; }
         .filter-input-group label { font-size: 0.85rem; font-weight: 600; margin: 0; color: var(--accent-blue); }
@@ -97,7 +80,7 @@
             <h2 class="fw-bold mb-0">Money Vault <span class="text-primary">3D Pro</span></h2>
         </div>
         <div class="d-flex gap-3 align-items-center">
-            <button id="loginBtn" class="btn btn-outline-primary rounded-pill px-3 fw-bold shadow-sm">
+            <button id="loginBtn" class="btn btn-outline-primary rounded-pill px-3 fw-bold shadow-sm" onclick="handleAuth()">
                 <i class="bi bi-google me-2"></i> Login
             </button>
             <button class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm" onclick="openTransferModal()">
@@ -177,26 +160,39 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    let allBanks = [], allTransactions = [], currentFilter = 'All', historyTypeFilter = 'All', myChart = null, selectedBankId = null, currentUser = null;
-    const bModal = new bootstrap.Modal(document.getElementById('bankModal')), eModal = new bootstrap.Modal(document.getElementById('entryModal')), tModal = new bootstrap.Modal(document.getElementById('transferModal'));
+    let allBanks = [], allTransactions = [], currentFilter = 'All', historyTypeFilter = 'All', myChart = null, selectedBankId = null;
+    window.currentUser = null; 
+    
+    const bModal = new bootstrap.Modal(document.getElementById('bankModal'));
+    const eModal = new bootstrap.Modal(document.getElementById('entryModal'));
+    const tModal = new bootstrap.Modal(document.getElementById('transferModal'));
 
-    // --- Authentication ---
-    document.getElementById('loginBtn').addEventListener('click', () => {
-        if (auth.currentUser) signOut(auth);
-        else signInWithPopup(auth, provider).catch(err => alert("Login Error: " + err.message));
-    });
+    // --- Authentication Function Exposed Globally ---
+    window.handleAuth = () => {
+        if (auth.currentUser) {
+            signOut(auth).catch(err => console.error(err));
+        } else {
+            signInWithPopup(auth, provider).catch(err => {
+                alert("Login Error: " + err.message + "\nMake sure you are running this from GitHub or Localhost.");
+                console.error(err);
+            });
+        }
+    };
 
     onAuthStateChanged(auth, (user) => {
-        currentUser = user;
+        window.currentUser = user;
         const btn = document.getElementById('loginBtn');
+        const protectedContent = document.getElementById('authProtectedContent');
+        const loginMsg = document.getElementById('loginMessage');
+        
         if (user) {
             btn.innerHTML = `<i class="bi bi-box-arrow-right me-2"></i> Logout (${user.displayName.split(' ')[0]})`;
-            document.getElementById('authProtectedContent').classList.remove('auth-hidden');
-            document.getElementById('loginMessage').classList.add('auth-hidden');
+            protectedContent.classList.remove('auth-hidden');
+            loginMsg.classList.add('auth-hidden');
         } else {
             btn.innerHTML = `<i class="bi bi-google me-2"></i> Login`;
-            document.getElementById('authProtectedContent').classList.add('auth-hidden');
-            document.getElementById('loginMessage').classList.remove('auth-hidden');
+            protectedContent.classList.add('auth-hidden');
+            loginMsg.classList.remove('auth-hidden');
         }
         renderBanks(); updateSummary(); if(user) initChart();
     });
@@ -210,7 +206,7 @@
     onValue(ref(db, 'bank_transactions'), (snap) => {
         allTransactions = [];
         snap.forEach(bNode => { bNode.forEach(tNode => { allTransactions.push({ id: tNode.key, bankId: bNode.key, ...tNode.val() }); }); });
-        renderBanks(); updateSummary(); if(currentUser) initChart(); if(selectedBankId) window.applyFilters();
+        renderBanks(); updateSummary(); if(window.currentUser) initChart(); if(selectedBankId) window.applyFilters();
     });
 
     function renderBanks() {
@@ -223,8 +219,8 @@
                 if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
                 return s;
             }, 0);
-            const displayBal = currentUser ? `Rs. ${balance.toLocaleString()}` : 'Rs. 🔒';
-            container.innerHTML += `<div class="card-3d bank-card-mini" onclick="${currentUser ? "selectBank('"+bank.id+"')" : "alert('Login to see history')" }">
+            const displayBal = window.currentUser ? `Rs. ${balance.toLocaleString()}` : 'Rs. 🔒';
+            container.innerHTML += `<div class="card-3d bank-card-mini" onclick="${window.currentUser ? "selectBank('"+bank.id+"')" : "alert('Please login to see history')" }">
                 <h6>${bank.name}</h6><span class="acc-num">${bank.number || '---'}</span><div class="bal-amt">${displayBal}</div></div>`;
         });
         const options = allBanks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
@@ -238,12 +234,12 @@
         let tAdjOut = allTransactions.filter(t => t.type === 'Adjustment Out').reduce((s, t) => s + parseFloat(t.amount), 0);
         document.getElementById('totalIncome').innerText = `Rs. ${tI.toLocaleString()}`;
         document.getElementById('totalExpense').innerText = `Rs. ${tE.toLocaleString()}`;
-        document.getElementById('totalBalance').innerText = currentUser ? `Rs. ${(tI + tAdjIn - tE - tAdjOut).toLocaleString()}` : 'Rs. 🔒';
+        document.getElementById('totalBalance').innerText = window.currentUser ? `Rs. ${(tI + tAdjIn - tE - tAdjOut).toLocaleString()}` : 'Rs. 🔒';
     }
 
     window.initChart = () => {
         const ctx = document.getElementById('mainChart');
-        if(!ctx || !currentUser) return;
+        if(!ctx || !window.currentUser) return;
         if(myChart) myChart.destroy();
         const dates = [...new Set(allTransactions.filter(t => t.type === 'Income' || t.type === 'Expense').map(t => t.date))].sort();
         const incData = dates.map(d => allTransactions.filter(t => t.date === d && t.type === 'Income').reduce((s, c) => s + parseFloat(c.amount), 0));
@@ -271,21 +267,21 @@
     };
 
     // Forms
-    document.getElementById('bankForm').onsubmit = (e) => { e.preventDefault(); push(ref(db, 'bank_accounts'), { name: document.getElementById('newBankName').value, number: document.getElementById('newBankNumber').value }); bModal.hide(); e.target.reset(); };
-    document.getElementById('entryForm').onsubmit = (e) => { e.preventDefault(); push(ref(db, `bank_transactions/${document.getElementById('entryBank').value}`), { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value }); eModal.hide(); e.target.reset(); };
-    document.getElementById('transferForm').onsubmit = (e) => {
+    document.getElementById('bankForm').addEventListener('submit', (e) => { e.preventDefault(); push(ref(db, 'bank_accounts'), { name: document.getElementById('newBankName').value, number: document.getElementById('newBankNumber').value }); bModal.hide(); e.target.reset(); });
+    document.getElementById('entryForm').addEventListener('submit', (e) => { e.preventDefault(); push(ref(db, `bank_transactions/${document.getElementById('entryBank').value}`), { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value }); eModal.hide(); e.target.reset(); });
+    document.getElementById('transferForm').addEventListener('submit', (e) => {
         e.preventDefault(); const f = document.getElementById('fromBank').value, t = document.getElementById('toBank').value, a = document.getElementById('transferAmt').value, d = document.getElementById('transferDate').value;
         if(f === t) return alert("Select different banks");
         push(ref(db, `bank_transactions/${f}`), { type: 'Adjustment Out', amount: a, date: d, remarks: `To ${allBanks.find(b => b.id === t).name}` });
         push(ref(db, `bank_transactions/${t}`), { type: 'Adjustment In', amount: a, date: d, remarks: `From ${allBanks.find(b => b.id === f).name}` });
         tModal.hide(); e.target.reset();
-    };
+    });
 
     window.openTransferModal = () => { document.getElementById('transferDate').value = new Date().toISOString().split('T')[0]; tModal.show(); };
     window.openBankModal = () => bModal.show();
     window.openTransactionModal = () => { document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; eModal.show(); };
     window.deleteEntry = (bId, tId) => { if(confirm("Delete?")) remove(ref(db, `bank_transactions/${bId}/${tId}`)); };
-    window.updateView = (v) => { currentFilter = v; if(currentUser) initChart(); };
+    window.updateView = (v) => { currentFilter = v; if(window.currentUser) initChart(); };
     window.changeTheme = (v) => document.body.setAttribute('data-theme', v);
     window.closeHistory = () => document.getElementById('bankDetailSection').style.display = 'none';
     window.resetDateFilters = () => { document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; window.applyFilters(); };
