@@ -151,6 +151,17 @@
         .table-custom tbody td { background-color: var(--input-bg) !important; color: var(--text-color) !important; border-color: var(--border-color); vertical-align: middle; }
         .table-custom tbody tr:hover td { filter: brightness(0.95); }
         
+        /* Range Summary Bar */
+        .range-summary-bar {
+            background: var(--table-header-bg);
+            color: var(--table-header-text);
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            display: none;
+            box-shadow: var(--shadow-3d);
+        }
+
         /* Custom Scrollbar */
         .chart-wrapper { overflow-x: auto; overflow-y: hidden; padding-bottom: 15px; margin-top: 15px; }
         .chart-wrapper::-webkit-scrollbar { height: 12px; }
@@ -207,14 +218,19 @@
                 <button class="btn btn-outline-primary px-4 fw-bold" id="btnInc" onclick="updateView('Income')">Income</button>
                 <button class="btn btn-outline-primary px-4 fw-bold" id="btnExp" onclick="updateView('Expense')">Expense</button>
             </div>
-            <div class="d-flex gap-2">
-                <select id="chartShape" class="form-select shadow-sm fw-bold text-primary" style="width: 170px;" onchange="refreshUI()">
+            <div class="d-flex align-items-center gap-2">
+                <select id="chartShape" class="form-select shadow-sm fw-bold text-primary" style="width: 140px;" onchange="refreshUI()">
                     <option value="bar">Bar Chart</option>
                     <option value="line">Line Chart</option>
                     <option value="area">Area Chart</option>
                     <option value="doughnut">Doughnut Chart</option>
                 </select>
-                <input type="date" id="filterDate" class="form-control shadow-sm" style="width:160px;">
+                <div class="input-group input-group-sm" style="width: 350px;">
+                    <span class="input-group-text fw-bold bg-dark text-white border-0">From</span>
+                    <input type="date" id="fromDate" class="form-control border-0">
+                    <span class="input-group-text fw-bold bg-dark text-white border-0">To</span>
+                    <input type="date" id="toDate" class="form-control border-0">
+                </div>
                 <button class="btn btn-dark shadow-sm" onclick="applyFilter()"><i class="bi bi-search"></i></button>
                 <button class="btn btn-secondary shadow-sm" onclick="resetFilter()">View All</button>
                 <button class="btn btn-danger shadow-sm fw-bold" onclick="downloadPDF()"><i class="bi bi-file-pdf"></i> PDF</button>
@@ -228,7 +244,18 @@
         </div>
 
         <div class="table-responsive mt-5 pb-3">
-            <h4 class="fw-bold mb-3"><i class="bi bi-receipt me-2"></i>Financial Summary Report</h4>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold m-0"><i class="bi bi-receipt me-2"></i>Financial Summary Report</h4>
+            </div>
+
+            <div id="rangeSummary" class="range-summary-bar">
+                <div class="row text-center">
+                    <div class="col">Range Income: <span id="rInc" class="fw-bold text-success">0</span></div>
+                    <div class="col">Range Expense: <span id="rExp" class="fw-bold text-danger">0</span></div>
+                    <div class="col">Net Profit: <span id="rProf" class="fw-bold text-info">0</span></div>
+                </div>
+            </div>
+
             <table class="table table-custom align-middle" id="summaryTable">
                 <thead>
                     <tr>
@@ -289,24 +316,26 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const dbRef = ref(db, 'transactions');
-    const themeRef = ref(db, 'settings/theme'); // New reference for Theme saving
+    const themeRef = ref(db, 'settings/theme'); 
 
     let allData = [];
     let currentTab = 'All';
-    let filterDate = null;
+    let filterStart = null;
+    let filterEnd = null;
     let myChart = null;
     const modalObj = new bootstrap.Modal(document.getElementById('entryModal'));
 
-    // Set Default Current Date in Filter
-    document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
+    // Set Today in inputs by default
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('fromDate').value = today;
+    document.getElementById('toDate').value = today;
 
-    // Theme Logic Handler
     onValue(themeRef, (snap) => {
         const savedTheme = snap.val() || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
         const selectElement = document.getElementById('appTheme');
         if(selectElement) selectElement.value = savedTheme;
-        if(allData.length > 0) refreshUI(); // Update chart colors dynamically when theme changes
+        if(allData.length > 0) refreshUI(); 
     });
 
     window.saveTheme = () => {
@@ -339,72 +368,83 @@
 
         const sortedDates = Object.keys(grouped).sort((a,b) => new Date(a) - new Date(b));
         let runningBalance = 0;
+        
+        // Tracking for range summary
+        let rangeIncTotal = 0;
+        let rangeExpTotal = 0;
 
         sortedDates.forEach((date) => {
             const data = grouped[date];
             const openingBalForDay = runningBalance;
             const currentDayClosing = openingBalForDay + data.income - data.expense;
             
-            let showRow = false;
-            if (currentTab === 'All') showRow = true;
-            else if (currentTab === 'Income' && data.income > 0) showRow = true;
-            else if (currentTab === 'Expense' && data.expense > 0) showRow = true;
+            // Range logic
+            const isWithinRange = (!filterStart || date >= filterStart) && (!filterEnd || date <= filterEnd);
 
-            if ((!filterDate || date === filterDate) && showRow) {
-                let filteredItems = data.items;
-                if (currentTab !== 'All') {
-                    filteredItems = data.items.filter(item => item.type === currentTab);
+            if (isWithinRange) {
+                rangeIncTotal += data.income;
+                rangeExpTotal += data.expense;
+
+                let showRow = (currentTab === 'All') || (currentTab === 'Income' && data.income > 0) || (currentTab === 'Expense' && data.expense > 0);
+
+                if (showRow) {
+                    let filteredItems = (currentTab === 'All') ? data.items : data.items.filter(item => item.type === currentTab);
+
+                    let remarksList = filteredItems
+                        .filter(item => item.remarks && item.remarks.trim() !== "" && item.remarks.toLowerCase() !== "n/a")
+                        .map(item => `<b class="${item.type==='Income'?'text-success':'text-danger'}">${item.type}:</b> ${item.remarks}`)
+                        .join(' | ');
+
+                    let actionButtons = filteredItems.map(item => `
+                        <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
+                            <span class="badge ${item.type==='Income'?'bg-success':'bg-danger'} shadow-sm" style="min-width:60px; font-size:12px;">${item.amount}</span>
+                            <button class="btn btn-sm btn-primary py-0 px-2 shadow-sm" onclick="editEntry('${item.id}')"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-danger py-0 px-2 shadow-sm" onclick="deleteEntry('${item.id}')"><i class="bi bi-trash"></i></button>
+                        </div>
+                    `).join('');
+
+                    summaryBody.innerHTML += `
+                        <tr>
+                            <td class="text-center fw-bold small">${formatDateDisplay(date)}</td>
+                            <td class="text-center fw-bold" style="opacity:0.8">${openingBalForDay.toFixed(2)}</td>
+                            <td class="text-center text-success fw-bold">${currentTab === 'Expense' ? '-' : data.income.toFixed(2)}</td>
+                            <td class="text-center text-danger fw-bold">${currentTab === 'Income' ? '-' : data.expense.toFixed(2)}</td>
+                            <td class="text-center text-primary fw-bold fs-6">${currentDayClosing.toFixed(2)}</td>
+                            <td class="small" style="line-height:1.6;">${remarksList}</td>
+                            <td class="text-center">${actionButtons}</td>
+                        </tr>`;
                 }
-
-                let remarksList = filteredItems
-                    .filter(item => item.remarks && item.remarks.trim() !== "" && item.remarks.toLowerCase() !== "n/a")
-                    .map(item => `<b class="${item.type==='Income'?'text-success':'text-danger'}">${item.type}:</b> ${item.remarks}`)
-                    .join(' | ');
-
-                let actionButtons = filteredItems.map(item => `
-                    <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
-                        <span class="badge ${item.type==='Income'?'bg-success':'bg-danger'} shadow-sm" style="min-width:60px; font-size:12px;">${item.amount}</span>
-                        <button class="btn btn-sm btn-primary py-0 px-2 shadow-sm" onclick="editEntry('${item.id}')"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm btn-danger py-0 px-2 shadow-sm" onclick="deleteEntry('${item.id}')"><i class="bi bi-trash"></i></button>
-                    </div>
-                `).join('');
-
-                summaryBody.innerHTML += `
-                    <tr>
-                        <td class="text-center fw-bold small">${formatDateDisplay(date)}</td>
-                        <td class="text-center fw-bold" style="opacity:0.8">${openingBalForDay.toFixed(2)}</td>
-                        <td class="text-center text-success fw-bold">${currentTab === 'Expense' ? '-' : data.income.toFixed(2)}</td>
-                        <td class="text-center text-danger fw-bold">${currentTab === 'Income' ? '-' : data.expense.toFixed(2)}</td>
-                        <td class="text-center text-primary fw-bold fs-6">${currentDayClosing.toFixed(2)}</td>
-                        <td class="small" style="line-height:1.6;">${remarksList}</td>
-                        <td class="text-center">${actionButtons}</td>
-                    </tr>`;
             }
             runningBalance = currentDayClosing;
         });
 
-        updateCalculations(filterDate);
-        initChart(allData.filter(t => !filterDate || t.date === filterDate));
+        // Update Range Summary Display
+        if (filterStart || filterEnd) {
+            document.getElementById('rangeSummary').style.display = 'block';
+            document.getElementById('rInc').innerText = rangeIncTotal.toFixed(2);
+            document.getElementById('rExp').innerText = rangeExpTotal.toFixed(2);
+            document.getElementById('rProf').innerText = (rangeIncTotal - rangeExpTotal).toFixed(2);
+        } else {
+            document.getElementById('rangeSummary').style.display = 'none';
+        }
+
+        updateCalculations();
+        
+        // Chart Filter
+        const chartData = allData.filter(t => (!filterStart || t.date >= filterStart) && (!filterEnd || t.date <= filterEnd));
+        initChart(chartData);
     }
 
-    function updateCalculations(selectedDate) {
+    function updateCalculations() {
         let dInc = 0, dExp = 0, tBal = 0;
         let todayInc = 0, todayExp = 0;
-        let lastDate = "";
-
-        if (allData.length > 0) {
-            const sortedDates = [...new Set(allData.map(t => t.date))].sort((a,b) => new Date(a) - new Date(b));
-            lastDate = sortedDates[sortedDates.length - 1]; 
-        }
+        const lastDate = allData.length > 0 ? [...new Set(allData.map(t => t.date))].sort().pop() : "";
 
         allData.forEach(t => { 
             tBal += (t.type === 'Income' ? t.amount : -t.amount); 
-            if (!selectedDate || t.date === selectedDate) {
-                if(t.type === 'Income') dInc += t.amount; else dExp += t.amount;
-            }
-            if (t.date === lastDate) {
-                if(t.type === 'Income') todayInc += t.amount; else todayExp += t.amount;
-            }
+            if(t.date === lastDate) { if(t.type === 'Income') todayInc += t.amount; else todayExp += t.amount; }
+            // General totals regardless of filter
+            if(t.type === 'Income') dInc += t.amount; else dExp += t.amount;
         });
 
         document.getElementById('totalIncVal').innerText = dInc.toFixed(2);
@@ -414,6 +454,20 @@
         document.getElementById('todayIncVal').innerText = todayInc.toFixed(2);
         document.getElementById('todayExpVal').innerText = todayExp.toFixed(2);
     }
+
+    window.applyFilter = () => { 
+        filterStart = document.getElementById('fromDate').value; 
+        filterEnd = document.getElementById('toDate').value; 
+        refreshUI(); 
+    };
+    
+    window.resetFilter = () => { 
+        filterStart = null; 
+        filterEnd = null; 
+        document.getElementById('fromDate').value = today;
+        document.getElementById('toDate').value = today;
+        refreshUI(); 
+    };
 
     window.editEntry = (id) => {
         const entry = allData.find(i => i.id === id);
@@ -429,13 +483,12 @@
         }
     };
 
-    window.deleteEntry = (id) => { if(confirm("Are you sure you want to permanently delete this entry?")) remove(ref(db, 'transactions/'+id)); };
+    window.deleteEntry = (id) => { if(confirm("Are you sure?")) remove(ref(db, 'transactions/'+id)); };
 
     window.initChart = (data) => {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(myChart) myChart.destroy();
         
-        // Dynamically get colors based on active theme
         const theme = document.documentElement.getAttribute('data-theme');
         const chartTextColor = (theme === 'dark' || theme === 'glass') ? '#ffffff' : '#2c3e50';
         const gridColor = (theme === 'dark' || theme === 'glass') ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
@@ -446,47 +499,29 @@
         const exps = labels.map(l => sorted.filter(d => formatDateDisplay(d.date) === l && d.type === 'Expense').reduce((s,c) => s+c.amount,0));
         
         const chartBox = document.getElementById('chartBox');
-        if (labels.length > 5) { chartBox.style.width = (labels.length * 15) + '%'; } 
-        else { chartBox.style.width = '100%'; }
+        chartBox.style.width = labels.length > 7 ? (labels.length * 12) + '%' : '100%';
 
-        const shape = document.getElementById('chartShape') ? document.getElementById('chartShape').value : 'bar';
-        let chartType = 'bar';
-        let isArea = false;
-
-        if (shape === 'area') { chartType = 'line'; isArea = true; }
-        else { chartType = shape; }
-
-        let datasetsArray = [];
-        if (currentTab === 'All' || currentTab === 'Income') {
-            datasetsArray.push({ 
-                label: 'Income', data: incs, 
-                backgroundColor: isArea ? 'rgba(46, 204, 113, 0.4)' : '#2ecc71', 
-                borderColor: '#2ecc71', fill: isArea, borderWidth: 3, tension: 0.4, borderRadius: 5
-            });
-        }
-        if (currentTab === 'All' || currentTab === 'Expense') {
-            datasetsArray.push({ 
-                label: 'Expense', data: exps, 
-                backgroundColor: isArea ? 'rgba(231, 76, 60, 0.4)' : '#e74c3c', 
-                borderColor: '#e74c3c', fill: isArea, borderWidth: 3, tension: 0.4, borderRadius: 5
-            });
-        }
+        const shape = document.getElementById('chartShape').value;
+        let chartType = shape === 'area' ? 'line' : shape;
 
         myChart = new Chart(ctx, {
             type: chartType,
-            data: { labels: labels, datasets: datasetsArray },
+            data: { 
+                labels: labels, 
+                datasets: [
+                    { label: 'Income', data: incs, backgroundColor: '#2ecc71', borderColor: '#2ecc71', fill: shape === 'area', tension: 0.4 },
+                    { label: 'Expense', data: exps, backgroundColor: '#e74c3c', borderColor: '#e74c3c', fill: shape === 'area', tension: 0.4 }
+                ].filter(ds => currentTab === 'All' || ds.label === currentTab)
+            },
             options: { 
                 responsive: true, maintainAspectRatio: false,
                 plugins: {
-                    legend: { labels: { color: chartTextColor, font: { family: 'Poppins', size: 13 } } },
-                    datalabels: {
-                        color: chartTextColor, font: { family: 'Poppins', weight: 'bold', size: 11 },
-                        anchor: 'end', align: 'end', formatter: (value) => { return value > 0 ? value : ''; }
-                    }
+                    legend: { labels: { color: chartTextColor } },
+                    datalabels: { color: chartTextColor, font: { weight: 'bold' }, anchor: 'end', align: 'end', formatter: v => v > 0 ? v : '' }
                 },
-                scales: (chartType === 'doughnut') ? {} : { 
-                    x: { ticks: { color: chartTextColor, font: { family: 'Poppins'} }, grid: { display: false } },
-                    y: { beginAtZero: true, ticks: { color: chartTextColor, font: { family: 'Poppins'} }, grid: { color: gridColor, borderDash: [5, 5] } } 
+                scales: chartType === 'doughnut' ? {} : { 
+                    x: { ticks: { color: chartTextColor } },
+                    y: { beginAtZero: true, ticks: { color: chartTextColor }, grid: { color: gridColor } } 
                 }
             }
         });
@@ -495,45 +530,34 @@
     window.updateView = (tab) => {
         currentTab = tab;
         document.querySelectorAll('.btn-group .btn').forEach(b => {
-            b.classList.remove('btn-primary', 'active');
-            b.classList.add('btn-outline-primary');
+            b.classList.replace('btn-primary', 'btn-outline-primary');
+            b.classList.remove('active');
         });
         const btnId = tab === 'All' ? 'btnAll' : (tab === 'Income' ? 'btnInc' : 'btnExp');
-        const activeBtn = document.getElementById(btnId);
-        activeBtn.classList.remove('btn-outline-primary');
-        activeBtn.classList.add('btn-primary', 'active');
+        document.getElementById(btnId).classList.replace('btn-outline-primary', 'btn-primary');
+        document.getElementById(btnId).classList.add('active');
         refreshUI();
     };
 
-    window.applyFilter = () => { filterDate = document.getElementById('filterDate').value; refreshUI(); };
-    window.resetFilter = () => { filterDate = null; document.getElementById('filterDate').value = ""; refreshUI(); };
-    
     window.openModal = () => {
         document.getElementById('entryForm').reset();
         document.getElementById('editKey').value = "";
-        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Nayi Entry Karein';
-        document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('entryDate').value = today;
         toggleForm();
         modalObj.show();
     };
 
     window.toggleForm = () => {
-        const type = document.getElementById('entryType').value;
-        const incArea = document.getElementById('incomeLogic');
-        const amtContainer = document.getElementById('amtContainer');
-        if(type === 'Income') {
-            incArea.style.display = 'block'; amtContainer.style.display = 'none';
-            document.getElementById('openBal').value = (parseFloat(document.getElementById('balanceVal').innerText) || 0).toFixed(2);
-        } else {
-            incArea.style.display = 'none'; amtContainer.style.display = 'block';
-            document.getElementById('amtLabel').innerText = "Amount Expended";
-        }
+        const isInc = document.getElementById('entryType').value === 'Income';
+        document.getElementById('incomeLogic').style.display = isInc ? 'block' : 'none';
+        document.getElementById('amtContainer').style.display = isInc ? 'none' : 'block';
+        if(isInc) document.getElementById('openBal').value = (parseFloat(document.getElementById('balanceVal').innerText) || 0).toFixed(2);
     };
 
     window.calcIncome = () => {
-        const tb = parseFloat(document.getElementById('todayBal').value) || 0;
-        document.getElementById('calcInc').value = tb.toFixed(2);
-        document.getElementById('entryAmount').value = tb;
+        const val = parseFloat(document.getElementById('todayBal').value) || 0;
+        document.getElementById('calcInc').value = val.toFixed(2);
+        document.getElementById('entryAmount').value = val;
     };
 
     document.getElementById('entryForm').onsubmit = (e) => {
@@ -543,24 +567,15 @@
             type: document.getElementById('entryType').value,
             date: document.getElementById('entryDate').value,
             amount: parseFloat(document.getElementById('entryAmount').value),
-            remarks: document.getElementById('entryRemarks').value || ""
+            remarks: document.getElementById('entryRemarks').value || "N/A"
         };
         key ? set(ref(db, 'transactions/'+key), data) : push(dbRef, data);
         modalObj.hide();
     };
 
     window.downloadPDF = () => { 
-        // Temporarily shift to light theme for printing clean PDF if dark/glass mode is active
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        if(currentTheme !== 'light') document.documentElement.setAttribute('data-theme', 'light');
-        
-        setTimeout(() => {
-            const element = document.getElementById('summaryTable');
-            html2pdf().from(element).save('Finance_Summary.pdf').then(() => {
-                // Restore theme
-                if(currentTheme !== 'light') document.documentElement.setAttribute('data-theme', currentTheme);
-            });
-        }, 500); // Give CSS variables 0.5s to switch before capturing PDF
+        const element = document.getElementById('summaryTable');
+        html2pdf().from(element).save('Finance_Report.pdf');
     };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
