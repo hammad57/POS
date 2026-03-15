@@ -33,8 +33,16 @@
         .bg-balance { background: linear-gradient(135deg, #00b09b, #96c93d); }
 
         .glass-panel { background: var(--container-bg); padding: 30px; border-radius: 25px; box-shadow: var(--shadow-3d); border: 1px solid var(--border-color); }
-        .table-custom { border-radius: 15px; overflow: hidden; box-shadow: var(--shadow-3d); margin-top: 20px; background: white; }
+        .table-custom { border-radius: 15px; overflow: hidden; box-shadow: var(--shadow-3d); margin-top: 20px; background: white; width: 100%; }
         .table-custom thead { background: #2c3e50; color: white; }
+
+        .history-row { background: #f8f9fa; display: none; }
+        .history-table { background: #fff; margin: 10px 0; border: 1px solid #dee2e6; border-radius: 10px; }
+        
+        .btn-expand { cursor: pointer; transition: 0.3s; color: #0d6efd; font-size: 1.2rem; }
+        .btn-expand.active { transform: rotate(45deg); color: #dc3545; }
+
+        .balance-pill { font-size: 0.85rem; padding: 5px 12px; border-radius: 50px; font-weight: 700; display: inline-block; }
 
         .fab-add {
             position: fixed; right: 50px; bottom: 50px; width: 80px; height: 80px;
@@ -42,66 +50,51 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 40px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); border: none; z-index: 1000;
         }
-        .balance-pill { font-size: 0.85rem; padding: 5px 12px; border-radius: 50px; font-weight: 700; display: inline-block; }
     </style>
 </head>
 <body>
 
 <div class="main-wrapper">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold"><i class="bi bi-wallet2 me-2 text-primary"></i>Loan Tracking & Ledger</h2>
+        <h2 class="fw-bold"><i class="bi bi-person-lines-fill me-2 text-primary"></i>User Loan Ledger</h2>
         <button class="btn btn-dark fw-bold px-4 shadow-sm" onclick="openUserModal()">+ Add New Person</button>
     </div>
 
     <div class="row text-center mb-4">
         <div class="col"><div class="summary-card bg-vault"><h6>Live Vault Balance</h6><h2 id="bankBalanceDisplay">Rs. 0</h2></div></div>
-        <div class="col"><div class="summary-card bg-given"><h6>Total Recoverable (Lena Hai)</h6><h2 id="totalGiven">0</h2></div></div>
-        <div class="col"><div class="summary-card bg-taken"><h6>Total Payable (Dena Hai)</h6><h2 id="totalTaken">0</h2></div></div>
-        <div class="col"><div class="summary-card bg-balance"><h6>Net Loan Position</h6><h2 id="netPosition">0</h2></div></div>
+        <div class="col"><div class="summary-card bg-given"><h6>Lena Hai (Total)</h6><h2 id="totalGiven">0</h2></div></div>
+        <div class="col"><div class="summary-card bg-taken"><h6>Dena Hai (Total)</h6><h2 id="totalTaken">0</h2></div></div>
+        <div class="col"><div class="summary-card bg-balance"><h6>Net Position</h6><h2 id="netPosition">0</h2></div></div>
     </div>
 
     <div class="glass-panel">
-        <h4 class="fw-bold mb-4"><i class="bi bi-journal-text me-2"></i>Detailed Transaction Ledger</h4>
+        <h4 class="fw-bold mb-4"><i class="bi bi-people-fill me-2"></i>Active User Balances</h4>
         <table class="table table-custom align-middle">
             <thead class="text-center">
                 <tr>
-                    <th>Date</th>
-                    <th>Person Name</th>
-                    <th>Type</th>
-                    <th>Remarks</th>
-                    <th class="text-end">Amount</th>
-                    <th class="text-end">Remaining Balance</th>
-                    <th>Action</th>
+                    <th style="width: 50px;">View</th>
+                    <th class="text-start">Person Name</th>
+                    <th>Current Status</th>
+                    <th class="text-end">Balance Amount</th>
                 </tr>
             </thead>
-            <tbody id="loanTableBody"></tbody>
+            <tbody id="userSummaryBody"></tbody>
         </table>
     </div>
 </div>
 
 <button class="fab-add" onclick="openLoanModal()"><i class="bi bi-plus-lg"></i></button>
 
-<div class="modal fade" id="userModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 20px;">
-            <div class="modal-header"><h5>Create New User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body p-4">
-                <input type="text" id="userName" class="form-control mb-3" placeholder="Enter Full Name">
-                <button class="btn btn-primary w-100" onclick="saveUser()">Save User</button>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="modal fade" id="userModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="border-radius: 20px;"><div class="modal-header"><h5>Add New Person</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><input type="text" id="userName" class="form-control mb-3" placeholder="Full Name"><button class="btn btn-primary w-100" onclick="saveUser()">Save User</button></div></div></div></div>
 
 <div class="modal fade" id="loanModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 20px;">
-            <div class="modal-header bg-primary text-white"><h5>New Entry & Auto Sync</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header bg-primary text-white"><h5>New Entry & Sync</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
             <div class="modal-body p-4">
                 <form id="loanForm">
                     <div class="mb-3"><label class="fw-bold">Select Person</label><select id="userSelect" class="form-select" required></select></div>
-                    <div class="mb-3">
-                        <label class="fw-bold">Type</label>
+                    <div class="mb-3"><label class="fw-bold">Type</label>
                         <select id="loanType" class="form-select" required onchange="toggleBankSelect()">
                             <option value="Opening Balance">Opening Balance</option>
                             <option value="Loan Given">Loan Given (Lena Hai)</option>
@@ -116,7 +109,7 @@
                         <div class="col-6 mb-3"><label class="fw-bold">Amount</label><input type="number" id="loanAmount" class="form-control" required></div>
                     </div>
                     <div class="mb-3"><label class="fw-bold">Remarks</label><textarea id="loanRemarks" class="form-control" rows="2"></textarea></div>
-                    <button type="submit" class="btn btn-success w-100 fw-bold py-2">Save & Sync</button>
+                    <button type="submit" class="btn btn-success w-100 fw-bold py-2">Save Record</button>
                 </form>
             </div>
         </div>
@@ -134,7 +127,7 @@
     const uModal = new bootstrap.Modal(document.getElementById('userModal'));
     const lModal = new bootstrap.Modal(document.getElementById('loanModal'));
 
-    // --- LIVE SYNC: BANK BALANCE ---
+    // --- LIVE BANK SYNC ---
     onValue(ref(db, 'bank_transactions'), (snap) => {
         let total = 0;
         snap.forEach(b => b.forEach(tNode => {
@@ -152,7 +145,7 @@
         snap.forEach(child => { syncBank.innerHTML += `<option value="${child.key}">${child.val().name}</option>`; });
     });
 
-    // --- LOAN USERS & LEDGER LOGIC ---
+    // --- MAIN LOGIC ---
     onValue(ref(db, 'loan_users'), (snap) => {
         const select = document.getElementById('userSelect');
         select.innerHTML = '<option value="">-- Select Person --</option>';
@@ -160,58 +153,80 @@
     });
 
     onValue(ref(db, 'loan_transactions'), (snapshot) => {
-        const body = document.getElementById('loanTableBody');
+        const body = document.getElementById('userSummaryBody');
         body.innerHTML = '';
-        let tg = 0, tt = 0;
-        const entries = [];
-        snapshot.forEach(c => { entries.push({id: c.key, ...c.val()}); });
+        let totalG = 0, totalT = 0;
         
-        // Logical Order: Oldest first for calculation
-        entries.sort((a,b) => new Date(a.date) - new Date(b.date));
-
-        const userBalances = {};
-        const calculatedData = entries.map(t => {
-            const amt = parseFloat(t.amount) || 0;
-            if (!userBalances[t.user]) userBalances[t.user] = 0;
-
-            if (t.type === 'Loan Given' || t.type === 'Repayment Paid' || (t.type === 'Opening Balance' && amt > 0)) {
-                userBalances[t.user] += amt;
-            } else {
-                userBalances[t.user] -= Math.abs(amt);
-            }
-            return { ...t, currentRunningBal: userBalances[t.user] };
+        const allTransactions = [];
+        snapshot.forEach(c => { allTransactions.push({id: c.key, ...c.val()}); });
+        
+        // Grouping by User
+        const groups = {};
+        allTransactions.forEach(t => {
+            if (!groups[t.user]) groups[t.user] = [];
+            groups[t.user].push(t);
         });
 
-        // Dashboard Summary
-        Object.values(userBalances).forEach(b => { if(b > 0) tg += b; else tt += Math.abs(b); });
-
-        // Table View: Newest First
-        calculatedData.reverse().forEach(t => {
-            const isLena = t.currentRunningBal >= 0;
-            const typeClass = (t.type.includes('Given') || t.type.includes('Paid')) ? 'bg-primary' : 'bg-danger';
+        Object.keys(groups).forEach((userName, index) => {
+            const userHistory = groups[userName].sort((a,b) => new Date(b.date) - new Date(a.date));
+            let balance = 0;
             
+            userHistory.forEach(t => {
+                const amt = parseFloat(t.amount) || 0;
+                if (t.type === 'Loan Given' || t.type === 'Repayment Paid' || (t.type === 'Opening Balance' && amt > 0)) balance += amt;
+                else balance -= Math.abs(amt);
+            });
+
+            if(balance > 0) totalG += balance; else totalT += Math.abs(balance);
+            const isLena = balance >= 0;
+
+            // Row Generation
             body.innerHTML += `
                 <tr class="text-center">
-                    <td>${t.date}</td>
-                    <td class="fw-bold text-start">${t.user}</td>
-                    <td><span class="badge ${typeClass}">${t.type}</span></td>
-                    <td class="text-muted small">${t.remarks || '-'}</td>
-                    <td class="text-end fw-bold">${parseFloat(t.amount).toLocaleString()}</td>
-                    <td class="text-end">
-                        <span class="balance-pill ${isLena ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}">
-                            ${isLena ? 'Lena: ' : 'Dena: '} ${Math.abs(t.currentRunningBal).toLocaleString()}
-                        </span>
+                    <td><i class="bi bi-plus-circle-fill btn-expand" onclick="toggleHistory('row-${index}', this)"></i></td>
+                    <td class="text-start fw-bold">${userName}</td>
+                    <td><span class="badge ${isLena ? 'bg-primary' : 'bg-danger'}">${isLena ? 'Lena Hai' : 'Dena Hai'}</span></td>
+                    <td class="text-end fw-bold">Rs. ${Math.abs(balance).toLocaleString()}</td>
+                </tr>
+                <tr id="row-${index}" class="history-row">
+                    <td colspan="4" class="p-3">
+                        <div class="table-responsive">
+                            <table class="table table-sm history-table align-middle">
+                                <thead class="table-light">
+                                    <tr class="text-center"><th>Date</th><th>Type</th><th>Remarks</th><th class="text-end">Amount</th><th>Action</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${userHistory.map(h => `
+                                        <tr class="text-center">
+                                            <td>${h.date}</td>
+                                            <td><small class="badge bg-secondary">${h.type}</small></td>
+                                            <td class="small">${h.remarks || '-'}</td>
+                                            <td class="text-end fw-bold">${parseFloat(h.amount).toLocaleString()}</td>
+                                            <td><button class="btn btn-sm text-danger" onclick="deleteEntry('${h.id}')"><i class="bi bi-trash"></i></button></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </td>
-                    <td><button class="btn btn-sm text-danger border-0" onclick="deleteEntry('${t.id}')"><i class="bi bi-trash3"></i></button></td>
-                </tr>`;
+                </tr>
+            `;
         });
 
-        document.getElementById('totalGiven').innerText = tg.toLocaleString();
-        document.getElementById('totalTaken').innerText = tt.toLocaleString();
-        document.getElementById('netPosition').innerText = (tg - tt).toLocaleString();
+        document.getElementById('totalGiven').innerText = totalG.toLocaleString();
+        document.getElementById('totalTaken').innerText = totalT.toLocaleString();
+        document.getElementById('netPosition').innerText = (totalG - totalT).toLocaleString();
     });
 
-    // --- FORM ACTIONS ---
+    window.toggleHistory = (rowId, btn) => {
+        const row = document.getElementById(rowId);
+        const isHidden = row.style.display === 'none' || row.style.display === '';
+        row.style.display = isHidden ? 'table-row' : 'none';
+        btn.classList.toggle('active', isHidden);
+        btn.classList.toggle('bi-plus-circle-fill', !isHidden);
+        btn.classList.toggle('bi-dash-circle-fill', isHidden);
+    };
+
     document.getElementById('loanForm').onsubmit = (e) => {
         e.preventDefault();
         const type = document.getElementById('loanType').value;
@@ -223,29 +238,19 @@
 
         push(ref(db, 'loan_transactions'), { user: person, type, date, amount: amt, remarks });
 
-        // Sync with Money.html
-        let syncAction = "";
-        if (type === 'Loan Given' || type === 'Repayment Paid') syncAction = "Adjustment Out";
-        else if (type === 'Loan Taken' || type === 'Repayment Received') syncAction = "Adjustment In";
+        let syncAction = (type === 'Loan Given' || type === 'Repayment Paid') ? "Adjustment Out" : 
+                         (type === 'Loan Taken' || type === 'Repayment Received') ? "Adjustment In" : "";
 
         if (syncAction !== "") {
-            push(ref(db, `bank_transactions/${bankId}`), {
-                type: syncAction, amount: amt, date, remarks: `Loan Sync: ${type} (${person})`
-            });
+            push(ref(db, `bank_transactions/${bankId}`), { type: syncAction, amount: amt, date, remarks: `Loan Sync: ${type} (${person})` });
         }
         lModal.hide();
     };
 
-    window.toggleBankSelect = () => {
-        const type = document.getElementById('loanType').value;
-        document.getElementById('bankSelectDiv').style.display = (type === 'Opening Balance') ? 'none' : 'block';
-    };
-    window.saveUser = () => {
-        const name = document.getElementById('userName').value;
-        if(name) { push(ref(db, 'loan_users'), { name }); uModal.hide(); }
-    };
+    window.toggleBankSelect = () => { document.getElementById('bankSelectDiv').style.display = (document.getElementById('loanType').value === 'Opening Balance') ? 'none' : 'block'; };
+    window.saveUser = () => { if(document.getElementById('userName').value) { push(ref(db, 'loan_users'), { name: document.getElementById('userName').value }); uModal.hide(); } };
     window.openUserModal = () => uModal.show();
-    window.openLoanModal = () => { document.getElementById('loanDate').value = new Date().toISOString().split('T')[0]; lModal.show(); };
+    window.openLoanModal = () => { document.getElementById('loanDate').value = new Date().toISOString().split('T')[0]; toggleBankSelect(); lModal.show(); };
     window.deleteEntry = (id) => { if(confirm("Delete this?")) remove(ref(db, 'loan_transactions/'+id)); };
 </script>
 
