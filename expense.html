@@ -2,161 +2,612 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1200, initial-scale=0.3, shrink-to-fit=no"> 
     <title>Smart Financial Tracker 3D Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
-        /* Dark theme styling matching your screenshot */
-        body { background-color: #1a1e29; color: #ffffff; font-family: sans-serif; }
-        .card-bg { background-color: #2a2f3f; }
+        /* ================= THEME VARIABLES ================= */
+        :root {
+            --bg-body: #e0e5ec;
+            --container-bg: #f2f5f9;
+            --text-color: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color: rgba(255, 255, 255, 0.5);
+            --shadow-3d: 9px 9px 16px rgba(163,177,198,0.5), -9px -9px 16px rgba(255,255,255, 0.8);
+            --shadow-inner: inset 4px 4px 8px rgba(163,177,198,0.3), inset -4px -4px 8px rgba(255,255,255, 0.8);
+            --table-header-bg: #2c3e50;
+            --table-header-text: #ffffff;
+            --input-bg: #ffffff;
+            --input-text: #333333;
+            --glass-blur: none;
+        }
+
+        html[data-theme="dark"] {
+            --bg-body: #121212;
+            --container-bg: #1e1e24;
+            --text-color: #f5f6fa;
+            --text-muted: #a4b0be;
+            --border-color: #2b2b36;
+            --shadow-3d: 8px 8px 15px #0a0a0c, -8px -8px 15px #2a2a32;
+            --shadow-inner: inset 4px 4px 8px #0a0a0c, inset -4px -4px 8px #2a2a32;
+            --table-header-bg: #0f3460;
+            --table-header-text: #e9ecef;
+            --input-bg: #2b2b36;
+            --input-text: #ffffff;
+            --glass-blur: none;
+        }
+
+        html[data-theme="glass"] {
+            --bg-body: linear-gradient(135deg, #12c2e9, #c471ed, #f64f59);
+            --container-bg: rgba(255, 255, 255, 0.15);
+            --text-color: #ffffff;
+            --text-muted: #e0e0e0;
+            --border-color: rgba(255, 255, 255, 0.25);
+            --shadow-3d: 0 15px 35px rgba(0, 0, 0, 0.25);
+            --shadow-inner: none;
+            --table-header-bg: rgba(0, 0, 0, 0.4);
+            --table-header-text: #ffffff;
+            --input-bg: rgba(255, 255, 255, 0.2);
+            --input-text: #ffffff;
+            --glass-blur: blur(12px);
+        }
+
+        /* ================= BASE STYLES ================= */
+        body { 
+            background: var(--bg-body); 
+            background-attachment: fixed;
+            color: var(--text-color); 
+            padding: 20px; 
+            font-family: 'Poppins', sans-serif; 
+            min-width: 1200px; 
+            transition: all 0.5s ease;
+        }
+        .main-wrapper { width: 1150px; margin: 0 auto; }
+        
+        /* ================= 3D CARDS ================= */
+        .summary-card { 
+            border-radius: 20px; 
+            color: white; 
+            padding: 25px 15px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 15px 25px rgba(0,0,0,0.2), inset 0 2px 5px rgba(255,255,255,0.4); 
+            cursor: pointer; 
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 1;
+        }
+        .summary-card::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 100%);
+            z-index: -1; pointer-events: none;
+        }
+        .summary-card::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg); transition: 0.6s; z-index: 0; pointer-events: none;
+        }
+        .summary-card:hover::before { left: 150%; }
+        .summary-card:hover { 
+            transform: translateY(-8px) scale(1.03); 
+            box-shadow: 0 25px 35px rgba(0,0,0,0.3), inset 0 2px 5px rgba(255,255,255,0.5); 
+        }
+        
+        .summary-card h2 { font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); z-index: 2; position: relative;}
+        .summary-card h6 { font-weight: 500; letter-spacing: 1px; opacity: 0.9; z-index: 2; position: relative;}
+
+        .bg-income { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .bg-expense { background: linear-gradient(135deg, #cb2d3e, #ef473a); }
+        .bg-profit { background: linear-gradient(135deg, #2193b0, #6dd5ed); }
+        .bg-today-inc { background: linear-gradient(135deg, #00b09b, #96c93d); }
+        .bg-today-exp { background: linear-gradient(135deg, #f12711, #f5af19); }
+        
+        /* ================= CONTAINERS & ELEMENTS ================= */
+        .chart-container { 
+            background: var(--container-bg); 
+            padding: 35px; 
+            border-radius: 25px; 
+            box-shadow: var(--shadow-3d); 
+            border: 1px solid var(--border-color);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            transition: all 0.5s ease;
+        }
+        
+        .fab-add {
+            position: fixed; right: 50px; bottom: 50px; width: 90px; height: 90px;
+            border-radius: 50%; background: linear-gradient(135deg, #0d6efd, #0b5ed7); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 45px; box-shadow: 0 10px 25px rgba(13, 110, 253, 0.4), inset 0 2px 5px rgba(255,255,255,0.4);
+            cursor: pointer; z-index: 1000; border: none; transition: 0.3s;
+        }
+        .fab-add:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 15px 35px rgba(13, 110, 253, 0.6); }
+
+        .form-control, .form-select {
+            background-color: var(--input-bg);
+            color: var(--input-text);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-inner);
+            border-radius: 10px;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: var(--input-bg); color: var(--input-text);
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25), var(--shadow-inner);
+        }
+
+        /* Custom Table */
+        .table-custom { border-collapse: separate; border-spacing: 0; overflow: hidden; border-radius: 15px; box-shadow: var(--shadow-3d); margin-bottom: 0;}
+        .table-custom thead th { background-color: var(--table-header-bg) !important; color: var(--table-header-text) !important; border-bottom: none; padding: 15px; font-weight: 600;}
+        .table-custom tbody td { background-color: var(--input-bg) !important; color: var(--text-color) !important; border-color: var(--border-color); vertical-align: middle; }
+        .table-custom tbody tr:hover td { filter: brightness(0.95); }
+        
+        .range-summary-bar {
+            background: var(--table-header-bg);
+            color: var(--table-header-text);
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            display: none;
+            box-shadow: var(--shadow-3d);
+        }
+
+        .chart-wrapper { overflow-x: auto; overflow-y: hidden; padding-bottom: 15px; margin-top: 15px; }
+        .chart-wrapper::-webkit-scrollbar { height: 12px; }
+        .chart-wrapper::-webkit-scrollbar-track { background: var(--input-bg); border-radius: 6px; box-shadow: var(--shadow-inner); }
+        .chart-wrapper::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #0d6efd, #0b5ed7); border-radius: 6px; }
+
+        .modal-content {
+            background: var(--container-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border-radius: 20px;
+            color: var(--text-color);
+        }
+        .modal-header { border-bottom: 1px solid var(--border-color); }
+        .form-locked { background: rgba(0,0,0,0.05) !important; opacity: 0.7; cursor: not-allowed; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body>
 
-    <div class="mb-6 flex items-center gap-2">
-        <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-        <h2 class="text-xl font-bold">Financial Summary Report</h2>
-    </div>
+<button class="fab-add" onclick="openModal()"><i class="bi bi-plus-lg"></i></button>
 
-    <div class="overflow-x-auto card-bg rounded-lg shadow-lg border border-gray-700">
-        <table class="w-full text-left text-sm whitespace-nowrap">
-            <thead class="bg-blue-900 text-white">
-                <tr>
-                    <th class="p-3 border-b border-gray-700">Date</th>
-                    <th class="p-3 border-b border-gray-700">Opening Balance</th>
-                    <th class="p-3 border-b border-gray-700">Income</th>
-                    <th class="p-3 border-b border-gray-700">Balance</th>
-                    <th class="p-3 border-b border-gray-700">Expense</th>
-                    <th class="p-3 border-b border-gray-700">Remaining Amount</th>
-                </tr>
-            </thead>
-            <tbody id="summaryTableBody">
-                <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
-                    <td class="p-3">15 Mar 2026</td>
-                    <td class="p-3">1640.00</td>
-                    <td class="p-3">660.00</td>
-                    <td class="p-3 text-blue-400 font-semibold">2300.00</td> <td class="p-3 text-red-400">180.00</td>
-                    <td class="p-3 text-green-400 font-bold remaining-amount">2120.00</td> </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <button id="openModalBtn" class="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full text-3xl shadow-lg flex items-center justify-center transition">+</button>
-
-    <div id="entryModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden z-50 px-4">
-        <div class="card-bg p-6 rounded-lg shadow-2xl w-full max-w-md border border-gray-600">
-            <h3 class="text-xl font-bold mb-4 border-b border-gray-600 pb-2">Add New Entry</h3>
-            
-            <form id="newEntryForm" class="flex flex-col gap-4">
-                
-                <div class="flex flex-col">
-                    <label class="text-gray-300 text-sm mb-1">Date</label>
-                    <input type="date" id="entryDate" required class="p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500">
-                </div>
-
-                <div class="flex flex-col">
-                    <label class="text-gray-300 text-sm mb-1">Opening Balance</label>
-                    <input type="number" id="openingBalance" readonly class="p-2 bg-gray-700 border border-gray-600 rounded text-gray-400 cursor-not-allowed" placeholder="0.00">
-                </div>
-
-                <div class="flex flex-col">
-                    <label class="text-gray-300 text-sm mb-1">Income</label>
-                    <input type="number" id="incomeAmount" class="p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500" placeholder="Enter income amount" min="0">
-                </div>
-
-                <div class="flex flex-col">
-                    <label class="text-gray-300 text-sm mb-1">Expense</label>
-                    <input type="number" id="expenseAmount" class="p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500" placeholder="Enter expense amount" min="0">
-                </div>
-
-                <div class="flex flex-col">
-                    <label class="text-gray-300 text-sm mb-1">Balance (Opening + Income - Expense)</label>
-                    <input type="number" id="finalBalance" readonly class="p-2 bg-gray-700 border border-gray-600 rounded text-green-400 font-bold cursor-not-allowed" placeholder="0.00">
-                </div>
-
-                <div class="flex justify-end gap-3 mt-4">
-                    <button type="button" id="closeModalBtn" class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500 text-white transition">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 text-white font-bold transition">Save</button>
-                </div>
-            </form>
+<div class="main-wrapper">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold m-0" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
+            <i class="bi bi-bank me-2 text-primary"></i>Smart Financial Tracker 3D
+        </h2>
+        
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-palette-fill fs-4"></i>
+            <select id="appTheme" class="form-select border-0 shadow-sm fw-bold" style="width: 200px; cursor: pointer;" onchange="saveTheme()">
+                <option value="light">☀️ Light 3D Theme</option>
+                <option value="dark">🌙 Dark 3D Theme</option>
+                <option value="glass">🧊 Glassmorphism</option>
+            </select>
         </div>
     </div>
 
-    <script>
-        // Modal & Elements Setup
-        const modal = document.getElementById('entryModal');
-        const openBtn = document.getElementById('openModalBtn');
-        const closeBtn = document.getElementById('closeModalBtn');
-        const form = document.getElementById('newEntryForm');
+    <div class="row text-center mb-4">
+        <div class="col" onclick="updateView('Income')"><div class="summary-card bg-income"><h6>Total Income</h6><h2 id="totalIncVal">0</h2></div></div>
+        <div class="col" onclick="updateView('Expense')"><div class="summary-card bg-expense"><h6>Total Expense</h6><h2 id="totalExpVal">0</h2></div></div>
+        <div class="col" onclick="updateView('All')"><div class="summary-card bg-profit"><h6>Daily Profit</h6><h2 id="dailyVal">0</h2></div></div>
+        <div class="col" onclick="updateView('Income')"><div class="summary-card bg-today-inc"><h6>Today Income</h6><h2 id="todayIncVal">0</h2></div></div>
+        <div class="col" onclick="updateView('Expense')"><div class="summary-card bg-today-exp"><h6>Today Expense</h6><h2 id="todayExpVal">0</h2></div></div>
+    </div>
+    
+    <span id="balanceVal" style="display: none;">0</span>
+
+    <div class="chart-container">
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+            <div class="btn-group shadow-sm" style="border-radius: 10px; overflow: hidden;">
+                <button class="btn btn-primary active px-4 fw-bold" id="btnAll" onclick="updateView('All')">All Tracking</button>
+                <button class="btn btn-outline-primary px-4 fw-bold" id="btnInc" onclick="updateView('Income')">Income</button>
+                <button class="btn btn-outline-primary px-4 fw-bold" id="btnExp" onclick="updateView('Expense')">Expense</button>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <select id="chartShape" class="form-select shadow-sm fw-bold text-primary" style="width: 140px;" onchange="refreshUI()">
+                    <option value="bar">Bar Chart</option>
+                    <option value="line">Line Chart</option>
+                    <option value="area">Area Chart</option>
+                    <option value="doughnut">Doughnut Chart</option>
+                </select>
+                <div class="input-group input-group-sm" style="width: 350px;">
+                    <span class="input-group-text fw-bold bg-dark text-white border-0">From</span>
+                    <input type="date" id="fromDate" class="form-control border-0">
+                    <span class="input-group-text fw-bold bg-dark text-white border-0">To</span>
+                    <input type="date" id="toDate" class="form-control border-0">
+                </div>
+                <button class="btn btn-dark shadow-sm" onclick="applyFilter()"><i class="bi bi-search"></i></button>
+                <button class="btn btn-secondary shadow-sm" onclick="resetFilter()">View All</button>
+                <button class="btn btn-danger shadow-sm fw-bold" onclick="downloadPDF()"><i class="bi bi-file-pdf"></i> PDF</button>
+            </div>
+        </div>
+
+        <div class="chart-wrapper" style="width: 100%;">
+            <div id="chartBox" style="height: 380px; width: 100%;">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <div class="table-responsive mt-5 pb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold m-0"><i class="bi bi-receipt me-2"></i>Financial Summary Report</h4>
+            </div>
+
+            <div id="rangeSummary" class="range-summary-bar">
+                <div class="row text-center">
+                    <div class="col">Range Income: <span id="rInc" class="fw-bold text-success">0</span></div>
+                    <div class="col">Range Expense: <span id="rExp" class="fw-bold text-danger">0</span></div>
+                    <div class="col">Net Profit: <span id="rProf" class="fw-bold text-info">0</span></div>
+                </div>
+            </div>
+
+            <table class="table table-custom align-middle" id="summaryTable">
+                <thead>
+                    <tr>
+                        <th class="text-center">Date</th>
+                        <th class="text-center">Opening Balance</th>
+                        <th class="text-center">Income</th>
+                        <th class="text-center">Balance</th>
+                        <th class="text-center">Expense</th>
+                        <th class="text-center">Remaining Amount</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="entryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white border-0" style="border-radius: 20px 20px 0 0;">
+                <h5 class="modal-title fw-bold" id="modalTitle"><i class="bi bi-plus-circle me-2"></i>Nayi Entry Karein</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="entryForm">
+                    <input type="hidden" id="editKey">
+                    
+                    <div class="mb-3">
+                        <label class="fw-bold mb-1">Date</label>
+                        <input type="date" id="entryDate" class="form-control shadow-sm" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="fw-bold mb-1 opacity-75">Opening Balance</label>
+                        <input type="number" id="openBal" class="form-control form-locked" readonly step="0.01">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="fw-bold mb-1 text-success">Income</label>
+                        <input type="number" id="incomeInput" class="form-control shadow-sm border-success" step="0.01" value="0" oninput="calculateLiveBalance()">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="fw-bold mb-1 text-danger">Expense</label>
+                        <input type="number" id="expenseInput" class="form-control shadow-sm border-danger" step="0.01" value="0" oninput="calculateLiveBalance()">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="fw-bold mb-1 text-primary">Balance (Opening + Income - Expense)</label>
+                        <input type="number" id="finalBalance" class="form-control form-locked fw-bold" readonly step="0.01">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="fw-bold mb-1">Remarks</label>
+                        <textarea id="entryRemarks" class="form-control shadow-sm" rows="2" placeholder="Koi detail likhna chahein to likhein..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 fw-bold py-3 shadow" style="border-radius: 12px; font-size: 1.1rem;">Save Record Data</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    Chart.register(ChartDataLabels);
+
+    const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/", projectId: "own-live-steam-web" };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db, 'transactions');
+    const themeRef = ref(db, 'settings/theme'); 
+
+    let allData = [];
+    let currentTab = 'All';
+    let filterStart = null;
+    let filterEnd = null;
+    let myChart = null;
+    const modalObj = new bootstrap.Modal(document.getElementById('entryModal'));
+
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('fromDate').value = today;
+    document.getElementById('toDate').value = today;
+
+    onValue(themeRef, (snap) => {
+        const savedTheme = snap.val() || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        const selectElement = document.getElementById('appTheme');
+        if(selectElement) selectElement.value = savedTheme;
+        if(allData.length > 0) refreshUI(); 
+    });
+
+    window.saveTheme = () => {
+        const selectedTheme = document.getElementById('appTheme').value;
+        set(themeRef, selectedTheme);
+    };
+
+    const formatDateDisplay = (dateStr) => {
+        const options = { day: '2-digit', month: 'short', year: 'numeric' };
+        return new Date(dateStr).toLocaleDateString('en-GB', options);
+    };
+
+    onValue(dbRef, (snap) => {
+        allData = [];
+        snap.forEach(c => { allData.push({ id: c.key, ...c.val() }); });
+        refreshUI();
+    });
+
+    // UPDATED REFRESH UI WITH NEW TABLE ORDER
+    window.refreshUI = function() {
+        const summaryBody = document.getElementById('summaryTableBody');
+        summaryBody.innerHTML = '';
         
-        const entryDate = document.getElementById('entryDate');
-        const openingBalanceInput = document.getElementById('openingBalance');
-        const incomeInput = document.getElementById('incomeAmount');
-        const expenseInput = document.getElementById('expenseAmount');
-        const finalBalanceInput = document.getElementById('finalBalance');
+        const grouped = {};
+        allData.forEach(t => {
+            if (!grouped[t.date]) { grouped[t.date] = { income: 0, expense: 0, items: [] }; }
+            if (t.type === 'Income') grouped[t.date].income += t.amount;
+            else grouped[t.date].expense += t.amount;
+            grouped[t.date].items.push(t);
+        });
 
-        // '+' Button par click karne se popup open hoga
-        openBtn.addEventListener('click', () => {
-            modal.classList.remove('hidden'); // Modal show karein
+        const sortedDates = Object.keys(grouped).sort((a,b) => new Date(a) - new Date(b));
+        let runningBalance = 0;
+        
+        let rangeIncTotal = 0;
+        let rangeExpTotal = 0;
+
+        sortedDates.forEach((date) => {
+            const data = grouped[date];
+            const openingBalForDay = runningBalance;
+            const balanceAfterIncome = openingBalForDay + data.income; // New Requirement
+            const currentDayClosing = balanceAfterIncome - data.expense;
             
-            // 1. Current Date auto-set karein
-            entryDate.valueAsDate = new Date();
-            
-            // 2. Pichli date ka "Remaining Amount" utha kar Opening Balance mein daalein
-            // Note: Main table se utha raha hoon, aap chahain to ise Firebase se link kar saktay hain.
-            const remainingElements = document.querySelectorAll('.remaining-amount');
-            let lastRemainingAmount = 0;
-            if(remainingElements.length > 0) {
-                // Table ki aakhri row ka amount uthaye ga
-                lastRemainingAmount = parseFloat(remainingElements[remainingElements.length - 1].innerText);
+            const isWithinRange = (!filterStart || date >= filterStart) && (!filterEnd || date <= filterEnd);
+
+            if (isWithinRange) {
+                rangeIncTotal += data.income;
+                rangeExpTotal += data.expense;
+
+                let showRow = (currentTab === 'All') || (currentTab === 'Income' && data.income > 0) || (currentTab === 'Expense' && data.expense > 0);
+
+                if (showRow) {
+                    let filteredItems = (currentTab === 'All') ? data.items : data.items.filter(item => item.type === currentTab);
+
+                    let actionButtons = filteredItems.map(item => `
+                        <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
+                            <span class="badge ${item.type==='Income'?'bg-success':'bg-danger'} shadow-sm" style="min-width:60px; font-size:12px;">${item.amount}</span>
+                            <button class="btn btn-sm btn-primary py-0 px-2 shadow-sm" onclick="editEntry('${item.id}')"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-danger py-0 px-2 shadow-sm" onclick="deleteEntry('${item.id}')"><i class="bi bi-trash"></i></button>
+                        </div>
+                    `).join('');
+
+                    // Table Layout: Date | Opening | Income | Balance | Expense | Remaining
+                    summaryBody.innerHTML += `
+                        <tr>
+                            <td class="text-center fw-bold small">${formatDateDisplay(date)}</td>
+                            <td class="text-center fw-bold" style="opacity:0.8">${openingBalForDay.toFixed(2)}</td>
+                            <td class="text-center text-success fw-bold">${data.income.toFixed(2)}</td>
+                            <td class="text-center text-info fw-bold">${balanceAfterIncome.toFixed(2)}</td>
+                            <td class="text-center text-danger fw-bold">${data.expense.toFixed(2)}</td>
+                            <td class="text-center text-primary fw-bold fs-6">${currentDayClosing.toFixed(2)}</td>
+                            <td class="text-center">${actionButtons}</td>
+                        </tr>`;
+                }
             }
-            
-            // Opening balance ko lock field mein set karein
-            openingBalanceInput.value = lastRemainingAmount.toFixed(2);
-            
-            // Purani values clear kar dein
-            incomeInput.value = '';
-            expenseInput.value = '';
-            
-            // Auto calculate balance
-            calculateFinalBalance();
+            runningBalance = currentDayClosing;
         });
 
-        // Cancel Button se popup band karein
-        closeBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
-
-        // Auto Calculation Logic
-        function calculateFinalBalance() {
-            let opening = parseFloat(openingBalanceInput.value) || 0;
-            let income = parseFloat(incomeInput.value) || 0;
-            let expense = parseFloat(expenseInput.value) || 0;
-
-            // Balance = Opening + Income - Expense
-            let calculatedBalance = (opening + income) - expense;
-            
-            // Final result locked field mein dikhayein
-            finalBalanceInput.value = calculatedBalance.toFixed(2);
+        if (filterStart || filterEnd) {
+            document.getElementById('rangeSummary').style.display = 'block';
+            document.getElementById('rInc').innerText = rangeIncTotal.toFixed(2);
+            document.getElementById('rExp').innerText = rangeExpTotal.toFixed(2);
+            document.getElementById('rProf').innerText = (rangeIncTotal - rangeExpTotal).toFixed(2);
+        } else {
+            document.getElementById('rangeSummary').style.display = 'none';
         }
 
-        // Jab user Income ya Expense type kare to calculation fauran update ho jaye
-        incomeInput.addEventListener('input', calculateFinalBalance);
-        expenseInput.addEventListener('input', calculateFinalBalance);
+        updateCalculations();
+        const chartData = allData.filter(t => (!filterStart || t.date >= filterStart) && (!filterEnd || t.date <= filterEnd));
+        initChart(chartData);
+    }
 
-        // Save Button (Yahan aap ki save logic aayegi)
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            // TODO: Yahan aap Firebase mein data push karne wali JS code likhain ge.
-            console.log("Saving Date:", entryDate.value);
-            console.log("Saving Opening:", openingBalanceInput.value);
-            console.log("Saving Income:", incomeInput.value);
-            console.log("Saving Expense:", expenseInput.value);
-            console.log("Saving Final Remaining:", finalBalanceInput.value);
-            
-            alert("Entry Ready for Save! (Apni Firebase logic attach karein)");
-            modal.classList.add('hidden'); // Save hone ke baad popup band ho jaye
+    function updateCalculations() {
+        let dInc = 0, dExp = 0, tBal = 0;
+        let todayInc = 0, todayExp = 0;
+        const lastDate = allData.length > 0 ? [...new Set(allData.map(t => t.date))].sort().pop() : "";
+
+        allData.forEach(t => { 
+            tBal += (t.type === 'Income' ? t.amount : -t.amount); 
+            if(t.date === lastDate) { if(t.type === 'Income') todayInc += t.amount; else todayExp += t.amount; }
+            if(t.type === 'Income') dInc += t.amount; else dExp += t.amount;
         });
-    </script>
+
+        document.getElementById('totalIncVal').innerText = dInc.toFixed(2);
+        document.getElementById('totalExpVal').innerText = dExp.toFixed(2);
+        document.getElementById('dailyVal').innerText = (dInc - dExp).toFixed(2);
+        document.getElementById('balanceVal').innerText = tBal.toFixed(2); 
+        document.getElementById('todayIncVal').innerText = todayInc.toFixed(2);
+        document.getElementById('todayExpVal').innerText = todayExp.toFixed(2);
+    }
+
+    window.applyFilter = () => { 
+        filterStart = document.getElementById('fromDate').value; 
+        filterEnd = document.getElementById('toDate').value; 
+        refreshUI(); 
+    };
+    
+    window.resetFilter = () => { 
+        filterStart = null; 
+        filterEnd = null; 
+        document.getElementById('fromDate').value = today;
+        document.getElementById('toDate').value = today;
+        refreshUI(); 
+    };
+
+    window.editEntry = (id) => {
+        const entry = allData.find(i => i.id === id);
+        if (entry) {
+            document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Update Record';
+            document.getElementById('editKey').value = entry.id;
+            document.getElementById('entryDate').value = entry.date;
+            document.getElementById('entryRemarks').value = (entry.remarks === "N/A" || !entry.remarks) ? "" : entry.remarks;
+            
+            // Set values based on type
+            if(entry.type === 'Income') {
+                document.getElementById('incomeInput').value = entry.amount;
+                document.getElementById('expenseInput').value = 0;
+            } else {
+                document.getElementById('incomeInput').value = 0;
+                document.getElementById('expenseInput').value = entry.amount;
+            }
+            
+            // Re-calc Opening Balance for that specific entry logic can be complex,
+            // standard approach: use current balance or let it update based on inputs.
+            document.getElementById('openBal').value = (parseFloat(document.getElementById('balanceVal').innerText) || 0).toFixed(2);
+            calculateLiveBalance();
+            modalObj.show();
+        }
+    };
+
+    window.deleteEntry = (id) => { if(confirm("Are you sure?")) remove(ref(db, 'transactions/'+id)); };
+
+    window.initChart = (data) => {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        if(myChart) myChart.destroy();
+        const theme = document.documentElement.getAttribute('data-theme');
+        const chartTextColor = (theme === 'dark' || theme === 'glass') ? '#ffffff' : '#2c3e50';
+        const gridColor = (theme === 'dark' || theme === 'glass') ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+        const sorted = [...data].sort((a,b) => new Date(a.date) - new Date(b.date));
+        const labels = [...new Set(sorted.map(d => formatDateDisplay(d.date)))];
+        const incs = labels.map(l => sorted.filter(d => formatDateDisplay(d.date) === l && d.type === 'Income').reduce((s,c) => s+c.amount,0));
+        const exps = labels.map(l => sorted.filter(d => formatDateDisplay(d.date) === l && d.type === 'Expense').reduce((s,c) => s+c.amount,0));
+        const chartBox = document.getElementById('chartBox');
+        chartBox.style.width = labels.length > 7 ? (labels.length * 12) + '%' : '100%';
+        const shape = document.getElementById('chartShape').value;
+        let chartType = shape === 'area' ? 'line' : shape;
+        myChart = new Chart(ctx, {
+            type: chartType,
+            data: { 
+                labels: labels, 
+                datasets: [
+                    { label: 'Income', data: incs, backgroundColor: '#2ecc71', borderColor: '#2ecc71', fill: shape === 'area', tension: 0.4 },
+                    { label: 'Expense', data: exps, backgroundColor: '#e74c3c', borderColor: '#e74c3c', fill: shape === 'area', tension: 0.4 }
+                ].filter(ds => currentTab === 'All' || ds.label === currentTab)
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: chartTextColor } },
+                    datalabels: { color: chartTextColor, font: { weight: 'bold' }, anchor: 'end', align: 'end', formatter: v => v > 0 ? v : '' }
+                },
+                scales: chartType === 'doughnut' ? {} : { 
+                    x: { ticks: { color: chartTextColor } },
+                    y: { beginAtZero: true, ticks: { color: chartTextColor }, grid: { color: gridColor } } 
+                }
+            }
+        });
+    }
+
+    window.updateView = (tab) => {
+        currentTab = tab;
+        document.querySelectorAll('.btn-group .btn').forEach(b => {
+            b.classList.replace('btn-primary', 'btn-outline-primary');
+            b.classList.remove('active');
+        });
+        const btnId = tab === 'All' ? 'btnAll' : (tab === 'Income' ? 'btnInc' : 'btnExp');
+        document.getElementById(btnId).classList.replace('btn-outline-primary', 'btn-primary');
+        document.getElementById(btnId).classList.add('active');
+        refreshUI();
+    };
+
+    // FORM OPEN LOGIC
+    window.openModal = () => {
+        document.getElementById('entryForm').reset();
+        document.getElementById('editKey').value = "";
+        document.getElementById('entryDate').value = today;
+        
+        // Opening balance pichly "Remaining Amount" se aayega
+        const currentTotal = parseFloat(document.getElementById('balanceVal').innerText) || 0;
+        document.getElementById('openBal').value = currentTotal.toFixed(2);
+        
+        document.getElementById('incomeInput').value = 0;
+        document.getElementById('expenseInput').value = 0;
+        
+        calculateLiveBalance();
+        modalObj.show();
+    };
+
+    // LIVE CALCULATION LOGIC FOR FORM
+    window.calculateLiveBalance = () => {
+        const opening = parseFloat(document.getElementById('openBal').value) || 0;
+        const income = parseFloat(document.getElementById('incomeInput').value) || 0;
+        const expense = parseFloat(document.getElementById('expenseInput').value) || 0;
+        
+        // Formula: Opening + Income - Expense
+        const result = (opening + income) - expense;
+        document.getElementById('finalBalance').value = result.toFixed(2);
+    };
+
+    // SAVE LOGIC (Handles both Income & Expense as separate entries or one)
+    document.getElementById('entryForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const key = document.getElementById('editKey').value;
+        const date = document.getElementById('entryDate').value;
+        const income = parseFloat(document.getElementById('incomeInput').value) || 0;
+        const expense = parseFloat(document.getElementById('expenseInput').value) || 0;
+        const remarks = document.getElementById('entryRemarks').value || "N/A";
+
+        // Agar edit kar rahe hain
+        if(key) {
+            // Edit logic simplified: update based on which field has value
+            const updateType = income > 0 ? 'Income' : 'Expense';
+            const updateAmount = income > 0 ? income : expense;
+            set(ref(db, 'transactions/'+key), { type: updateType, date, amount: updateAmount, remarks });
+        } else {
+            // New entry logic: Agar dono fields bhari hain to do entries karega
+            if(income > 0) {
+                await push(dbRef, { type: 'Income', date, amount: income, remarks });
+            }
+            if(expense > 0) {
+                await push(dbRef, { type: 'Expense', date, amount: expense, remarks });
+            }
+        }
+        modalObj.hide();
+    };
+
+    window.downloadPDF = () => { 
+        const element = document.getElementById('summaryTable');
+        html2pdf().from(element).save('Finance_Report.pdf');
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
