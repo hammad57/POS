@@ -8,6 +8,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 3px; }
+        /* Smooth accordion transition */
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+    </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen pb-20">
 
@@ -19,7 +28,7 @@
     </header>
 
     <main class="p-4 max-w-4xl mx-auto space-y-4" id="dashboardList">
-        <div id="loading" class="text-center py-10 text-gray-400">Loading data...</div>
+        <div id="loading" class="text-center py-10 text-gray-400">Loading fast data...</div>
     </main>
 
     <button onclick="openExpenseModal()" class="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-white text-2xl transition-transform active:scale-90 z-20">
@@ -35,8 +44,8 @@
                 <input type="text" id="s_address" placeholder="Address" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
                 <input type="text" id="s_location" placeholder="Google Map Link (Location)" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
                 <div class="flex space-x-2 pt-2">
-                    <button onclick="saveShop()" class="flex-1 bg-blue-600 p-3 rounded-lg font-bold">Save Shop</button>
-                    <button onclick="toggleModal('shopModal')" class="flex-1 bg-gray-600 p-3 rounded-lg font-bold">Cancel</button>
+                    <button onclick="saveShop()" class="flex-1 bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-700">Save Shop</button>
+                    <button onclick="toggleModal('shopModal')" class="flex-1 bg-gray-600 p-3 rounded-lg font-bold hover:bg-gray-700">Cancel</button>
                 </div>
             </div>
         </div>
@@ -44,7 +53,7 @@
 
     <div id="expenseModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-30 overflow-y-auto">
         <div class="bg-gray-800 rounded-2xl w-full max-w-md p-6 border border-gray-700 my-auto">
-            <h2 class="text-xl font-bold mb-4 text-green-400">Add New Expense</h2>
+            <h2 class="text-xl font-bold mb-4 text-green-400">Add New Entry</h2>
             <div class="space-y-4">
                 <div>
                     <label class="text-xs text-gray-400 ml-1">Date</label>
@@ -52,21 +61,20 @@
                 </div>
                 
                 <div>
-                    <label class="text-xs text-gray-400 ml-1">Select Shop</label>
+                    <label class="text-xs text-gray-400 ml-1">Select Seller / Shop</label>
                     <select id="e_shop_list" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
-                        <option value="">Choose a shop...</option>
+                        <option value="">Choose a seller...</option>
                     </select>
                 </div>
 
                 <div>
                     <label class="text-xs text-gray-400 ml-1">Expended Amount</label>
-                    <input type="text" id="e_amount" value="RS 0.00" onfocus="if(this.value=='RS 0.00')this.value=''" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white font-mono text-lg">
+                    <input type="number" id="e_amount" placeholder="0.00" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white font-mono text-lg">
                 </div>
 
                 <div>
                     <label class="text-xs text-gray-400 ml-1 font-bold">Attachments (HD Images)</label>
                     <input type="file" id="e_files" accept="image/*" multiple capture="environment" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700">
-                    <div id="previewContainer" class="flex gap-2 mt-2 overflow-x-auto"></div>
                 </div>
 
                 <div>
@@ -75,16 +83,17 @@
                 </div>
 
                 <div class="flex space-x-2 pt-2">
-                    <button id="saveExpenseBtn" onclick="saveExpense()" class="flex-1 bg-green-600 p-3 rounded-lg font-bold">Save Data</button>
-                    <button onclick="toggleModal('expenseModal')" class="flex-1 bg-gray-600 p-3 rounded-lg font-bold">Close</button>
+                    <button id="saveExpenseBtn" onclick="saveExpense()" class="flex-1 bg-green-600 p-3 rounded-lg font-bold hover:bg-green-700">Save Data</button>
+                    <button onclick="toggleModal('expenseModal')" class="flex-1 bg-gray-600 p-3 rounded-lg font-bold hover:bg-gray-700">Close</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="imageViewer" class="hidden fixed inset-0 bg-black z-50 flex flex-col items-center justify-center p-4">
-        <button onclick="toggleModal('imageViewer')" class="absolute top-6 right-6 text-white text-3xl">&times;</button>
-        <img id="fullImage" src="" class="max-w-full max-h-[90vh] object-contain shadow-2xl rounded-lg">
+    <div id="imageViewer" class="hidden fixed inset-0 bg-black bg-opacity-95 z-50 flex flex-col items-center justify-center p-4">
+        <button onclick="toggleModal('imageViewer')" class="absolute top-6 right-6 text-white text-4xl hover:text-red-500 transition">&times;</button>
+        <div id="imageLoading" class="text-white text-lg hidden"><i class="fas fa-spinner fa-spin mr-2"></i>Loading HD Image...</div>
+        <img id="fullImage" src="" class="max-w-full max-h-[90vh] object-contain shadow-2xl rounded-lg hidden">
     </div>
 
     <script>
@@ -95,17 +104,17 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Helper: Toggle Modals
+        let shopsDataMap = {}; // Global variable to store shop addresses & locations
+
         function toggleModal(id) {
             document.getElementById(id).classList.toggle('hidden');
         }
 
-        // Initialize Date
         document.getElementById('e_date').valueAsDate = new Date();
 
         // Save New Shop
         function saveShop() {
-            const name = document.getElementById('s_name').value;
+            const name = document.getElementById('s_name').value.trim();
             const mobile = document.getElementById('s_mobile').value;
             const address = document.getElementById('s_address').value;
             const location = document.getElementById('s_location').value;
@@ -115,29 +124,31 @@
             db.ref('shops').push({ name, mobile, address, location })
             .then(() => {
                 alert("Shop saved successfully!");
+                document.getElementById('s_name').value = '';
+                document.getElementById('s_mobile').value = '';
+                document.getElementById('s_address').value = '';
+                document.getElementById('s_location').value = '';
                 toggleModal('shopModal');
-                loadShops(); // Refresh dropdown
             });
         }
 
-        // Load Shops into Dropdown
-        function loadShops() {
+        // Load Shops into Memory and Dropdown
+        db.ref('shops').on('value', (snapshot) => {
             const dropdown = document.getElementById('e_shop_list');
-            db.ref('shops').on('value', (snapshot) => {
-                dropdown.innerHTML = '<option value="">Choose a shop...</option>';
-                snapshot.forEach((child) => {
-                    const shop = child.val();
-                    dropdown.innerHTML += `<option value="${shop.name}">${shop.name}</option>`;
-                });
+            dropdown.innerHTML = '<option value="">Choose a seller...</option>';
+            shopsDataMap = {}; // Reset map
+            
+            snapshot.forEach((child) => {
+                const shop = child.val();
+                shopsDataMap[shop.name] = shop; // Store shop details for main dashboard
+                dropdown.innerHTML += `<option value="${shop.name}">${shop.name}</option>`;
             });
-        }
+        });
 
         function openExpenseModal() {
-            loadShops();
             toggleModal('expenseModal');
         }
 
-        // Convert images to Base64 (For HD result in RTDB)
         async function getImagesBase64(files) {
             const promises = Array.from(files).map(file => {
                 return new Promise((resolve) => {
@@ -149,35 +160,48 @@
             return Promise.all(promises);
         }
 
-        // Save Expense
+        // Save Expense (Separating Image and Data for speed)
         async function saveExpense() {
             const btn = document.getElementById('saveExpenseBtn');
             const date = document.getElementById('e_date').value;
             const shop = document.getElementById('e_shop_list').value;
-            const amount = document.getElementById('e_amount').value;
+            const amount = parseFloat(document.getElementById('e_amount').value) || 0;
             const remarks = document.getElementById('e_remarks').value;
             const files = document.getElementById('e_files').files;
 
-            if(!shop || amount === "RS 0.00") return alert("Please fill all details!");
+            if(!shop || amount <= 0) return alert("Please select a shop and enter a valid amount!");
 
             btn.disabled = true;
-            btn.innerText = "Saving...";
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-            const images = await getImagesBase64(files);
+            const hasAttachment = files.length > 0;
+            const newExpenseRef = db.ref('expenses').push();
+            const expenseId = newExpenseRef.key;
 
-            db.ref('expenses').push({
-                date, shop, amount, remarks, images,
+            // Save text data to 'expenses' node
+            await newExpenseRef.set({
+                date, shop, amount, remarks, hasAttachment,
                 timestamp: Date.now()
-            }).then(() => {
-                alert("Expense Recorded!");
-                location.reload();
             });
+
+            // Save heavy images to a separate 'expense_images' node using the same ID
+            if (hasAttachment) {
+                const imagesBase64 = await getImagesBase64(files);
+                await db.ref('expense_images/' + expenseId).set(imagesBase64);
+            }
+
+            alert("Entry Recorded Successfully!");
+            btn.disabled = false;
+            btn.innerText = "Save Data";
+            document.getElementById('e_amount').value = '';
+            document.getElementById('e_remarks').value = '';
+            document.getElementById('e_files').value = '';
+            toggleModal('expenseModal');
         }
 
-        // Load Dashboard Data
+        // Load Dashboard Data (Grouped by Seller)
         db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
             const container = document.getElementById('dashboardList');
-            const loading = document.getElementById('loading');
             container.innerHTML = "";
             
             if(!snapshot.exists()) {
@@ -185,39 +209,111 @@
                 return;
             }
 
-            let html = "";
+            // Grouping Logic
+            let groupedData = {};
             snapshot.forEach((child) => {
                 const data = child.val();
-                const firstImg = data.images ? data.images[0] : 'https://via.placeholder.com/150?text=No+Image';
+                const key = child.key;
+                const sellerName = data.shop;
+
+                if (!groupedData[sellerName]) {
+                    groupedData[sellerName] = {
+                        totalAmount: 0,
+                        entries: [],
+                        shopDetails: shopsDataMap[sellerName] || {} // Get Address & Location from global map
+                    };
+                }
                 
-                html = `
-                <div class="bg-gray-800 border border-gray-700 rounded-xl p-4 shadow-md flex items-start space-x-4">
-                    <div class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-gray-600 bg-gray-700">
-                        <img src="${firstImg}" class="w-full h-full object-cover">
-                    </div>
-                    <div class="flex-grow">
-                        <div class="flex justify-between items-start">
-                            <h3 class="font-bold text-lg text-white">${data.shop}</h3>
-                            <span class="text-xs text-gray-400 bg-gray-900 px-2 py-1 rounded">${data.date}</span>
-                        </div>
-                        <p class="text-green-400 font-mono font-bold">${data.amount}</p>
-                        ${data.remarks ? `<p class="text-sm text-gray-400 mt-1 italic">"${data.remarks}"</p>` : ''}
-                        
-                        <div class="mt-3 flex space-x-2">
-                            <button onclick="viewHD('${data.images ? data.images[0] : ''}')" class="text-xs bg-blue-600/20 text-blue-400 border border-blue-600/30 px-3 py-1 rounded-md hover:bg-blue-600 hover:text-white transition">
-                                <i class="fas fa-expand mr-1"></i> View HD
-                            </button>
-                        </div>
-                    </div>
-                </div>` + html;
+                groupedData[sellerName].totalAmount += parseFloat(data.amount);
+                groupedData[sellerName].entries.push({ id: key, ...data });
             });
+
+            // Render HTML
+            let html = "";
+            for (const seller in groupedData) {
+                const group = groupedData[seller];
+                const address = group.shopDetails.address || "No Address Saved";
+                const location = group.shopDetails.location || "#";
+
+                let entriesHtml = "";
+                // Reverse entries to show latest first inside the group
+                group.entries.slice().reverse().forEach(entry => {
+                    entriesHtml += `
+                        <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 mt-2 flex justify-between items-center">
+                            <div>
+                                <p class="text-sm text-gray-400"><i class="far fa-calendar-alt mr-1"></i> ${entry.date}</p>
+                                <p class="text-lg font-bold text-green-400">Rs ${entry.amount.toLocaleString()}</p>
+                                ${entry.remarks ? `<p class="text-xs text-gray-500 italic mt-1">${entry.remarks}</p>` : ''}
+                            </div>
+                            <div>
+                                ${entry.hasAttachment ? 
+                                `<button onclick="fetchAndShowImage('${entry.id}', this)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded-md transition shadow-md">
+                                    <i class="fas fa-image mr-1"></i> View Attachment
+                                </button>` 
+                                : '<span class="text-xs text-gray-600 italic">No Image</span>'}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                <details class="bg-gray-800 border border-gray-600 rounded-xl shadow-md mb-4 overflow-hidden group">
+                    <summary class="p-4 cursor-pointer flex justify-between items-center bg-gray-700 hover:bg-gray-600 transition">
+                        <div class="flex flex-col">
+                            <h2 class="text-xl font-bold text-white flex items-center">
+                                <i class="fas fa-store text-blue-400 mr-2"></i> ${seller}
+                            </h2>
+                            <div class="flex items-center text-xs text-gray-400 mt-1">
+                                <i class="fas fa-map-marker-alt text-red-500 mr-1"></i> ${address}
+                                ${location !== "#" ? `<a href="${location}" target="_blank" class="ml-2 text-blue-400 hover:text-blue-300 underline"><i class="fas fa-external-link-alt"></i> Map</a>` : ''}
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-gray-400 mb-1">Total Paid</p>
+                            <p class="text-xl font-black text-green-500">Rs ${group.totalAmount.toLocaleString()}</p>
+                        </div>
+                    </summary>
+                    <div class="p-4 bg-gray-900 border-t border-gray-600">
+                        ${entriesHtml}
+                    </div>
+                </details>`;
+            }
             container.innerHTML = html;
         });
 
-        function viewHD(src) {
-            if(!src) return alert("No attachment found");
-            document.getElementById('fullImage').src = src;
-            toggleModal('imageViewer');
+        // Fetch Image On-Demand (Lazy Loading to keep page fast)
+        function fetchAndShowImage(expenseId, btnElement) {
+            const originalText = btnElement.innerHTML;
+            btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            btnElement.disabled = true;
+
+            db.ref('expense_images/' + expenseId).once('value')
+            .then((snapshot) => {
+                btnElement.innerHTML = originalText;
+                btnElement.disabled = false;
+
+                if (snapshot.exists() && snapshot.val().length > 0) {
+                    const imgElement = document.getElementById('fullImage');
+                    const loadingElement = document.getElementById('imageLoading');
+                    
+                    imgElement.classList.add('hidden');
+                    loadingElement.classList.remove('hidden');
+                    toggleModal('imageViewer');
+
+                    imgElement.onload = function() {
+                        loadingElement.classList.add('hidden');
+                        imgElement.classList.remove('hidden');
+                    }
+                    imgElement.src = snapshot.val()[0]; // Load first image
+                } else {
+                    alert("No attachment found or image is corrupted.");
+                }
+            })
+            .catch(err => {
+                alert("Error loading image.");
+                btnElement.innerHTML = originalText;
+                btnElement.disabled = false;
+            });
         }
     </script>
 </body>
