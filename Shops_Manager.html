@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen pb-20">
+
+    <header class="bg-gray-800 p-4 shadow-lg sticky top-0 z-10 flex justify-between items-center border-b border-blue-500">
+        <h1 class="text-xl font-bold text-blue-400"><i class="fas fa-chart-line mr-2"></i>Dashboard</h1>
+        <button onclick="toggleModal('shopModal')" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-plus-circle mr-1"></i> New Shop
+        </button>
+    </header>
+
+    <main class="p-4 max-w-4xl mx-auto space-y-4" id="dashboardList">
+        <div id="loading" class="text-center py-10 text-gray-400">Loading data...</div>
+    </main>
+
+    <button onclick="openExpenseModal()" class="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-white text-2xl transition-transform active:scale-90 z-20">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <div id="shopModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-30">
+        <div class="bg-gray-800 rounded-2xl w-full max-w-md p-6 border border-gray-700">
+            <h2 class="text-xl font-bold mb-4 text-blue-400">Add New Shop</h2>
+            <div class="space-y-4">
+                <input type="text" id="s_name" placeholder="Shop Name" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
+                <input type="text" id="s_mobile" placeholder="Mobile Number" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
+                <input type="text" id="s_address" placeholder="Address" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
+                <input type="text" id="s_location" placeholder="Google Map Link (Location)" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
+                <div class="flex space-x-2 pt-2">
+                    <button onclick="saveShop()" class="flex-1 bg-blue-600 p-3 rounded-lg font-bold">Save Shop</button>
+                    <button onclick="toggleModal('shopModal')" class="flex-1 bg-gray-600 p-3 rounded-lg font-bold">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="expenseModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-30 overflow-y-auto">
+        <div class="bg-gray-800 rounded-2xl w-full max-w-md p-6 border border-gray-700 my-auto">
+            <h2 class="text-xl font-bold mb-4 text-green-400">Add New Expense</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-400 ml-1">Date</label>
+                    <input type="date" id="e_date" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
+                </div>
+                
+                <div>
+                    <label class="text-xs text-gray-400 ml-1">Select Shop</label>
+                    <select id="e_shop_list" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
+                        <option value="">Choose a shop...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-400 ml-1">Expended Amount</label>
+                    <input type="text" id="e_amount" value="RS 0.00" onfocus="if(this.value=='RS 0.00')this.value=''" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white font-mono text-lg">
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-400 ml-1 font-bold">Attachments (HD Images)</label>
+                    <input type="file" id="e_files" accept="image/*" multiple capture="environment" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700">
+                    <div id="previewContainer" class="flex gap-2 mt-2 overflow-x-auto"></div>
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-400 ml-1">Remarks</label>
+                    <textarea id="e_remarks" rows="3" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'" placeholder="Any special notes..." class="w-full bg-gray-700 border-none rounded-lg p-3 text-white resize-none"></textarea>
+                </div>
+
+                <div class="flex space-x-2 pt-2">
+                    <button id="saveExpenseBtn" onclick="saveExpense()" class="flex-1 bg-green-600 p-3 rounded-lg font-bold">Save Data</button>
+                    <button onclick="toggleModal('expenseModal')" class="flex-1 bg-gray-600 p-3 rounded-lg font-bold">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="imageViewer" class="hidden fixed inset-0 bg-black z-50 flex flex-col items-center justify-center p-4">
+        <button onclick="toggleModal('imageViewer')" class="absolute top-6 right-6 text-white text-3xl">&times;</button>
+        <img id="fullImage" src="" class="max-w-full max-h-[90vh] object-contain shadow-2xl rounded-lg">
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Helper: Toggle Modals
+        function toggleModal(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+
+        // Initialize Date
+        document.getElementById('e_date').valueAsDate = new Date();
+
+        // Save New Shop
+        function saveShop() {
+            const name = document.getElementById('s_name').value;
+            const mobile = document.getElementById('s_mobile').value;
+            const address = document.getElementById('s_address').value;
+            const location = document.getElementById('s_location').value;
+
+            if(!name) return alert("Shop name is required!");
+
+            db.ref('shops').push({ name, mobile, address, location })
+            .then(() => {
+                alert("Shop saved successfully!");
+                toggleModal('shopModal');
+                loadShops(); // Refresh dropdown
+            });
+        }
+
+        // Load Shops into Dropdown
+        function loadShops() {
+            const dropdown = document.getElementById('e_shop_list');
+            db.ref('shops').on('value', (snapshot) => {
+                dropdown.innerHTML = '<option value="">Choose a shop...</option>';
+                snapshot.forEach((child) => {
+                    const shop = child.val();
+                    dropdown.innerHTML += `<option value="${shop.name}">${shop.name}</option>`;
+                });
+            });
+        }
+
+        function openExpenseModal() {
+            loadShops();
+            toggleModal('expenseModal');
+        }
+
+        // Convert images to Base64 (For HD result in RTDB)
+        async function getImagesBase64(files) {
+            const promises = Array.from(files).map(file => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                });
+            });
+            return Promise.all(promises);
+        }
+
+        // Save Expense
+        async function saveExpense() {
+            const btn = document.getElementById('saveExpenseBtn');
+            const date = document.getElementById('e_date').value;
+            const shop = document.getElementById('e_shop_list').value;
+            const amount = document.getElementById('e_amount').value;
+            const remarks = document.getElementById('e_remarks').value;
+            const files = document.getElementById('e_files').files;
+
+            if(!shop || amount === "RS 0.00") return alert("Please fill all details!");
+
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
+            const images = await getImagesBase64(files);
+
+            db.ref('expenses').push({
+                date, shop, amount, remarks, images,
+                timestamp: Date.now()
+            }).then(() => {
+                alert("Expense Recorded!");
+                location.reload();
+            });
+        }
+
+        // Load Dashboard Data
+        db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
+            const container = document.getElementById('dashboardList');
+            const loading = document.getElementById('loading');
+            container.innerHTML = "";
+            
+            if(!snapshot.exists()) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-10">No records found.</div>';
+                return;
+            }
+
+            let html = "";
+            snapshot.forEach((child) => {
+                const data = child.val();
+                const firstImg = data.images ? data.images[0] : 'https://via.placeholder.com/150?text=No+Image';
+                
+                html = `
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-4 shadow-md flex items-start space-x-4">
+                    <div class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-gray-600 bg-gray-700">
+                        <img src="${firstImg}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg text-white">${data.shop}</h3>
+                            <span class="text-xs text-gray-400 bg-gray-900 px-2 py-1 rounded">${data.date}</span>
+                        </div>
+                        <p class="text-green-400 font-mono font-bold">${data.amount}</p>
+                        ${data.remarks ? `<p class="text-sm text-gray-400 mt-1 italic">"${data.remarks}"</p>` : ''}
+                        
+                        <div class="mt-3 flex space-x-2">
+                            <button onclick="viewHD('${data.images ? data.images[0] : ''}')" class="text-xs bg-blue-600/20 text-blue-400 border border-blue-600/30 px-3 py-1 rounded-md hover:bg-blue-600 hover:text-white transition">
+                                <i class="fas fa-expand mr-1"></i> View HD
+                            </button>
+                        </div>
+                    </div>
+                </div>` + html;
+            });
+            container.innerHTML = html;
+        });
+
+        function viewHD(src) {
+            if(!src) return alert("No attachment found");
+            document.getElementById('fullImage').src = src;
+            toggleModal('imageViewer');
+        }
+    </script>
+</body>
+</html>
