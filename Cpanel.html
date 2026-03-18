@@ -98,6 +98,12 @@
         </div>
 
         <div class="grid grid-cols-2 gap-4" id="appsGrid"></div>
+
+        <div class="flex justify-center mt-6 pb-6">
+            <button id="bottomInstallBtn" class="bg-slate-800/80 text-slate-300 border border-slate-700 px-5 py-2.5 rounded-full text-xs font-bold hidden items-center gap-2 hover:bg-slate-700 transition-all shadow-lg">
+                <i class="fas fa-download text-blue-400"></i> Install Hub App
+            </button>
+        </div>
     </main>
 
     <div id="addAppModal" class="fixed inset-0 bg-black/95 hidden flex items-center justify-center p-6 z-[200000]">
@@ -230,6 +236,36 @@
             const icon = document.getElementById('selectedIcon').value;
             if(name && link) { push(ref(db, 'cpanel_apps'), {name, link, icon}); toggleModal('addAppModal'); }
         };
+
+        // --- PWA Installation Logic ---
+        let deferredPrompt;
+        const bottomBtn = document.getElementById('bottomInstallBtn');
+        const topBannerBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Button ko show karo jab browser allow kare
+            bottomBtn.classList.remove('hidden');
+            bottomBtn.classList.add('flex');
+        });
+
+        const handleInstallClick = async () => {
+            if (deferredPrompt !== null) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    deferredPrompt = null;
+                    bottomBtn.classList.add('hidden');
+                    bottomBtn.classList.remove('flex');
+                    document.getElementById('installBanner').style.display = 'none';
+                }
+            }
+        };
+
+        bottomBtn.addEventListener('click', handleInstallClick);
+        if(topBannerBtn) topBannerBtn.addEventListener('click', handleInstallClick);
+
     </script>
 </body>
 </html>
