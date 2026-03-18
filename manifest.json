@@ -1,20 +1,24 @@
 {
-  "name": "Hammad Mart POS",
-  "short_name": "Mart POS",
-  "start_url": "./index.html",
+  "name": "Muluk Hussain Hub",
+  "short_name": "Hub App",
+  "description": "Personal dashboard and management hub.",
+  "start_url": "./Cpanel.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/241/241508.png",
+      "src": "icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/241/241508.png",
+      "src": "icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
