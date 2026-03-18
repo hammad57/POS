@@ -15,43 +15,43 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #0f172a; color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
-        .glass { background: rgba(30, 41, 59, 0.9); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        body { font-family: 'Poppins', sans-serif; background: #0f172a; color: #f1f5f9; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        .glass { background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
         
-        /* App Card Styling */
-        .app-card { transition: transform 0.2s; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .app-card { transition: transform 0.2s; border: 1px solid rgba(255, 255, 255, 0.05); position: relative; z-index: 10; }
         .app-card:active { transform: scale(0.95); background: rgba(59, 130, 246, 0.1); }
         
-        /* Iframe Overlay */
-        #appOverlay { position: fixed; inset: 0; background: #000; z-index: 9998; display: none; }
-        #closeAppBtn { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; display: none; }
+        #appOverlay { position: fixed; inset: 0; background: #000; z-index: 99998; display: none; }
+        #closeAppBtn { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 99999; display: none; }
         
-        /* Notifications Logic */
+        /* Notifications - Sab Se Ooper Set Kar Diya */
         .notify-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; border-radius: 50%; padding: 2px 5px; font-size: 10px; font-weight: bold; border: 2px solid #0f172a; }
+        
         #notifDropdown { 
             display: none; 
             position: absolute; 
             right: 0; 
-            top: 60px; 
+            top: 65px; 
             width: calc(100vw - 32px); 
             max-width: 400px; 
-            z-index: 10000; /* Buttons se hamesha ooper */
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            z-index: 100000 !important; /* Extremely high priority */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
-        #notifDropdown.active { display: block; animation: fadeIn 0.2s ease-out; }
+        #notifDropdown.active { display: block; animation: slideDown 0.3s ease-out; }
         
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Privacy/Blur Logic */
-        .balance-hidden { filter: blur(12px); pointer-events: none; user-select: none; transition: filter 0.3s ease; }
+        /* Privacy/Blur State */
+        .balance-hidden { filter: blur(15px); pointer-events: none; user-select: none; transition: filter 0.4s ease; }
     </style>
 </head>
 <body class="p-4">
 
-    <div id="installBanner" class="fixed bottom-6 left-4 right-4 glass p-5 rounded-2xl shadow-2xl border-t-4 border-blue-500 hidden items-center justify-between gap-4 z-[10001]">
+    <div id="installBanner" class="fixed bottom-6 left-4 right-4 glass p-5 rounded-2xl shadow-2xl border-t-4 border-blue-500 hidden items-center justify-between gap-4 z-[100001]">
         <div class="flex items-center gap-3">
             <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center"><i class="fas fa-rocket text-white"></i></div>
-            <div><p class="text-sm font-bold">Install App</p><p class="text-[10px] text-slate-400">Add to Home Screen</p></div>
+            <div><p class="text-sm font-bold">Install Hub</p><p class="text-[10px] text-slate-400">Add to your home screen</p></div>
         </div>
         <div class="flex gap-2">
             <button id="installBtn" class="bg-blue-600 px-4 py-2 rounded-lg text-xs font-bold">Install</button>
@@ -60,45 +60,47 @@
     </div>
 
     <button id="closeAppBtn" onclick="closeApp()" class="bg-red-600 text-white px-8 py-3 rounded-full shadow-2xl font-bold flex items-center gap-2">
-        <i class="fas fa-home"></i> Back to Hub
+        <i class="fas fa-home"></i> Close App
     </button>
     <div id="appOverlay"><iframe id="appFrame" class="w-full h-full border-none"></iframe></div>
 
-    <header class="flex justify-between items-center mb-6 glass p-4 rounded-2xl relative">
+    <header class="flex justify-between items-center mb-6 glass p-4 rounded-2xl relative z-[50]">
         <h1 class="text-xl font-extrabold tracking-tight">Muluk Hussain <span class="text-blue-500">Hub</span></h1>
         
         <div class="flex items-center gap-3">
             <div class="relative">
-                <div class="p-2 bg-slate-800 rounded-xl cursor-pointer" onclick="toggleNotif()">
+                <div class="p-2.5 bg-slate-800 rounded-xl cursor-pointer" onclick="toggleNotif()">
                     <i class="fas fa-bell text-lg text-yellow-500"></i>
                     <span id="notifBadge" class="notify-badge">0</span>
                 </div>
-                <div id="notifDropdown" class="glass rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                    <div class="p-4 border-b border-white/10 bg-slate-800/90 flex justify-between items-center">
+                
+                <div id="notifDropdown" class="glass rounded-2xl overflow-hidden shadow-2xl">
+                    <div class="p-4 border-b border-white/10 bg-slate-800 flex justify-between items-center">
                         <span class="font-bold text-sm">Notifications</span>
                         <button onclick="toggleNotif()"><i class="fas fa-times text-slate-500"></i></button>
                     </div>
-                    <div id="notifList" class="max-h-96 overflow-y-auto p-3 space-y-3 bg-slate-900/80"></div>
+                    <div id="notifList" class="max-h-[70vh] overflow-y-auto p-3 space-y-3 bg-slate-900/90">
+                        </div>
                 </div>
             </div>
-            <button onclick="toggleModal('addAppModal')" class="bg-blue-600 w-10 h-10 rounded-xl"><i class="fas fa-plus"></i></button>
+            <button onclick="toggleModal('addAppModal')" class="bg-blue-600 w-11 h-11 rounded-xl shadow-lg shadow-blue-900/20"><i class="fas fa-plus"></i></button>
         </div>
     </header>
 
     <main class="space-y-6">
         
-        <div class="glass p-8 rounded-3xl bg-gradient-to-br from-blue-600/10 to-transparent border-t border-blue-500/30 text-center">
-            <h3 class="text-xs font-bold text-blue-400 mb-2 uppercase tracking-widest flex justify-center items-center gap-2">
+        <div class="glass p-8 rounded-[2.5rem] bg-gradient-to-br from-blue-600/20 to-transparent border-t border-blue-500/40 text-center relative z-10">
+            <h3 class="text-xs font-bold text-blue-400 mb-3 uppercase tracking-[0.2em] flex justify-center items-center gap-2">
                 Available Balance
-                <i id="eyeIcon" class="fas fa-eye-slash text-slate-500 cursor-pointer text-lg" onclick="togglePrivacy()"></i>
+                <i id="eyeIcon" class="fas fa-eye-slash text-slate-500 cursor-pointer text-lg p-1" onclick="togglePrivacy()"></i>
             </h3>
-            <p id="mainNetBalance" class="text-4xl font-black balance-hidden transition-all duration-300">Rs. 0</p>
+            <p id="mainNetBalance" class="text-4xl font-black balance-hidden">Rs. 0</p>
         </div>
 
         <div class="grid grid-cols-2 gap-4" id="appsGrid"></div>
     </main>
 
-    <div id="addAppModal" class="fixed inset-0 bg-black/95 hidden flex items-center justify-center p-6 z-[20000]">
+    <div id="addAppModal" class="fixed inset-0 bg-black/95 hidden flex items-center justify-center p-6 z-[200000]">
         <div class="glass p-6 rounded-3xl w-full max-w-sm">
             <h2 class="text-lg font-bold mb-4 text-center">Add Shortcut</h2>
             <input type="text" id="newAppName" placeholder="App Name" class="w-full p-4 bg-slate-900 rounded-xl mb-3 outline-none text-sm border border-slate-700">
@@ -117,17 +119,10 @@
         import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
         const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/" };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        const fbApp = initializeApp(firebaseConfig);
+        const db = getDatabase(fbApp);
 
-        // --- PWA Service Worker ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
-            });
-        }
-
-        // --- Navigation Logic ---
+        // --- Core Functions ---
         window.openApp = (url) => {
             document.getElementById('appFrame').src = url;
             document.getElementById('appOverlay').style.display = 'block';
@@ -143,8 +138,8 @@
         window.toggleModal = (id) => document.getElementById(id).classList.toggle('hidden');
         window.toggleNotif = () => document.getElementById('notifDropdown').classList.toggle('active');
 
-        // --- Privacy Toggle (Start Hidden) ---
-        let isHidden = true; 
+        // Privacy Toggle (Starts Hidden)
+        let isHidden = true;
         window.togglePrivacy = () => {
             isHidden = !isHidden;
             const bal = document.getElementById('mainNetBalance');
@@ -158,21 +153,7 @@
             }
         };
 
-        // --- PWA Logic ---
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            setTimeout(() => { document.getElementById('installBanner').style.display = 'flex'; }, 3000);
-        });
-        document.getElementById('installBtn').addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt = null;
-            }
-        });
-
-        // --- Firebase Data Fetching ---
+        // --- Data Handling ---
         onValue(ref(db, 'notifications'), snap => {
             const list = document.getElementById('notifList');
             const badge = document.getElementById('notifBadge');
@@ -181,17 +162,22 @@
                 const data = Object.values(snap.val()).reverse();
                 badge.innerText = data.length;
                 data.forEach(n => {
-                    list.innerHTML += `<div class="p-3 bg-white/5 border-l-2 border-blue-500 rounded-lg text-[11px] mb-2">
-                        <p class="text-slate-200">${n.text}</p>
-                        <small class="opacity-30 block mt-1 uppercase font-bold text-[9px]">${n.date} | ${n.time}</small>
+                    list.innerHTML += `<div class="p-4 bg-white/5 border-l-4 border-blue-500 rounded-xl text-[12px] mb-2 shadow-lg">
+                        <p class="text-slate-200 leading-relaxed font-medium">${n.text}</p>
+                        <div class="flex justify-between items-center mt-2 opacity-40 text-[9px] uppercase font-bold tracking-wider">
+                            <span>${n.date}</span><span>${n.time}</span>
+                        </div>
                     </div>`;
                 });
-            } else { badge.innerText = "0"; list.innerHTML = `<p class="text-center text-xs py-10 opacity-30 italic">No notifications</p>`; }
+            } else {
+                badge.innerText = "0";
+                list.innerHTML = `<div class="py-12 text-center opacity-30 italic text-sm">No new updates</div>`;
+            }
         });
 
         onValue(ref(db, 'bank_accounts'), snapBanks => {
             onValue(ref(db, 'bank_transactions'), snapTrans => {
-                let totalVault = 0;
+                let total = 0;
                 if(snapBanks.exists()) {
                     snapBanks.forEach(bSnap => {
                         const bId = bSnap.key;
@@ -203,49 +189,39 @@
                                 else bBal -= amt;
                             });
                         }
-                        totalVault += bBal;
+                        total += bBal;
                     });
                 }
-                document.getElementById('mainNetBalance').innerText = "Rs. " + totalVault.toLocaleString();
+                document.getElementById('mainNetBalance').innerText = "Rs. " + total.toLocaleString();
             });
         });
 
-        // --- Grid Generation ---
+        // --- UI Rendering ---
         const iconsList = ['fa-barcode', 'fa-vault', 'fa-chart-line', 'fa-user-gear', 'fa-store', 'fa-hand-holding-dollar', 'fa-users', 'fa-sync', 'fa-wallet', 'fa-receipt'];
-        document.getElementById('iconGrid').innerHTML = iconsList.map(i => `<div onclick="selectIcon('${i}')" class="p-3 bg-slate-800 rounded-lg text-center"><i class="fas ${i}"></i></div>`).join('');
-        window.selectIcon = (i) => { document.getElementById('selectedIcon').value = i; alert("Icon: " + i + " selected!"); };
+        document.getElementById('iconGrid').innerHTML = iconsList.map(i => `<div onclick="selectIcon('${i}')" class="p-3 bg-slate-800 rounded-lg text-center cursor-pointer hover:bg-blue-600"><i class="fas ${i}"></i></div>`).join('');
+        window.selectIcon = (i) => { document.getElementById('selectedIcon').value = i; };
 
         onValue(ref(db, 'cpanel_apps'), snap => {
             const grid = document.getElementById('appsGrid');
             grid.innerHTML = '';
             const defaults = [
-                {name: 'POS Scanner', link: 'index.html', icon: 'fa-barcode'},
-                {name: 'Money Vault', link: 'Money.html', icon: 'fa-vault'},
+                {name: 'Scanner', link: 'index.html', icon: 'fa-barcode'},
+                {name: 'Money', link: 'Money.html', icon: 'fa-vault'},
                 {name: 'Manager', link: 'manager.html', icon: 'fa-user-gear'},
                 {name: 'Expenses', link: 'expense.html', icon: 'fa-chart-line'},
-                {name: 'Shops Sync', link: 'Shops_Manager.html', icon: 'fa-store'},
-                {name: 'Loan Manager', link: 'Loan.html', icon: 'fa-hand-holding-dollar'},
-                {name: 'Saler Records', link: 'Saler.html', icon: 'fa-users'},
-                {name: 'Data Sync', link: 'data.html', icon: 'fa-sync'}
+                {name: 'Shops', link: 'Shops_Manager.html', icon: 'fa-store'},
+                {name: 'Loans', link: 'Loan.html', icon: 'fa-hand-holding-dollar'},
+                {name: 'Salers', link: 'Saler.html', icon: 'fa-users'},
+                {name: 'Sync', link: 'data.html', icon: 'fa-sync'}
             ];
             defaults.forEach(a => {
                 const d = document.createElement('div');
-                d.className = 'app-card glass p-6 rounded-3xl flex flex-col items-center gap-3 text-center';
+                d.className = 'app-card glass p-6 rounded-[2rem] flex flex-col items-center gap-3 text-center cursor-pointer';
                 d.onclick = () => openApp(a.link);
-                d.innerHTML = `<div class="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-2xl shadow-inner"><i class="fas ${a.icon}"></i></div>
-                               <span class="text-[10px] font-bold uppercase tracking-wider text-slate-300">${a.name}</span>`;
+                d.innerHTML = `<div class="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-3xl shadow-inner"><i class="fas ${a.icon}"></i></div>
+                               <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300">${a.name}</span>`;
                 grid.appendChild(d);
             });
-            if(snap.exists()) {
-                Object.values(snap.val()).forEach(a => {
-                    const d = document.createElement('div');
-                    d.className = 'app-card glass p-6 rounded-3xl flex flex-col items-center gap-3 text-center';
-                    d.onclick = () => openApp(a.link);
-                    d.innerHTML = `<div class="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-2xl shadow-inner"><i class="fas ${a.icon || 'fa-cube'}"></i></div>
-                                   <span class="text-[10px] font-bold uppercase tracking-wider text-slate-300">${a.name}</span>`;
-                    grid.appendChild(d);
-                });
-            }
         });
 
         window.saveApp = () => {
