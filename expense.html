@@ -14,7 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        /* ================= THEME VARIABLES (Back to Full Detail) ================= */
+        /* ================= THEME VARIABLES ================= */
         :root {
             --bg-body: #e0e5ec;
             --container-bg: #f2f5f9;
@@ -220,7 +220,7 @@
                     </tr>
                 </thead>
                 <tbody id="summaryTableBody">
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>
@@ -245,6 +245,12 @@
                             <label class="small fw-bold">Current Opening Balance</label>
                             <input type="number" id="openBal" class="form-control form-locked" readonly step="0.01">
                         </div>
+                        
+                        <div class="col-12">
+                            <label class="small fw-bold text-info">Today Drawer</label>
+                            <input type="number" id="todayDrawer" class="form-control border-info" step="0.01" value="0" oninput="calculateLiveBalance()">
+                        </div>
+
                         <div class="col-6">
                             <label class="small fw-bold text-success">Income Amount</label>
                             <input type="number" id="incomeInput" class="form-control border-success" step="0.01" value="0" oninput="calculateLiveBalance()">
@@ -322,7 +328,7 @@
         sortedDates.forEach((date) => {
             const day = grouped[date];
             const opening = runningBalance;
-            const mid = opening + day.inc; // Handled negative logically (e.g. -500 + 200 = -300)
+            const mid = opening + day.inc; 
             const closing = mid - day.exp;
 
             const isVisible = (!filterStart || date >= filterStart) && (!filterEnd || date <= filterEnd);
@@ -371,22 +377,39 @@
         document.getElementById('totalExpVal').innerText = tExp.toFixed(0);
         document.getElementById('balanceVal').innerText = (tInc - tExp).toFixed(0);
         document.getElementById('todayProfitVal').innerText = tDay.toFixed(0);
-        // Sync the modal opening balance
-        document.getElementById('openBal').value = (tInc - tExp).toFixed(2);
     }
 
     // --- ACTIONS ---
     window.calculateLiveBalance = () => {
         const b = parseFloat(document.getElementById('openBal').value) || 0;
-        const i = parseFloat(document.getElementById('incomeInput').value) || 0;
+        const d = parseFloat(document.getElementById('todayDrawer').value) || 0;
         const e = parseFloat(document.getElementById('expenseInput').value) || 0;
-        document.getElementById('finalBalance').value = (b + i - e).toFixed(2);
+        
+        // Custom calculation logic requested by you
+        if (d > 0) {
+            const calculatedValue = b + d - e;
+            document.getElementById('incomeInput').value = calculatedValue.toFixed(2);
+            document.getElementById('finalBalance').value = calculatedValue.toFixed(2);
+        } else {
+            // Normal fallback calculation
+            const i = parseFloat(document.getElementById('incomeInput').value) || 0;
+            document.getElementById('finalBalance').value = (b + i - e).toFixed(2);
+        }
     };
 
     window.openModal = () => {
         document.getElementById('entryForm').reset();
         document.getElementById('editKey').value = "";
         document.getElementById('entryDate').value = today;
+        document.getElementById('todayDrawer').value = 0; // Drawer reset
+        
+        // Last day / Overall Balance automatically fetch ho raha hy
+        let tInc = 0, tExp = 0;
+        allData.forEach(t => {
+            if(t.type === 'Income') tInc += t.amount; else tExp += t.amount;
+        });
+        document.getElementById('openBal').value = (tInc - tExp).toFixed(2);
+        
         calculateLiveBalance();
         modalObj.show();
     };
@@ -397,8 +420,23 @@
         document.getElementById('editKey').value = item.id;
         document.getElementById('entryDate').value = item.date;
         document.getElementById('entryRemarks').value = item.remarks === "N/A" ? "" : item.remarks;
-        if(item.type === 'Income') { document.getElementById('incomeInput').value = item.amount; document.getElementById('expenseInput').value = 0; }
-        else { document.getElementById('incomeInput').value = 0; document.getElementById('expenseInput').value = item.amount; }
+        document.getElementById('todayDrawer').value = 0; // Editing k waqt drawer 0
+        
+        // Populate specific values
+        let tInc = 0, tExp = 0;
+        allData.forEach(t => {
+            if(t.type === 'Income') tInc += t.amount; else tExp += t.amount;
+        });
+        document.getElementById('openBal').value = (tInc - tExp).toFixed(2);
+
+        if(item.type === 'Income') { 
+            document.getElementById('incomeInput').value = item.amount; 
+            document.getElementById('expenseInput').value = 0; 
+        } else { 
+            document.getElementById('incomeInput').value = 0; 
+            document.getElementById('expenseInput').value = item.amount; 
+        }
+        
         calculateLiveBalance();
         modalObj.show();
     };
