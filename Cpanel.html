@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Muluk Hussain - Mobile Hub</title>
+    <title>Muluk Hussain - Hub</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
@@ -17,8 +17,8 @@
     <style>
         body { font-family: 'Poppins', sans-serif; background: #0f172a; color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .app-card { transition: transform 0.2s active; border: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; }
-        .app-card:active { transform: scale(0.95); background: rgba(59, 130, 246, 0.2); }
+        .app-card { transition: transform 0.2s; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .app-card:active { transform: scale(0.95); background: rgba(59, 130, 246, 0.1); }
         
         #appOverlay { position: fixed; inset: 0; background: #000; z-index: 9998; display: none; }
         #closeAppBtn { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; display: none; }
@@ -29,36 +29,30 @@
         #notifDropdown.active { display: block; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-        /* Install Popup Styling */
-        #installBanner { display: none; position: fixed; bottom: 20px; left: 10px; right: 10px; z-index: 10001; }
+        .balance-hidden { filter: blur(10px); pointer-events: none; user-select: none; }
     </style>
 </head>
 <body class="p-4">
 
-    <div id="installBanner" class="glass p-5 rounded-2xl shadow-2xl border-t-4 border-blue-500 flex items-center justify-between gap-4">
+    <div id="installBanner" class="fixed bottom-6 left-4 right-4 glass p-5 rounded-2xl shadow-2xl border-t-4 border-blue-500 hidden items-center justify-between gap-4 z-[10001]">
         <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <i class="fas fa-rocket text-white"></i>
-            </div>
-            <div>
-                <p class="text-sm font-bold">Install App</p>
-                <p class="text-[10px] text-slate-400">Install for better experience</p>
-            </div>
+            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center"><i class="fas fa-rocket text-white"></i></div>
+            <div><p class="text-sm font-bold">Install App</p><p class="text-[10px] text-slate-400">For a faster experience</p></div>
         </div>
         <div class="flex gap-2">
             <button id="installBtn" class="bg-blue-600 px-4 py-2 rounded-lg text-xs font-bold">Install</button>
-            <button onclick="hideInstall()" class="text-slate-400 p-2"><i class="fas fa-times"></i></button>
+            <button onclick="document.getElementById('installBanner').style.display='none'" class="text-slate-400 p-2"><i class="fas fa-times"></i></button>
         </div>
     </div>
 
-    <button id="closeAppBtn" onclick="closeApp()" class="bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl font-bold flex items-center gap-2">
+    <button id="closeAppBtn" onclick="closeApp()" class="bg-red-600 text-white px-8 py-3 rounded-full shadow-2xl font-bold flex items-center gap-2">
         <i class="fas fa-home"></i> Back to Hub
     </button>
 
     <div id="appOverlay"><iframe id="appFrame" class="w-full h-full border-none"></iframe></div>
 
     <header class="flex justify-between items-center mb-6 glass p-4 rounded-2xl">
-        <h1 class="text-xl font-extrabold"><span class="text-blue-500">M.H.</span> Hub</h1>
+        <h1 class="text-xl font-extrabold tracking-tight">Muluk Hussain <span class="text-blue-500">Hub</span></h1>
         
         <div class="flex items-center gap-3">
             <div class="relative">
@@ -66,33 +60,73 @@
                     <i class="fas fa-bell text-lg text-yellow-500"></i>
                     <span id="notifBadge" class="notify-badge">0</span>
                 </div>
-                <div id="notifDropdown" class="absolute right-0 mt-3 w-[85vw] max-w-sm glass rounded-2xl overflow-hidden z-[1000] shadow-2xl border border-white/10">
+                <div id="notifDropdown" class="absolute right-0 mt-3 w-[85vw] max-w-sm glass rounded-2xl overflow-hidden z-[1000] border border-white/10 shadow-2xl">
                     <div class="p-4 border-b border-white/10 bg-slate-800/50 flex justify-between items-center">
                         <span class="font-bold text-sm">Notifications</span>
-                        <button onclick="toggleNotif()" class="text-slate-500"><i class="fas fa-times"></i></button>
+                        <button onclick="toggleNotif()"><i class="fas fa-times text-slate-500"></i></button>
                     </div>
                     <div id="notifList" class="max-h-96 overflow-y-auto p-3 space-y-3"></div>
                 </div>
             </div>
-            <button onclick="toggleModal('addAppModal')" class="bg-blue-600 w-10 h-10 rounded-xl font-bold"><i class="fas fa-plus"></i></button>
+            <button onclick="toggleModal('addAppModal')" class="bg-blue-600 w-10 h-10 rounded-xl"><i class="fas fa-plus"></i></button>
         </div>
     </header>
 
     <main class="space-y-4">
-        <div class="grid grid-cols-2 gap-4" id="appsGrid">
+        
+        <div class="glass p-6 rounded-3xl bg-gradient-to-br from-blue-600/10 to-transparent border-t border-blue-500/30">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="text-sm font-bold text-blue-400 mb-1 flex items-center gap-2">
+                        Current Balance 
+                        <i id="eyeIcon" class="fas fa-eye text-slate-500 cursor-pointer" onclick="togglePrivacy()"></i>
+                    </h3>
+                    <p id="mainNetBalance" class="text-3xl font-black transition-all duration-300">Rs. 0</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Est. Profit</p>
+                    <p id="statProfit" class="text-sm font-bold text-orange-400">Rs. 0</p>
+                </div>
             </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3">
+            <div class="glass p-4 rounded-2xl border-l-4 border-blue-500" onclick="toggleVault()">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Vault Available</p>
+                        <h2 class="text-lg font-black" id="statVault">Rs. 0</h2>
+                    </div>
+                    <i id="vaultChevron" class="fas fa-chevron-down text-slate-600"></i>
+                </div>
+                <div id="bankList" class="hidden mt-3 pt-3 border-t border-white/5 space-y-2"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="glass p-4 rounded-2xl border-l-4 border-emerald-500" onclick="openApp('expense.html')">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Expenses</p>
+                    <h2 class="text-lg font-black text-emerald-400" id="statExpense">Rs. 0</h2>
+                </div>
+                <div class="glass p-4 rounded-2xl border-l-4 border-purple-500" onclick="openApp('order.html')">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Orders</p>
+                    <h2 class="text-lg font-black text-purple-400" id="statOrders">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mt-6" id="appsGrid"></div>
     </main>
 
     <div id="addAppModal" class="fixed inset-0 bg-black/95 hidden flex items-center justify-center p-6 z-[10000]">
         <div class="glass p-6 rounded-3xl w-full">
-            <h2 class="text-lg font-bold mb-4">Add New Shortcut</h2>
-            <input type="text" id="newAppName" placeholder="App Name" class="w-full p-4 bg-slate-900 border border-slate-700 rounded-xl mb-3 outline-none text-sm">
-            <input type="text" id="newAppLink" placeholder="Link (e.g. data.html)" class="w-full p-4 bg-slate-900 border border-slate-700 rounded-xl mb-3 outline-none text-sm">
+            <h2 class="text-lg font-bold mb-4">Add Shortcut</h2>
+            <input type="text" id="newAppName" placeholder="App Name" class="w-full p-4 bg-slate-900 rounded-xl mb-3 outline-none text-sm">
+            <input type="text" id="newAppLink" placeholder="Link (e.g. data.html)" class="w-full p-4 bg-slate-900 rounded-xl mb-3 outline-none text-sm">
             <div id="iconGrid" class="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto mb-4 p-2 bg-slate-950 rounded-xl"></div>
             <input type="hidden" id="selectedIcon" value="fa-cube">
-            <div class="flex gap-2 mt-4">
-                <button onclick="saveApp()" class="flex-1 bg-blue-600 p-4 rounded-xl font-bold text-sm">Save</button>
-                <button onclick="toggleModal('addAppModal')" class="flex-1 bg-slate-800 p-4 rounded-xl text-sm">Cancel</button>
+            <div class="flex gap-2">
+                <button onclick="saveApp()" class="flex-1 bg-blue-600 p-4 rounded-xl font-bold">Save</button>
+                <button onclick="toggleModal('addAppModal')" class="flex-1 bg-slate-800 p-4 rounded-xl">Cancel</button>
             </div>
         </div>
     </div>
@@ -105,7 +139,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- Core Navigation ---
+        // --- PWA Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW Registered')).catch(err => console.log('SW Failed', err));
+            });
+        }
+
+        // --- UI Navigation ---
         window.openApp = (url) => {
             document.getElementById('appFrame').src = url;
             document.getElementById('appOverlay').style.display = 'block';
@@ -120,27 +161,53 @@
         };
         window.toggleModal = (id) => document.getElementById(id).classList.toggle('hidden');
         window.toggleNotif = () => document.getElementById('notifDropdown').classList.toggle('active');
+        window.toggleVault = () => {
+            document.getElementById('bankList').classList.toggle('hidden');
+            document.getElementById('vaultChevron').classList.toggle('rotate-180');
+        };
 
-        // --- PWA Install Logic ---
+        // --- Privacy Toggle ---
+        let isHidden = false;
+        window.togglePrivacy = () => {
+            isHidden = !isHidden;
+            const bal = document.getElementById('mainNetBalance');
+            const icon = document.getElementById('eyeIcon');
+            if(isHidden) {
+                bal.classList.add('balance-hidden');
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                bal.classList.remove('balance-hidden');
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        };
+
+        // --- PWA Install Prompt ---
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            document.getElementById('installBanner').style.display = 'flex';
+            setTimeout(() => { document.getElementById('installBanner').style.display = 'flex'; }, 3000);
         });
-
         document.getElementById('installBtn').addEventListener('click', async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') hideInstall();
+                if (outcome === 'accepted') document.getElementById('installBanner').style.display = 'none';
                 deferredPrompt = null;
             }
         });
 
-        window.hideInstall = () => document.getElementById('installBanner').style.display = 'none';
+        // --- Live Data Sync ---
+        onValue(ref(db, 'orders'), snap => {
+            document.getElementById('statOrders').innerText = snap.exists() ? Object.keys(snap.val()).length : 0;
+        });
 
-        // --- Notifications ---
+        onValue(ref(db, 'expenses'), snap => {
+            let total = 0;
+            if(snap.exists()) Object.values(snap.val()).forEach(e => total += parseFloat(e.amount || 0));
+            document.getElementById('statExpense').innerText = "Rs. " + total.toLocaleString();
+        });
+
         onValue(ref(db, 'notifications'), snap => {
             const list = document.getElementById('notifList');
             const badge = document.getElementById('notifBadge');
@@ -149,22 +216,43 @@
                 const data = Object.values(snap.val()).reverse();
                 badge.innerText = data.length;
                 data.forEach(n => {
-                    list.innerHTML += `<div class="p-3 bg-white/5 border-l-2 border-blue-500 rounded-lg text-xs">
-                        <p class="text-slate-200">${n.text}</p>
-                        <small class="opacity-40 mt-1 block">${n.date} ${n.time}</small>
+                    list.innerHTML += `<div class="p-3 bg-white/5 border-l-2 border-blue-500 rounded-lg text-[11px]">
+                        <p>${n.text}</p><small class="opacity-40 block mt-1">${n.date} ${n.time}</small>
                     </div>`;
                 });
-            } else {
-                badge.innerText = "0";
-                list.innerHTML = `<p class="text-center text-slate-500 text-xs py-6">No notifications</p>`;
-            }
+            } else { badge.innerText = "0"; list.innerHTML = `<p class="text-center text-xs py-10 opacity-40">No notifications</p>`; }
+        });
+
+        onValue(ref(db, 'bank_accounts'), snapBanks => {
+            onValue(ref(db, 'bank_transactions'), snapTrans => {
+                const bList = document.getElementById('bankList');
+                bList.innerHTML = '';
+                let totalVault = 0, income = 0, expense = 0;
+                if(snapBanks.exists()) {
+                    snapBanks.forEach(bSnap => {
+                        const bId = bSnap.key;
+                        let bBal = 0;
+                        if(snapTrans.exists() && snapTrans.val()[bId]) {
+                            Object.values(snapTrans.val()[bId]).forEach(t => {
+                                const amt = parseFloat(t.amount || 0);
+                                if(t.type.includes('In') || t.type.includes('Received')) { bBal += amt; income += amt; }
+                                else { bBal -= amt; expense += amt; }
+                            });
+                        }
+                        totalVault += bBal;
+                        bList.innerHTML += `<div class="flex justify-between text-xs py-1 px-2 bg-white/5 rounded"><span>${bSnap.val().name}</span><span class="font-bold">Rs. ${bBal.toLocaleString()}</span></div>`;
+                    });
+                }
+                document.getElementById('statVault').innerText = "Rs. " + totalVault.toLocaleString();
+                document.getElementById('mainNetBalance').innerText = "Rs. " + totalVault.toLocaleString();
+                document.getElementById('statProfit').innerText = "Rs. " + (income - expense).toLocaleString();
+            });
         });
 
         // --- Apps Load ---
-        const icons = ['fa-barcode', 'fa-vault', 'fa-chart-line', 'fa-user-gear', 'fa-store', 'fa-hand-holding-dollar', 'fa-users', 'fa-sync'];
-        const iconGrid = document.getElementById('iconGrid');
-        iconGrid.innerHTML = icons.map(i => `<div onclick="selectIcon('${i}')" class="p-3 bg-slate-800 rounded-lg text-center"><i class="fas ${i}"></i></div>`).join('');
-        window.selectIcon = (i) => { document.getElementById('selectedIcon').value = i; alert("Selected!"); };
+        const iconChoices = ['fa-barcode', 'fa-vault', 'fa-chart-line', 'fa-user-gear', 'fa-store', 'fa-hand-holding-dollar', 'fa-users', 'fa-sync'];
+        document.getElementById('iconGrid').innerHTML = iconChoices.map(i => `<div onclick="selectIcon('${i}')" class="p-3 bg-slate-800 rounded-lg text-center"><i class="fas ${i}"></i></div>`).join('');
+        window.selectIcon = (i) => { document.getElementById('selectedIcon').value = i; alert("Icon Selected!"); };
 
         onValue(ref(db, 'cpanel_apps'), snap => {
             const grid = document.getElementById('appsGrid');
@@ -179,18 +267,16 @@
                 {name: 'Saler Records', link: 'Saler.html', icon: 'fa-users'},
                 {name: 'Data Sync', link: 'data.html', icon: 'fa-sync'}
             ];
-            defaults.forEach(a => renderCard(a));
-            if(snap.exists()) Object.values(snap.val()).forEach(a => renderCard(a));
+            defaults.forEach(a => {
+                const d = document.createElement('div');
+                d.className = 'app-card glass p-5 rounded-3xl flex flex-col items-center gap-3 text-center';
+                d.onclick = () => openApp(a.link);
+                d.innerHTML = `<div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl shadow-inner"><i class="fas ${a.icon}"></i></div>
+                               <span class="text-[10px] font-bold uppercase tracking-wide text-slate-300">${a.name}</span>`;
+                grid.appendChild(d);
+            });
+            if(snap.exists()) Object.values(snap.val()).forEach(a => { /* similar render logic */ });
         });
-
-        function renderCard(a) {
-            const d = document.createElement('div');
-            d.className = 'app-card glass p-6 rounded-3xl flex flex-col items-center gap-3 text-center';
-            d.onclick = () => openApp(a.link);
-            d.innerHTML = `<div class="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-2xl shadow-inner"><i class="fas ${a.icon}"></i></div>
-                           <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300">${a.name}</span>`;
-            document.getElementById('appsGrid').appendChild(d);
-        }
 
         window.saveApp = () => {
             const name = document.getElementById('newAppName').value;
