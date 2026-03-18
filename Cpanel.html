@@ -3,121 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Muluk Hussain - CPanel Hub</title>
-    
+    <title>Muluk Hussain - Professional CPanel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #0f172a; color: #f1f5f9; overflow-x: hidden; }
+        body { font-family: 'Poppins', sans-serif; background: #0f172a; color: #f1f5f9; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .app-card { transition: all 0.3s ease; border: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; }
         .app-card:hover { transform: translateY(-5px); border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
         
-        /* Iframe Overlay for Apps */
         #appOverlay { position: fixed; inset: 0; background: #000; z-index: 9998; display: none; }
         #closeAppBtn { position: fixed; top: 20px; right: 20px; z-index: 9999; display: none; }
         
         .notify-badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; border: 2px solid #0f172a; }
         
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        /* Dropdown Animation */
+        #notifDropdown { display: none; transform-origin: top right; transition: 0.2s; }
+        #notifDropdown.active { display: block; animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <button id="closeAppBtn" onclick="closeApp()" class="bg-red-600 hover:bg-red-700 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transition-all scale-110">
+    <button id="closeAppBtn" onclick="closeApp()" class="bg-red-600 hover:bg-red-700 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transition-all">
         <i class="fas fa-times text-xl"></i>
     </button>
 
-    <div id="appOverlay">
-        <iframe id="appFrame" class="w-full h-full border-none"></iframe>
-    </div>
+    <div id="appOverlay"><iframe id="appFrame" class="w-full h-full border-none"></iframe></div>
 
-    <header class="max-w-7xl mx-auto flex flex-col md:row justify-between items-center mb-8 glass p-6 rounded-2xl gap-4">
-        <div class="flex items-center gap-4">
-            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">
-                <span class="text-blue-500">Muluk Hussain</span> Hub
-            </h1>
-            <div class="relative cursor-pointer group" onclick="openApp('Notify.html')">
-                <div class="p-3 bg-slate-800 rounded-full group-hover:bg-slate-700 transition">
-                    <i class="fas fa-bell text-xl text-yellow-500"></i>
-                </div>
-                <span id="notifBadge" class="notify-badge">0</span>
-            </div>
-        </div>
+    <header class="max-w-7xl mx-auto flex justify-between items-center mb-8 glass p-6 rounded-2xl relative">
+        <h1 class="text-2xl font-extrabold tracking-tight"><span class="text-blue-500">Muluk Hussain</span> Hub</h1>
         
-        <div class="flex gap-3">
-            <button onclick="toggleModal('addAppModal')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20">
-                <i class="fas fa-plus"></i> Add New File
-            </button>
+        <div class="flex items-center gap-4">
+            <div class="relative">
+                <div class="p-3 bg-slate-800 rounded-full cursor-pointer hover:bg-slate-700" onclick="toggleNotif()">
+                    <i class="fas fa-bell text-xl text-yellow-500"></i>
+                    <span id="notifBadge" class="notify-badge">0</span>
+                </div>
+                <div id="notifDropdown" class="absolute right-0 mt-3 w-72 glass rounded-2xl overflow-hidden z-[1000]">
+                    <div class="p-4 border-b border-white/10 flex justify-between">
+                        <span class="font-bold">Notifications</span>
+                        <button onclick="openApp('Notify.html')" class="text-xs text-blue-400">Manage</button>
+                    </div>
+                    <div id="notifList" class="max-h-60 overflow-y-auto p-2 space-y-2">
+                        </div>
+                </div>
+            </div>
+            <button onclick="toggleModal('addAppModal')" class="bg-blue-600 px-4 py-2 rounded-xl font-bold flex items-center gap-2"><i class="fas fa-plus"></i></button>
         </div>
     </header>
 
     <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
         
-        <div class="lg:col-span-1 space-y-6">
-            <div class="grid grid-cols-1 gap-4">
-                <div onclick="openApp('Money.html')" class="glass p-5 rounded-2xl cursor-pointer hover:bg-slate-800 transition border-l-4 border-blue-500">
-                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">Vault Available</p>
-                    <h2 class="text-xl font-black" id="statVault">Loading...</h2>
+        <div class="lg:col-span-1 space-y-4">
+            <div class="glass p-5 rounded-2xl cursor-pointer hover:bg-slate-800 transition border-l-4 border-blue-500" onclick="toggleVaultDetails()">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-slate-400 text-xs font-bold uppercase">Vault Available</p>
+                        <h2 class="text-xl font-black" id="statVault">Rs. 0</h2>
+                    </div>
+                    <i class="fas fa-chevron-down text-slate-500"></i>
                 </div>
-                <div onclick="openApp('expense.html')" class="glass p-5 rounded-2xl cursor-pointer hover:bg-slate-800 transition border-l-4 border-emerald-500">
-                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">Expenses</p>
-                    <h2 class="text-xl font-black" id="statExpense">Loading...</h2>
-                </div>
-                <div onclick="openApp('order.html')" class="glass p-5 rounded-2xl cursor-pointer hover:bg-slate-800 transition border-l-4 border-purple-500">
-                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">Active Orders</p>
-                    <h2 class="text-xl font-black" id="statOrders">0</h2>
-                </div>
+                <div id="bankList" class="hidden mt-4 pt-4 border-t border-white/10 space-y-2">
+                    </div>
             </div>
 
-            <div class="glass p-5 rounded-2xl">
-                <h3 class="text-sm font-bold text-slate-300 mb-4"><i class="fas fa-chart-bar mr-2"></i> System Analytics</h3>
-                <div class="h-64">
-                    <canvas id="sideBarChart"></canvas>
-                </div>
+            <div onclick="openApp('expense.html')" class="glass p-5 rounded-2xl cursor-pointer hover:bg-slate-800 border-l-4 border-emerald-500">
+                <p class="text-slate-400 text-xs font-bold uppercase">Market Expenses</p>
+                <h2 class="text-xl font-black" id="statExpense">Rs. 0</h2>
+            </div>
+
+            <div onclick="openApp('order.html')" class="glass p-5 rounded-2xl cursor-pointer hover:bg-slate-800 border-l-4 border-purple-500">
+                <p class="text-slate-400 text-xs font-bold uppercase">Active Orders</p>
+                <h2 class="text-xl font-black text-purple-400" id="statOrders">0</h2>
+            </div>
+
+            <div class="glass p-5 rounded-2xl border-l-4 border-orange-500">
+                <p class="text-slate-400 text-xs font-bold uppercase">Est. Profit</p>
+                <h2 class="text-xl font-black text-orange-400" id="statProfit">Rs. 0</h2>
             </div>
         </div>
 
-        <div class="lg:col-span-3">
-            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                <i class="fas fa-th-large text-blue-500"></i> My Applications
-            </h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" id="appsGrid">
+        <div class="lg:col-span-3 space-y-8">
+            <div class="glass p-8 rounded-3xl bg-gradient-to-br from-blue-600/20 to-transparent border-t-4 border-blue-500">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-blue-400 mb-1">Current Balance</h3>
+                        <p class="text-sm text-slate-400">Combined balance after all adjustments</p>
+                    </div>
+                    <div class="text-center md:text-right">
+                        <span class="text-4xl md:text-5xl font-black text-white" id="mainNetBalance">Rs. 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="appsGrid">
                 </div>
         </div>
     </div>
 
     <div id="addAppModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-4 z-[10000]">
-        <div class="glass p-8 rounded-3xl w-full max-w-md border border-slate-700">
-            <h2 class="text-2xl font-bold mb-6 text-center">Register New Application</h2>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="text-xs text-slate-400 font-bold ml-1 uppercase">App Name</label>
-                    <input type="text" id="newAppName" placeholder="e.g. Stock Manager" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="text-xs text-slate-400 font-bold ml-1 uppercase">File Link (GitHub/Local)</label>
-                    <input type="text" id="newAppLink" placeholder="e.g. stock.html" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-blue-500 outline-none">
-                </div>
-                
-                <div>
-                    <label class="text-xs text-slate-400 font-bold ml-1 uppercase">Search Icon</label>
-                    <input type="text" id="iconSearchInput" onkeyup="filterIcons()" placeholder="Search icons (e.g. money, cart, user)..." class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl mb-3 focus:border-blue-500 outline-none">
-                    <div id="iconGrid" class="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto p-2 bg-slate-950 rounded-xl">
-                        </div>
-                </div>
-            </div>
-
-            <input type="hidden" id="selectedIconClass" value="fa-cube">
-
-            <div class="flex gap-3 mt-8">
-                <button onclick="saveApp()" class="flex-1 bg-blue-600 p-4 rounded-xl font-bold shadow-lg shadow-blue-500/20">Save Application</button>
-                <button onclick="toggleModal('addAppModal')" class="flex-1 bg-slate-800 p-4 rounded-xl font-bold">Cancel</button>
+        <div class="glass p-8 rounded-3xl w-full max-w-md">
+            <h2 class="text-xl font-bold mb-6">Register New File</h2>
+            <input type="text" id="newAppName" placeholder="App Name" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl mb-3 outline-none">
+            <input type="text" id="newAppLink" placeholder="File Link (e.g. data.html)" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl mb-3 outline-none">
+            <input type="text" id="iconSearch" onkeyup="filterIcons()" placeholder="Search icon..." class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl mb-3 outline-none">
+            <div id="iconGrid" class="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto mb-4"></div>
+            <input type="hidden" id="selectedIcon" value="fa-cube">
+            <div class="flex gap-2">
+                <button onclick="saveApp()" class="flex-1 bg-blue-600 p-3 rounded-xl font-bold">Save</button>
+                <button onclick="toggleModal('addAppModal')" class="flex-1 bg-slate-700 p-3 rounded-xl">Cancel</button>
             </div>
         </div>
     </div>
@@ -130,143 +127,131 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- Core Navigation ---
+        // Core Functions
         window.openApp = (url) => {
             document.getElementById('appFrame').src = url;
             document.getElementById('appOverlay').style.display = 'block';
             document.getElementById('closeAppBtn').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
         };
-
         window.closeApp = () => {
             document.getElementById('appOverlay').style.display = 'none';
             document.getElementById('closeAppBtn').style.display = 'none';
             document.getElementById('appFrame').src = '';
-            document.body.style.overflow = 'auto';
         };
+        window.toggleModal = (id) => document.getElementById(id).classList.toggle('hidden');
+        window.toggleNotif = () => document.getElementById('notifDropdown').classList.toggle('active');
+        window.toggleVaultDetails = () => document.getElementById('bankList').classList.toggle('hidden');
 
-        window.toggleModal = (id) => {
-            const m = document.getElementById(id);
-            m.classList.toggle('hidden');
-            if(!m.classList.contains('hidden')) loadIconGrid();
-        };
+        // Stats & Data Sync
+        onValue(ref(db, 'orders'), snap => {
+            document.getElementById('statOrders').innerText = snap.exists() ? Object.keys(snap.val()).length : 0;
+        });
 
-        // --- Icon Search System ---
-        const iconList = ['fa-wallet', 'fa-cart-shopping', 'fa-user-tie', 'fa-chart-pie', 'fa-boxes-stacked', 'fa-file-invoice-dollar', 'fa-shop', 'fa-database', 'fa-gear', 'fa-truck-fast', 'fa-barcode', 'fa-vault', 'fa-hand-holding-dollar', 'fa-users', 'fa-tags'];
-        
-        function loadIconGrid() {
-            const grid = document.getElementById('iconGrid');
-            grid.innerHTML = iconList.map(icon => `
-                <div onclick="selectIcon('${icon}')" class="icon-item p-3 bg-slate-800 rounded-lg text-center cursor-pointer hover:bg-blue-600 transition">
-                    <i class="fas ${icon} text-lg"></i>
-                </div>
-            `).join('');
-        }
+        onValue(ref(db, 'expenses'), snap => {
+            let total = 0;
+            if(snap.exists()) Object.values(snap.val()).forEach(e => total += parseFloat(e.amount || 0));
+            document.getElementById('statExpense').innerText = "Rs. " + total.toLocaleString();
+        });
 
-        window.filterIcons = () => {
-            const q = document.getElementById('iconSearchInput').value.toLowerCase();
-            document.querySelectorAll('.icon-item').forEach(item => {
-                const iconClass = item.querySelector('i').className.toLowerCase();
-                item.style.display = iconClass.includes(q) ? 'block' : 'none';
-            });
-        };
-
-        window.selectIcon = (icon) => {
-            document.getElementById('selectedIconClass').value = icon;
-            document.querySelectorAll('.icon-item').forEach(i => i.classList.remove('bg-blue-600', 'border-white', 'border'));
-            event.currentTarget.classList.add('bg-blue-600', 'border-white', 'border');
-        };
-
-        // --- App Management ---
-        window.saveApp = () => {
-            const name = document.getElementById('newAppName').value;
-            const link = document.getElementById('newAppLink').value;
-            const icon = document.getElementById('selectedIconClass').value;
-            if(name && link) {
-                push(ref(db, 'cpanel_apps'), { name, link, icon });
-                toggleModal('addAppModal');
-                document.getElementById('newAppName').value = '';
-                document.getElementById('newAppLink').value = '';
+        // Notifications Dropdown
+        onValue(ref(db, 'notifications'), snap => {
+            const list = document.getElementById('notifList');
+            const badge = document.getElementById('notifBadge');
+            list.innerHTML = '';
+            let count = 0;
+            if(snap.exists()) {
+                const data = Object.values(snap.val()).reverse();
+                count = data.length;
+                data.forEach(n => {
+                    list.innerHTML += `<div class="p-3 bg-white/5 rounded-lg text-xs border-l-2 border-blue-500">
+                        <p>${n.text}</p><small class="text-slate-500">${n.time || ''}</small>
+                    </div>`;
+                });
+            } else {
+                list.innerHTML = `<p class="text-center text-xs text-slate-500 py-4">No new notifications</p>`;
             }
+            badge.innerText = count;
+        });
+
+        // Detailed Vault & Net Balance Logic
+        onValue(ref(db, 'bank_accounts'), snapBanks => {
+            onValue(ref(db, 'bank_transactions'), snapTrans => {
+                const bList = document.getElementById('bankList');
+                bList.innerHTML = '';
+                let totalVault = 0;
+                let totalIncome = 0;
+                let totalExpense = 0;
+
+                if(snapBanks.exists()) {
+                    snapBanks.forEach(bSnap => {
+                        const bId = bSnap.key;
+                        const bData = bSnap.val();
+                        let bBal = 0;
+                        
+                        if(snapTrans.exists() && snapTrans.val()[bId]) {
+                            Object.values(snapTrans.val()[bId]).forEach(t => {
+                                const amt = parseFloat(t.amount);
+                                if(t.type.includes('In') || t.type.includes('Received') || t.type.includes('Adjustment In')) {
+                                    bBal += amt; totalIncome += amt;
+                                } else {
+                                    bBal -= amt; totalExpense += amt;
+                                }
+                            });
+                        }
+                        totalVault += bBal;
+                        bList.innerHTML += `<div class="flex justify-between text-xs py-1"><span>${bData.name}</span><span class="font-bold">${bBal.toLocaleString()}</span></div>`;
+                    });
+                }
+                document.getElementById('statVault').innerText = "Rs. " + totalVault.toLocaleString();
+                document.getElementById('mainNetBalance').innerText = "Rs. " + totalVault.toLocaleString();
+                document.getElementById('statProfit').innerText = "Rs. " + (totalIncome - totalExpense).toLocaleString();
+            });
+        });
+
+        // Apps Grid Restoration
+        const iconList = ['fa-barcode', 'fa-vault', 'fa-chart-line', 'fa-user-gear', 'fa-store', 'fa-hand-holding-dollar', 'fa-users', 'fa-sync', 'fa-file-invoice', 'fa-box'];
+        window.filterIcons = () => {
+            const grid = document.getElementById('iconGrid');
+            const q = document.getElementById('iconSearch').value.toLowerCase();
+            grid.innerHTML = iconList.filter(i => i.includes(q)).map(i => `<div onclick="selectIcon('${i}')" class="p-2 bg-slate-800 rounded cursor-pointer text-center hover:bg-blue-600"><i class="fas ${i}"></i></div>`).join('');
         };
 
-        onValue(ref(db, 'cpanel_apps'), (snap) => {
+        window.selectIcon = (i) => { document.getElementById('selectedIcon').value = i; alert("Icon Selected!"); };
+
+        onValue(ref(db, 'cpanel_apps'), snap => {
             const grid = document.getElementById('appsGrid');
             grid.innerHTML = '';
-            
-            // Fixed Default Apps
             const defaults = [
                 {name: 'POS Scanner', link: 'index.html', icon: 'fa-barcode'},
                 {name: 'Money Vault', link: 'Money.html', icon: 'fa-vault'},
                 {name: 'Manager', link: 'manager.html', icon: 'fa-user-gear'},
                 {name: 'Expenses', link: 'expense.html', icon: 'fa-chart-line'},
-                {name: 'Shops Sync', link: 'Shops_Manager.html', icon: 'fa-store'}
+                {name: 'Shops Sync', link: 'Shops_Manager.html', icon: 'fa-store'},
+                {name: 'Loan Manager', link: 'Loan.html', icon: 'fa-hand-holding-dollar'},
+                {name: 'Saler Records', link: 'Saler.html', icon: 'fa-users'},
+                {name: 'Data Sync', link: 'data.html', icon: 'fa-sync'}
             ];
-            
-            defaults.forEach(app => renderAppCard(app));
-            if(snap.exists()) {
-                Object.values(snap.val()).forEach(app => renderAppCard(app));
-            }
+            defaults.forEach(a => renderCard(a));
+            if(snap.exists()) Object.values(snap.val()).forEach(a => renderCard(a));
         });
 
-        function renderAppCard(app) {
-            const card = document.createElement('div');
-            card.className = 'app-card glass p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-3';
-            card.onclick = () => openApp(app.link);
-            card.innerHTML = `
-                <div class="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-2xl group-hover:bg-blue-500 group-hover:text-white transition">
-                    <i class="fas ${app.icon}"></i>
-                </div>
-                <span class="font-bold text-sm tracking-wide text-slate-200">${app.name}</span>
-            `;
-            document.getElementById('appsGrid').appendChild(card);
+        function renderCard(a) {
+            const d = document.createElement('div');
+            d.className = 'app-card glass p-6 rounded-2xl flex flex-col items-center gap-3';
+            d.onclick = () => openApp(a.link);
+            d.innerHTML = `<div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl"><i class="fas ${a.icon}"></i></div>
+                           <span class="text-xs font-bold">${a.name}</span>`;
+            document.getElementById('appsGrid').appendChild(d);
         }
 
-        // --- Live Stats & Notifications ---
-        onValue(ref(db, 'notifications'), (snap) => {
-            const count = snap.exists() ? Object.keys(snap.val()).length : 0;
-            document.getElementById('notifBadge').innerText = count;
-        });
-
-        // Real-time Summary Logic
-        onValue(ref(db, 'bank_transactions'), (snap) => {
-            let total = 0;
-            if(snap.exists()){
-                snap.forEach(b => b.forEach(t => {
-                    const val = t.val();
-                    if(val.type.includes('In')) total += parseFloat(val.amount);
-                    else total -= parseFloat(val.amount);
-                }));
-            }
-            document.getElementById('statVault').innerText = "Rs. " + total.toLocaleString();
-            updateCharts(total);
-        });
-
-        onValue(ref(db, 'expenses'), snap => {
-            let total = 0;
-            if(snap.exists()) snap.forEach(e => total += parseFloat(e.val().amount));
-            document.getElementById('statExpense').innerText = "Rs. " + total.toLocaleString();
-        });
-
-        // --- Chart Initialization ---
-        let sideChart;
-        function updateCharts(vault) {
-            const ctx = document.getElementById('sideBarChart').getContext('2d');
-            if(sideChart) sideChart.destroy();
-            sideChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Vault', 'Expenses', 'Orders'],
-                    datasets: [{
-                        label: 'Live Status',
-                        data: [vault, 50000, 12], // Placeholder expenses/orders for visual
-                        backgroundColor: ['#3b82f6', '#10b981', '#a855f7'],
-                        borderRadius: 10
-                    }]
-                },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } } } }
-            });
-        }
+        window.saveApp = () => {
+            const name = document.getElementById('newAppName').value;
+            const link = document.getElementById('newAppLink').value;
+            const icon = document.getElementById('selectedIcon').value;
+            if(name && link) { push(ref(db, 'cpanel_apps'), {name, link, icon}); toggleModal('addAppModal'); }
+        };
+        
+        window.filterIcons(); // Initial icon load
     </script>
 </body>
 </html>
