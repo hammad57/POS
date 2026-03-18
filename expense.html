@@ -247,8 +247,8 @@
                         </div>
                         
                         <div class="col-12">
-                            <label class="small fw-bold text-info">Today Drawer</label>
-                            <input type="number" id="todayDrawer" class="form-control border-info" step="0.01" value="0" oninput="calculateLiveBalance()">
+                            <label class="small fw-bold text-warning">Today Drawer</label>
+                            <input type="number" id="todayDrawer" class="form-control border-warning" step="0.01" placeholder="Enter today drawer amount..." oninput="calculateLiveBalance()">
                         </div>
 
                         <div class="col-6">
@@ -328,18 +328,16 @@
         sortedDates.forEach((date) => {
             const day = grouped[date];
             const opening = runningBalance;
-            const mid = opening + day.inc; 
+            const mid = opening + day.inc;
             const closing = mid - day.exp;
 
             const isVisible = (!filterStart || date >= filterStart) && (!filterEnd || date <= filterEnd);
 
             if (isVisible) {
-                // Formatting remarks as bullet points
                 const remarksList = day.items
                     .filter(i => i.remarks && i.remarks !== "N/A")
                     .map(i => `• ${i.remarks}`).join('<br>');
 
-                // Dynamic Action Buttons
                 const actions = day.items.map(i => `
                     <div class="d-flex justify-content-center gap-2 mb-1">
                         <span class="badge ${i.type==='Income'?'bg-success':'bg-danger'}" style="width:50px;">${i.amount}</span>
@@ -377,21 +375,26 @@
         document.getElementById('totalExpVal').innerText = tExp.toFixed(0);
         document.getElementById('balanceVal').innerText = (tInc - tExp).toFixed(0);
         document.getElementById('todayProfitVal').innerText = tDay.toFixed(0);
+        // Default update for openBal
+        document.getElementById('openBal').value = (tInc - tExp).toFixed(2);
     }
 
-    // --- ACTIONS ---
+    // --- ACTIONS & NEW CALCULATION LOGIC ---
     window.calculateLiveBalance = () => {
         const b = parseFloat(document.getElementById('openBal').value) || 0;
-        const d = parseFloat(document.getElementById('todayDrawer').value) || 0;
+        const drawerStr = document.getElementById('todayDrawer').value;
         const e = parseFloat(document.getElementById('expenseInput').value) || 0;
         
-        // Custom calculation logic requested by you
-        if (d > 0) {
-            const calculatedValue = b + d - e;
-            document.getElementById('incomeInput').value = calculatedValue.toFixed(2);
-            document.getElementById('finalBalance').value = calculatedValue.toFixed(2);
+        // Agar Today Drawer mein koi value hai, toh apka formula chalega
+        if (drawerStr !== "") {
+            const drawer = parseFloat(drawerStr) || 0;
+            const calculatedVal = b - drawer - e;
+            
+            // Income aur Final Balance dono mein calculated value ja rahi hai
+            document.getElementById('incomeInput').value = calculatedVal.toFixed(2);
+            document.getElementById('finalBalance').value = calculatedVal.toFixed(2);
         } else {
-            // Normal fallback calculation
+            // Agar Drawer empty hai toh normal purana hisaab chalega
             const i = parseFloat(document.getElementById('incomeInput').value) || 0;
             document.getElementById('finalBalance').value = (b + i - e).toFixed(2);
         }
@@ -401,14 +404,14 @@
         document.getElementById('entryForm').reset();
         document.getElementById('editKey').value = "";
         document.getElementById('entryDate').value = today;
-        document.getElementById('todayDrawer').value = 0; // Drawer reset
         
-        // Last day / Overall Balance automatically fetch ho raha hy
+        // Modal khulne pe specifically current running balance count karna
         let tInc = 0, tExp = 0;
         allData.forEach(t => {
             if(t.type === 'Income') tInc += t.amount; else tExp += t.amount;
         });
         document.getElementById('openBal').value = (tInc - tExp).toFixed(2);
+        document.getElementById('todayDrawer').value = ""; // Naya modal khulne pe drawer empty
         
         calculateLiveBalance();
         modalObj.show();
@@ -420,23 +423,10 @@
         document.getElementById('editKey').value = item.id;
         document.getElementById('entryDate').value = item.date;
         document.getElementById('entryRemarks').value = item.remarks === "N/A" ? "" : item.remarks;
-        document.getElementById('todayDrawer').value = 0; // Editing k waqt drawer 0
-        
-        // Populate specific values
-        let tInc = 0, tExp = 0;
-        allData.forEach(t => {
-            if(t.type === 'Income') tInc += t.amount; else tExp += t.amount;
-        });
-        document.getElementById('openBal').value = (tInc - tExp).toFixed(2);
+        document.getElementById('todayDrawer').value = ""; // Edit kartay waqt drawer mode off rakha hai
 
-        if(item.type === 'Income') { 
-            document.getElementById('incomeInput').value = item.amount; 
-            document.getElementById('expenseInput').value = 0; 
-        } else { 
-            document.getElementById('incomeInput').value = 0; 
-            document.getElementById('expenseInput').value = item.amount; 
-        }
-        
+        if(item.type === 'Income') { document.getElementById('incomeInput').value = item.amount; document.getElementById('expenseInput').value = 0; }
+        else { document.getElementById('incomeInput').value = 0; document.getElementById('expenseInput').value = item.amount; }
         calculateLiveBalance();
         modalObj.show();
     };
