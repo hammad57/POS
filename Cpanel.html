@@ -17,31 +17,33 @@
     <style>
         body { font-family: 'Poppins', sans-serif; background: #0f172a; color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
         .glass { background: rgba(30, 41, 59, 0.9); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .app-card { transition: transform 0.2s; border: 1px solid rgba(255, 255, 255, 0.05); z-index: 10; }
+        
+        /* App Card Styling */
+        .app-card { transition: transform 0.2s; border: 1px solid rgba(255, 255, 255, 0.05); }
         .app-card:active { transform: scale(0.95); background: rgba(59, 130, 246, 0.1); }
         
-        /* App Viewer Overlay */
+        /* Iframe Overlay */
         #appOverlay { position: fixed; inset: 0; background: #000; z-index: 9998; display: none; }
         #closeAppBtn { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; display: none; }
         
+        /* Notifications Logic */
         .notify-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; border-radius: 50%; padding: 2px 5px; font-size: 10px; font-weight: bold; border: 2px solid #0f172a; }
-        
-        /* Notification Dropdown Fix - Always on Top */
         #notifDropdown { 
             display: none; 
             position: absolute; 
             right: 0; 
             top: 60px; 
-            width: calc(100vw - 32px); /* Autofit Screen */
+            width: calc(100vw - 32px); 
             max-width: 400px; 
-            z-index: 10000; /* Buttons se upar */
+            z-index: 10000; /* Buttons se hamesha ooper */
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
         #notifDropdown.active { display: block; animation: fadeIn 0.2s ease-out; }
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .balance-hidden { filter: blur(10px); pointer-events: none; user-select: none; }
+        /* Privacy/Blur Logic */
+        .balance-hidden { filter: blur(12px); pointer-events: none; user-select: none; transition: filter 0.3s ease; }
     </style>
 </head>
 <body class="p-4">
@@ -49,7 +51,7 @@
     <div id="installBanner" class="fixed bottom-6 left-4 right-4 glass p-5 rounded-2xl shadow-2xl border-t-4 border-blue-500 hidden items-center justify-between gap-4 z-[10001]">
         <div class="flex items-center gap-3">
             <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center"><i class="fas fa-rocket text-white"></i></div>
-            <div><p class="text-sm font-bold">Install App</p><p class="text-[10px] text-slate-400">For a faster experience</p></div>
+            <div><p class="text-sm font-bold">Install App</p><p class="text-[10px] text-slate-400">Add to Home Screen</p></div>
         </div>
         <div class="flex gap-2">
             <button id="installBtn" class="bg-blue-600 px-4 py-2 rounded-lg text-xs font-bold">Install</button>
@@ -60,7 +62,6 @@
     <button id="closeAppBtn" onclick="closeApp()" class="bg-red-600 text-white px-8 py-3 rounded-full shadow-2xl font-bold flex items-center gap-2">
         <i class="fas fa-home"></i> Back to Hub
     </button>
-
     <div id="appOverlay"><iframe id="appFrame" class="w-full h-full border-none"></iframe></div>
 
     <header class="flex justify-between items-center mb-6 glass p-4 rounded-2xl relative">
@@ -73,68 +74,36 @@
                     <span id="notifBadge" class="notify-badge">0</span>
                 </div>
                 <div id="notifDropdown" class="glass rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                    <div class="p-4 border-b border-white/10 bg-slate-800/80 flex justify-between items-center">
+                    <div class="p-4 border-b border-white/10 bg-slate-800/90 flex justify-between items-center">
                         <span class="font-bold text-sm">Notifications</span>
                         <button onclick="toggleNotif()"><i class="fas fa-times text-slate-500"></i></button>
                     </div>
-                    <div id="notifList" class="max-h-96 overflow-y-auto p-3 space-y-3 bg-slate-900/50">
-                        </div>
+                    <div id="notifList" class="max-h-96 overflow-y-auto p-3 space-y-3 bg-slate-900/80"></div>
                 </div>
             </div>
             <button onclick="toggleModal('addAppModal')" class="bg-blue-600 w-10 h-10 rounded-xl"><i class="fas fa-plus"></i></button>
         </div>
     </header>
 
-    <main class="space-y-4">
-        <div class="glass p-6 rounded-3xl bg-gradient-to-br from-blue-600/10 to-transparent border-t border-blue-500/30">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h3 class="text-sm font-bold text-blue-400 mb-1 flex items-center gap-2">
-                        Current Balance 
-                        <i id="eyeIcon" class="fas fa-eye text-slate-500 cursor-pointer" onclick="togglePrivacy()"></i>
-                    </h3>
-                    <p id="mainNetBalance" class="text-3xl font-black transition-all duration-300">Rs. 0</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Est. Profit</p>
-                    <p id="statProfit" class="text-sm font-bold text-orange-400">Rs. 0</p>
-                </div>
-            </div>
+    <main class="space-y-6">
+        
+        <div class="glass p-8 rounded-3xl bg-gradient-to-br from-blue-600/10 to-transparent border-t border-blue-500/30 text-center">
+            <h3 class="text-xs font-bold text-blue-400 mb-2 uppercase tracking-widest flex justify-center items-center gap-2">
+                Available Balance
+                <i id="eyeIcon" class="fas fa-eye-slash text-slate-500 cursor-pointer text-lg" onclick="togglePrivacy()"></i>
+            </h3>
+            <p id="mainNetBalance" class="text-4xl font-black balance-hidden transition-all duration-300">Rs. 0</p>
         </div>
 
-        <div class="grid grid-cols-1 gap-3">
-            <div class="glass p-4 rounded-2xl border-l-4 border-blue-500" onclick="toggleVault()">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Vault Available</p>
-                        <h2 class="text-lg font-black" id="statVault">Rs. 0</h2>
-                    </div>
-                    <i id="vaultChevron" class="fas fa-chevron-down text-slate-600 transition-transform"></i>
-                </div>
-                <div id="bankList" class="hidden mt-3 pt-3 border-t border-white/5 space-y-2"></div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="glass p-4 rounded-2xl border-l-4 border-emerald-500" onclick="openApp('expense.html')">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">Expenses</p>
-                    <h2 class="text-lg font-black text-emerald-400" id="statExpense">Rs. 0</h2>
-                </div>
-                <div class="glass p-4 rounded-2xl border-l-4 border-purple-500" onclick="openApp('order.html')">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">Orders</p>
-                    <h2 class="text-lg font-black text-purple-400" id="statOrders">0</h2>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4 mt-4" id="appsGrid"></div>
+        <div class="grid grid-cols-2 gap-4" id="appsGrid"></div>
     </main>
 
     <div id="addAppModal" class="fixed inset-0 bg-black/95 hidden flex items-center justify-center p-6 z-[20000]">
         <div class="glass p-6 rounded-3xl w-full max-w-sm">
-            <h2 class="text-lg font-bold mb-4">Add Shortcut</h2>
+            <h2 class="text-lg font-bold mb-4 text-center">Add Shortcut</h2>
             <input type="text" id="newAppName" placeholder="App Name" class="w-full p-4 bg-slate-900 rounded-xl mb-3 outline-none text-sm border border-slate-700">
             <input type="text" id="newAppLink" placeholder="Link (e.g. data.html)" class="w-full p-4 bg-slate-900 rounded-xl mb-3 outline-none text-sm border border-slate-700">
-            <div id="iconGrid" class="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto mb-4 p-2 bg-slate-950 rounded-xl"></div>
+            <div id="iconGrid" class="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto mb-4 p-2 bg-slate-950 rounded-xl"></div>
             <input type="hidden" id="selectedIcon" value="fa-cube">
             <div class="flex gap-2">
                 <button onclick="saveApp()" class="flex-1 bg-blue-600 p-4 rounded-xl font-bold">Save</button>
@@ -154,11 +123,11 @@
         // --- PWA Service Worker ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW Ready')).catch(err => console.log('SW Error', err));
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
             });
         }
 
-        // --- Navigation ---
+        // --- Navigation Logic ---
         window.openApp = (url) => {
             document.getElementById('appFrame').src = url;
             document.getElementById('appOverlay').style.display = 'block';
@@ -173,13 +142,9 @@
         };
         window.toggleModal = (id) => document.getElementById(id).classList.toggle('hidden');
         window.toggleNotif = () => document.getElementById('notifDropdown').classList.toggle('active');
-        window.toggleVault = () => {
-            document.getElementById('bankList').classList.toggle('hidden');
-            document.getElementById('vaultChevron').classList.toggle('rotate-180');
-        };
 
-        // --- Privacy Toggle ---
-        let isHidden = false;
+        // --- Privacy Toggle (Start Hidden) ---
+        let isHidden = true; 
         window.togglePrivacy = () => {
             isHidden = !isHidden;
             const bal = document.getElementById('mainNetBalance');
@@ -193,7 +158,7 @@
             }
         };
 
-        // --- PWA Install Banner ---
+        // --- PWA Logic ---
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -203,23 +168,11 @@
         document.getElementById('installBtn').addEventListener('click', async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') document.getElementById('installBanner').style.display = 'none';
                 deferredPrompt = null;
             }
         });
 
-        // --- Data Listeners ---
-        onValue(ref(db, 'orders'), snap => {
-            document.getElementById('statOrders').innerText = snap.exists() ? Object.keys(snap.val()).length : 0;
-        });
-
-        onValue(ref(db, 'expenses'), snap => {
-            let total = 0;
-            if(snap.exists()) Object.values(snap.val()).forEach(e => total += parseFloat(e.amount || 0));
-            document.getElementById('statExpense').innerText = "Rs. " + total.toLocaleString();
-        });
-
+        // --- Firebase Data Fetching ---
         onValue(ref(db, 'notifications'), snap => {
             const list = document.getElementById('notifList');
             const badge = document.getElementById('notifBadge');
@@ -230,46 +183,37 @@
                 data.forEach(n => {
                     list.innerHTML += `<div class="p-3 bg-white/5 border-l-2 border-blue-500 rounded-lg text-[11px] mb-2">
                         <p class="text-slate-200">${n.text}</p>
-                        <small class="opacity-40 block mt-1 uppercase font-bold text-[9px]">${n.date} | ${n.time}</small>
+                        <small class="opacity-30 block mt-1 uppercase font-bold text-[9px]">${n.date} | ${n.time}</small>
                     </div>`;
                 });
-            } else { badge.innerText = "0"; list.innerHTML = `<p class="text-center text-xs py-10 opacity-30 italic">No updates</p>`; }
+            } else { badge.innerText = "0"; list.innerHTML = `<p class="text-center text-xs py-10 opacity-30 italic">No notifications</p>`; }
         });
 
         onValue(ref(db, 'bank_accounts'), snapBanks => {
             onValue(ref(db, 'bank_transactions'), snapTrans => {
-                const bList = document.getElementById('bankList');
-                bList.innerHTML = '';
-                let totalVault = 0, income = 0, expense = 0;
+                let totalVault = 0;
                 if(snapBanks.exists()) {
                     snapBanks.forEach(bSnap => {
                         const bId = bSnap.key;
-                        const bData = bSnap.val();
                         let bBal = 0;
                         if(snapTrans.exists() && snapTrans.val()[bId]) {
                             Object.values(snapTrans.val()[bId]).forEach(t => {
                                 const amt = parseFloat(t.amount || 0);
-                                if(t.type.includes('In') || t.type.includes('Received')) { bBal += amt; income += amt; }
-                                else { bBal -= amt; expense += amt; }
+                                if(t.type.includes('In') || t.type.includes('Received')) bBal += amt;
+                                else bBal -= amt;
                             });
                         }
                         totalVault += bBal;
-                        bList.innerHTML += `<div class="flex justify-between text-[11px] py-2 px-3 bg-white/5 rounded-lg border border-white/5">
-                            <span class="text-slate-400">${bData.name}</span>
-                            <span class="font-bold text-blue-400">Rs. ${bBal.toLocaleString()}</span>
-                        </div>`;
                     });
                 }
-                document.getElementById('statVault').innerText = "Rs. " + totalVault.toLocaleString();
                 document.getElementById('mainNetBalance').innerText = "Rs. " + totalVault.toLocaleString();
-                document.getElementById('statProfit').innerText = "Rs. " + (income - expense).toLocaleString();
             });
         });
 
-        // --- Apps Grid Rendering ---
-        const icons = ['fa-barcode', 'fa-vault', 'fa-chart-line', 'fa-user-gear', 'fa-store', 'fa-hand-holding-dollar', 'fa-users', 'fa-sync'];
-        document.getElementById('iconGrid').innerHTML = icons.map(i => `<div onclick="selectIcon('${i}')" class="p-3 bg-slate-800 rounded-lg text-center"><i class="fas ${i}"></i></div>`).join('');
-        window.selectIcon = (i) => { document.getElementById('selectedIcon').value = i; alert("Icon Selected!"); };
+        // --- Grid Generation ---
+        const iconsList = ['fa-barcode', 'fa-vault', 'fa-chart-line', 'fa-user-gear', 'fa-store', 'fa-hand-holding-dollar', 'fa-users', 'fa-sync', 'fa-wallet', 'fa-receipt'];
+        document.getElementById('iconGrid').innerHTML = iconsList.map(i => `<div onclick="selectIcon('${i}')" class="p-3 bg-slate-800 rounded-lg text-center"><i class="fas ${i}"></i></div>`).join('');
+        window.selectIcon = (i) => { document.getElementById('selectedIcon').value = i; alert("Icon: " + i + " selected!"); };
 
         onValue(ref(db, 'cpanel_apps'), snap => {
             const grid = document.getElementById('appsGrid');
@@ -286,15 +230,20 @@
             ];
             defaults.forEach(a => {
                 const d = document.createElement('div');
-                d.className = 'app-card glass p-5 rounded-3xl flex flex-col items-center gap-3 text-center';
+                d.className = 'app-card glass p-6 rounded-3xl flex flex-col items-center gap-3 text-center';
                 d.onclick = () => openApp(a.link);
-                d.innerHTML = `<div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl shadow-inner"><i class="fas ${a.icon}"></i></div>
-                               <span class="text-[10px] font-bold uppercase tracking-wide text-slate-300">${a.name}</span>`;
+                d.innerHTML = `<div class="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-2xl shadow-inner"><i class="fas ${a.icon}"></i></div>
+                               <span class="text-[10px] font-bold uppercase tracking-wider text-slate-300">${a.name}</span>`;
                 grid.appendChild(d);
             });
             if(snap.exists()) {
                 Object.values(snap.val()).forEach(a => {
-                   // Render custom apps if needed
+                    const d = document.createElement('div');
+                    d.className = 'app-card glass p-6 rounded-3xl flex flex-col items-center gap-3 text-center';
+                    d.onclick = () => openApp(a.link);
+                    d.innerHTML = `<div class="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-2xl shadow-inner"><i class="fas ${a.icon || 'fa-cube'}"></i></div>
+                                   <span class="text-[10px] font-bold uppercase tracking-wider text-slate-300">${a.name}</span>`;
+                    grid.appendChild(d);
                 });
             }
         });
