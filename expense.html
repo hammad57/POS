@@ -192,7 +192,13 @@
                 <button class="btn btn-primary active fw-bold" id="btnAll">Full History</button>
                 <button class="btn btn-outline-primary fw-bold" onclick="exportPDF()">Export PDF</button>
             </div>
-            <div class="d-flex align-items-center gap-2">
+            
+            <div class="btn-group shadow-sm ms-3">
+                <button class="btn btn-info active fw-bold text-white" id="btnBarChart" onclick="setChartType('bar')">Bar Chart</button>
+                <button class="btn btn-outline-info fw-bold" id="btnLineChart" onclick="setChartType('line')">Flow Chart</button>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 ms-auto">
                 <input type="date" id="fromDate" class="form-control form-control-sm">
                 <span class="fw-bold">to</span>
                 <input type="date" id="toDate" class="form-control form-control-sm">
@@ -220,7 +226,7 @@
                     </tr>
                 </thead>
                 <tbody id="summaryTableBody">
-                </tbody>
+                    </tbody>
             </table>
         </div>
     </div>
@@ -247,8 +253,8 @@
                         </div>
                         
                         <div class="col-12">
-                            <label class="small fw-bold text-warning">Today Drawer</label>
-                            <input type="number" id="todayDrawer" class="form-control border-warning" step="0.01" placeholder="Enter today drawer amount..." oninput="calculateLiveBalance()">
+                            <label class="small fw-bold text-info">Today Drawer</label>
+                            <input type="number" id="todayDrawerInput" class="form-control border-info" step="0.01" placeholder="Enter today's total drawer amount..." oninput="calculateLiveBalance()">
                         </div>
 
                         <div class="col-6">
@@ -291,8 +297,12 @@
     let filterStart = null;
     let filterEnd = null;
     let myChart = null;
+    let currentChartType = 'bar'; // Set default to Bar Chart
     const modalObj = new bootstrap.Modal(document.getElementById('entryModal'));
     const today = new Date().toISOString().split('T')[0];
+    
+    // Register ChartDataLabels plugin
+    Chart.register(ChartDataLabels);
 
     // --- THEME LOGIC ---
     onValue(themeRef, (snap) => {
@@ -375,26 +385,26 @@
         document.getElementById('totalExpVal').innerText = tExp.toFixed(0);
         document.getElementById('balanceVal').innerText = (tInc - tExp).toFixed(0);
         document.getElementById('todayProfitVal').innerText = tDay.toFixed(0);
-        // Default update for openBal
+        // Automatically fills Opening Balance with the running (last) balance
         document.getElementById('openBal').value = (tInc - tExp).toFixed(2);
     }
 
-    // --- ACTIONS & NEW CALCULATION LOGIC ---
+    // --- ACTIONS & CALCULATIONS ---
     window.calculateLiveBalance = () => {
         const b = parseFloat(document.getElementById('openBal').value) || 0;
-        const drawerStr = document.getElementById('todayDrawer').value;
         const e = parseFloat(document.getElementById('expenseInput').value) || 0;
-        
-        // Agar Today Drawer mein koi value hai, toh apka formula chalega
-        if (drawerStr !== "") {
-            const drawer = parseFloat(drawerStr) || 0;
-            const calculatedVal = b - drawer - e;
+        const tdStr = document.getElementById('todayDrawerInput').value;
+
+        // Agar Today Drawer mein koi value hai, to aapki custom calculation hogi
+        if (tdStr !== "") {
+            const td = parseFloat(tdStr) || 0;
+            // Formula: Today Drawer - less negative amount (Math.abs) - expense
+            const calcVal = td - Math.abs(b) - e;
             
-            // Income aur Final Balance dono mein calculated value ja rahi hai
-            document.getElementById('incomeInput').value = calculatedVal.toFixed(2);
-            document.getElementById('finalBalance').value = calculatedVal.toFixed(2);
+            document.getElementById('incomeInput').value = calcVal.toFixed(2);
+            document.getElementById('finalBalance').value = calcVal.toFixed(2);
         } else {
-            // Agar Drawer empty hai toh normal purana hisaab chalega
+            // Agar Today Drawer empty hai, to normal standard calculation
             const i = parseFloat(document.getElementById('incomeInput').value) || 0;
             document.getElementById('finalBalance').value = (b + i - e).toFixed(2);
         }
@@ -404,15 +414,8 @@
         document.getElementById('entryForm').reset();
         document.getElementById('editKey').value = "";
         document.getElementById('entryDate').value = today;
-        
-        // Modal khulne pe specifically current running balance count karna
-        let tInc = 0, tExp = 0;
-        allData.forEach(t => {
-            if(t.type === 'Income') tInc += t.amount; else tExp += t.amount;
-        });
-        document.getElementById('openBal').value = (tInc - tExp).toFixed(2);
-        document.getElementById('todayDrawer').value = ""; // Naya modal khulne pe drawer empty
-        
+        document.getElementById('todayDrawerInput').value = "";
+        updateDashboard(); // Ensure fresh balance is populated
         calculateLiveBalance();
         modalObj.show();
     };
@@ -422,9 +425,8 @@
         if(!item) return;
         document.getElementById('editKey').value = item.id;
         document.getElementById('entryDate').value = item.date;
+        document.getElementById('todayDrawerInput').value = ""; // Clear on edit
         document.getElementById('entryRemarks').value = item.remarks === "N/A" ? "" : item.remarks;
-        document.getElementById('todayDrawer').value = ""; // Edit kartay waqt drawer mode off rakha hai
-
         if(item.type === 'Income') { document.getElementById('incomeInput').value = item.amount; document.getElementById('expenseInput').value = 0; }
         else { document.getElementById('incomeInput').value = 0; document.getElementById('expenseInput').value = item.amount; }
         calculateLiveBalance();
@@ -455,7 +457,18 @@
     window.applyFilter = () => { filterStart = document.getElementById('fromDate').value; filterEnd = document.getElementById('toDate').value; refreshUI(); };
     window.resetFilter = () => { filterStart = null; filterEnd = null; refreshUI(); };
 
-    // --- VISUALS ---
+    // --- VISUALS & CHARTS ---
+    window.setChartType = (type) => {
+        currentChartType = type;
+        
+        // UI toggles for buttons
+        const isBar = type === 'bar';
+        document.getElementById('btnBarChart').className = isBar ? 'btn btn-info active fw-bold text-white' : 'btn btn-outline-info fw-bold';
+        document.getElementById('btnLineChart').className = isBar ? 'btn btn-outline-info fw-bold' : 'btn btn-info active fw-bold text-white';
+        
+        initChart();
+    };
+
     function initChart() {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(myChart) myChart.destroy();
@@ -465,19 +478,33 @@
         const exps = dates.map(d => allData.filter(x => x.date === d && x.type === 'Expense').reduce((a,b)=>a+b.amount,0));
 
         myChart = new Chart(ctx, {
-            type: 'line',
+            type: currentChartType,
             data: {
                 labels: dates.map(d => d.split('-').reverse().slice(0,2).join('/')),
                 datasets: [
-                    { label: 'Income', data: incs, borderColor: '#2ecc71', backgroundColor: 'rgba(46, 204, 113, 0.1)', fill: true, tension: 0.4 },
-                    { label: 'Expense', data: exps, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.1)', fill: true, tension: 0.4 }
+                    { label: 'Income', data: incs, borderColor: '#2ecc71', backgroundColor: currentChartType === 'bar' ? '#2ecc71' : 'rgba(46, 204, 113, 0.2)', fill: true, tension: 0.4 },
+                    { label: 'Expense', data: exps, borderColor: '#e74c3c', backgroundColor: currentChartType === 'bar' ? '#e74c3c' : 'rgba(231, 76, 60, 0.2)', fill: true, tension: 0.4 }
                 ]
             },
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false,
-                plugins: { legend: { display: true, position: 'top' } },
-                scales: { y: { beginAtZero: false } }
+                plugins: { 
+                    legend: { display: true, position: 'top' },
+                    datalabels: {
+                        color: currentChartType === 'bar' ? '#ffffff' : '#555555',
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: Math.round,
+                        font: { weight: 'bold', size: 11 }
+                    }
+                },
+                scales: { 
+                    y: { 
+                        beginAtZero: true,
+                        grace: '10%' // Leaves room for data labels at the top
+                    } 
+                }
             }
         });
     }
