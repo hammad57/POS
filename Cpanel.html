@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muluk Hussain - Master Hub</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #0f172a; /* Deep Slate Background */
+            color: #f1f5f9;
+        }
+        
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .app-card {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .app-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stat-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border-left: 4px solid;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <header class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 glass-panel p-6 rounded-2xl">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">
+                <i class="fas fa-layer-group text-blue-500 mr-2"></i> <span class="gradient-text">Muluk Hussain</span> Hub
+            </h1>
+            <p class="text-slate-400 text-sm mt-1">Smart POS & Financial Management System</p>
+        </div>
+        <div class="mt-4 md:mt-0 text-right">
+            <span class="bg-blue-500/20 text-blue-400 py-1 px-3 rounded-full text-xs font-bold uppercase tracking-wider border border-blue-500/30">
+                System Online 🟢
+            </span>
+            <p class="text-xs text-slate-500 mt-2" id="currentDate"></p>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div class="lg:col-span-1 space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="stat-card p-4 rounded-xl shadow-lg border-blue-500">
+                    <h3 class="text-slate-400 text-xs font-bold uppercase">Vault Balance</h3>
+                    <h2 class="text-xl font-black text-white mt-1" id="liveVault">Loading...</h2>
+                </div>
+                <div class="stat-card p-4 rounded-xl shadow-lg border-green-500">
+                    <h3 class="text-slate-400 text-xs font-bold uppercase">Market Expenses</h3>
+                    <h2 class="text-xl font-black text-white mt-1" id="liveExpense">Loading...</h2>
+                </div>
+                <div class="stat-card p-4 rounded-xl shadow-lg border-purple-500">
+                    <h3 class="text-slate-400 text-xs font-bold uppercase">Pending Orders</h3>
+                    <h2 class="text-xl font-black text-white mt-1" id="liveOrders">Loading...</h2>
+                </div>
+                <div class="stat-card p-4 rounded-xl shadow-lg border-orange-500">
+                    <h3 class="text-slate-400 text-xs font-bold uppercase">Total Salers</h3>
+                    <h2 class="text-xl font-black text-white mt-1" id="liveSalers">Loading...</h2>
+                </div>
+            </div>
+
+            <div class="glass-panel p-5 rounded-2xl">
+                <h3 class="text-sm font-bold text-slate-300 mb-4"><i class="fas fa-chart-pie mr-2"></i>System Overview</h3>
+                <div class="relative h-48 w-full">
+                    <canvas id="hubChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 glass-panel p-6 rounded-2xl">
+            <h2 class="text-xl font-bold mb-6 border-b border-slate-700 pb-2">
+                <i class="fas fa-th mr-2"></i> All Applications
+            </h2>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                
+                <a href="./index.html" class="app-card bg-slate-800 p-5 rounded-xl text-center group flex flex-col items-center justify-center h-32 text-decoration-none">
+                    <div class="w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-2xl mb-3 group-hover:bg-blue-500 group-hover:text-white transition">
+                        <i class="fas fa-barcode"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-slate-200">POS Scanner</span>
+                </a>
+
+                <a href="./manager.html" class="app-card bg-slate-800 p-5 rounded-xl text-center group flex flex-col items-center justify-center h-32">
+                    <div class="w-12 h-12 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-2xl mb-3 group-hover:bg-indigo-500 group-hover:text-white transition">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-slate-200">Admin Panel</span>
+                </a>
+
+                <a href="./order.html" class="app-card bg-slate-800 p-5 rounded-xl text-center group flex flex-col items-center justify-center h-32">
+                    <div class="w-12 h-12 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-2xl mb-3 group-hover:bg-purple-500 group-hover:text-white transition">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-slate-200">Demand List</span>
+                </a>
+
+                <a href="./Money.html" class="app-card bg-slate-800 p-5 rounded-xl text-center group flex flex-col items-center justify-center h-32">
+                    <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl mb-3 group-hover:bg-emerald-500 group-hover:text-white transition">
+                        <i class="fas fa-vault"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-slate-200">Money Vault</span>
+                </a>
+
+                <a href="./expense.html" class="app-card bg-slate-800 p-5 rounded-xl text-center group flex flex-col items-center justify-center h-32">
+                    <div class="w-12 h-12 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center text-2xl mb-3 group-hover:bg-teal-500 group-hover:text-white transition">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-slate-200">Fin Tracker</span>
+                </a>
+
+                <a href="./Loan.html" class="app-card bg-slate-800 p-5 rounded-xl text-center group flex flex-col items-center justify-center h-32">
+                    <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-2xl mb-3 group-hover:bg-rose-500 group-hover:text-white transition">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-slate-200">Loan Ledger</span>
+                </a>
+
+                <a href="./Shops_Manager.html" class="app-card bg-slate-800 p-5 rounded-xl text-center group flex flex-col items-center justify-center h-32">
+                    <div class="w-12 h-12 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center text-2xl mb-3 group-hover:bg-orange-500 group-hover:text-white transition">
+                        <i class="fas fa-store-alt"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-slate-200">Shop Manager</span>
+                </a>
+
+                <a href="./Saler.html" class="app-card bg-slate-800 p-5 rounded-xl text-center group flex flex-col items-center justify-center h-32">
+                    <div class="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-2xl mb-3 group-hover:bg-amber-500 group-hover:text-white transition">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-slate-200">Salers Directory</span>
+                </a>
+
+                <a href="./data.html" class="app-card bg-slate-800 p-5 rounded-xl text-center group flex flex-col items-center justify-center h-32">
+                    <div class="w-12 h-12 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-2xl mb-3 group-hover:bg-cyan-500 group-hover:text-white transition">
+                        <i class="fas fa-sync"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-slate-200">Data Sync</span>
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // Display current date
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        // Firebase Setup
+        const firebaseConfig = {
+            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
+            projectId: "own-live-steam-web"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let vaultTotal = 0, expensesTotal = 0, ordersCount = 0, salersCount = 0;
+        let hubChart;
+
+        // Fetch Vault Balance
+        onValue(ref(db, 'bank_transactions'), (snap) => {
+            vaultTotal = 0;
+            if(snap.exists()){
+                snap.forEach(b => b.forEach(tNode => {
+                    const t = tNode.val();
+                    const amt = parseFloat(t.amount) || 0;
+                    if (t.type === 'Income' || t.type === 'Adjustment In') vaultTotal += amt;
+                    else if (t.type === 'Expense' || t.type === 'Adjustment Out') vaultTotal -= amt;
+                }));
+            }
+            document.getElementById('liveVault').innerText = "Rs. " + vaultTotal.toLocaleString();
+            updateChart();
+        });
+
+        // Fetch Shop Expenses
+        onValue(ref(db, 'expenses'), (snap) => {
+            expensesTotal = 0;
+            if(snap.exists()){
+                snap.forEach(child => { expensesTotal += parseFloat(child.val().amount) || 0; });
+            }
+            document.getElementById('liveExpense').innerText = "Rs. " + expensesTotal.toLocaleString();
+            updateChart();
+        });
+
+        // Fetch Orders Count
+        onValue(ref(db, 'orders'), (snap) => {
+            ordersCount = snap.exists() ? Object.keys(snap.val()).length : 0;
+            document.getElementById('liveOrders').innerText = ordersCount;
+        });
+
+        // Fetch Salers Count
+        onValue(ref(db, 'salers'), (snap) => {
+            salersCount = snap.exists() ? Object.keys(snap.val()).length : 0;
+            document.getElementById('liveSalers').innerText = salersCount;
+        });
+
+        // Initialize / Update Chart.js
+        function updateChart() {
+            const ctx = document.getElementById('hubChart').getContext('2d');
+            if (hubChart) hubChart.destroy();
+            
+            hubChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Vault Available', 'Market Expenses'],
+                    datasets: [{
+                        data: [vaultTotal > 0 ? vaultTotal : 0, expensesTotal],
+                        backgroundColor: ['#3b82f6', '#10b981'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#cbd5e1', font: {family: 'Poppins'} } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
