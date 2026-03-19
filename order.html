@@ -9,99 +9,118 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        /* Custom Scrollbar for a clean look */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="bg-[#f8fafc] text-slate-800 min-h-screen flex flex-col">
 
-    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-10">
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
         <div class="flex items-center gap-3">
-            <div class="bg-indigo-600 p-2 rounded-lg text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+            <div class="bg-indigo-600 p-2 rounded-lg text-white shadow-indigo-200 shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
             </div>
-            <h1 class="text-xl font-bold text-slate-800">Order Management</h1>
+            <h1 class="text-xl font-bold tracking-tight text-slate-800">Order System</h1>
         </div>
-        <a href="https://hammad57.github.io/POS/" class="text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-md transition-colors flex items-center gap-2">
+        <a href="https://hammad57.github.io/POS/" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-slate-200 px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
             Home
         </a>
     </nav>
 
-    <main class="flex-grow p-6 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <main class="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 class="text-lg font-semibold text-slate-800 mb-5 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Create New Order
+        <div class="lg:col-span-4">
+            <div class="sticky top-24 relative bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 p-8 overflow-hidden group transition-all hover:shadow-2xl">
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-[0.08] group-hover:opacity-15 transition-opacity"></div>
+                
+                <h2 class="text-2xl font-bold text-slate-800 mb-8 flex items-center gap-3 relative z-10">
+                    <span class="bg-indigo-600 w-1.5 h-8 rounded-full"></span>
+                    New Order
                 </h2>
                 
-                <div class="space-y-4">
+                <div class="space-y-6 relative z-10">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Item Name <span class="text-slate-400 text-xs">(چیز کا نام)</span></label>
-                        <input type="text" id="itemName" placeholder="e.g., Sugar, Atta..." class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Item Name <span class="text-slate-400 font-normal ml-1">(چیز کا نام)</span></label>
+                        <div class="relative group/input">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-slate-400 group-focus-within/input:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                            </div>
+                            <input type="text" id="itemName" placeholder="e.g. Sugar, Flour" class="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all bg-slate-50/50 focus:bg-white">
+                        </div>
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Quantity <span class="text-slate-400 text-xs">(تعداد)</span></label>
-                        <input type="number" id="itemQty" placeholder="e.g., 5" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Quantity <span class="text-slate-400 font-normal ml-1">(تعداد)</span></label>
+                        <div class="relative group/input">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-slate-400 group-focus-within/input:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+                            </div>
+                            <input type="number" id="itemQty" placeholder="e.g. 10" class="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all bg-slate-50/50 focus:bg-white">
+                        </div>
                     </div>
                     
-                    <button id="saveBtn" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <button id="saveBtn" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transform active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Place Order
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="lg:col-span-2">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6" id="orderSection">
+        <div class="lg:col-span-8">
+            <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 p-8" id="orderSection">
                 
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                    <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                        Recent Orders
-                    </h2>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <button id="deleteSelectedBtn" class="hidden bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 text-sm font-medium px-3 py-1.5 rounded-md border border-rose-200 transition-colors items-center gap-1">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Order List</h2>
+                        <p class="text-slate-400 text-sm mt-1">Manage and export your orders</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button id="deleteSelectedBtn" class="hidden bg-rose-50 text-rose-600 hover:bg-rose-100 px-4 py-2.5 rounded-xl border border-rose-100 transition-all font-semibold text-sm flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             Delete (<span id="selectedCount">0</span>)
                         </button>
-                        <button onclick="downloadImage()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 rounded-md border border-slate-200 transition-colors flex items-center gap-1">
+                        <button onclick="downloadImage()" class="bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-2.5 rounded-xl border border-slate-200 transition-all font-semibold text-sm flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            Image
+                            Save Pic
                         </button>
-                        <button onclick="downloadPDF()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 rounded-md border border-slate-200 transition-colors flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <button onclick="downloadPDF()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2.5 rounded-xl border border-indigo-100 transition-all font-semibold text-sm flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                             PDF
                         </button>
                     </div>
                 </div>
 
-                <div id="printArea" class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div id="printArea" class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-semibold tracking-wider">
-                                    <th class="py-3 px-4 w-12 text-center action-col">
-                                        <input type="checkbox" id="selectAll" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer">
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold tracking-widest">
+                                    <th class="py-5 px-6 w-12 text-center action-col">
+                                        <input type="checkbox" id="selectAll" class="w-5 h-5 text-indigo-600 rounded-lg border-slate-300 focus:ring-indigo-500 cursor-pointer">
                                     </th>
-                                    <th class="py-3 px-6">Item Name</th>
-                                    <th class="py-3 px-6 text-center">Quantity</th>
-                                    <th class="py-3 px-6 text-center action-col">Action</th>
+                                    <th class="py-5 px-6">Item Description</th>
+                                    <th class="py-5 px-6 text-center">Qty</th>
+                                    <th class="py-5 px-6 text-center action-col">Operations</th>
                                 </tr>
                             </thead>
-                            <tbody id="orderTableBody" class="text-sm divide-y divide-slate-200">
+                            <tbody id="orderTableBody" class="text-sm divide-y divide-slate-100">
                                 </tbody>
                         </table>
                     </div>
-                    <div id="loading" class="text-center py-8 text-sm text-slate-500">
-                        <svg class="animate-spin h-5 w-5 mx-auto text-indigo-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        Loading orders...
+                    <div id="loading" class="flex flex-col items-center justify-center py-20 text-slate-400">
+                        <svg class="animate-spin h-8 w-8 text-indigo-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <p class="font-medium">Syncing with database...</p>
                     </div>
                 </div>
 
@@ -127,22 +146,28 @@
         const db = getDatabase(app);
         const orderListRef = ref(db, 'orders');
 
-        // Toast Notification Config
+        // Professional Toast Config
         const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
             showConfirmButton: false,
-            timer: 3000,
+            timer: 2500,
             timerProgressBar: true,
         });
 
-        // Add Order
+        // Add Order Functionality
         document.getElementById('saveBtn').addEventListener('click', () => {
             const nameInput = document.getElementById('itemName');
             const qtyInput = document.getElementById('itemQty');
             
             if(nameInput.value.trim() === "" || qtyInput.value.trim() === "") { 
-                Swal.fire({ icon: 'error', title: 'Oops...', text: 'Please fill all fields!', confirmButtonColor: '#4f46e5' });
+                Swal.fire({ 
+                    icon: 'warning', 
+                    title: 'Missing Info', 
+                    text: 'Please enter both item name and quantity.',
+                    confirmButtonColor: '#4f46e5',
+                    customClass: { popup: 'rounded-3xl' }
+                });
                 return; 
             }
 
@@ -150,11 +175,11 @@
             .then(() => {
                 nameInput.value = '';
                 qtyInput.value = '';
-                Toast.fire({ icon: 'success', title: 'Order placed successfully' });
+                Toast.fire({ icon: 'success', title: 'Order added to list' });
             });
         });
 
-        // Realtime Data Fetch
+        // Realtime Data Sync
         onValue(orderListRef, (snapshot) => {
             const tableBody = document.getElementById('orderTableBody');
             const loading = document.getElementById('loading');
@@ -166,103 +191,95 @@
                 Object.keys(data).forEach((key) => {
                     const order = data[key];
                     const row = document.createElement('tr');
-                    row.className = "hover:bg-slate-50 transition-colors";
+                    row.className = "hover:bg-slate-50/80 transition-all duration-150 group";
                     row.innerHTML = `
-                        <td class="py-3 px-4 text-center action-col">
-                            <input type="checkbox" class="order-checkbox w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer" data-id="${key}">
+                        <td class="py-4 px-6 text-center action-col">
+                            <input type="checkbox" class="order-checkbox w-5 h-5 text-indigo-600 rounded-lg border-slate-300 focus:ring-indigo-500 cursor-pointer" data-id="${key}">
                         </td>
-                        <td class="py-3 px-6 text-slate-800 font-medium">${order.itemName}</td>
-                        <td class="py-3 px-6 text-center">
-                            <span class="bg-indigo-50 text-indigo-700 py-1 px-3 rounded-md text-xs font-semibold border border-indigo-100">${order.quantity}</span>
+                        <td class="py-4 px-6 font-semibold text-slate-700">${order.itemName}</td>
+                        <td class="py-4 px-6 text-center">
+                            <span class="bg-indigo-100 text-indigo-700 py-1.5 px-4 rounded-full text-xs font-bold border border-indigo-200">${order.quantity}</span>
                         </td>
-                        <td class="py-3 px-6 text-center action-col">
-                            <button class="delete-btn text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-1.5 rounded transition-colors" data-id="${key}" title="Delete">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <td class="py-4 px-6 text-center action-col">
+                            <button class="delete-btn text-rose-400 hover:text-rose-600 bg-rose-50 hover:bg-rose-100 p-2 rounded-xl transition-all" data-id="${key}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         </td>
                     `;
                     tableBody.appendChild(row);
                 });
             } else {
-                tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-500 text-sm">No orders found. Add one above!</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-20 text-slate-400 text-sm italic">No active orders in the database.</td></tr>`;
             }
             updateDeleteButtonVisibility();
         });
 
-        // Event Delegation for Table Actions (Delete & Checkbox)
+        // Handle Table Actions
         document.getElementById('orderTableBody').addEventListener('click', (e) => {
-            // Single Delete
             const deleteBtn = e.target.closest('.delete-btn');
             if (deleteBtn) {
                 const key = deleteBtn.getAttribute('data-id');
                 Swal.fire({
-                    title: 'Are you sure?',
-                    text: "You won't be able to revert this!",
+                    title: 'Delete Order?',
+                    text: "This action cannot be undone.",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#ef4444',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, delete it!'
+                    confirmButtonText: 'Delete',
+                    customClass: { popup: 'rounded-3xl' }
                 }).then((result) => {
                     if (result.isConfirmed) {
                         remove(ref(db, `orders/${key}`));
-                        Toast.fire({ icon: 'success', title: 'Deleted successfully' });
+                        Toast.fire({ icon: 'success', title: 'Removed' });
                     }
                 });
             }
 
-            // Checkbox change
             if (e.target.classList.contains('order-checkbox')) {
                 updateDeleteButtonVisibility();
-                // Check/Uncheck "Select All" based on total
-                const allCb = document.querySelectorAll('.order-checkbox').length;
-                const checkedCb = document.querySelectorAll('.order-checkbox:checked').length;
-                document.getElementById('selectAll').checked = (allCb === checkedCb && allCb > 0);
+                const total = document.querySelectorAll('.order-checkbox').length;
+                const checked = document.querySelectorAll('.order-checkbox:checked').length;
+                document.getElementById('selectAll').checked = (total === checked && total > 0);
             }
         });
 
-        // Select All Logic
+        // Bulk Selection Logic
         document.getElementById('selectAll').addEventListener('change', (e) => {
             const checkboxes = document.querySelectorAll('.order-checkbox');
             checkboxes.forEach(cb => cb.checked = e.target.checked);
             updateDeleteButtonVisibility();
         });
 
-        // Multi-Delete visibility
         function updateDeleteButtonVisibility() {
             const selectedCount = document.querySelectorAll('.order-checkbox:checked').length;
             const btn = document.getElementById('deleteSelectedBtn');
             const countSpan = document.getElementById('selectedCount');
-            
             if (selectedCount > 0) {
                 btn.classList.remove('hidden');
-                btn.classList.add('flex');
                 countSpan.innerText = selectedCount;
             } else {
                 btn.classList.add('hidden');
-                btn.classList.remove('flex');
             }
         }
 
-        // Multi-Delete Action
+        // Bulk Delete Logic
         document.getElementById('deleteSelectedBtn').addEventListener('click', async () => {
-            const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
-            
+            const selected = document.querySelectorAll('.order-checkbox:checked');
             Swal.fire({
-                title: `Delete ${selectedCheckboxes.length} items?`,
+                title: `Delete ${selected.length} orders?`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Delete All'
+                confirmButtonText: 'Yes, delete all',
+                customClass: { popup: 'rounded-3xl' }
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    for (let cb of selectedCheckboxes) {
+                    for (let cb of selected) {
                         await remove(ref(db, `orders/${cb.getAttribute('data-id')}`));
                     }
                     document.getElementById('selectAll').checked = false;
-                    updateDeleteButtonVisibility();
-                    Toast.fire({ icon: 'success', title: 'Items deleted' });
+                    Toast.fire({ icon: 'success', title: 'Batch delete complete' });
                 }
             });
         });
@@ -275,37 +292,29 @@
         async function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const element = document.getElementById("printArea");
-            
-            // Hide action columns
             document.querySelectorAll('.action-col').forEach(el => el.style.display = 'none');
             
             const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#ffffff" });
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgProps = pdf.getImageProperties(imgData);
             const pdfWidth = pdf.internal.pageSize.getWidth();
+            const imgProps = pdf.getImageProperties(imgData);
             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
             
             pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
-            pdf.save("Order-Report.pdf");
-            
-            // Restore action columns
+            pdf.save("Order-List.pdf");
             document.querySelectorAll('.action-col').forEach(el => el.style.display = '');
         }
 
         function downloadImage() {
             const element = document.getElementById("printArea");
-            
-            // Hide action columns
             document.querySelectorAll('.action-col').forEach(el => el.style.display = 'none');
             
             html2canvas(element, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'Order-Snapshot.png';
+                link.download = 'Orders-Export.png';
                 link.href = canvas.toDataURL();
                 link.click();
-                
-                // Restore action columns
                 document.querySelectorAll('.action-col').forEach(el => el.style.display = '');
             });
         }
