@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1200, initial-scale=0.3, shrink-to-fit=no"> 
+    <title>Muluk Hussain - Professional Financial Tracker 3D</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-body: #e0e5ec;
+            --container-bg: #f2f5f9;
+            --text-color: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color: rgba(255, 255, 255, 0.5);
+            --shadow-3d: 9px 9px 16px rgba(163,177,198,0.5), -9px -9px 16px rgba(255,255,255, 0.8);
+            --table-header-bg: #2c3e50;
+            --table-header-text: #ffffff;
+            --input-bg: #ffffff;
+            --input-text: #333333;
+        }
+
+        html[data-theme="dark"] {
+            --bg-body: #121212;
+            --container-bg: #1e1e24;
+            --text-color: #f5f6fa;
+            --text-muted: #a4b0be;
+            --border-color: #2b2b36;
+            --shadow-3d: 8px 8px 15px #0a0a0c, -8px -8px 15px #2a2a32;
+            --table-header-bg: #0f3460;
+            --table-header-text: #e9ecef;
+            --input-bg: #2b2b36;
+            --input-text: #ffffff;
+        }
+
+        html[data-theme="glass"] {
+            --bg-body: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --container-bg: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff;
+            --border-color: rgba(255, 255, 255, 0.2);
+            --table-header-bg: rgba(0, 0, 0, 0.3);
+            --input-bg: rgba(255, 255, 255, 0.2);
+        }
+
+        body { background: var(--bg-body); color: var(--text-color); padding: 20px; font-family: 'Poppins', sans-serif; min-width: 1200px; transition: all 0.4s ease; }
+        .main-wrapper { width: 1150px; margin: 0 auto; }
+        
+        .summary-card { border-radius: 20px; color: white; padding: 25px 15px; margin-bottom: 20px; box-shadow: 0 15px 25px rgba(0,0,0,0.2); transition: 0.3s; }
+        .bg-income { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .bg-expense { background: linear-gradient(135deg, #cb2d3e, #ef473a); }
+        .bg-profit { background: linear-gradient(135deg, #2193b0, #6dd5ed); }
+        .bg-today { background: linear-gradient(135deg, #1e3c72, #2a5298); }
+        
+        .chart-container { background: var(--container-bg); padding: 35px; border-radius: 25px; box-shadow: var(--shadow-3d); border: 1px solid var(--border-color); margin-top: 20px; }
+
+        .table-custom { border-collapse: separate; border-radius: 15px; box-shadow: var(--shadow-3d); width: 100%; overflow: hidden; }
+        .table-custom thead th { background-color: var(--table-header-bg) !important; color: var(--table-header-text) !important; padding: 15px; }
+        .table-custom tbody td { background-color: var(--input-bg) !important; border-color: var(--border-color); color: var(--text-color); padding: 12px; }
+
+        .fab-add { position: fixed; right: 50px; bottom: 50px; width: 80px; height: 80px; border-radius: 50%; background: #0d6efd; color: white; display: flex; align-items: center; justify-content: center; font-size: 35px; box-shadow: 0 10px 20px rgba(13, 110, 253, 0.4); border: none; z-index: 1000; }
+        
+        .form-control { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; }
+        .form-locked { background: rgba(128, 128, 128, 0.1) !important; cursor: not-allowed; font-weight: bold; }
+
+        .modal-content { background: var(--container-bg); border-radius: 25px; border: 1px solid var(--border-color); color: var(--text-color); }
+    </style>
+</head>
+<body>
+
+<button class="fab-add" onclick="openModal()"><i class="bi bi-plus-lg"></i></button>
+
+<div class="main-wrapper">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold m-0"><i class="bi bi-cpu me-2 text-primary"></i>Muluk Hussain Analytics</h2>
+            <p class="text-muted small m-0">Smart Financial Management System v4.0</p>
+        </div>
+        <div class="d-flex gap-3">
+            <select id="appTheme" class="form-select border-0 shadow-sm fw-bold" style="width: 180px;" onchange="saveTheme()">
+                <option value="light">☀️ Light Theme</option>
+                <option value="dark">🌙 Dark Theme</option>
+                <option value="glass">🧊 Glassmorphism</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row text-center mb-2">
+        <div class="col"><div class="summary-card bg-income"><h6>Total Income</h6><h2 id="totalIncVal">0</h2></div></div>
+        <div class="col"><div class="summary-card bg-expense"><h6>Total Expense</h6><h2 id="totalExpVal">0</h2></div></div>
+        <div class="col"><div class="summary-card bg-profit"><h6>Current Balance</h6><h2 id="balanceVal">0</h2></div></div>
+        <div class="col"><div class="summary-card bg-today"><h6>Today Profit</h6><h2 id="todayProfitVal">0</h2></div></div>
+    </div>
+
+    <div class="chart-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="btn-group shadow-sm">
+                <button class="btn btn-primary" onclick="toggleChartType('bar')">Bar Chart</button>
+                <button class="btn btn-outline-primary" onclick="toggleChartType('line')">Flow Chart</button>
+                <button class="btn btn-outline-dark ms-2" onclick="exportPDF()">Export PDF</button>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <input type="date" id="fromDate" class="form-control form-control-sm">
+                <input type="date" id="toDate" class="form-control form-control-sm">
+                <button class="btn btn-dark btn-sm px-3" onclick="applyFilter()">Filter</button>
+                <button class="btn btn-secondary btn-sm" onclick="resetFilter()">Reset</button>
+            </div>
+        </div>
+
+        <div id="chartBox" style="height: 350px; width: 100%;">
+            <canvas id="mainChart"></canvas>
+        </div>
+
+        <div class="table-responsive mt-5">
+            <table class="table table-custom align-middle" id="summaryTable">
+                <thead>
+                    <tr>
+                        <th class="text-center">Date</th>
+                        <th class="text-center">Opening Bal</th>
+                        <th class="text-center">Income (+)</th>
+                        <th class="text-center">Mid Balance</th>
+                        <th class="text-center">Expense (-)</th>
+                        <th class="text-center">Final Balance</th>
+                        <th class="text-start">Remarks / Details</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="entryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle-fill me-2"></i>New Transaction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="entryForm">
+                    <input type="hidden" id="editKey">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="small fw-bold">Date Selection</label>
+                            <input type="date" id="entryDate" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-bold">Current Opening Balance</label>
+                            <input type="number" id="openBal" class="form-control form-locked" readonly step="0.01">
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-bold text-primary">Today Drawer</label>
+                            <input type="number" id="todayDrawer" class="form-control border-primary" step="0.01" value="0" oninput="calculateFromDrawer()">
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold text-success">Income Amount</label>
+                            <input type="number" id="incomeInput" class="form-control border-success" step="0.01" value="0" oninput="calculateLiveBalance()">
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold text-danger">Expense Amount</label>
+                            <input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateLiveBalance()" onclick="handleExpenseClick()">
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-bold">Transaction Remarks</label>
+                            <textarea id="entryRemarks" class="form-control" rows="2" placeholder="Enter purpose..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-bold text-primary">Expected Final Balance</label>
+                            <input type="number" id="finalBalance" class="form-control form-locked text-primary" readonly step="0.01">
+                        </div>
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary w-100 fw-bold py-3 shadow">SAVE TRANSACTION</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmExpenseModal" tabindex="-1" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <h6 class="mb-4">Would you like to add expense detail?</h6>
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal" onclick="setTimeout(window.openExpenseIframe, 400)">Yes</button>
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal" onclick="setTimeout(window.focusExpenseInput, 400)">No</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="iframeModal" tabindex="-1" style="z-index: 1060;">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="height: 85vh;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary">Expense Details (Shops Manager)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="setTimeout(window.focusExpenseInput, 400)"></button>
+            </div>
+            <div class="modal-body p-3">
+                <iframe src="https://hammad57.github.io/POS/Shops_Manager.html" style="width: 100%; height: 100%; border: none; border-radius: 10px;"></iframe>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal" onclick="setTimeout(window.focusExpenseInput, 400)">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/" };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db, 'transactions');
+    const themeRef = ref(db, 'settings/theme');
+
+    let allData = [];
+    let filterStart = null;
+    let filterEnd = null;
+    let myChart = null;
+    let chartType = 'bar'; // Default
+    let globalLastBalance = 0;
+
+    const modalObj = new bootstrap.Modal(document.getElementById('entryModal'));
+    const today = new Date().toISOString().split('T')[0];
+
+    // Naye variables Expense Dialogues ke liye
+    let expensePrompted = false;
+    let confirmModalObj = null;
+    let iframeModalObj = null;
+
+    onValue(themeRef, (snap) => {
+        const t = snap.val() || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        document.getElementById('appTheme').value = t;
+    });
+    window.saveTheme = () => set(themeRef, document.getElementById('appTheme').value);
+
+    onValue(dbRef, (snap) => {
+        allData = [];
+        snap.forEach(c => { allData.push({ id: c.key, ...c.val() }); });
+        refreshUI();
+    });
+
+    window.refreshUI = function() {
+        const body = document.getElementById('summaryTableBody');
+        body.innerHTML = '';
+        
+        const grouped = {};
+        allData.forEach(t => {
+            if (!grouped[t.date]) { grouped[t.date] = { inc: 0, exp: 0, items: [] }; }
+            if (t.type === 'Income') grouped[t.date].inc += t.amount;
+            else grouped[t.date].exp += t.amount;
+            grouped[t.date].items.push(t);
+        });
+
+        const sortedDates = Object.keys(grouped).sort((a,b) => new Date(a) - new Date(b));
+        let runningBalance = 0;
+
+        sortedDates.forEach((date) => {
+            const day = grouped[date];
+            const opening = runningBalance;
+            const mid = opening + day.inc;
+            const closing = mid - day.exp;
+
+            if ((!filterStart || date >= filterStart) && (!filterEnd || date <= filterEnd)) {
+                const remarksList = day.items.filter(i => i.remarks && i.remarks !== "N/A").map(i => `• ${i.remarks}`).join('<br>');
+                const actions = day.items.map(i => `
+                    <div class="d-flex justify-content-center gap-2 mb-1">
+                        <span class="badge ${i.type==='Income'?'bg-success':'bg-danger'}" style="width:55px;">${i.amount}</span>
+                        <button class="btn btn-sm btn-light py-0 border" onclick="editEntry('${i.id}')"><i class="bi bi-pencil text-primary"></i></button>
+                        <button class="btn btn-sm btn-light py-0 border" onclick="deleteEntry('${i.id}')"><i class="bi bi-trash text-danger"></i></button>
+                    </div>
+                `).join('');
+
+                body.innerHTML += `
+                    <tr>
+                        <td class="text-center fw-bold small">${date.split('-').reverse().join('/')}</td>
+                        <td class="text-center">${opening.toFixed(2)}</td>
+                        <td class="text-center text-success fw-bold">+${day.inc.toFixed(2)}</td>
+                        <td class="text-center text-secondary">${mid.toFixed(2)}</td>
+                        <td class="text-center text-danger fw-bold">-${day.exp.toFixed(2)}</td>
+                        <td class="text-center fw-bold text-primary">${closing.toFixed(2)}</td>
+                        <td><span style="font-size:0.75rem;">${remarksList || '-'}</span></td>
+                        <td>${actions}</td>
+                    </tr>`;
+            }
+            runningBalance = closing;
+        });
+
+        globalLastBalance = runningBalance;
+        updateDashboard(runningBalance);
+        initChart();
+    };
+
+    function updateDashboard(finalBal) {
+        let tInc = 0, tExp = 0, tDay = 0;
+        allData.forEach(t => {
+            if(t.type === 'Income') tInc += t.amount; else tExp += t.amount;
+            if(t.date === today) tDay += (t.type === 'Income' ? t.amount : -t.amount);
+        });
+        document.getElementById('totalIncVal').innerText = tInc.toFixed(0);
+        document.getElementById('totalExpVal').innerText = tExp.toFixed(0);
+        document.getElementById('balanceVal').innerText = (tInc - tExp).toFixed(0);
+        document.getElementById('todayProfitVal').innerText = tDay.toFixed(0);
+    }
+
+    // --- LOGIC FOR CALCULATIONS ---
+    window.calculateLiveBalance = () => {
+        const b = parseFloat(document.getElementById('openBal').value) || 0;
+        const i = parseFloat(document.getElementById('incomeInput').value) || 0;
+        const e = parseFloat(document.getElementById('expenseInput').value) || 0;
+        document.getElementById('finalBalance').value = (b + i - e).toFixed(2);
+    };
+
+    window.calculateFromDrawer = () => {
+        const drawer = parseFloat(document.getElementById('todayDrawer').value) || 0;
+        const opening = parseFloat(document.getElementById('openBal').value) || 0;
+        const expense = parseFloat(document.getElementById('expenseInput').value) || 0;
+        
+        // Income = Today Drawer - Opening + Expense (Since drawer is total cash on hand)
+        // If drawer is 1000, opening 200, expense 100. Income should be 900.
+        const calculatedIncome = drawer - opening + expense;
+        
+        document.getElementById('incomeInput').value = calculatedIncome.toFixed(2);
+        calculateLiveBalance();
+    };
+
+    // --- NAYE FUNCTIONS EXPENSE DIALOGUE KE LIYE ---
+    window.handleExpenseClick = () => {
+        // Sirf pehli baar click karne par poochega
+        if (!expensePrompted) {
+            expensePrompted = true;
+            if (!confirmModalObj) confirmModalObj = new bootstrap.Modal(document.getElementById('confirmExpenseModal'));
+            confirmModalObj.show();
+        }
+    };
+
+    window.openExpenseIframe = () => {
+        if (!iframeModalObj) iframeModalObj = new bootstrap.Modal(document.getElementById('iframeModal'));
+        iframeModalObj.show();
+    };
+
+    window.focusExpenseInput = () => {
+        // Modal close hone k baad wapas amount likhne ke liye focus
+        document.getElementById('expenseInput').focus();
+    };
+    // ----------------------------------------------
+
+    window.openModal = () => {
+        expensePrompted = false; // Naye entry pe flag reset kar diya
+        document.getElementById('entryForm').reset();
+        document.getElementById('editKey').value = "";
+        document.getElementById('entryDate').value = today;
+        // Auto fill last balance
+        document.getElementById('openBal').value = globalLastBalance.toFixed(2);
+        calculateLiveBalance();
+        modalObj.show();
+    };
+
+    window.editEntry = (id) => {
+        expensePrompted = false; // Edit pe bhi flag reset
+        const item = allData.find(i => i.id === id);
+        if(!item) return;
+        document.getElementById('editKey').value = item.id;
+        document.getElementById('entryDate').value = item.date;
+        document.getElementById('entryRemarks').value = item.remarks === "N/A" ? "" : item.remarks;
+        if(item.type === 'Income') { 
+            document.getElementById('incomeInput').value = item.amount; 
+            document.getElementById('expenseInput').value = 0; 
+        } else { 
+            document.getElementById('incomeInput').value = 0; 
+            document.getElementById('expenseInput').value = item.amount; 
+        }
+        calculateLiveBalance();
+        modalObj.show();
+    };
+
+    window.deleteEntry = (id) => { if(confirm("Confirm Delete?")) remove(ref(db, 'transactions/'+id)); };
+
+    document.getElementById('entryForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const key = document.getElementById('editKey').value;
+        const date = document.getElementById('entryDate').value;
+        const inc = parseFloat(document.getElementById('incomeInput').value) || 0;
+        const exp = parseFloat(document.getElementById('expenseInput').value) || 0;
+        const rem = document.getElementById('entryRemarks').value || "N/A";
+
+        if(key) {
+            const type = inc > 0 ? 'Income' : 'Expense';
+            const amount = inc > 0 ? inc : exp;
+            await set(ref(db, 'transactions/'+key), { type, date, amount, remarks: rem });
+        } else {
+            if(inc !== 0) await push(dbRef, { type: 'Income', date, amount: inc, remarks: rem });
+            if(exp !== 0) await push(dbRef, { type: 'Expense', date, amount: exp, remarks: rem });
+        }
+        modalObj.hide();
+    };
+
+    window.applyFilter = () => { filterStart = document.getElementById('fromDate').value; filterEnd = document.getElementById('toDate').value; refreshUI(); };
+    window.resetFilter = () => { filterStart = null; filterEnd = null; refreshUI(); };
+
+    // --- CHART LOGIC ---
+    window.toggleChartType = (type) => { chartType = type; initChart(); };
+
+    function initChart() {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        if(myChart) myChart.destroy();
+        
+        const dates = [...new Set(allData.map(d => d.date))].sort().slice(-10);
+        const incs = dates.map(d => allData.filter(x => x.date === d && x.type === 'Income').reduce((a,b)=>a+b.amount,0));
+        const exps = dates.map(d => allData.filter(x => x.date === d && x.type === 'Expense').reduce((a,b)=>a+b.amount,0));
+
+        myChart = new Chart(ctx, {
+            type: chartType,
+            data: {
+                labels: dates.map(d => d.split('-').reverse().slice(0,2).join('/')),
+                datasets: [
+                    { label: 'Income', data: incs, borderColor: '#2ecc71', backgroundColor: 'rgba(46, 204, 113, 0.5)', fill: true, tension: 0.4 },
+                    { label: 'Expense', data: exps, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.5)', fill: true, tension: 0.4 }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    window.exportPDF = () => {
+        const element = document.getElementById('summaryTable');
+        html2pdf().from(element).save(`Report_${today}.pdf`);
+    };
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
