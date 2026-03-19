@@ -1,82 +1,113 @@
 <!DOCTYPE html>
-<html lang="ur">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Management System</title>
+    <title>Professional Order Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
-        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .glass {
-            background: rgba(255, 255, 255, 0.25);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-        .fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        body { font-family: 'Inter', sans-serif; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="min-h-screen p-4 flex flex-col items-center justify-center text-white relative">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <div class="w-full max-w-md md:max-w-2xl mb-4 flex justify-start fade-in">
-        <a href="https://hammad57.github.io/POS/" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-full shadow-lg border border-white/20 transition duration-300 flex items-center gap-2">
-            🏠 Home
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-10">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 p-2 rounded-lg text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+            </div>
+            <h1 class="text-xl font-bold text-slate-800">Order Management</h1>
+        </div>
+        <a href="https://hammad57.github.io/POS/" class="text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-md transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            Home
         </a>
-    </div>
+    </nav>
 
-    <div class="glass p-6 w-full max-w-md md:max-w-2xl fade-in mb-10">
-        <h1 class="text-3xl font-bold text-center mb-6">🛍️ New Order</h1>
+    <main class="flex-grow p-6 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-bold mb-2">Item Name (چیز کا نام)</label>
-                <input type="text" id="itemName" placeholder="Ex: Sugar, Atta..." class="w-full p-3 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-md transition-all">
-            </div>
-            <div>
-                <label class="block text-sm font-bold mb-2">Quantity (تعداد)</label>
-                <input type="number" id="itemQty" placeholder="Ex: 2, 5..." class="w-full p-3 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-md transition-all">
-            </div>
-            
-            <button onclick="saveOrder()" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition duration-300">
-                🛒 Place Order
-            </button>
-        </div>
-    </div>
-
-    <div class="glass p-6 w-full max-w-4xl fade-in" id="orderSection">
-        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-            <h2 class="text-2xl font-bold">📋 Order List</h2>
-            <div class="space-x-2 flex items-center">
-                <button id="deleteSelectedBtn" onclick="deleteSelectedOrders()" class="hidden bg-orange-600 hover:bg-orange-700 text-white text-sm px-4 py-2 rounded shadow transition">
-                    🗑️ Delete Selected
-                </button>
-                <button onclick="downloadImage()" class="bg-blue-500 hover:bg-blue-600 text-sm px-4 py-2 rounded shadow transition">📸 Save Pic</button>
-                <button onclick="downloadPDF()" class="bg-red-500 hover:bg-red-600 text-sm px-4 py-2 rounded shadow transition">📄 PDF</button>
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h2 class="text-lg font-semibold text-slate-800 mb-5 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Create New Order
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Item Name <span class="text-slate-400 text-xs">(چیز کا نام)</span></label>
+                        <input type="text" id="itemName" placeholder="e.g., Sugar, Atta..." class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Quantity <span class="text-slate-400 text-xs">(تعداد)</span></label>
+                        <input type="number" id="itemQty" placeholder="e.g., 5" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
+                    </div>
+                    
+                    <button id="saveBtn" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Place Order
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div id="printArea" class="overflow-x-auto bg-white rounded-lg text-black p-2">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
-                        <th class="py-3 px-4 action-col text-center">
-                            <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" class="w-4 h-4">
-                        </th>
-                        <th class="py-3 px-6">Item Name</th>
-                        <th class="py-3 px-6 text-center">Quantity</th>
-                        <th class="py-3 px-6 text-center action-col">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="orderTableBody" class="text-gray-600 text-sm font-light">
-                    </tbody>
-            </table>
-            <div id="loading" class="text-center p-4 font-bold text-gray-500">Loading orders...</div>
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6" id="orderSection">
+                
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        Recent Orders
+                    </h2>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button id="deleteSelectedBtn" class="hidden bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 text-sm font-medium px-3 py-1.5 rounded-md border border-rose-200 transition-colors items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            Delete (<span id="selectedCount">0</span>)
+                        </button>
+                        <button onclick="downloadImage()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 rounded-md border border-slate-200 transition-colors flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            Image
+                        </button>
+                        <button onclick="downloadPDF()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 rounded-md border border-slate-200 transition-colors flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            PDF
+                        </button>
+                    </div>
+                </div>
+
+                <div id="printArea" class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-semibold tracking-wider">
+                                    <th class="py-3 px-4 w-12 text-center action-col">
+                                        <input type="checkbox" id="selectAll" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer">
+                                    </th>
+                                    <th class="py-3 px-6">Item Name</th>
+                                    <th class="py-3 px-6 text-center">Quantity</th>
+                                    <th class="py-3 px-6 text-center action-col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderTableBody" class="text-sm divide-y divide-slate-200">
+                                </tbody>
+                        </table>
+                    </div>
+                    <div id="loading" class="text-center py-8 text-sm text-slate-500">
+                        <svg class="animate-spin h-5 w-5 mx-auto text-indigo-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Loading orders...
+                    </div>
+                </div>
+
+            </div>
         </div>
-    </div>
+    </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -96,18 +127,34 @@
         const db = getDatabase(app);
         const orderListRef = ref(db, 'orders');
 
-        window.saveOrder = function() {
-            const name = document.getElementById('itemName').value;
-            const qty = document.getElementById('itemQty').value;
-            if(name === "" || qty === "") { alert("Please fill all fields!"); return; }
+        // Toast Notification Config
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+        });
 
-            push(orderListRef, { itemName: name, quantity: qty })
+        // Add Order
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const nameInput = document.getElementById('itemName');
+            const qtyInput = document.getElementById('itemQty');
+            
+            if(nameInput.value.trim() === "" || qtyInput.value.trim() === "") { 
+                Swal.fire({ icon: 'error', title: 'Oops...', text: 'Please fill all fields!', confirmButtonColor: '#4f46e5' });
+                return; 
+            }
+
+            push(orderListRef, { itemName: nameInput.value.trim(), quantity: qtyInput.value.trim() })
             .then(() => {
-                document.getElementById('itemName').value = '';
-                document.getElementById('itemQty').value = '';
+                nameInput.value = '';
+                qtyInput.value = '';
+                Toast.fire({ icon: 'success', title: 'Order placed successfully' });
             });
-        }
+        });
 
+        // Realtime Data Fetch
         onValue(orderListRef, (snapshot) => {
             const tableBody = document.getElementById('orderTableBody');
             const loading = document.getElementById('loading');
@@ -118,59 +165,107 @@
             if (data) {
                 Object.keys(data).forEach((key) => {
                     const order = data[key];
-                    const row = `
-                        <tr class="border-b border-gray-200 hover:bg-gray-100 transition duration-150">
-                            <td class="py-3 px-4 text-center action-col">
-                                <input type="checkbox" class="order-checkbox w-4 h-4" value="${key}" onclick="updateDeleteButtonVisibility()">
-                            </td>
-                            <td class="py-3 px-6 font-medium">${order.itemName}</td>
-                            <td class="py-3 px-6 text-center"><span class="bg-purple-200 text-purple-600 py-1 px-3 rounded-full text-xs">${order.quantity}</span></td>
-                            <td class="py-3 px-6 text-center action-col">
-                                <button onclick="deleteOrder('${key}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">Delete 🗑️</button>
-                            </td>
-                        </tr>
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-slate-50 transition-colors";
+                    row.innerHTML = `
+                        <td class="py-3 px-4 text-center action-col">
+                            <input type="checkbox" class="order-checkbox w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer" data-id="${key}">
+                        </td>
+                        <td class="py-3 px-6 text-slate-800 font-medium">${order.itemName}</td>
+                        <td class="py-3 px-6 text-center">
+                            <span class="bg-indigo-50 text-indigo-700 py-1 px-3 rounded-md text-xs font-semibold border border-indigo-100">${order.quantity}</span>
+                        </td>
+                        <td class="py-3 px-6 text-center action-col">
+                            <button class="delete-btn text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-1.5 rounded transition-colors" data-id="${key}" title="Delete">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </td>
                     `;
-                    tableBody.innerHTML += row;
+                    tableBody.appendChild(row);
                 });
             } else {
-                tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-4">No orders found.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-500 text-sm">No orders found. Add one above!</td></tr>`;
             }
             updateDeleteButtonVisibility();
         });
 
-        window.deleteOrder = function(key) {
-            if(confirm("Are you sure?")) {
-                remove(ref(db, `orders/${key}`));
+        // Event Delegation for Table Actions (Delete & Checkbox)
+        document.getElementById('orderTableBody').addEventListener('click', (e) => {
+            // Single Delete
+            const deleteBtn = e.target.closest('.delete-btn');
+            if (deleteBtn) {
+                const key = deleteBtn.getAttribute('data-id');
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        remove(ref(db, `orders/${key}`));
+                        Toast.fire({ icon: 'success', title: 'Deleted successfully' });
+                    }
+                });
             }
-        }
 
-        // --- Multi-Delete Functions ---
-        window.toggleSelectAll = function(source) {
+            // Checkbox change
+            if (e.target.classList.contains('order-checkbox')) {
+                updateDeleteButtonVisibility();
+                // Check/Uncheck "Select All" based on total
+                const allCb = document.querySelectorAll('.order-checkbox').length;
+                const checkedCb = document.querySelectorAll('.order-checkbox:checked').length;
+                document.getElementById('selectAll').checked = (allCb === checkedCb && allCb > 0);
+            }
+        });
+
+        // Select All Logic
+        document.getElementById('selectAll').addEventListener('change', (e) => {
             const checkboxes = document.querySelectorAll('.order-checkbox');
-            checkboxes.forEach(cb => cb.checked = source.checked);
+            checkboxes.forEach(cb => cb.checked = e.target.checked);
             updateDeleteButtonVisibility();
-        }
+        });
 
-        window.updateDeleteButtonVisibility = function() {
+        // Multi-Delete visibility
+        function updateDeleteButtonVisibility() {
             const selectedCount = document.querySelectorAll('.order-checkbox:checked').length;
             const btn = document.getElementById('deleteSelectedBtn');
+            const countSpan = document.getElementById('selectedCount');
+            
             if (selectedCount > 0) {
                 btn.classList.remove('hidden');
-                btn.innerText = `🗑️ Delete Selected (${selectedCount})`;
+                btn.classList.add('flex');
+                countSpan.innerText = selectedCount;
             } else {
                 btn.classList.add('hidden');
+                btn.classList.remove('flex');
             }
         }
 
-        window.deleteSelectedOrders = async function() {
+        // Multi-Delete Action
+        document.getElementById('deleteSelectedBtn').addEventListener('click', async () => {
             const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
-            if(confirm(`Delete ${selectedCheckboxes.length} items?`)) {
-                for (let cb of selectedCheckboxes) {
-                    await remove(ref(db, `orders/${cb.value}`));
+            
+            Swal.fire({
+                title: `Delete ${selectedCheckboxes.length} items?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Delete All'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    for (let cb of selectedCheckboxes) {
+                        await remove(ref(db, `orders/${cb.getAttribute('data-id')}`));
+                    }
+                    document.getElementById('selectAll').checked = false;
+                    updateDeleteButtonVisibility();
+                    Toast.fire({ icon: 'success', title: 'Items deleted' });
                 }
-                document.getElementById('selectAll').checked = false;
-            }
-        }
+            });
+        });
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -180,26 +275,37 @@
         async function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const element = document.getElementById("printArea");
+            
+            // Hide action columns
             document.querySelectorAll('.action-col').forEach(el => el.style.display = 'none');
-            const canvas = await html2canvas(element);
+            
+            const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#ffffff" });
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF();
+            const pdf = new jsPDF('p', 'mm', 'a4');
             const imgProps = pdf.getImageProperties(imgData);
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save("Order-List.pdf");
+            
+            pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
+            pdf.save("Order-Report.pdf");
+            
+            // Restore action columns
             document.querySelectorAll('.action-col').forEach(el => el.style.display = '');
         }
 
         function downloadImage() {
             const element = document.getElementById("printArea");
+            
+            // Hide action columns
             document.querySelectorAll('.action-col').forEach(el => el.style.display = 'none');
-            html2canvas(element).then(canvas => {
+            
+            html2canvas(element, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'Order-List.png';
+                link.download = 'Order-Snapshot.png';
                 link.href = canvas.toDataURL();
                 link.click();
+                
+                // Restore action columns
                 document.querySelectorAll('.action-col').forEach(el => el.style.display = '');
             });
         }
