@@ -235,7 +235,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    import { getDatabase, ref, push, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
     Chart.register(ChartDataLabels);
     const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/", projectId: "own-live-steam-web" };
@@ -302,7 +302,6 @@
         myChart = new Chart(ctx, { type: 'bar', data: { labels: dates, datasets: [{ label: 'Income', data: incData, backgroundColor: '#00b894', borderRadius: 8, hidden: currentFilter === 'Expense', barThickness: 20 }, { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 20 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' }, formatter: (v) => v > 0 ? 'Rs.' + v : '' } } } });
     };
 
-    // New Filtering Logic
     window.selectBank = (id) => {
         selectedBankId = id;
         document.getElementById('bankDetailSection').style.display = 'block';
@@ -319,11 +318,9 @@
         
         let filteredTrans = allTransactions.filter(t => t.bankId === selectedBankId);
 
-        // Apply Date Range Filter
         if(fromDate) filteredTrans = filteredTrans.filter(t => t.date >= fromDate);
         if(toDate) filteredTrans = filteredTrans.filter(t => t.date <= toDate);
 
-        // Calculate Totals for Stats Bar (Based on Date Filter)
         const bInc = filteredTrans.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
         const bExp = filteredTrans.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
         const bAdj = filteredTrans.filter(t => t.type.includes('Adjustment')).reduce((s, t) => s + parseFloat(t.amount), 0);
@@ -332,17 +329,14 @@
         document.getElementById('statExp').innerText = `Expense: Rs. ${bExp.toLocaleString()}`;
         document.getElementById('statAdj').innerText = `Adjustment: Rs. ${bAdj.toLocaleString()}`;
 
-        // Highlight active type button
         document.getElementById('statInc').classList.toggle('active', historyTypeFilter === 'Income');
         document.getElementById('statExp').classList.toggle('active', historyTypeFilter === 'Expense');
         document.getElementById('statAdj').classList.toggle('active', historyTypeFilter === 'Adjustment');
 
-        // Apply Type Filter to the list
         if(historyTypeFilter !== 'All') {
             filteredTrans = filteredTrans.filter(t => historyTypeFilter === 'Adjustment' ? t.type.includes('Adjustment') : t.type === historyTypeFilter);
         }
 
-        // Render Table
         document.getElementById('transactionBody').innerHTML = filteredTrans.map(t => {
             let tCls = (t.type === 'Income' || t.type === 'Adjustment In') ? 'text-success' : 'text-danger';
             return `<tr><td>${t.date}</td><td class="${tCls} fw-bold">${t.type.replace('Adjustment ','')}</td><td>Rs. ${parseFloat(t.amount).toLocaleString()}</td><td>${t.remarks || '---'}</td><td class="text-center"><button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button></td></tr>`
@@ -366,7 +360,6 @@
         document.getElementById('filterToDate').value = '';
     };
 
-    // Remaining transaction & bank logic...
     document.getElementById('transferForm').onsubmit = (e) => {
         e.preventDefault();
         const from = document.getElementById('fromBank').value; const to = document.getElementById('toBank').value;
@@ -381,10 +374,62 @@
     window.openTransferModal = () => { document.getElementById('transferDate').value = new Date().toISOString().split('T')[0]; tModal.show(); };
     window.deleteEntry = (bId, tId) => { if(confirm("Delete record?")) remove(ref(db, `bank_transactions/${bId}/${tId}`)); };
     window.openBankModal = () => bModal.show();
-    window.openTransactionModal = () => { document.getElementById('entryForm').reset(); document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; eModal.show(); };
     
+    window.openTransactionModal = () => { 
+        document.getElementById('entryForm').reset(); 
+        document.getElementById('editKey').value = ''; 
+        document.getElementById('entryBank').disabled = false;
+        document.getElementById('modalTitle').innerText = 'New Transaction';
+        document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; 
+        eModal.show(); 
+    };
+    
+    // NEW: Edit Entry Function
+    window.editEntry = (tId) => {
+        const t = allTransactions.find(trans => trans.id === tId);
+        if (!t) return;
+
+        document.getElementById('editKey').value = t.id;
+        document.getElementById('entryBank').value = t.bankId;
+        document.getElementById('entryBank').disabled = true; // Disable bank change during edit
+        
+        // Ensure adjustment types are available in select if needed
+        const typeSelect = document.getElementById('entryType');
+        if (!Array.from(typeSelect.options).some(opt => opt.value === t.type)) {
+            typeSelect.add(new Option(t.type, t.type));
+        }
+        
+        document.getElementById('entryType').value = t.type;
+        document.getElementById('entryAmt').value = t.amount;
+        document.getElementById('entryDate').value = t.date;
+        document.getElementById('entryRemarks').value = t.remarks || '';
+        
+        document.getElementById('modalTitle').innerText = 'Edit Transaction';
+        eModal.show();
+    };
+
     document.getElementById('bankForm').onsubmit = (e) => { e.preventDefault(); push(ref(db, 'bank_accounts'), { name: document.getElementById('newBankName').value, number: document.getElementById('newBankNumber').value }); bModal.hide(); };
-    document.getElementById('entryForm').onsubmit = (e) => { e.preventDefault(); const bId = document.getElementById('entryBank').value; const data = { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value }; push(ref(db, `bank_transactions/${bId}`), data); eModal.hide(); };
+    
+    document.getElementById('entryForm').onsubmit = (e) => { 
+        e.preventDefault(); 
+        const bId = document.getElementById('entryBank').value; 
+        const tId = document.getElementById('editKey').value;
+        const data = { 
+            type: document.getElementById('entryType').value, 
+            amount: document.getElementById('entryAmt').value, 
+            date: document.getElementById('entryDate').value, 
+            remarks: document.getElementById('entryRemarks').value 
+        }; 
+        
+        if (tId) {
+            // Update existing entry
+            update(ref(db, `bank_transactions/${bId}/${tId}`), data);
+        } else {
+            // Push new entry
+            push(ref(db, `bank_transactions/${bId}`), data); 
+        }
+        eModal.hide(); 
+    };
 
     window.updateView = (v) => { currentFilter = v; initChart(); };
     window.changeTheme = (v) => { document.body.setAttribute('data-theme', v); initChart(); };
