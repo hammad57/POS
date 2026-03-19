@@ -63,7 +63,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         
-        /* Filter Bar UI */
         .history-filter-bar {
             padding: 15px 25px;
             background: rgba(9, 132, 227, 0.08);
@@ -137,15 +136,16 @@
     </div>
 
     <div class="row g-4 mb-5">
-        <div class="col-md-4" onclick="updateView('All')"><div class="card-3d grad-balance"><h6>Total Balance</h6><h2 id="totalBalance">Rs. 0</h2></div></div>
+        <div class="col-md-4" onclick="resetChartToAll()"><div class="card-3d grad-balance"><h6>Total Balance</h6><h2 id="totalBalance">Rs. 0</h2></div></div>
         <div class="col-md-4" onclick="updateView('Income')"><div class="card-3d grad-income"><h6>Total Income</h6><h2 id="totalIncome">Rs. 0</h2></div></div>
         <div class="col-md-4" onclick="updateView('Expense')"><div class="card-3d grad-expense"><h6>Total Expense</h6><h2 id="totalExpense">Rs. 0</h2></div></div>
     </div>
 
-    <h5 class="fw-bold mb-3"><i class="bi bi-wallet2 me-2"></i>Bank Accounts</h5>
+    <h5 class="fw-bold mb-3"><i class="bi bi-wallet2 me-2"></i>Bank Accounts (Click to filter Chart)</h5>
     <div id="bankCardsContainer" class="d-flex flex-wrap gap-3 mb-5"></div>
 
     <div class="chart-wrapper mb-5">
+        <h6 id="chartTitle" class="fw-bold text-muted mb-3">Showing: All Accounts</h6>
         <div style="height: 380px;"><canvas id="mainChart"></canvas></div>
     </div>
 
@@ -248,6 +248,7 @@
     let historyTypeFilter = 'All';
     let myChart = null;
     let selectedBankId = null;
+    let chartBankId = null; // Specific bank for chart filter
 
     const bModal = new bootstrap.Modal(document.getElementById('bankModal'));
     const eModal = new bootstrap.Modal(document.getElementById('entryModal'));
@@ -277,7 +278,7 @@
                 if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
                 return s;
             }, 0);
-            container.innerHTML += `<div class="card-3d bank-card-mini" onclick="resetAllFilters(); selectBank('${bank.id}')"><h6>${bank.name}</h6><span class="acc-num">${bank.number || '---'}</span><div class="bal-amt">Rs. ${balance.toLocaleString()}</div></div>`;
+            container.innerHTML += `<div class="card-3d bank-card-mini" onclick="selectBank('${bank.id}')"><h6>${bank.name}</h6><span class="acc-num">${bank.number || '---'}</span><div class="bal-amt">Rs. ${balance.toLocaleString()}</div></div>`;
         });
         const options = allBanks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
         document.getElementById('entryBank').innerHTML = options; document.getElementById('fromBank').innerHTML = options; document.getElementById('toBank').innerHTML = options;
@@ -296,26 +297,58 @@
     window.initChart = () => {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(myChart) myChart.destroy();
-        const dates = [...new Set(allTransactions.filter(t => t.type === 'Income' || t.type === 'Expense').map(t => t.date))].sort();
-        const incData = dates.map(d => allTransactions.filter(t => t.date === d && t.type === 'Income').reduce((s, c) => s + parseFloat(c.amount), 0));
-        const expData = dates.map(d => allTransactions.filter(t => t.date === d && t.type === 'Expense').reduce((s, c) => s + parseFloat(c.amount), 0));
-        myChart = new Chart(ctx, { type: 'bar', data: { labels: dates, datasets: [{ label: 'Income', data: incData, backgroundColor: '#00b894', borderRadius: 8, hidden: currentFilter === 'Expense', barThickness: 20 }, { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 20 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' }, formatter: (v) => v > 0 ? 'Rs.' + v : '' } } } });
+
+        // Logic: Filter transactions by chartBankId if one is selected
+        let chartData = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : allTransactions;
+        
+        // Update Chart Title
+        const bankName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
+        document.getElementById('chartTitle').innerText = `Showing: ${bankName}`;
+
+        const dates = [...new Set(chartData.filter(t => t.type === 'Income' || t.type === 'Expense').map(t => t.date))].sort();
+        const incData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Income').reduce((s, c) => s + parseFloat(c.amount), 0));
+        const expData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Expense').reduce((s, c) => s + parseFloat(c.amount), 0));
+        
+        myChart = new Chart(ctx, { 
+            type: 'bar', 
+            data: { 
+                labels: dates, 
+                datasets: [
+                    { label: 'Income', data: incData, backgroundColor: '#00b894', borderRadius: 8, hidden: currentFilter === 'Expense', barThickness: 20 }, 
+                    { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 20 }
+                ] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' }, formatter: (v) => v > 0 ? 'Rs.' + v : '' } 
+                } 
+            } 
+        });
     };
 
     window.selectBank = (id) => {
         selectedBankId = id;
+        chartBankId = id; // Set chart to this bank
         document.getElementById('bankDetailSection').style.display = 'block';
         const bank = allBanks.find(b => b.id === id);
         document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bank.name} History`;
+        window.resetAllFilters();
         window.applyFilters();
+        initChart(); // Reload chart for this specific bank
+    };
+
+    window.resetChartToAll = () => {
+        chartBankId = null;
+        currentFilter = 'All';
+        initChart();
     };
 
     window.applyFilters = () => {
         if(!selectedBankId) return;
-        
         const fromDate = document.getElementById('filterFromDate').value;
         const toDate = document.getElementById('filterToDate').value;
-        
         let filteredTrans = allTransactions.filter(t => t.bankId === selectedBankId);
 
         if(fromDate) filteredTrans = filteredTrans.filter(t => t.date >= fromDate);
@@ -329,10 +362,6 @@
         document.getElementById('statExp').innerText = `Expense: Rs. ${bExp.toLocaleString()}`;
         document.getElementById('statAdj').innerText = `Adjustment: Rs. ${bAdj.toLocaleString()}`;
 
-        document.getElementById('statInc').classList.toggle('active', historyTypeFilter === 'Income');
-        document.getElementById('statExp').classList.toggle('active', historyTypeFilter === 'Expense');
-        document.getElementById('statAdj').classList.toggle('active', historyTypeFilter === 'Adjustment');
-
         if(historyTypeFilter !== 'All') {
             filteredTrans = filteredTrans.filter(t => historyTypeFilter === 'Adjustment' ? t.type.includes('Adjustment') : t.type === historyTypeFilter);
         }
@@ -343,22 +372,23 @@
         }).join('');
     };
 
-    window.filterByType = (type) => {
-        historyTypeFilter = (historyTypeFilter === type) ? 'All' : type;
-        window.applyFilters();
+    window.editEntry = (tId) => {
+        const t = allTransactions.find(trans => trans.id === tId);
+        if (!t) return;
+        document.getElementById('editKey').value = t.id;
+        document.getElementById('entryBank').value = t.bankId;
+        document.getElementById('entryBank').disabled = true;
+        document.getElementById('entryType').value = t.type;
+        document.getElementById('entryAmt').value = t.amount;
+        document.getElementById('entryDate').value = t.date;
+        document.getElementById('entryRemarks').value = t.remarks || '';
+        document.getElementById('modalTitle').innerText = 'Edit Transaction';
+        eModal.show();
     };
 
-    window.resetDateFilters = () => {
-        document.getElementById('filterFromDate').value = '';
-        document.getElementById('filterToDate').value = '';
-        window.applyFilters();
-    };
-
-    window.resetAllFilters = () => {
-        historyTypeFilter = 'All';
-        document.getElementById('filterFromDate').value = '';
-        document.getElementById('filterToDate').value = '';
-    };
+    window.filterByType = (type) => { historyTypeFilter = (historyTypeFilter === type) ? 'All' : type; window.applyFilters(); };
+    window.resetDateFilters = () => { document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; window.applyFilters(); };
+    window.resetAllFilters = () => { historyTypeFilter = 'All'; document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; };
 
     document.getElementById('transferForm').onsubmit = (e) => {
         e.preventDefault();
@@ -374,66 +404,23 @@
     window.openTransferModal = () => { document.getElementById('transferDate').value = new Date().toISOString().split('T')[0]; tModal.show(); };
     window.deleteEntry = (bId, tId) => { if(confirm("Delete record?")) remove(ref(db, `bank_transactions/${bId}/${tId}`)); };
     window.openBankModal = () => bModal.show();
+    window.openTransactionModal = () => { document.getElementById('entryForm').reset(); document.getElementById('editKey').value = ''; document.getElementById('entryBank').disabled = false; document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; eModal.show(); };
     
-    window.openTransactionModal = () => { 
-        document.getElementById('entryForm').reset(); 
-        document.getElementById('editKey').value = ''; 
-        document.getElementById('entryBank').disabled = false;
-        document.getElementById('modalTitle').innerText = 'New Transaction';
-        document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; 
-        eModal.show(); 
-    };
-    
-    // NEW: Edit Entry Function
-    window.editEntry = (tId) => {
-        const t = allTransactions.find(trans => trans.id === tId);
-        if (!t) return;
-
-        document.getElementById('editKey').value = t.id;
-        document.getElementById('entryBank').value = t.bankId;
-        document.getElementById('entryBank').disabled = true; // Disable bank change during edit
-        
-        // Ensure adjustment types are available in select if needed
-        const typeSelect = document.getElementById('entryType');
-        if (!Array.from(typeSelect.options).some(opt => opt.value === t.type)) {
-            typeSelect.add(new Option(t.type, t.type));
-        }
-        
-        document.getElementById('entryType').value = t.type;
-        document.getElementById('entryAmt').value = t.amount;
-        document.getElementById('entryDate').value = t.date;
-        document.getElementById('entryRemarks').value = t.remarks || '';
-        
-        document.getElementById('modalTitle').innerText = 'Edit Transaction';
-        eModal.show();
-    };
-
     document.getElementById('bankForm').onsubmit = (e) => { e.preventDefault(); push(ref(db, 'bank_accounts'), { name: document.getElementById('newBankName').value, number: document.getElementById('newBankNumber').value }); bModal.hide(); };
     
     document.getElementById('entryForm').onsubmit = (e) => { 
         e.preventDefault(); 
         const bId = document.getElementById('entryBank').value; 
         const tId = document.getElementById('editKey').value;
-        const data = { 
-            type: document.getElementById('entryType').value, 
-            amount: document.getElementById('entryAmt').value, 
-            date: document.getElementById('entryDate').value, 
-            remarks: document.getElementById('entryRemarks').value 
-        }; 
-        
-        if (tId) {
-            // Update existing entry
-            update(ref(db, `bank_transactions/${bId}/${tId}`), data);
-        } else {
-            // Push new entry
-            push(ref(db, `bank_transactions/${bId}`), data); 
-        }
+        const data = { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value }; 
+        if (tId) update(ref(db, `bank_transactions/${bId}/${tId}`), data);
+        else push(ref(db, `bank_transactions/${bId}`), data); 
         eModal.hide(); 
     };
 
     window.updateView = (v) => { currentFilter = v; initChart(); };
     window.changeTheme = (v) => { document.body.setAttribute('data-theme', v); initChart(); };
-    window.closeHistory = () => { document.getElementById('bankDetailSection').style.display = 'none'; selectedBankId = null; resetAllFilters(); };
+    window.closeHistory = () => { document.getElementById('bankDetailSection').style.display = 'none'; selectedBankId = null; chartBankId = null; initChart(); };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
