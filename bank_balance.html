@@ -298,10 +298,8 @@
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(myChart) myChart.destroy();
 
-        // Logic: Filter transactions by chartBankId if one is selected
         let chartData = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : allTransactions;
         
-        // Update Chart Title
         const bankName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
         document.getElementById('chartTitle').innerText = `Showing: ${bankName}`;
 
@@ -314,41 +312,33 @@
             data: { 
                 labels: dates, 
                 datasets: [
-                    { 
-                        label: 'Income', 
-                        data: incData, 
-                        backgroundColor: '#00b894', 
-                        borderRadius: 8, 
-                        hidden: currentFilter === 'Expense', 
-                        barThickness: 20,
-                        minBarLength: 25 // Yeh line add ki gayi hai
-                    }, 
-                    { 
-                        label: 'Expense', 
-                        data: expData, 
-                        backgroundColor: '#d63031', 
-                        borderRadius: 8, 
-                        hidden: currentFilter === 'Income', 
-                        barThickness: 20,
-                        minBarLength: 25 // Yeh line add ki gayi hai
-                    }
+                    { label: 'Income', data: incData, backgroundColor: '#00b894', borderRadius: 8, hidden: currentFilter === 'Expense', barThickness: 25, minBarLength: 5 }, 
+                    { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 25, minBarLength: 5 }
                 ] 
             }, 
             options: { 
                 responsive: true, 
-                maintainAspectRatio: false, 
-                layout: {
-                    padding: {
-                        top: 30 // Top se thori padding takay labels cut na hon
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        type: 'logarithmic',
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                if (value === 0) return "0";
+                                if ([1, 10, 100, 1000, 10000, 100000, 1000000, 2500000].includes(value)) return 'Rs.' + value.toLocaleString();
+                            }
+                        }
                     }
                 },
                 plugins: { 
                     datalabels: { 
                         anchor: 'end', 
                         align: 'top', 
-                        offset: 4, // Text ko thora opar karnay ke liye
                         font: { weight: 'bold', size: 10 }, 
-                        formatter: (v) => v > 0 ? 'Rs.' + v : '' 
+                        formatter: (v) => v > 0 ? 'Rs.' + v.toLocaleString() : '',
+                        clip: false,
+                        padding: 4
                     } 
                 },
                 onClick: (e, elements) => {
@@ -356,25 +346,15 @@
                         const element = elements[0];
                         const datasetIndex = element.datasetIndex;
                         const index = element.index;
-                        
                         const clickedDate = myChart.data.labels[index];
                         const clickedType = myChart.data.datasets[datasetIndex].label;
-
-                        // Show history section
                         document.getElementById('bankDetailSection').style.display = 'block';
-
-                        // Update title dynamically based on clicked bar
                         const bName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
                         document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bName} - ${clickedType} (${clickedDate})`;
-
-                        // Set date filters to match the clicked bar
                         document.getElementById('filterFromDate').value = clickedDate;
                         document.getElementById('filterToDate').value = clickedDate;
-                        historyTypeFilter = clickedType; // 'Income' or 'Expense'
-
+                        historyTypeFilter = clickedType;
                         window.applyFilters();
-                        
-                        // Smoothly scroll down to the history section
                         document.getElementById('bankDetailSection').scrollIntoView({ behavior: 'smooth' });
                     }
                 }
@@ -384,13 +364,13 @@
 
     window.selectBank = (id) => {
         selectedBankId = id;
-        chartBankId = id; // Set chart to this bank
+        chartBankId = id;
         document.getElementById('bankDetailSection').style.display = 'block';
         const bank = allBanks.find(b => b.id === id);
         document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bank.name} History`;
         window.resetAllFilters();
         window.applyFilters();
-        initChart(); // Reload chart for this specific bank
+        initChart();
     };
 
     window.resetChartToAll = () => {
@@ -400,34 +380,24 @@
     };
 
     window.applyFilters = () => {
-        // Removing "if(!selectedBankId) return;" so that it works for All Accounts too
         let filteredTrans = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : [...allTransactions];
-
         const fromDate = document.getElementById('filterFromDate').value;
         const toDate = document.getElementById('filterToDate').value;
-
         if(fromDate) filteredTrans = filteredTrans.filter(t => t.date >= fromDate);
         if(toDate) filteredTrans = filteredTrans.filter(t => t.date <= toDate);
-
         const bInc = filteredTrans.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
         const bExp = filteredTrans.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
         const bAdj = filteredTrans.filter(t => t.type.includes('Adjustment')).reduce((s, t) => s + parseFloat(t.amount), 0);
-
         document.getElementById('statInc').innerText = `Income: Rs. ${bInc.toLocaleString()}`;
         document.getElementById('statExp').innerText = `Expense: Rs. ${bExp.toLocaleString()}`;
         document.getElementById('statAdj').innerText = `Adjustment: Rs. ${bAdj.toLocaleString()}`;
-
         if(historyTypeFilter !== 'All') {
             filteredTrans = filteredTrans.filter(t => historyTypeFilter === 'Adjustment' ? t.type.includes('Adjustment') : t.type === historyTypeFilter);
         }
-
         document.getElementById('transactionBody').innerHTML = filteredTrans.map(t => {
             let tCls = (t.type === 'Income' || t.type === 'Adjustment In') ? 'text-success' : 'text-danger';
-            
-            // Show bank name badge in remarks if viewing "All Accounts"
             let bName = allBanks.find(b => b.id === t.bankId)?.name || 'Unknown';
             let displayRemarks = chartBankId ? (t.remarks || '---') : `<span class="badge bg-light text-dark border me-1">${bName}</span> ${t.remarks || '---'}`;
-            
             return `<tr><td>${t.date}</td><td class="${tCls} fw-bold">${t.type.replace('Adjustment ','')}</td><td>Rs. ${parseFloat(t.amount).toLocaleString()}</td><td>${displayRemarks}</td><td class="text-center"><button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button></td></tr>`
         }).join('');
     };
