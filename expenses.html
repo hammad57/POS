@@ -436,7 +436,24 @@
                 responsive: true, 
                 maintainAspectRatio: false,
                 plugins: { legend: { display: true } },
-                scales: { y: { beginAtZero: true } }
+                scales: { y: { beginAtZero: true } },
+                onClick: (e, activeEls) => {
+                    if (activeEls.length > 0) {
+                        const dataIndex = activeEls[0].index;
+                        const selectedDate = dates[dataIndex]; // Bar se exact date nikaali
+                        
+                        // Filters apply kiye
+                        filterStart = selectedDate;
+                        filterEnd = selectedDate;
+                        
+                        // Dates ko Date pickers mein show kar diya takay andaza ho jaye filter laga hua hai
+                        document.getElementById('fromDate').value = selectedDate;
+                        document.getElementById('toDate').value = selectedDate;
+                        
+                        // Table refresh kar diya
+                        refreshUI(); 
+                    }
+                }
             }
         });
     }
