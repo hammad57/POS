@@ -265,7 +265,7 @@
         renderBanks();
         updateSummary();
         initChart();
-        if(selectedBankId) window.applyFilters();
+        if(selectedBankId || chartBankId === null) window.applyFilters();
     });
 
     function renderBanks() {
@@ -323,7 +323,34 @@
                 maintainAspectRatio: false, 
                 plugins: { 
                     datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' }, formatter: (v) => v > 0 ? 'Rs.' + v : '' } 
-                } 
+                },
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const element = elements[0];
+                        const datasetIndex = element.datasetIndex;
+                        const index = element.index;
+                        
+                        const clickedDate = myChart.data.labels[index];
+                        const clickedType = myChart.data.datasets[datasetIndex].label;
+
+                        // Show history section
+                        document.getElementById('bankDetailSection').style.display = 'block';
+
+                        // Update title dynamically based on clicked bar
+                        const bName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
+                        document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bName} - ${clickedType} (${clickedDate})`;
+
+                        // Set date filters to match the clicked bar
+                        document.getElementById('filterFromDate').value = clickedDate;
+                        document.getElementById('filterToDate').value = clickedDate;
+                        historyTypeFilter = clickedType; // 'Income' or 'Expense'
+
+                        window.applyFilters();
+                        
+                        // Smoothly scroll down to the history section
+                        document.getElementById('bankDetailSection').scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
             } 
         });
     };
@@ -346,10 +373,11 @@
     };
 
     window.applyFilters = () => {
-        if(!selectedBankId) return;
+        // Removing "if(!selectedBankId) return;" so that it works for All Accounts too
+        let filteredTrans = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : [...allTransactions];
+
         const fromDate = document.getElementById('filterFromDate').value;
         const toDate = document.getElementById('filterToDate').value;
-        let filteredTrans = allTransactions.filter(t => t.bankId === selectedBankId);
 
         if(fromDate) filteredTrans = filteredTrans.filter(t => t.date >= fromDate);
         if(toDate) filteredTrans = filteredTrans.filter(t => t.date <= toDate);
@@ -368,7 +396,12 @@
 
         document.getElementById('transactionBody').innerHTML = filteredTrans.map(t => {
             let tCls = (t.type === 'Income' || t.type === 'Adjustment In') ? 'text-success' : 'text-danger';
-            return `<tr><td>${t.date}</td><td class="${tCls} fw-bold">${t.type.replace('Adjustment ','')}</td><td>Rs. ${parseFloat(t.amount).toLocaleString()}</td><td>${t.remarks || '---'}</td><td class="text-center"><button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button></td></tr>`
+            
+            // Show bank name badge in remarks if viewing "All Accounts"
+            let bName = allBanks.find(b => b.id === t.bankId)?.name || 'Unknown';
+            let displayRemarks = chartBankId ? (t.remarks || '---') : `<span class="badge bg-light text-dark border me-1">${bName}</span> ${t.remarks || '---'}`;
+            
+            return `<tr><td>${t.date}</td><td class="${tCls} fw-bold">${t.type.replace('Adjustment ','')}</td><td>Rs. ${parseFloat(t.amount).toLocaleString()}</td><td>${displayRemarks}</td><td class="text-center"><button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button></td></tr>`
         }).join('');
     };
 
