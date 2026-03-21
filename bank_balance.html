@@ -20,6 +20,7 @@
             --shadow-3d: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
             --accent-blue: #0984e3;
             --blue-3d-grad: linear-gradient(145deg, #0984e3, #0056b3);
+            --danger-grad: linear-gradient(145deg, #ff7675, #d63031);
         }
 
         [data-theme="dark"] {
@@ -42,6 +43,15 @@
             cursor: pointer;
         }
         .card-3d:hover { transform: translateY(-5px); }
+
+        /* Professional Toast Style */
+        .error-toast-3d {
+            background: var(--danger-grad) !important;
+            border-radius: 15px !important;
+            box-shadow: 0 10px 30px rgba(214, 48, 49, 0.4) !important;
+            border: none !important;
+            color: white !important;
+        }
 
         .bank-card-mini { min-width: 190px; border-left: 5px solid var(--accent-blue); padding: 15px; }
         .bank-card-mini .bal-amt { font-size: 1.1rem; font-weight: 700; color: var(--accent-blue); }
@@ -93,6 +103,18 @@
     </style>
 </head>
 <body data-theme="light">
+
+<div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 2000;">
+    <div id="errorToast" class="toast error-toast-3d" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center gap-3 py-3 px-4">
+                <i class="bi bi-exclamation-octagon-fill fs-3"></i>
+                <div id="errorMessage" style="font-weight: 500;"></div>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -234,6 +256,9 @@
     const bModal = new bootstrap.Modal(document.getElementById('bankModal'));
     const eModal = new bootstrap.Modal(document.getElementById('entryModal'));
     const tModal = new bootstrap.Modal(document.getElementById('transferModal'));
+    
+    // Initialize Professional Error Toast
+    const errorToast = new bootstrap.Toast(document.getElementById('errorToast'), { delay: 5000 });
 
     onValue(ref(db, 'settings/theme'), (snap) => {
         const savedTheme = snap.val() || 'light';
@@ -356,7 +381,7 @@
     window.resetDateFilters = () => { document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; window.applyFilters(); };
     window.resetAllFilters = () => { historyTypeFilter = 'All'; document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; };
 
-    // --- UPDATED TRANSFER FORM WITH BALANCE VALIDATION ---
+    // --- UPDATED TRANSFER FORM WITH PROFESSIONAL ERROR NOTIFICATION ---
     document.getElementById('transferForm').onsubmit = (e) => {
         e.preventDefault();
         const from = document.getElementById('fromBank').value; 
@@ -368,7 +393,11 @@
         const fromName = fromBankObj.name; 
         const toName = allBanks.find(b => b.id === to).name;
 
-        if(from === to) return alert("Select different banks!");
+        if(from === to) {
+            document.getElementById('errorMessage').innerText = "Select different banks for transfer!";
+            errorToast.show();
+            return;
+        }
 
         // Step 1: Calculate Current Balance of 'From' Bank
         const currentFromBalance = allTransactions.filter(t => t.bankId === from).reduce((s, t) => {
@@ -378,9 +407,10 @@
             return s;
         }, 0);
 
-        // Step 2: Validation Check
+        // Step 2: Professional Validation Check
         if(amt > currentFromBalance) {
-            alert(`Insufficient Balance! Your current balance in ${fromName} is Rs. ${currentFromBalance.toLocaleString()}. You cannot transfer Rs. ${amt.toLocaleString()}.`);
+            document.getElementById('errorMessage').innerText = `Insufficient Balance! Your current balance in ${fromName} is Rs. ${currentFromBalance.toLocaleString()}. You cannot transfer Rs. ${amt.toLocaleString()}.`;
+            errorToast.show(); // Replace alert with Professional Toast
             return;
         }
 
