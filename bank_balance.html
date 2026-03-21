@@ -314,15 +314,42 @@
             data: { 
                 labels: dates, 
                 datasets: [
-                    { label: 'Income', data: incData, backgroundColor: '#00b894', borderRadius: 8, hidden: currentFilter === 'Expense', barThickness: 20 }, 
-                    { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 20 }
+                    { 
+                        label: 'Income', 
+                        data: incData, 
+                        backgroundColor: '#00b894', 
+                        borderRadius: 8, 
+                        hidden: currentFilter === 'Expense', 
+                        barThickness: 20,
+                        minBarLength: 25 // Yeh line add ki gayi hai
+                    }, 
+                    { 
+                        label: 'Expense', 
+                        data: expData, 
+                        backgroundColor: '#d63031', 
+                        borderRadius: 8, 
+                        hidden: currentFilter === 'Income', 
+                        barThickness: 20,
+                        minBarLength: 25 // Yeh line add ki gayi hai
+                    }
                 ] 
             }, 
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false, 
+                layout: {
+                    padding: {
+                        top: 30 // Top se thori padding takay labels cut na hon
+                    }
+                },
                 plugins: { 
-                    datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' }, formatter: (v) => v > 0 ? 'Rs.' + v : '' } 
+                    datalabels: { 
+                        anchor: 'end', 
+                        align: 'top', 
+                        offset: 4, // Text ko thora opar karnay ke liye
+                        font: { weight: 'bold', size: 10 }, 
+                        formatter: (v) => v > 0 ? 'Rs.' + v : '' 
+                    } 
                 },
                 onClick: (e, elements) => {
                     if (elements.length > 0) {
