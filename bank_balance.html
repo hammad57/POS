@@ -377,6 +377,8 @@
         chartBankId = null;
         currentFilter = 'All';
         initChart();
+        // Hide summary section if resetting to global view
+        document.getElementById('bankDetailSection').style.display = 'none';
     };
 
     window.applyFilters = () => {
@@ -448,7 +450,24 @@
         eModal.hide(); 
     };
 
-    window.updateView = (v) => { currentFilter = v; initChart(); };
+    window.updateView = (v) => { 
+        currentFilter = v; 
+        initChart(); 
+        
+        // --- NEW UPDATED LOGIC TO LOAD SUMMARY ---
+        document.getElementById('bankDetailSection').style.display = 'block';
+        const bName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
+        document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bName} - ${v} Details`;
+        
+        // Reset specific date filters to show overall category history
+        document.getElementById('filterFromDate').value = '';
+        document.getElementById('filterToDate').value = '';
+        
+        historyTypeFilter = v;
+        window.applyFilters();
+        document.getElementById('bankDetailSection').scrollIntoView({ behavior: 'smooth' });
+    };
+    
     window.changeTheme = (v) => { document.body.setAttribute('data-theme', v); initChart(); };
     window.closeHistory = () => { document.getElementById('bankDetailSection').style.display = 'none'; selectedBankId = null; chartBankId = null; initChart(); };
 </script>
