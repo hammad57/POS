@@ -318,6 +318,10 @@
                 document.querySelectorAll('.action-col').forEach(el => el.style.display = '');
             });
         }
-    </script>
+    window.history.pushState(null, null, window.location.href);
+    window.onpopstate = function () {
+        window.location.href = "https://hammad57.github.io/POS/index.html";
+    };
+</script>
 </body>
 </html>
