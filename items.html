@@ -193,7 +193,7 @@
         let selectedID = null;
         let scanner = null;
         let stream = null;
-        let productToDelete = null; // Store ID temporarily for deletion
+        let productToDelete = null; 
 
         // --- Camera Management ---
         async function startCamera() {
@@ -327,16 +327,16 @@
             showLoader("Saving...");
             
             try {
-                // FIXED: Added Headers & redirect settings for Google Apps Script to prevent CORS block
+                // FIXED: mode: "no-cors" added to prevent browser block
                 await fetch(SHEET_API, { 
                     method: "POST", 
+                    mode: "no-cors",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(data),
-                    redirect: "follow"
+                    body: JSON.stringify(data) 
                 });
                 resetForm();
                 await loadData();
-            } catch(e) { alert("Failed to save."); }
+            } catch(e) { alert("Failed to save. Please check your internet connection."); }
             finally { hideLoader(); }
         }
 
@@ -383,15 +383,14 @@
             showLoader("Deleting item...");
             
             try {
-                // Send delete action to Google Sheet API
                 const data = { action: "delete", id: productToDelete };
                 
-                // FIXED: Added Headers & redirect settings to solve "Failed to fetch/No internet" bug
+                // FIXED: mode: "no-cors" added to prevent fake network errors
                 await fetch(SHEET_API, { 
                     method: "POST", 
+                    mode: "no-cors",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(data),
-                    redirect: "follow"
+                    body: JSON.stringify(data) 
                 });
                 
                 // Immediately update local array for fast UI experience
@@ -402,6 +401,7 @@
                 filterList();
             } catch(e) {
                 alert("Failed to delete. Please check your internet connection or try again.");
+                console.error(e);
             } finally {
                 hideLoader();
                 productToDelete = null;
