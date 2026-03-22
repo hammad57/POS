@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.3, shrink-to-fit=no">
     <title>3D Money Vault Pro | Professional Edition</title>
@@ -8,8 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     
     <style>
@@ -44,7 +44,6 @@
         }
         .card-3d:hover { transform: translateY(-5px); }
 
-        /* Professional Toast Style */
         .error-toast-3d {
             background: var(--danger-grad) !important;
             border-radius: 15px !important;
@@ -95,11 +94,21 @@
         [data-theme="dark"] .table-custom thead th { background: #34495e; color: #ecf0f1; border-color: #2c3e50; }
 
         .chart-wrapper { background: var(--card-main); border-radius: 25px; padding: 25px; box-shadow: var(--shadow-3d); }
+        
+        /* Floating Buttons Style */
         .fab-btn {
             position: fixed; bottom: 40px; right: 40px; width: 75px; height: 75px; border-radius: 50%;
             background: var(--accent-blue); color: white; border: none; font-size: 35px; box-shadow: 0 10px 25px rgba(9, 132, 227, 0.4);
             z-index: 1000; transition: 0.3s;
         }
+
+        .fab-home {
+            position: fixed; bottom: 130px; right: 47px; width: 60px; height: 60px; border-radius: 50%;
+            background: #2d3436; color: white; display: flex; align-items: center; justify-content: center;
+            font-size: 26px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); text-decoration: none; z-index: 1000; transition: 0.3s;
+        }
+        .fab-home:hover { transform: scale(1.1); color: #00d2ff; background: #000; }
+        [data-theme="dark"] .fab-home { background: #0984e3; }
     </style>
 </head>
 <body data-theme="light">
@@ -116,12 +125,16 @@
     </div>
 </div>
 
+<a href="https://hammad57.github.io/POS/index.html" class="fab-home" title="Go to Dashboard">
+    <i class="bi bi-house-door-fill"></i>
+</a>
+
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center gap-3">
-            <a href="https://hammad57.github.io/POS/index.html" class="card-3d p-2 rounded-circle" style="width:50px; height:50px; display:flex; align-items:center; justify-content:center; text-decoration:none;">
-                <i class="bi bi-house-door-fill text-primary fs-4"></i>
-            </a>
+            <div class="card-3d p-2 rounded-circle" style="width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
+                <i class="bi bi-bank2 text-primary fs-4"></i>
+            </div>
             <h2 class="fw-bold mb-0">Money Vault <span class="text-primary">3D Pro</span></h2>
         </div>
         <div class="d-flex gap-3">
@@ -257,7 +270,6 @@
     const eModal = new bootstrap.Modal(document.getElementById('entryModal'));
     const tModal = new bootstrap.Modal(document.getElementById('transferModal'));
     
-    // Initialize Professional Error Toast
     const errorToast = new bootstrap.Toast(document.getElementById('errorToast'), { delay: 5000 });
 
     onValue(ref(db, 'settings/theme'), (snap) => {
@@ -381,7 +393,6 @@
     window.resetDateFilters = () => { document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; window.applyFilters(); };
     window.resetAllFilters = () => { historyTypeFilter = 'All'; document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; };
 
-    // --- UPDATED TRANSFER FORM WITH PROFESSIONAL ERROR NOTIFICATION ---
     document.getElementById('transferForm').onsubmit = (e) => {
         e.preventDefault();
         const from = document.getElementById('fromBank').value; 
@@ -399,7 +410,6 @@
             return;
         }
 
-        // Step 1: Calculate Current Balance of 'From' Bank
         const currentFromBalance = allTransactions.filter(t => t.bankId === from).reduce((s, t) => {
             const tAmt = parseFloat(t.amount);
             if(t.type === 'Income' || t.type === 'Adjustment In') return s + tAmt;
@@ -407,14 +417,12 @@
             return s;
         }, 0);
 
-        // Step 2: Professional Validation Check
         if(amt > currentFromBalance) {
             document.getElementById('errorMessage').innerText = `Insufficient Balance! Your current balance in ${fromName} is Rs. ${currentFromBalance.toLocaleString()}. You cannot transfer Rs. ${amt.toLocaleString()}.`;
-            errorToast.show(); // Replace alert with Professional Toast
+            errorToast.show();
             return;
         }
 
-        // Step 3: Record Transactions
         push(ref(db, `bank_transactions/${from}`), { type: 'Adjustment Out', amount: amt, date: dt, remarks: `Transfer To ${toName}` });
         push(ref(db, `bank_transactions/${to}`), { type: 'Adjustment In', amount: amt, date: dt, remarks: `Transfer From ${fromName}` });
         
