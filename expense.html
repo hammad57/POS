@@ -69,6 +69,44 @@
         .form-locked { background: rgba(128, 128, 128, 0.1) !important; cursor: not-allowed; font-weight: bold; }
 
         .modal-content { background: var(--container-bg); border-radius: 25px; border: 1px solid var(--border-color); color: var(--text-color); }
+
+        /* Calculator Styles */
+        .calc-btn-trigger { cursor: pointer; color: #0d6efd; font-size: 1.2rem; transition: 0.3s; }
+        .calc-btn-trigger:hover { transform: scale(1.2); color: #0056b3; }
+        
+        #calculatorModal .modal-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 320px;
+            margin: auto;
+        }
+        .calc-display {
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            font-size: 2rem;
+            text-align: right;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            font-family: monospace;
+            min-height: 60px;
+            word-wrap: break-word;
+        }
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .btn-calc {
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: 0.2s;
+        }
+        .btn-calc:hover { background: rgba(255, 255, 255, 0.25); }
+        .btn-op { background: rgba(255, 159, 67, 0.3); }
+        .btn-eq { background: #0d6efd; grid-column: span 2; }
     </style>
 </head>
 <body>
@@ -101,29 +139,11 @@
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
-
-    .top-home-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
-        background: linear-gradient(135deg, #4338ca, #2563eb);
-        color: #ffffff !important;
-    }
-
-    .top-home-btn svg {
-        width: 18px;
-        height: 18px;
-    }
-
-    /* Mobile screens ke liye thoda adjust karne ke liye */
-    @media (max-width: 768px) {
-        .top-home-btn {
-            top: 15px;
-            left: 15px;
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-    }
+    .top-home-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6); background: linear-gradient(135deg, #4338ca, #2563eb); color: #ffffff !important; }
+    .top-home-btn svg { width: 18px; height: 18px; }
+    @media (max-width: 768px) { .top-home-btn { top: 15px; left: 15px; padding: 8px 16px; font-size: 14px; } }
 </style>
+
 <button class="fab-add" onclick="openModal()"><i class="bi bi-plus-lg"></i></button>
 
 <div class="main-wrapper">
@@ -191,7 +211,10 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle-fill me-2"></i>New Transaction</h5>
+                <div class="d-flex justify-content-between w-100 align-items-center">
+                    <h5 class="modal-title fw-bold m-0"><i class="bi bi-plus-circle-fill me-2"></i>New Transaction</h5>
+                    <i class="bi bi-calculator calc-btn-trigger me-3" onclick="openCalculator()" title="Open Calculator"></i>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
@@ -236,6 +259,44 @@
     </div>
 </div>
 
+<div class="modal fade" id="calculatorModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="text-white small fw-bold opacity-75">3D CALCULATOR</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="calc-display" id="calcDisplay">0</div>
+                <div class="calc-grid">
+                    <button class="btn-calc btn-op" onclick="clearCalc()">C</button>
+                    <button class="btn-calc btn-op" onclick="backspaceCalc()">⌫</button>
+                    <button class="btn-calc btn-op" onclick="pressCalc('/')">÷</button>
+                    <button class="btn-calc btn-op" onclick="pressCalc('*')">×</button>
+                    
+                    <button class="btn-calc" onclick="pressCalc('7')">7</button>
+                    <button class="btn-calc" onclick="pressCalc('8')">8</button>
+                    <button class="btn-calc" onclick="pressCalc('9')">9</button>
+                    <button class="btn-calc btn-op" onclick="pressCalc('-')">-</button>
+                    
+                    <button class="btn-calc" onclick="pressCalc('4')">4</button>
+                    <button class="btn-calc" onclick="pressCalc('5')">5</button>
+                    <button class="btn-calc" onclick="pressCalc('6')">6</button>
+                    <button class="btn-calc btn-op" onclick="pressCalc('+')">+</button>
+                    
+                    <button class="btn-calc" onclick="pressCalc('1')">1</button>
+                    <button class="btn-calc" onclick="pressCalc('2')">2</button>
+                    <button class="btn-calc" onclick="pressCalc('3')">3</button>
+                    <button class="btn-calc btn-eq" onclick="solveCalc()">=</button>
+                    
+                    <button class="btn-calc" style="grid-column: span 2;" onclick="pressCalc('0')">0</button>
+                    <button class="btn-calc" onclick="pressCalc('.')">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
@@ -250,11 +311,37 @@
     let filterStart = null;
     let filterEnd = null;
     let myChart = null;
-    let chartType = 'bar'; // Default
+    let chartType = 'bar'; 
     let globalLastBalance = 0;
 
     const modalObj = new bootstrap.Modal(document.getElementById('entryModal'));
+    const calcModalObj = new bootstrap.Modal(document.getElementById('calculatorModal'));
     const today = new Date().toISOString().split('T')[0];
+
+    // Calculator Functions
+    let calcExpression = "";
+    window.openCalculator = () => calcModalObj.show();
+    window.pressCalc = (val) => {
+        calcExpression += val;
+        document.getElementById('calcDisplay').innerText = calcExpression;
+    };
+    window.clearCalc = () => {
+        calcExpression = "";
+        document.getElementById('calcDisplay').innerText = "0";
+    };
+    window.backspaceCalc = () => {
+        calcExpression = calcExpression.slice(0, -1);
+        document.getElementById('calcDisplay').innerText = calcExpression || "0";
+    };
+    window.solveCalc = () => {
+        try {
+            calcExpression = eval(calcExpression).toString();
+            document.getElementById('calcDisplay').innerText = calcExpression;
+        } catch {
+            document.getElementById('calcDisplay').innerText = "Error";
+            calcExpression = "";
+        }
+    };
 
     onValue(themeRef, (snap) => {
         const t = snap.val() || 'light';
@@ -332,7 +419,6 @@
         document.getElementById('todayProfitVal').innerText = tDay.toFixed(0);
     }
 
-    // --- LOGIC FOR CALCULATIONS ---
     window.calculateLiveBalance = () => {
         const b = parseFloat(document.getElementById('openBal').value) || 0;
         const i = parseFloat(document.getElementById('incomeInput').value) || 0;
@@ -344,11 +430,7 @@
         const drawer = parseFloat(document.getElementById('todayDrawer').value) || 0;
         const opening = parseFloat(document.getElementById('openBal').value) || 0;
         const expense = parseFloat(document.getElementById('expenseInput').value) || 0;
-        
-        // Income = Today Drawer - Opening + Expense (Since drawer is total cash on hand)
-        // If drawer is 1000, opening 200, expense 100. Income should be 900.
         const calculatedIncome = drawer - opening + expense;
-        
         document.getElementById('incomeInput').value = calculatedIncome.toFixed(2);
         calculateLiveBalance();
     };
@@ -357,7 +439,6 @@
         document.getElementById('entryForm').reset();
         document.getElementById('editKey').value = "";
         document.getElementById('entryDate').value = today;
-        // Auto fill last balance
         document.getElementById('openBal').value = globalLastBalance.toFixed(2);
         calculateLiveBalance();
         modalObj.show();
@@ -404,17 +485,14 @@
     window.applyFilter = () => { filterStart = document.getElementById('fromDate').value; filterEnd = document.getElementById('toDate').value; refreshUI(); };
     window.resetFilter = () => { filterStart = null; filterEnd = null; refreshUI(); };
 
-    // --- CHART LOGIC ---
     window.toggleChartType = (type) => { chartType = type; initChart(); };
 
     function initChart() {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(myChart) myChart.destroy();
-        
         const dates = [...new Set(allData.map(d => d.date))].sort().slice(-10);
         const incs = dates.map(d => allData.filter(x => x.date === d && x.type === 'Income').reduce((a,b)=>a+b.amount,0));
         const exps = dates.map(d => allData.filter(x => x.date === d && x.type === 'Expense').reduce((a,b)=>a+b.amount,0));
-
         myChart = new Chart(ctx, {
             type: chartType,
             data: {
@@ -424,12 +502,7 @@
                     { label: 'Expense', data: exps, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.5)', fill: true, tension: 0.4 }
                 ]
             },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: { legend: { display: true } },
-                scales: { y: { beginAtZero: true } }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true } } }
         });
     }
 
