@@ -60,8 +60,8 @@
         .price-tag { color: var(--accent); font-weight: 800; font-size: 14px; }
         
         .action-btns { display: flex; gap: 8px; }
-        .edit-btn { background: #3b82f6; color: white; padding: 8px; border-radius: 6px; border:none; font-size: 12px; }
-        .del-btn { background: var(--red); color: white; padding: 8px; border-radius: 6px; border:none; font-size: 12px; }
+        .edit-btn { background: #3b82f6; color: white; padding: 8px; border-radius: 6px; border:none; font-size: 12px; cursor: pointer; }
+        .del-btn { background: var(--red); color: white; padding: 8px; border-radius: 6px; border:none; font-size: 12px; cursor: pointer; }
 
         .search-box { position: sticky; top: 115px; z-index: 90; background: var(--light); padding: 10px 0; }
         
@@ -72,6 +72,14 @@
         #capture-btn { display: none; background: #ef4444; margin-top: 10px; }
         #img-preview-container { margin-top: 10px; display: none; text-align: center; }
         #img-preview-container img { max-width: 100px; border-radius: 8px; border: 2px solid var(--accent); }
+
+        /* Delete Confirmation Modal UI */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; }
+        .modal { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popIn 0.3s ease-out; }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal h3 { margin-top: 0; color: var(--primary); font-size: 18px; }
+        .modal p { color: #64748b; font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+        .modal .item-name { color: var(--red); font-weight: bold; font-size: 16px; display: block; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -79,6 +87,17 @@
     <div id="loading">
         <div class="spinner"></div>
         <span id="loading-text">Processing...</span>
+    </div>
+
+    <div id="delete-modal" class="modal-overlay">
+        <div class="modal">
+            <h3>Confirm Deletion</h3>
+            <p>Are you sure you want to delete this product? <span class="item-name" id="delete-item-name"></span></p>
+            <div class="btn-grid">
+                <button class="btn btn-secondary" style="margin-top:0;" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn" style="background: var(--red); color: white; margin-top:0;" onclick="confirmDeleteAction()">Yes, Delete</button>
+            </div>
+        </div>
     </div>
 
     <div class="nav-bar">
@@ -174,6 +193,7 @@
         let selectedID = null;
         let scanner = null;
         let stream = null;
+        let productToDelete = null; // Store ID temporarily for deletion
 
         // --- Camera Management ---
         async function startCamera() {
@@ -209,7 +229,6 @@
         // --- Auto-Load Feature ---
         function checkExistingProduct(id) {
             if (!id) {
-                // Agar ID delete kar di jaye toh form reset ho jaye
                 selectedID = null;
                 document.getElementById('form-header').innerText = "Add New Product";
                 document.getElementById('saveBtn').innerText = "SAVE PRODUCT ✓";
@@ -233,7 +252,6 @@
                 document.getElementById('form-header').innerText = "Update Product (Existing Found)";
                 document.getElementById('saveBtn').innerText = "UPDATE PRODUCT ✓";
             } else {
-                // Agar naya ID hai toh selectedID reset rakhen
                 selectedID = null;
                 document.getElementById('form-header').innerText = "Add New Product";
                 document.getElementById('saveBtn').innerText = "SAVE PRODUCT ✓";
@@ -334,6 +352,46 @@
                 document.getElementById('form-header').innerText = "Update Product";
                 document.getElementById('saveBtn').innerText = "UPDATE PRODUCT ✓";
                 switchTab('add');
+            }
+        }
+
+        // --- Professional Delete System ---
+        function deleteProduct(id) {
+            const p = allProducts.find(item => item.id == id);
+            if(p) {
+                productToDelete = id;
+                document.getElementById('delete-item-name').innerText = p.en + " (ID: " + p.id + ")";
+                document.getElementById('delete-modal').style.display = 'flex';
+            }
+        }
+
+        function closeDeleteModal() {
+            productToDelete = null;
+            document.getElementById('delete-modal').style.display = 'none';
+        }
+
+        async function confirmDeleteAction() {
+            if(!productToDelete) return;
+            
+            closeDeleteModal();
+            showLoader("Deleting item...");
+            
+            try {
+                // Send delete action to Google Sheet API
+                const data = { action: "delete", id: productToDelete };
+                await fetch(SHEET_API, { method: "POST", body: JSON.stringify(data) });
+                
+                // Immediately update local array for fast UI experience
+                allProducts = allProducts.filter(item => item.id != productToDelete);
+                localStorage.setItem('mart_data', JSON.stringify(allProducts));
+                
+                // Refresh list using existing filter logic to keep search intact
+                filterList();
+            } catch(e) {
+                alert("Failed to delete. Please check your internet connection.");
+            } finally {
+                hideLoader();
+                productToDelete = null;
             }
         }
 
