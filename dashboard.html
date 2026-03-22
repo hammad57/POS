@@ -154,5 +154,11 @@
             });
         });
     </script>
+<script>
+    window.history.pushState(null, null, window.location.href);
+    window.onpopstate = function () {
+        window.location.href = "https://hammad57.github.io/POS/index.html";
+    };
+</script>
 </body>
 </html>
