@@ -1,26 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hammad Mart - Manager (Barcode System)</title>
+    <title>Hammad Mart - Manager</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     
     <style>
-        :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; --red: #ef4444; }
+        :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; --red: #ef4444; --blue: #3b82f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding-bottom: 80px; }
         
-        /* Loading Overlay */
+        /* Sync UI */
+        .sync-box { text-align: right; line-height: 1.2; }
+        #sync-btn { background: var(--accent); color: white; border: none; padding: 6px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 12px; margin-left: 10px; }
+        #sync-time { font-size: 9px; opacity: 0.7; display: block; margin-top: 2px; }
+
+        /* Loader */
         #loading { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; padding: 12px 24px; border-radius: 12px; display: none; align-items: center; gap: 12px; z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border-left: 5px solid var(--accent); }
         .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid var(--accent); border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Sync UI Styles */
-        .sync-box { text-align: right; line-height: 1.2; }
-        #sync-btn { background: var(--accent); color: white; border: none; padding: 6px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 12px; margin-left: 10px; transition: 0.3s; }
-        #sync-btn:disabled { background: #94a3b8; }
-        #sync-time { font-size: 9px; opacity: 0.7; display: block; margin-top: 2px; }
 
         .nav-bar { background: var(--primary); padding: 15px; color: white; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; }
         .back-btn { color: white; text-decoration: none; font-size: 18px; font-weight: bold; }
@@ -40,12 +39,18 @@
         .btn { padding: 14px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: white; width: 100%; margin-top: 10px; }
         .btn-secondary { background: #64748b; color: white; }
+        .btn-blue { background: var(--blue); color: white; width: 100%; margin-top: 10px; }
 
-        /* Camera Preview */
+        /* Queue Styling */
+        .queue-container { margin-top: 20px; border-top: 2px dashed #cbd5e1; padding-top: 15px; }
+        .queue-item { display: flex; align-items: center; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--blue); }
+        .queue-info { flex: 1; font-size: 13px; }
+
+        /* Camera UI */
         #camera-preview { width: 100%; border-radius: 10px; display: none; margin-top: 10px; background: #000; }
-        #capture-btn { display: none; background: var(--red); color: white; margin-top: 10px; width: 100%; }
+        #capture-btn { display: none; background: var(--red); margin-top: 10px; width: 100%; }
         #img-preview-container { margin-top: 10px; display: none; text-align: center; }
-        #img-preview-container img { max-width: 120px; border-radius: 8px; border: 2px solid var(--accent); }
+        #img-preview-container img { max-width: 100px; border-radius: 8px; border: 2px solid var(--accent); }
 
         .product-item { display: flex; align-items: center; padding: 15px; background: white; border-bottom: 1px solid #f1f5f9; gap: 12px; }
         .product-img { width: 50px; height: 50px; object-fit: contain; background: #f8fafc; border-radius: 8px; }
@@ -60,7 +65,6 @@
         .search-box { position: sticky; top: 115px; z-index: 90; background: var(--light); padding: 10px 0; }
         #reader { width: 100%; border-radius: 15px; overflow: hidden; display: none; margin-bottom: 15px; }
 
-        /* Delete Modal */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; }
         .modal { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; }
     </style>
@@ -72,10 +76,10 @@
     <div id="delete-modal" class="modal-overlay">
         <div class="modal">
             <h3>Confirm Deletion</h3>
-            <p>Are you sure you want to delete <br><span id="delete-item-name" style="font-weight:bold; color:var(--red);"></span>?</p>
-            <div class="btn-grid" style="margin-top:20px;">
+            <p>Delete <span id="delete-item-name" style="font-weight:bold; color:var(--red);"></span>?</p>
+            <div class="btn-grid">
                 <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-                <button class="btn" style="background: var(--red); color: white;" onclick="confirmDeleteAction()">Delete Now</button>
+                <button class="btn" style="background: var(--red); color: white;" onclick="confirmDeleteAction()">Delete</button>
             </div>
         </div>
     </div>
@@ -83,7 +87,7 @@
     <div class="nav-bar">
         <a href="index.html" class="back-btn">← Hammad Mart</a>
         <div class="sync-box">
-            <span id="sync-status" style="font-size:11px; font-weight:bold;">Local Mode</span>
+            <span id="sync-status" style="font-size:11px; font-weight:bold;">Offline Mode</span>
             <button id="sync-btn" onclick="syncData()">🔄 Sync</button>
             <span id="sync-time">Last Sync: Never</span>
         </div>
@@ -91,21 +95,17 @@
 
     <div class="tabs">
         <div class="tab active" onclick="switchTab('add', this)">Add / Edit</div>
-        <div class="tab" onclick="switchTab('list', this)">Product List</div>
+        <div class="tab" onclick="switchTab('list', this)">All Products</div>
     </div>
 
     <div id="add-view" class="container">
         <div class="card">
-            <h3 id="form-header" style="margin:0 0 15px 0; color: var(--primary);">Product Details</h3>
+            <h3 id="form-header" style="margin:0 0 15px 0; color: var(--primary);">Add New Product</h3>
             
             <button class="btn btn-secondary" style="width:100%; margin-bottom:15px;" onclick="toggleScanner()">📷 Scan Barcode</button>
             <div id="reader"></div>
 
-            <div class="form-group">
-                <label>Product ID (Barcode)</label>
-                <input type="text" id="pID" oninput="checkExistingProduct(this.value)">
-            </div>
-            
+            <div class="form-group"><label>Product ID (Barcode)</label><input type="text" id="pID" oninput="checkExistingProduct(this.value)"></div>
             <div class="form-group"><label>English Name</label><input type="text" id="enName"></div>
             <div class="form-group"><label>Urdu Name</label><input type="text" id="urName" dir="rtl"></div>
             
@@ -116,53 +116,162 @@
 
             <div class="form-group">
                 <label>Unit</label>
-                <select id="unit">
-                    <option value="kg">Kilogram (KG)</option>
-                    <option value="piece">Piece / Item</option>
-                    <option value="pack">Pack / Box</option>
-                    <option value="ltr">Litre</option>
-                </select>
+                <select id="unit"><option value="kg">KG</option><option value="piece">Piece</option><option value="pack">Pack</option><option value="ltr">Litre</option></select>
             </div>
 
             <div class="form-group">
                 <label>Product Image</label>
                 <div style="display:flex; gap:10px;">
                     <input type="text" id="img" placeholder="URL or Capture Data">
-                    <button class="btn btn-secondary" onclick="startCamera()" style="white-space:nowrap; padding: 10px;">📷 Camera</button>
+                    <button class="btn btn-secondary" onclick="startCamera()" style="white-space:nowrap; padding: 10px;">📷 Take Photo</button>
                 </div>
                 
                 <video id="camera-preview" autoplay playsinline></video>
-                <button id="capture-btn" class="btn" onclick="capturePhoto()">CAPTURE PHOTO 📸</button>
+                <button id="capture-btn" class="btn" onclick="capturePhoto()">CAPTURE NOW 📸</button>
                 <canvas id="photo-canvas" style="display:none;"></canvas>
                 
                 <div id="img-preview-container">
-                    <p style="font-size:11px; margin:5px 0;">Image Preview:</p>
+                    <p style="font-size:11px; margin:5px 0;">Preview:</p>
                     <img id="img-preview" src="">
                 </div>
             </div>
 
-            <button class="btn btn-primary" id="saveBtn" onclick="saveProduct()">SAVE PRODUCT ✓</button>
+            <div class="btn-grid">
+                <button class="btn btn-blue" onclick="addToQueue()">+ ADD TO QUEUE</button>
+                <button class="btn btn-primary" id="saveBtn" onclick="saveProduct()">SAVE NOW ✓</button>
+            </div>
             <button class="btn btn-secondary" style="width:100%; margin-top:10px;" onclick="resetForm()">CLEAR FORM</button>
+
+            <div id="bulk-section" class="queue-container" style="display:none;">
+                <h4 style="margin:0 0 10px 0; color:var(--blue);">Pending Items (<span id="queue-count">0</span>)</h4>
+                <div id="queue-list"></div>
+                <button class="btn btn-primary" style="background:var(--blue); margin-top:15px;" onclick="uploadBulk()">🚀 UPLOAD ALL TO SHEET</button>
+            </div>
         </div>
     </div>
 
     <div id="list-view" class="container" style="display:none;">
-        <button class="btn btn-primary" style="margin-bottom:15px;" onclick="generatePDF()">📥 Download Barcode PDF</button>
-        <div class="search-box"><input type="text" id="listSearch" placeholder="Search by name or ID..." oninput="filterList()"></div>
+        <div class="search-box"><input type="text" id="listSearch" placeholder="Search products..." oninput="filterList()"></div>
         <div class="card" style="padding:0; overflow:hidden;" id="product-list"></div>
     </div>
-
-    <canvas id="barcode-canvas" style="display:none;"></canvas>
 
     <script>
         const SHEET_API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
         let allProducts = [];
+        let bulkQueue = [];
         let selectedID = null;
         let scanner = null;
         let stream = null;
         let productToDelete = null;
 
-        // --- 1. Offline & Sync Logic ---
+        // --- Camera Management ---
+        async function startCamera() {
+            const video = document.getElementById('camera-preview');
+            const btn = document.getElementById('capture-btn');
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                btn.style.display = 'block';
+            } catch (err) { alert("Camera Error: " + err); }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('camera-preview');
+            const canvas = document.getElementById('photo-canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+            document.getElementById('img').value = dataUrl;
+            document.getElementById('img-preview').src = dataUrl;
+            document.getElementById('img-preview-container').style.display = 'block';
+            stopCamera();
+        }
+
+        function stopCamera() {
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            document.getElementById('camera-preview').style.display = 'none';
+            document.getElementById('capture-btn').style.display = 'none';
+        }
+
+        // --- Bulk Queue Logic ---
+        function addToQueue() {
+            const id = document.getElementById('pID').value;
+            const en = document.getElementById('enName').value;
+            const price = document.getElementById('price').value;
+
+            if(!id || !en || !price) { alert("ID, Name, and Price are required!"); return; }
+
+            const item = {
+                action: selectedID ? "update" : "add",
+                id: id,
+                en: en,
+                ur: document.getElementById('urName').value,
+                pp: document.getElementById('purchasePrice').value,
+                price: price,
+                unit: document.getElementById('unit').value,
+                img: document.getElementById('img').value
+            };
+
+            bulkQueue.push(item);
+            updateQueueUI();
+            resetForm();
+        }
+
+        function updateQueueUI() {
+            const section = document.getElementById('bulk-section');
+            const list = document.getElementById('queue-list');
+            const count = document.getElementById('queue-count');
+
+            if(bulkQueue.length > 0) {
+                section.style.display = 'block';
+                count.innerText = bulkQueue.length;
+                list.innerHTML = bulkQueue.map((item, index) => `
+                    <div class="queue-item">
+                        <div class="queue-info">
+                            <b>${item.en}</b> (ID: ${item.id})<br>
+                            Rs. ${item.price} | ${item.unit}
+                        </div>
+                        <button class="del-btn" onclick="removeFromQueue(${index})" style="padding:5px 10px;">✕</button>
+                    </div>
+                `).join('');
+            } else {
+                section.style.display = 'none';
+            }
+        }
+
+        function removeFromQueue(index) {
+            bulkQueue.splice(index, 1);
+            updateQueueUI();
+        }
+
+        async function uploadBulk() {
+            if(bulkQueue.length === 0) return;
+            
+            showLoader(`Uploading 1 of ${bulkQueue.length}...`);
+            
+            try {
+                for(let i = 0; i < bulkQueue.length; i++) {
+                    showLoader(`Uploading ${i+1} of ${bulkQueue.length}...`);
+                    await fetch(SHEET_API, { 
+                        method: "POST", 
+                        mode: "no-cors", 
+                        body: JSON.stringify(bulkQueue[i]) 
+                    });
+                }
+                bulkQueue = [];
+                updateQueueUI();
+                await syncData();
+                alert("All items uploaded successfully!");
+            } catch(e) {
+                alert("Some items failed to upload. Check internet.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // --- Core Sync Logic ---
         function initializePage() {
             const localData = localStorage.getItem('mart_data');
             const lastSync = localStorage.getItem('mart_last_sync');
@@ -170,8 +279,7 @@
                 allProducts = JSON.parse(localData);
                 renderList(allProducts);
                 if (lastSync) document.getElementById('sync-time').innerText = "Last Sync: " + lastSync;
-            } else {
-                syncData(); // Pehli baar load ho raha ho
+                document.getElementById('sync-status').innerText = "Storage Mode";
             }
         }
 
@@ -188,43 +296,12 @@
                 localStorage.setItem('mart_last_sync', now);
                 renderList(allProducts);
                 document.getElementById('sync-time').innerText = "Last Sync: " + now;
-                document.getElementById('sync-status').innerText = "Cloud Synced";
-            } catch(e) { alert("Network Error. Check internet."); }
+                document.getElementById('sync-status').innerText = "Sync Success";
+            } catch(e) { alert("Internet Error!"); }
             finally { hideLoader(); btn.disabled = false; }
         }
 
-        // --- 2. Camera Functions ---
-        async function startCamera() {
-            const video = document.getElementById('camera-preview');
-            const btn = document.getElementById('capture-btn');
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                video.srcObject = stream;
-                video.style.display = 'block';
-                btn.style.display = 'block';
-            } catch (err) { alert("Camera Permission Denied!"); }
-        }
-
-        function capturePhoto() {
-            const video = document.getElementById('camera-preview');
-            const canvas = document.getElementById('photo-canvas');
-            canvas.width = 300; // Compressed size
-            canvas.height = (video.videoHeight / video.videoWidth) * 300;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-            document.getElementById('img').value = dataUrl;
-            document.getElementById('img-preview').src = dataUrl;
-            document.getElementById('img-preview-container').style.display = 'block';
-            stopCamera();
-        }
-
-        function stopCamera() {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            document.getElementById('camera-preview').style.display = 'none';
-            document.getElementById('capture-btn').style.display = 'none';
-        }
-
-        // --- 3. Core Actions ---
+        // --- UI & Actions ---
         function renderList(data) {
             const listDiv = document.getElementById('product-list');
             listDiv.innerHTML = data.map(p => `
@@ -233,7 +310,7 @@
                     <div class="product-info">
                         <h4>${p.en}</h4>
                         <span class="price-tag">Rs. ${p.price}</span>
-                        <p style="font-size:10px; margin:0; opacity:0.6;">Barcode: ${p.id}</p>
+                        <p style="font-size:10px; margin:0;">ID: ${p.id}</p>
                     </div>
                     <div class="action-btns">
                         <button class="edit-btn" onclick="editProduct('${p.id}')">✏️</button>
@@ -241,6 +318,36 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        function switchTab(tab, el) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('add-view').style.display = (tab === 'add') ? 'block' : 'none';
+            document.getElementById('list-view').style.display = (tab === 'list') ? 'block' : 'none';
+        }
+
+        function checkExistingProduct(id) {
+            const p = allProducts.find(item => String(item.id) === String(id));
+            if (p) {
+                selectedID = p.id;
+                document.getElementById('enName').value = p.en;
+                document.getElementById('urName').value = p.ur || "";
+                document.getElementById('purchasePrice').value = p.pp || "";
+                document.getElementById('price').value = p.price;
+                document.getElementById('unit').value = p.unit || "kg";
+                document.getElementById('img').value = p.img || "";
+                if(p.img) {
+                    document.getElementById('img-preview').src = p.img;
+                    document.getElementById('img-preview-container').style.display = 'block';
+                }
+                document.getElementById('form-header').innerText = "Update Product";
+                document.getElementById('saveBtn').innerText = "UPDATE NOW ✓";
+            } else {
+                selectedID = null;
+                document.getElementById('form-header').innerText = "Add New Product";
+                document.getElementById('saveBtn').innerText = "SAVE NOW ✓";
+            }
         }
 
         async function saveProduct() {
@@ -254,7 +361,7 @@
                 unit: document.getElementById('unit').value,
                 img: document.getElementById('img').value
             };
-            if(!data.id || !data.en) return alert("Fill required fields!");
+            if(!data.id || !data.en || !data.price) { alert("ID, Name, and Price are required!"); return; }
             showLoader("Saving...");
             try {
                 await fetch(SHEET_API, { method: "POST", mode: "no-cors", body: JSON.stringify(data) });
@@ -264,70 +371,40 @@
             finally { hideLoader(); }
         }
 
-        // --- 4. PDF Generation (Your Original Feature) ---
-        function generatePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const canvas = document.getElementById('barcode-canvas');
-            let x = 10, y = 10;
-            const cardWidth = 60, cardHeight = 70, margin = 5;
-
-            showLoader("Generating PDF...");
-            allProducts.forEach((p, i) => {
-                doc.rect(x, y, cardWidth, cardHeight);
-                if (p.img) {
-                    try { doc.addImage(p.img, 'JPEG', x + 5, y + 5, 50, 30); } catch(e) {}
-                }
-                doc.setFontSize(10);
-                doc.text(p.en.substring(0, 20), x + 5, y + 42);
-                doc.text("Rs. " + p.price, x + 5, y + 47);
-                
-                try {
-                    JsBarcode(canvas, p.id, { format: "CODE128", height: 30, displayValue: true });
-                    const bImg = canvas.toDataURL("image/png");
-                    doc.addImage(bImg, 'PNG', x + 5, y + 50, 50, 15);
-                } catch(e) {}
-
-                x += cardWidth + margin;
-                if (x > 180) { x = 10; y += cardHeight + margin; }
-                if (y > 240 && i < allProducts.length - 1) { doc.addPage(); x = 10; y = 10; }
-            });
-            doc.save("Mart_Barcodes.pdf");
-            hideLoader();
+        function editProduct(id) {
+            checkExistingProduct(id);
+            document.getElementById('pID').value = id;
+            switchTab('add', document.querySelectorAll('.tab')[0]);
         }
 
-        // --- 5. Helper Functions ---
-        function checkExistingProduct(id) {
-            const p = allProducts.find(x => String(x.id) === String(id));
-            if (p) {
-                selectedID = p.id;
-                document.getElementById('enName').value = p.en;
-                document.getElementById('urName').value = p.ur || "";
-                document.getElementById('purchasePrice').value = p.pp || "";
-                document.getElementById('price').value = p.price;
-                document.getElementById('img').value = p.img || "";
-                document.getElementById('unit').value = p.unit || "kg";
-                if(p.img) { document.getElementById('img-preview').src = p.img; document.getElementById('img-preview-container').style.display='block'; }
-                document.getElementById('form-header').innerText = "Update Item";
-            } else {
-                selectedID = null;
-                document.getElementById('form-header').innerText = "New Item";
-            }
+        function deleteProduct(id) {
+            productToDelete = id;
+            const p = allProducts.find(x => x.id == id);
+            document.getElementById('delete-item-name').innerText = p ? p.en : id;
+            document.getElementById('delete-modal').style.display = 'flex';
         }
 
-        function editProduct(id) { checkExistingProduct(id); document.getElementById('pID').value = id; switchTab('add', document.querySelectorAll('.tab')[0]); }
-        
-        function deleteProduct(id) { productToDelete = id; document.getElementById('delete-item-name').innerText = id; document.getElementById('delete-modal').style.display = 'flex'; }
         function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; }
+
         async function confirmDeleteAction() {
-            closeDeleteModal(); showLoader("Deleting...");
-            try { await fetch(SHEET_API, { method: "POST", mode: "no-cors", body: JSON.stringify({action:"delete", id: productToDelete}) }); await syncData(); } catch(e) {}
+            closeDeleteModal();
+            showLoader("Deleting...");
+            try {
+                await fetch(SHEET_API, { method: "POST", mode: "no-cors", body: JSON.stringify({action:"delete", id: productToDelete}) });
+                await syncData();
+            } catch(e) { alert("Delete failed!"); }
             finally { hideLoader(); }
+        }
+
+        function filterList() {
+            const q = document.getElementById('listSearch').value.toLowerCase();
+            const filtered = allProducts.filter(p => p.en.toLowerCase().includes(q) || String(p.id).includes(q));
+            renderList(filtered);
         }
 
         function toggleScanner() {
             const div = document.getElementById('reader');
-            if(div.style.display === 'block') { scanner.clear(); div.style.display = 'none'; }
+            if(div.style.display === 'block') { if(scanner) scanner.clear(); div.style.display = 'none'; }
             else {
                 div.style.display = 'block';
                 scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
@@ -335,21 +412,17 @@
             }
         }
 
-        function filterList() {
-            const q = document.getElementById('listSearch').value.toLowerCase();
-            renderList(allProducts.filter(p => p.en.toLowerCase().includes(q) || String(p.id).includes(q)));
-        }
-
-        function switchTab(tab, el) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById('add-view').style.display = (tab === 'add') ? 'block' : 'none';
-            document.getElementById('list-view').style.display = (tab === 'list') ? 'block' : 'none';
-        }
-
         function showLoader(t) { document.getElementById('loading-text').innerText = t; document.getElementById('loading').style.display = 'flex'; }
         function hideLoader() { document.getElementById('loading').style.display = 'none'; }
-        function resetForm() { selectedID = null; ['pID', 'enName', 'urName', 'purchasePrice', 'price', 'img'].forEach(i => document.getElementById(i).value=""); document.getElementById('img-preview-container').style.display='none'; stopCamera(); }
+        
+        function resetForm() { 
+            selectedID = null; 
+            ['pID', 'enName', 'urName', 'purchasePrice', 'price', 'img'].forEach(i => document.getElementById(i).value=""); 
+            document.getElementById('img-preview-container').style.display = 'none';
+            document.getElementById('form-header').innerText = "Add New Product";
+            document.getElementById('saveBtn').innerText = "SAVE NOW ✓";
+            stopCamera();
+        }
 
         window.onload = initializePage;
     </script>
