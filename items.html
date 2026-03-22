@@ -327,7 +327,13 @@
             showLoader("Saving...");
             
             try {
-                await fetch(SHEET_API, { method: "POST", body: JSON.stringify(data) });
+                // FIXED: Added Headers & redirect settings for Google Apps Script to prevent CORS block
+                await fetch(SHEET_API, { 
+                    method: "POST", 
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(data),
+                    redirect: "follow"
+                });
                 resetForm();
                 await loadData();
             } catch(e) { alert("Failed to save."); }
@@ -379,16 +385,23 @@
             try {
                 // Send delete action to Google Sheet API
                 const data = { action: "delete", id: productToDelete };
-                await fetch(SHEET_API, { method: "POST", body: JSON.stringify(data) });
+                
+                // FIXED: Added Headers & redirect settings to solve "Failed to fetch/No internet" bug
+                await fetch(SHEET_API, { 
+                    method: "POST", 
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(data),
+                    redirect: "follow"
+                });
                 
                 // Immediately update local array for fast UI experience
-                allProducts = allProducts.filter(item => item.id != productToDelete);
+                allProducts = allProducts.filter(item => String(item.id) !== String(productToDelete));
                 localStorage.setItem('mart_data', JSON.stringify(allProducts));
                 
                 // Refresh list using existing filter logic to keep search intact
                 filterList();
             } catch(e) {
-                alert("Failed to delete. Please check your internet connection.");
+                alert("Failed to delete. Please check your internet connection or try again.");
             } finally {
                 hideLoader();
                 productToDelete = null;
