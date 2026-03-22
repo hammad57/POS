@@ -165,7 +165,7 @@
                         </div>
                         <div class="col-6">
                             <label class="small fw-bold text-danger">Expense Amount</label>
-                            <input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateLiveBalance()" onclick="handleExpenseClick()">
+                            <input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateLiveBalance()">
                         </div>
                         <div class="col-12">
                             <label class="small fw-bold">Transaction Remarks</label>
@@ -180,37 +180,6 @@
                         </div>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="confirmExpenseModal" tabindex="-1" style="z-index: 1060;">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-body text-center p-4">
-                <h6 class="mb-4">Would you like to add expense detail?</h6>
-                <div class="d-flex justify-content-center gap-3">
-                    <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal" onclick="setTimeout(window.openExpenseIframe, 400)">Yes</button>
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal" onclick="setTimeout(window.focusExpenseInput, 400)">No</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="iframeModal" tabindex="-1" style="z-index: 1060;">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content" style="height: 85vh;">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-primary">Expense Details (Shops Manager)</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="setTimeout(window.focusExpenseInput, 400)"></button>
-            </div>
-            <div class="modal-body p-3">
-                <iframe src="https://hammad57.github.io/POS/Shops_Manager.html" style="width: 100%; height: 100%; border: none; border-radius: 10px;"></iframe>
-            </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal" onclick="setTimeout(window.focusExpenseInput, 400)">Close</button>
             </div>
         </div>
     </div>
@@ -235,11 +204,6 @@
 
     const modalObj = new bootstrap.Modal(document.getElementById('entryModal'));
     const today = new Date().toISOString().split('T')[0];
-
-    // Naye variables Expense Dialogues ke liye
-    let expensePrompted = false;
-    let confirmModalObj = null;
-    let iframeModalObj = null;
 
     onValue(themeRef, (snap) => {
         const t = snap.val() || 'light';
@@ -338,29 +302,7 @@
         calculateLiveBalance();
     };
 
-    // --- NAYE FUNCTIONS EXPENSE DIALOGUE KE LIYE ---
-    window.handleExpenseClick = () => {
-        // Sirf pehli baar click karne par poochega
-        if (!expensePrompted) {
-            expensePrompted = true;
-            if (!confirmModalObj) confirmModalObj = new bootstrap.Modal(document.getElementById('confirmExpenseModal'));
-            confirmModalObj.show();
-        }
-    };
-
-    window.openExpenseIframe = () => {
-        if (!iframeModalObj) iframeModalObj = new bootstrap.Modal(document.getElementById('iframeModal'));
-        iframeModalObj.show();
-    };
-
-    window.focusExpenseInput = () => {
-        // Modal close hone k baad wapas amount likhne ke liye focus
-        document.getElementById('expenseInput').focus();
-    };
-    // ----------------------------------------------
-
     window.openModal = () => {
-        expensePrompted = false; // Naye entry pe flag reset kar diya
         document.getElementById('entryForm').reset();
         document.getElementById('editKey').value = "";
         document.getElementById('entryDate').value = today;
@@ -371,7 +313,6 @@
     };
 
     window.editEntry = (id) => {
-        expensePrompted = false; // Edit pe bhi flag reset
         const item = allData.find(i => i.id === id);
         if(!item) return;
         document.getElementById('editKey').value = item.id;
@@ -436,24 +377,7 @@
                 responsive: true, 
                 maintainAspectRatio: false,
                 plugins: { legend: { display: true } },
-                scales: { y: { beginAtZero: true } },
-                onClick: (e, activeEls) => {
-                    if (activeEls.length > 0) {
-                        const dataIndex = activeEls[0].index;
-                        const selectedDate = dates[dataIndex]; // Bar se exact date nikaali
-                        
-                        // Filters apply kiye
-                        filterStart = selectedDate;
-                        filterEnd = selectedDate;
-                        
-                        // Dates ko Date pickers mein show kar diya takay andaza ho jaye filter laga hua hai
-                        document.getElementById('fromDate').value = selectedDate;
-                        document.getElementById('toDate').value = selectedDate;
-                        
-                        // Table refresh kar diya
-                        refreshUI(); 
-                    }
-                }
+                scales: { y: { beginAtZero: true } }
             }
         });
     }
@@ -465,5 +389,11 @@
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    window.history.pushState(null, null, window.location.href);
+    window.onpopstate = function () {
+        window.location.href = "https://hammad57.github.io/POS/index.html";
+    };
+</script>
 </body>
 </html>
