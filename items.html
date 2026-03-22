@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hammad Mart - Manager (Barcode System)</title>
+    <title>Hammad Mart - Manager</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -11,29 +11,19 @@
         :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; --red: #ef4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding-bottom: 80px; }
         
-        #loading { 
-            position: fixed; 
-            bottom: 20px; 
-            right: 20px; 
-            background: var(--primary); 
-            color: white; 
-            padding: 12px 24px; 
-            border-radius: 12px; 
-            display: none; 
-            align-items: center; 
-            gap: 12px; 
-            z-index: 9999; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            border-left: 5px solid var(--accent);
-            animation: slideIn 0.3s ease-out;
-        }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        /* Sync UI Styles */
+        .sync-box { text-align: right; line-height: 1.2; }
+        #sync-btn { background: var(--accent); color: white; border: none; padding: 6px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 12px; margin-left: 10px; transition: 0.3s; }
+        #sync-btn:active { transform: scale(0.9); }
+        #sync-time { font-size: 9px; opacity: 0.7; display: block; margin-top: 2px; }
 
+        /* Existing Styles */
+        #loading { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; padding: 12px 24px; border-radius: 12px; display: none; align-items: center; gap: 12px; z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border-left: 5px solid var(--accent); }
         .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid var(--accent); border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .nav-bar { background: var(--primary); padding: 15px; color: white; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; }
-        .back-btn { color: white; text-decoration: none; font-size: 20px; font-weight: bold; }
+        .back-btn { color: white; text-decoration: none; font-size: 18px; font-weight: bold; }
         
         .tabs { display: flex; background: var(--primary); }
         .tab { flex: 1; padding: 15px; text-align: center; color: #94a3b8; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.3s; font-weight: bold; }
@@ -50,141 +40,80 @@
         .btn { padding: 14px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: white; width: 100%; margin-top: 10px; }
         .btn-secondary { background: #64748b; color: white; }
-        .btn:active { transform: scale(0.98); }
 
         .product-item { display: flex; align-items: center; padding: 15px; background: white; border-bottom: 1px solid #f1f5f9; gap: 12px; }
         .product-img { width: 50px; height: 50px; object-fit: contain; background: #f8fafc; border-radius: 8px; }
         .product-info { flex: 1; }
         .product-info h4 { margin: 0; color: #1e293b; font-size: 15px; }
-        .product-info p { margin: 2px 0; color: #64748b; font-size: 12px; }
         .price-tag { color: var(--accent); font-weight: 800; font-size: 14px; }
         
         .action-btns { display: flex; gap: 8px; }
-        .edit-btn { background: #3b82f6; color: white; padding: 8px; border-radius: 6px; border:none; font-size: 12px; cursor: pointer; }
-        .del-btn { background: var(--red); color: white; padding: 8px; border-radius: 6px; border:none; font-size: 12px; cursor: pointer; }
+        .edit-btn { background: #3b82f6; color: white; padding: 8px; border-radius: 6px; border:none; cursor: pointer; }
+        .del-btn { background: var(--red); color: white; padding: 8px; border-radius: 6px; border:none; cursor: pointer; }
 
         .search-box { position: sticky; top: 115px; z-index: 90; background: var(--light); padding: 10px 0; }
-        
         #reader { width: 100%; border-radius: 15px; overflow: hidden; display: none; margin-bottom: 15px; }
 
-        /* Camera UI */
-        #camera-preview { width: 100%; border-radius: 10px; display: none; margin-top: 10px; background: #000; }
-        #capture-btn { display: none; background: #ef4444; margin-top: 10px; }
-        #img-preview-container { margin-top: 10px; display: none; text-align: center; }
-        #img-preview-container img { max-width: 100px; border-radius: 8px; border: 2px solid var(--accent); }
-
-        /* Delete Confirmation Modal UI */
+        /* Delete Modal */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; }
-        .modal { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popIn 0.3s ease-out; }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .modal h3 { margin-top: 0; color: var(--primary); font-size: 18px; }
-        .modal p { color: #64748b; font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
-        .modal .item-name { color: var(--red); font-weight: bold; font-size: 16px; display: block; margin-top: 5px; }
+        .modal { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div id="loading">
-        <div class="spinner"></div>
-        <span id="loading-text">Processing...</span>
-    </div>
+    <div id="loading"><div class="spinner"></div><span id="loading-text">Processing...</span></div>
 
     <div id="delete-modal" class="modal-overlay">
         <div class="modal">
             <h3>Confirm Deletion</h3>
-            <p>Are you sure you want to delete this product? <span class="item-name" id="delete-item-name"></span></p>
+            <p>Delete <span id="delete-item-name" style="font-weight:bold; color:var(--red);"></span>?</p>
             <div class="btn-grid">
-                <button class="btn btn-secondary" style="margin-top:0;" onclick="closeDeleteModal()">Cancel</button>
-                <button class="btn" style="background: var(--red); color: white; margin-top:0;" onclick="confirmDeleteAction()">Yes, Delete</button>
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn" style="background: var(--red); color: white;" onclick="confirmDeleteAction()">Delete</button>
             </div>
         </div>
     </div>
 
     <div class="nav-bar">
         <a href="index.html" class="back-btn">← Hammad Mart</a>
-        <div style="font-size: 12px; opacity: 0.8;" id="sync-status">Mode: Online</div>
+        <div class="sync-box">
+            <span id="sync-status" style="font-size:11px; font-weight:bold;">Offline Mode</span>
+            <button id="sync-btn" onclick="syncData()">🔄 Sync</button>
+            <span id="sync-time">Last Sync: Never</span>
+        </div>
     </div>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('add')">Add / Edit</div>
-        <div class="tab" onclick="switchTab('list')">All Products</div>
+        <div class="tab active" onclick="switchTab('add', this)">Add / Edit</div>
+        <div class="tab" onclick="switchTab('list', this)">All Products</div>
     </div>
 
     <div id="add-view" class="container">
         <div class="card">
-            <h3 id="form-header" style="margin-top:0; color: var(--primary);">Add New Product</h3>
-            
+            <h3 id="form-header" style="margin:0 0 15px 0; color: var(--primary);">Add New Product</h3>
             <button class="btn btn-secondary" style="width:100%; margin-bottom:15px;" onclick="toggleScanner()">📷 Scan Barcode</button>
             <div id="reader"></div>
 
-            <div class="form-group">
-                <label>Product ID (Barcode)</label>
-                <input type="text" id="pID" placeholder="Scan or Enter ID" oninput="checkExistingProduct(this.value)">
-            </div>
-
-            <div class="form-group">
-                <label>English Name</label>
-                <input type="text" id="enName" placeholder="e.g. Sugar">
-            </div>
-
-            <div class="form-group">
-                <label>Urdu Name</label>
-                <input type="text" id="urName" placeholder="مثال: چینی" dir="rtl">
-            </div>
-
+            <div class="form-group"><label>Product ID (Barcode)</label><input type="text" id="pID" oninput="checkExistingProduct(this.value)"></div>
+            <div class="form-group"><label>English Name</label><input type="text" id="enName"></div>
+            <div class="form-group"><label>Urdu Name</label><input type="text" id="urName" dir="rtl"></div>
             <div class="btn-grid">
-                <div class="form-group">
-                    <label>Purchase Price</label>
-                    <input type="number" id="purchasePrice" placeholder="0.00">
-                </div>
-                <div class="form-group">
-                    <label>Sale Price</label>
-                    <input type="number" id="price" placeholder="0.00">
-                </div>
+                <div class="form-group"><label>Purchase Price</label><input type="number" id="purchasePrice"></div>
+                <div class="form-group"><label>Sale Price</label><input type="number" id="price"></div>
             </div>
-
-            <div class="form-group">
-                <label>Unit</label>
-                <select id="unit">
-                    <option value="kg">KG</option>
-                    <option value="piece">Piece</option>
-                    <option value="pack">Pack</option>
-                    <option value="ltr">Litre</option>
-                </select>
+            <div class="form-group"><label>Unit</label>
+                <select id="unit"><option value="kg">KG</option><option value="piece">Piece</option><option value="pack">Pack</option></select>
             </div>
-
-            <div class="form-group">
-                <label>Product Image</label>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="img" placeholder="URL or Captured Data">
-                    <button class="btn btn-secondary" onclick="startCamera()" style="white-space:nowrap; padding: 10px;">📷 Take Photo</button>
-                </div>
-                
-                <video id="camera-preview" autoplay playsinline></video>
-                <button id="capture-btn" class="btn btn-primary" onclick="capturePhoto()">SURE! CAPTURE NOW 📸</button>
-                <canvas id="photo-canvas" style="display:none;"></canvas>
-                
-                <div id="img-preview-container">
-                    <p style="font-size:11px; margin:5px 0;">Preview:</p>
-                    <img id="img-preview" src="">
-                </div>
-            </div>
+            <div class="form-group"><label>Image URL / Data</label><input type="text" id="img"></div>
 
             <button class="btn btn-primary" id="saveBtn" onclick="saveProduct()">SAVE PRODUCT ✓</button>
-            <button class="btn btn-secondary" style="width:100%; margin-top:10px; background:#e2e8f0; color:#475569;" onclick="resetForm()">CLEAR FORM</button>
+            <button class="btn btn-secondary" style="width:100%; margin-top:10px;" onclick="resetForm()">CLEAR</button>
         </div>
     </div>
 
     <div id="list-view" class="container" style="display:none;">
-        <div class="search-box">
-            <input type="text" id="listSearch" placeholder="Search by name or ID..." oninput="filterList()">
-        </div>
+        <div class="search-box"><input type="text" id="listSearch" placeholder="Search products..." oninput="filterList()"></div>
         <div class="card" style="padding:0; overflow:hidden;" id="product-list"></div>
-        
-        <div style="margin-top:20px;">
-            <button class="btn btn-primary" style="background:#3b82f6; width:100%;" onclick="generateBarcodePDF()">Download Barcode Catalog PDF 🖨️</button>
-            <canvas id="barcodeCanvasHelper" style="display:none;"></canvas>
-        </div>
     </div>
 
     <script>
@@ -192,50 +121,79 @@
         let allProducts = [];
         let selectedID = null;
         let scanner = null;
-        let stream = null;
-        let productToDelete = null; 
+        let productToDelete = null;
 
-        // --- Camera Management ---
-        async function startCamera() {
-            const video = document.getElementById('camera-preview');
-            const btn = document.getElementById('capture-btn');
+        // --- Core Sync Logic ---
+        function initializePage() {
+            const localData = localStorage.getItem('mart_data');
+            const lastSync = localStorage.getItem('mart_last_sync');
+            
+            if (localData) {
+                allProducts = JSON.parse(localData);
+                renderList(allProducts);
+                if (lastSync) document.getElementById('sync-time').innerText = "Last Sync: " + lastSync;
+                document.getElementById('sync-status').innerText = "Storage Mode";
+            }
+        }
+
+        async function syncData() {
+            showLoader("Syncing with Google Sheets...");
+            const btn = document.getElementById('sync-btn');
+            btn.disabled = true;
+            
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-                video.srcObject = stream;
-                video.style.display = 'block';
-                btn.style.display = 'block';
-            } catch (err) { alert("Camera Error: " + err); }
+                const res = await fetch(SHEET_API + "?action=read");
+                const data = await res.json();
+                
+                allProducts = data;
+                const now = new Date().toLocaleString();
+                
+                localStorage.setItem('mart_data', JSON.stringify(data));
+                localStorage.setItem('mart_last_sync', now);
+                
+                renderList(allProducts);
+                document.getElementById('sync-time').innerText = "Last Sync: " + now;
+                document.getElementById('sync-status').innerText = "Sync Success";
+            } catch(e) {
+                alert("Internet Error! Check connection.");
+            } finally {
+                hideLoader();
+                btn.disabled = false;
+            }
         }
 
-        function capturePhoto() {
-            const video = document.getElementById('camera-preview');
-            const canvas = document.getElementById('photo-canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
-            document.getElementById('img').value = dataUrl;
-            document.getElementById('img-preview').src = dataUrl;
-            document.getElementById('img-preview-container').style.display = 'block';
-            stopCamera();
-        }
-
-        function stopCamera() {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            document.getElementById('camera-preview').style.display = 'none';
-            document.getElementById('capture-btn').style.display = 'none';
-        }
-
-        // --- Auto-Load Feature ---
-        function checkExistingProduct(id) {
-            if (!id) {
-                selectedID = null;
-                document.getElementById('form-header').innerText = "Add New Product";
-                document.getElementById('saveBtn').innerText = "SAVE PRODUCT ✓";
+        // --- UI Functions ---
+        function renderList(data) {
+            const listDiv = document.getElementById('product-list');
+            if (data.length === 0) {
+                listDiv.innerHTML = '<p style="padding:20px; text-align:center; color:#94a3b8;">No products found. Please Sync.</p>';
                 return;
             }
+            listDiv.innerHTML = data.map(p => `
+                <div class="product-item">
+                    <img class="product-img" src="${p.img || 'https://via.placeholder.com/50'}">
+                    <div class="product-info">
+                        <h4>${p.en}</h4>
+                        <span class="price-tag">Rs. ${p.price}</span>
+                        <p style="font-size:10px; margin:0;">ID: ${p.id}</p>
+                    </div>
+                    <div class="action-btns">
+                        <button class="edit-btn" onclick="editProduct('${p.id}')">✏️</button>
+                        <button class="del-btn" onclick="deleteProduct('${p.id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-            const p = allProducts.find(item => item.id == id);
+        function switchTab(tab, el) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('add-view').style.display = (tab === 'add') ? 'block' : 'none';
+            document.getElementById('list-view').style.display = (tab === 'list') ? 'block' : 'none';
+        }
+
+        function checkExistingProduct(id) {
+            const p = allProducts.find(item => String(item.id) === String(id));
             if (p) {
                 selectedID = p.id;
                 document.getElementById('enName').value = p.en;
@@ -244,72 +202,13 @@
                 document.getElementById('price').value = p.price;
                 document.getElementById('unit').value = p.unit || "kg";
                 document.getElementById('img').value = p.img || "";
-                
-                if (p.img) {
-                    document.getElementById('img-preview').src = p.img;
-                    document.getElementById('img-preview-container').style.display = 'block';
-                }
-                document.getElementById('form-header').innerText = "Update Product (Existing Found)";
+                document.getElementById('form-header').innerText = "Update Product";
                 document.getElementById('saveBtn').innerText = "UPDATE PRODUCT ✓";
             } else {
                 selectedID = null;
                 document.getElementById('form-header').innerText = "Add New Product";
                 document.getElementById('saveBtn').innerText = "SAVE PRODUCT ✓";
             }
-        }
-
-        // --- Basic UI Logic ---
-        function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            if(event && event.currentTarget) event.currentTarget.classList.add('active');
-            if(tab === 'add') {
-                document.getElementById('add-view').style.display = 'block';
-                document.getElementById('list-view').style.display = 'none';
-            } else {
-                document.getElementById('add-view').style.display = 'none';
-                document.getElementById('list-view').style.display = 'block';
-                loadData();
-            }
-        }
-
-        function showLoader(text) {
-            document.getElementById('loading-text').innerText = text;
-            document.getElementById('loading').style.display = 'flex';
-        }
-        function hideLoader() { document.getElementById('loading').style.display = 'none'; }
-
-        async function loadData() {
-            showLoader("Loading items...");
-            try {
-                const res = await fetch(SHEET_API + "?action=read");
-                allProducts = await res.json();
-                localStorage.setItem('mart_data', JSON.stringify(allProducts));
-                renderList(allProducts);
-            } catch(e) {
-                const local = localStorage.getItem('mart_data');
-                if(local) {
-                    allProducts = JSON.parse(local);
-                    renderList(allProducts);
-                }
-            } finally { hideLoader(); }
-        }
-
-        function renderList(data) {
-            const listDiv = document.getElementById('product-list');
-            listDiv.innerHTML = data.map(p => `
-                <div class="product-item">
-                    <img class="product-img" src="${p.img || 'https://via.placeholder.com/50'}">
-                    <div class="product-info">
-                        <h4>${p.en}</h4>
-                        <span class="price-tag">Rs. ${p.price}</span>
-                        <p style="font-size:10px;">ID: ${p.id}</p>
-                    </div>
-                    <div class="action-btns">
-                        <button class="edit-btn" onclick="editProduct('${p.id}')">✏️</button>
-                        <button class="del-btn" onclick="deleteProduct('${p.id}')">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
         }
 
         async function saveProduct() {
@@ -323,180 +222,62 @@
                 unit: document.getElementById('unit').value,
                 img: document.getElementById('img').value
             };
-            if(!data.id || !data.en || !data.price) { alert("ID, Name, and Price are required!"); return; }
+            if(!data.id || !data.en || !data.price) { alert("Missing fields!"); return; }
             showLoader("Saving...");
-            
             try {
-                // FIXED: mode: "no-cors" added to prevent browser block
-                await fetch(SHEET_API, { 
-                    method: "POST", 
-                    mode: "no-cors",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(data) 
-                });
+                await fetch(SHEET_API, { method: "POST", mode: "no-cors", body: JSON.stringify(data) });
                 resetForm();
-                await loadData();
-            } catch(e) { alert("Failed to save. Please check your internet connection."); }
+                await syncData(); // Auto sync after save
+            } catch(e) { alert("Save failed!"); }
             finally { hideLoader(); }
         }
 
         function editProduct(id) {
-            const p = allProducts.find(item => item.id == id);
-            if(p) {
-                selectedID = p.id;
-                document.getElementById('pID').value = p.id;
-                document.getElementById('enName').value = p.en;
-                document.getElementById('urName').value = p.ur || "";
-                document.getElementById('purchasePrice').value = p.pp || "";
-                document.getElementById('price').value = p.price;
-                document.getElementById('unit').value = p.unit || "kg";
-                document.getElementById('img').value = p.img || "";
-                if(p.img) {
-                    document.getElementById('img-preview').src = p.img;
-                    document.getElementById('img-preview-container').style.display = 'block';
-                }
-                document.getElementById('form-header').innerText = "Update Product";
-                document.getElementById('saveBtn').innerText = "UPDATE PRODUCT ✓";
-                switchTab('add');
-            }
+            checkExistingProduct(id);
+            document.getElementById('pID').value = id;
+            switchTab('add', document.querySelectorAll('.tab')[0]);
         }
 
-        // --- Professional Delete System ---
         function deleteProduct(id) {
-            const p = allProducts.find(item => item.id == id);
-            if(p) {
-                productToDelete = id;
-                document.getElementById('delete-item-name').innerText = p.en + " (ID: " + p.id + ")";
-                document.getElementById('delete-modal').style.display = 'flex';
-            }
+            productToDelete = id;
+            const p = allProducts.find(x => x.id == id);
+            document.getElementById('delete-item-name').innerText = p ? p.en : id;
+            document.getElementById('delete-modal').style.display = 'flex';
         }
 
-        function closeDeleteModal() {
-            productToDelete = null;
-            document.getElementById('delete-modal').style.display = 'none';
-        }
+        function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; }
 
         async function confirmDeleteAction() {
-            if(!productToDelete) return;
-            
             closeDeleteModal();
-            showLoader("Deleting item...");
-            
+            showLoader("Deleting...");
             try {
-                const data = { action: "delete", id: productToDelete };
-                
-                // FIXED: mode: "no-cors" added to prevent fake network errors
-                await fetch(SHEET_API, { 
-                    method: "POST", 
-                    mode: "no-cors",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(data) 
-                });
-                
-                // Immediately update local array for fast UI experience
-                allProducts = allProducts.filter(item => String(item.id) !== String(productToDelete));
-                localStorage.setItem('mart_data', JSON.stringify(allProducts));
-                
-                // Refresh list using existing filter logic to keep search intact
-                filterList();
-            } catch(e) {
-                alert("Failed to delete. Please check your internet connection or try again.");
-                console.error(e);
-            } finally {
-                hideLoader();
-                productToDelete = null;
-            }
-        }
-
-        function resetForm() {
-            selectedID = null;
-            ['pID', 'enName', 'urName', 'purchasePrice', 'price', 'img'].forEach(id => document.getElementById(id).value = "");
-            document.getElementById('img-preview-container').style.display = 'none';
-            document.getElementById('form-header').innerText = "Add New Product";
-            document.getElementById('saveBtn').innerText = "SAVE PRODUCT ✓";
-            stopCamera();
+                await fetch(SHEET_API, { method: "POST", mode: "no-cors", body: JSON.stringify({action:"delete", id: productToDelete}) });
+                await syncData();
+            } catch(e) { alert("Delete failed!"); }
+            finally { hideLoader(); }
         }
 
         function filterList() {
             const q = document.getElementById('listSearch').value.toLowerCase();
-            const filtered = allProducts.filter(p => p.en.toLowerCase().includes(q) || p.id.toString().includes(q));
+            const filtered = allProducts.filter(p => p.en.toLowerCase().includes(q) || String(p.id).includes(q));
             renderList(filtered);
         }
 
         function toggleScanner() {
             const div = document.getElementById('reader');
-            if(div.style.display === 'block') {
-                scanner.clear(); div.style.display = 'none';
-            } else {
+            if(div.style.display === 'block') { scanner.clear(); div.style.display = 'none'; }
+            else {
                 div.style.display = 'block';
                 scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-                scanner.render((id) => { 
-                    document.getElementById('pID').value = id; 
-                    checkExistingProduct(id); // Auto-load data after scan
-                    toggleScanner(); 
-                });
+                scanner.render((id) => { document.getElementById('pID').value = id; checkExistingProduct(id); toggleScanner(); });
             }
         }
 
-        async function generateBarcodePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const canvas = document.getElementById('barcodeCanvasHelper');
-            
-            showLoader("Generating Barcodes...");
+        function showLoader(t) { document.getElementById('loading-text').innerText = t; document.getElementById('loading').style.display = 'flex'; }
+        function hideLoader() { document.getElementById('loading').style.display = 'none'; }
+        function resetForm() { selectedID = null; ['pID', 'enName', 'urName', 'purchasePrice', 'price', 'img'].forEach(i => document.getElementById(i).value=""); }
 
-            let x = 10;
-            let y = 15;
-            const cardWidth = 60;
-            const cardHeight = 70; 
-            const margin = 5;
-
-            for (let i = 0; i < allProducts.length; i++) {
-                const p = allProducts[i];
-                doc.setDrawColor(220);
-                doc.rect(x, y, cardWidth, cardHeight);
-
-                if (p.img) {
-                    try {
-                        doc.addImage(p.img, 'JPEG', x + 5, y + 5, 50, 30);
-                    } catch(e) { doc.text("[No Image]", x + 20, y + 20); }
-                }
-
-                doc.setFontSize(10);
-                doc.setFont(undefined, 'bold');
-                doc.setTextColor(40);
-                doc.text(p.en.substring(0, 25), x + 5, y + 42);
-
-                try {
-                    JsBarcode(canvas, p.id, {
-                        format: "CODE128",
-                        width: 2,
-                        height: 40,
-                        displayValue: true,
-                        fontSize: 14
-                    });
-                    const barcodeImg = canvas.toDataURL("image/png");
-                    doc.addImage(barcodeImg, 'PNG', x + 5, y + 45, 50, 20);
-                } catch(err) { console.error(err); }
-
-                x += cardWidth + margin;
-                if (x > 180) {
-                    x = 10;
-                    y += cardHeight + margin;
-                }
-
-                if (y > 240 && i < allProducts.length - 1) {
-                    doc.addPage();
-                    y = 15;
-                    x = 10;
-                }
-            }
-
-            doc.save("Hammad_Mart_Barcodes.pdf");
-            hideLoader();
-        }
-
-        window.onload = loadData;
+        window.onload = initializePage;
     </script>
 </body>
 </html>
