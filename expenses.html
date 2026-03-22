@@ -71,8 +71,10 @@
         .modal-content { background: var(--container-bg); border-radius: 25px; border: 1px solid var(--border-color); color: var(--text-color); }
 
         /* Calculator Styles */
-        .calc-btn-trigger { cursor: pointer; color: #0d6efd; font-size: 1.2rem; transition: 0.3s; }
+        .calc-btn-trigger { cursor: pointer; color: #0d6efd; font-size: 1.3rem; transition: 0.3s; margin-left: 10px; }
         .calc-btn-trigger:hover { transform: scale(1.2); color: #0056b3; }
+        .sys-calc-btn { color: #6c757d; }
+        .sys-calc-btn:hover { color: #343a40; }
         
         #calculatorModal .modal-content {
             background: rgba(255, 255, 255, 0.1);
@@ -107,9 +109,33 @@
         .btn-calc:hover { background: rgba(255, 255, 255, 0.25); }
         .btn-op { background: rgba(255, 159, 67, 0.3); }
         .btn-eq { background: #0d6efd; grid-column: span 2; }
+
+        .top-home-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #4f46e5, #3b82f6);
+            color: #ffffff !important;
+            text-decoration: none !important;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            z-index: 9999;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .top-home-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6); background: linear-gradient(135deg, #4338ca, #2563eb); color: #ffffff !important; }
+        .top-home-btn svg { width: 18px; height: 18px; }
     </style>
 </head>
 <body>
+
 <a href="https://hammad57.github.io/POS/index.html" class="top-home-btn" title="Go to Dashboard">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -117,32 +143,6 @@
     </svg>
     Home
 </a>
-
-<style>
-    .top-home-btn {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        background: linear-gradient(135deg, #4f46e5, #3b82f6);
-        color: #ffffff !important;
-        text-decoration: none !important;
-        padding: 10px 20px;
-        border-radius: 50px;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        font-weight: 600;
-        font-size: 15px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-        z-index: 9999;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    .top-home-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6); background: linear-gradient(135deg, #4338ca, #2563eb); color: #ffffff !important; }
-    .top-home-btn svg { width: 18px; height: 18px; }
-    @media (max-width: 768px) { .top-home-btn { top: 15px; left: 15px; padding: 8px 16px; font-size: 14px; } }
-</style>
 
 <button class="fab-add" onclick="openModal()"><i class="bi bi-plus-lg"></i></button>
 
@@ -213,7 +213,10 @@
             <div class="modal-header border-0">
                 <div class="d-flex justify-content-between w-100 align-items-center">
                     <h5 class="modal-title fw-bold m-0"><i class="bi bi-plus-circle-fill me-2"></i>New Transaction</h5>
-                    <i class="bi bi-calculator calc-btn-trigger me-3" onclick="openCalculator()" title="Open Calculator"></i>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-laptop calc-btn-trigger sys-calc-btn" onclick="openSystemCalculator()" title="Open Device Calculator"></i>
+                        <i class="bi bi-calculator calc-btn-trigger" onclick="openCalculator()" title="Open Built-in Calculator"></i>
+                    </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -259,11 +262,11 @@
     </div>
 </div>
 
-<div class="modal fade" id="calculatorModal" tabindex="-1" data-bs-backdrop="static">
+<div class="modal fade" id="calculatorModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header border-0 pb-0">
-                <h6 class="text-white small fw-bold opacity-75">3D CALCULATOR</h6>
+                <h6 class="text-white small fw-bold opacity-75">SMART CALCULATOR</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -273,22 +276,18 @@
                     <button class="btn-calc btn-op" onclick="backspaceCalc()">⌫</button>
                     <button class="btn-calc btn-op" onclick="pressCalc('/')">÷</button>
                     <button class="btn-calc btn-op" onclick="pressCalc('*')">×</button>
-                    
                     <button class="btn-calc" onclick="pressCalc('7')">7</button>
                     <button class="btn-calc" onclick="pressCalc('8')">8</button>
                     <button class="btn-calc" onclick="pressCalc('9')">9</button>
                     <button class="btn-calc btn-op" onclick="pressCalc('-')">-</button>
-                    
                     <button class="btn-calc" onclick="pressCalc('4')">4</button>
                     <button class="btn-calc" onclick="pressCalc('5')">5</button>
                     <button class="btn-calc" onclick="pressCalc('6')">6</button>
                     <button class="btn-calc btn-op" onclick="pressCalc('+')">+</button>
-                    
                     <button class="btn-calc" onclick="pressCalc('1')">1</button>
                     <button class="btn-calc" onclick="pressCalc('2')">2</button>
                     <button class="btn-calc" onclick="pressCalc('3')">3</button>
                     <button class="btn-calc btn-eq" onclick="solveCalc()">=</button>
-                    
                     <button class="btn-calc" style="grid-column: span 2;" onclick="pressCalc('0')">0</button>
                     <button class="btn-calc" onclick="pressCalc('.')">.</button>
                 </div>
@@ -318,7 +317,12 @@
     const calcModalObj = new bootstrap.Modal(document.getElementById('calculatorModal'));
     const today = new Date().toISOString().split('T')[0];
 
-    // Calculator Functions
+    // System Calculator Launcher
+    window.openSystemCalculator = () => {
+        window.location.href = "calc:";
+    };
+
+    // In-App Calculator Logic
     let calcExpression = "";
     window.openCalculator = () => calcModalObj.show();
     window.pressCalc = (val) => {
@@ -359,7 +363,6 @@
     window.refreshUI = function() {
         const body = document.getElementById('summaryTableBody');
         body.innerHTML = '';
-        
         const grouped = {};
         allData.forEach(t => {
             if (!grouped[t.date]) { grouped[t.date] = { inc: 0, exp: 0, items: [] }; }
@@ -401,7 +404,6 @@
             }
             runningBalance = closing;
         });
-
         globalLastBalance = runningBalance;
         updateDashboard(runningBalance);
         initChart();
@@ -470,7 +472,6 @@
         const inc = parseFloat(document.getElementById('incomeInput').value) || 0;
         const exp = parseFloat(document.getElementById('expenseInput').value) || 0;
         const rem = document.getElementById('entryRemarks').value || "N/A";
-
         if(key) {
             const type = inc > 0 ? 'Income' : 'Expense';
             const amount = inc > 0 ? inc : exp;
@@ -484,7 +485,6 @@
 
     window.applyFilter = () => { filterStart = document.getElementById('fromDate').value; filterEnd = document.getElementById('toDate').value; refreshUI(); };
     window.resetFilter = () => { filterStart = null; filterEnd = null; refreshUI(); };
-
     window.toggleChartType = (type) => { chartType = type; initChart(); };
 
     function initChart() {
