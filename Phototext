@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details Extractor</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        /* Modern Dark Mode & Glassmorphism Styling */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #0f172a; 
+            color: #f8fafc; 
+            padding: 20px; 
+            display: flex;
+            justify-content: center;
+        }
+        .container { 
+            width: 100%;
+            max-width: 600px; 
+            background: rgba(30, 41, 59, 0.7); 
+            padding: 25px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+        h2 { text-align: center; color: #38bdf8; margin-top: 0; }
+        .input-group { text-align: center; margin-bottom: 25px; }
+        input[type="file"] { margin: 10px 0; color: #cbd5e1; }
+        .box { 
+            background: #1e293b; 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin-bottom: 15px; 
+            position: relative; 
+            border: 1px solid #334155; 
+        }
+        .box label { 
+            font-weight: 600; 
+            color: #38bdf8; 
+            display: block; 
+            margin-bottom: 8px; 
+            font-size: 14px;
+        }
+        textarea, input[type="text"] { 
+            width: calc(100% - 80px); 
+            background: transparent; 
+            border: none; 
+            color: #f8fafc; 
+            font-size: 15px; 
+            outline: none; 
+            resize: none; 
+            font-family: inherit;
+        }
+        textarea { height: 120px; width: 100%; margin-top: 10px; line-height: 1.5; }
+        .copy-btn { 
+            position: absolute; 
+            right: 15px; 
+            top: 15px; 
+            background: #0284c7; 
+            border: none; 
+            color: white; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .copy-btn:hover { background: #38bdf8; color: #0f172a; }
+        #status { text-align: center; color: #fde047; font-weight: 500; font-size: 14px; }
+        .loader { display: none; margin: 10px auto; border: 4px solid #334155; border-top: 4px solid #38bdf8; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Product Extractor</h2>
+        
+        <div class="input-group">
+            <input type="file" id="imageInput" accept="image/*">
+            <div class="loader" id="loader"></div>
+            <p id="status">Tasweer upload karein data nikalne ke liye...</p>
+        </div>
+
+        <div class="box">
+            <label>Price</label>
+            <input type="text" id="priceBox" readonly>
+            <button class="copy-btn" onclick="copyText('priceBox')">Copy</button>
+        </div>
+
+        <div class="box">
+            <label>Description Details</label>
+            <button class="copy-btn" onclick="copyText('descBox')">Copy</button>
+            <textarea id="descBox" readonly></textarea>
+        </div>
+
+        <div class="box">
+            <label>Product Code</label>
+            <input type="text" id="codeBox" readonly>
+            <button class="copy-btn" onclick="copyText('codeBox')">Copy</button>
+        </div>
+
+        <div class="box">
+            <label>Size</label>
+            <input type="text" id="sizeBox" readonly>
+            <button class="copy-btn" onclick="copyText('sizeBox')">Copy</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // UI Updates during scanning
+            document.getElementById('status').innerText = "Tasweer scan ho rahi hai, baraye meharbani intezar karein...";
+            document.getElementById('status').style.color = "#fde047";
+            document.getElementById('loader').style.display = "block";
+            
+            // Clear old values
+            document.getElementById('priceBox').value = "";
+            document.getElementById('codeBox').value = "";
+            document.getElementById('sizeBox').value = "";
+            document.getElementById('descBox').value = "";
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                Tesseract.recognize(
+                    event.target.result,
+                    'eng',
+                    { logger: m => console.log(m) } // Check browser console for progress
+                ).then(({ data: { text } }) => {
+                    document.getElementById('status').innerText = "Data mukammal taur par nikal aya hai!";
+                    document.getElementById('status').style.color = "#4ade80";
+                    document.getElementById('loader').style.display = "none";
+                    parseText(text);
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function parseText(text) {
+            // Regex to find the Price (e.g., Rs. 3,530)
+            let priceMatch = text.match(/(Rs\.?\s*[0-9,]+)/i);
+            document.getElementById('priceBox').value = priceMatch ? priceMatch[1] : 'Nahi mila';
+
+            // Regex to find the Product Code
+            let codeMatch = text.match(/Product Code:\s*([A-Z0-9]+)/i);
+            document.getElementById('codeBox').value = codeMatch ? codeMatch[1] : 'Nahi mila';
+
+            // Regex to find the Size
+            let sizeMatch = text.match(/Size\s*:\s*([A-Za-z]+)/i);
+            document.getElementById('sizeBox').value = sizeMatch ? sizeMatch[1] : 'Nahi mila';
+
+            // Clean up and extract Description (Bullet points)
+            let lines = text.split('\n');
+            let descLines = [];
+            
+            for (let line of lines) {
+                line = line.trim();
+                // Filter out empty lines, price, code, size, and notes from description
+                if (line.length > 3 && !line.match(/Rs\./i) && !line.match(/Product Code/i) && !line.match(/Size\s*:/i) && !line.match(/Note:/i)) {
+                    // Clean up OCR bullet artifacts
+                    line = line.replace(/^[•*-\.]\s*/, '');
+                    // Add a clean bullet point
+                    descLines.push('• ' + line);
+                }
+            }
+            document.getElementById('descBox').value = descLines.join('\n');
+        }
+
+        // Copy functionality
+        function copyText(elementId) {
+            let copyElement = document.getElementById(elementId);
+            
+            // Select and copy text
+            copyElement.select();
+            copyElement.setSelectionRange(0, 99999); // For mobile devices
+            navigator.clipboard.writeText(copyElement.value).then(() => {
+                // Change button text temporarily to show success
+                let btn = copyElement.parentElement.querySelector('.copy-btn');
+                let originalText = btn.innerText;
+                btn.innerText = "Copied!";
+                btn.style.background = "#4ade80";
+                btn.style.color = "#0f172a";
+                
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = "#0284c7";
+                    btn.style.color = "white";
+                }, 1500);
+            });
+        }
+    </script>
+</body>
+</html>
