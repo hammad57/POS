@@ -3,237 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details Extractor</title>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <title>Link Data Extractor</title>
     <style>
-        /* Modern Dark Mode & Glassmorphism Styling */
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Segoe UI', sans-serif; 
             background-color: #0f172a; 
             color: #f8fafc; 
             padding: 20px; 
-            display: flex;
-            justify-content: center;
+            display: flex; justify-content: center; 
         }
         .container { 
-            width: 100%;
-            max-width: 600px; 
-            background: rgba(30, 41, 59, 0.7); 
-            padding: 25px; 
-            border-radius: 15px; 
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); 
-            backdrop-filter: blur(10px); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
+            width: 100%; max-width: 600px; 
+            background: rgba(30, 41, 59, 0.8); 
+            padding: 25px; border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        h2 { text-align: center; color: #38bdf8; margin-top: 0; }
-        .input-group { text-align: center; margin-bottom: 25px; }
-        input[type="file"] { margin: 10px 0; color: #cbd5e1; font-size: 15px; }
+        h2 { text-align: center; color: #38bdf8; margin-bottom: 20px; }
         
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input[type="text"]#urlInput { 
+            flex: 1; padding: 12px; border-radius: 8px; 
+            border: 1px solid #334155; background: #1e293b; color: white;
+        }
+        button#fetchBtn { 
+            padding: 10px 20px; background: #38bdf8; border: none; 
+            border-radius: 8px; color: #0f172a; font-weight: bold; cursor: pointer;
+        }
+
         .box { 
-            background: #1e293b; 
-            padding: 15px; 
-            border-radius: 10px; 
-            margin-bottom: 15px; 
-            position: relative; 
-            border: 1px solid #334155; 
-            transition: all 0.3s ease;
+            background: #1e293b; padding: 15px; border-radius: 10px; 
+            margin-bottom: 15px; position: relative; border: 1px solid #334155; 
         }
-        .box:focus-within {
-            border-color: #38bdf8;
-            box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
-        }
-        .box label { 
-            font-weight: 600; 
-            color: #38bdf8; 
-            display: block; 
-            margin-bottom: 8px; 
-            font-size: 14px;
-        }
-        textarea, input[type="text"] { 
-            width: calc(100% - 80px); 
-            background: transparent; 
-            border: none; 
-            color: #f8fafc; 
-            font-size: 15px; 
-            outline: none; 
-            resize: none; 
-            font-family: inherit;
-        }
-        textarea { height: 120px; width: 100%; margin-top: 10px; line-height: 1.6; }
+        .box label { font-weight: 600; color: #38bdf8; display: block; margin-bottom: 8px; font-size: 13px; }
         
+        /* Readonly inputs taake keyboard open na ho */
+        .display-input { 
+            width: calc(100% - 80px); background: transparent; border: none; 
+            color: #f8fafc; font-size: 15px; outline: none; cursor: pointer;
+        }
+        textarea.display-input { width: 100%; height: 80px; margin-top: 5px; cursor: pointer; }
+
         .copy-btn { 
-            position: absolute; 
-            right: 15px; 
-            top: 15px; 
-            background: #0284c7; 
-            border: none; 
-            color: white; 
-            padding: 6px 12px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            transition: 0.3s; 
-            font-size: 12px;
-            font-weight: bold;
+            position: absolute; right: 10px; top: 10px; 
+            background: #0284c7; border: none; color: white; 
+            padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 11px;
         }
-        .copy-btn:hover { background: #38bdf8; color: #0f172a; }
-        
-        #status { text-align: center; color: #fde047; font-weight: 500; font-size: 14px; margin-top: 10px; }
+
+        #status { text-align: center; font-size: 14px; margin-bottom: 10px; }
         .loader { 
-            display: none; 
-            margin: 10px auto; 
-            border: 4px solid #334155; 
-            border-top: 4px solid #38bdf8; 
-            border-radius: 50%; 
-            width: 30px; 
-            height: 30px; 
-            animation: spin 1s linear infinite; 
+            display: none; border: 3px solid #334155; border-top: 3px solid #38bdf8; 
+            border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 0 auto 10px;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>Product Details Extractor</h2>
-        
-        <div class="input-group">
-            <input type="file" id="imageInput" accept="image/*">
-            <div class="loader" id="loader"></div>
-            <p id="status">Tasweer upload karein data nikalne ke liye...</p>
-        </div>
+<div class="container">
+    <h2>Link Data Extractor</h2>
+    
+    <div class="input-group">
+        <input type="text" id="urlInput" placeholder="Yahan Product Link paste karein...">
+        <button id="fetchBtn" onclick="fetchData()">Extract</button>
+    </div>
+    
+    <div class="loader" id="loader"></div>
+    <p id="status"></p>
 
-        <div class="box">
-            <label>Product Name</label>
-            <input type="text" id="nameBox">
-            <button class="copy-btn" onclick="copyText('nameBox')">Copy</button>
-        </div>
-
-        <div class="box">
-            <label>Price</label>
-            <input type="text" id="priceBox">
-            <button class="copy-btn" onclick="copyText('priceBox')">Copy</button>
-        </div>
-
-        <div class="box">
-            <label>Description Details</label>
-            <button class="copy-btn" onclick="copyText('descBox')">Copy</button>
-            <textarea id="descBox"></textarea>
-        </div>
-
-        <div class="box">
-            <label>Product Code</label>
-            <input type="text" id="codeBox">
-            <button class="copy-btn" onclick="copyText('codeBox')">Copy</button>
-        </div>
-
-        <div class="box">
-            <label>Size</label>
-            <input type="text" id="sizeBox">
-            <button class="copy-btn" onclick="copyText('sizeBox')">Copy</button>
-        </div>
+    <div class="box" onclick="copyText('nameBox')">
+        <label>Product Name</label>
+        <input type="text" id="nameBox" class="display-input" readonly>
+        <button class="copy-btn">Copy</button>
     </div>
 
-    <script>
-        document.getElementById('imageInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+    <div class="box" onclick="copyText('priceBox')">
+        <label>Price</label>
+        <input type="text" id="priceBox" class="display-input" readonly>
+        <button class="copy-btn">Copy</button>
+    </div>
 
-            // Jab scanning shuru ho to UI update karein
-            document.getElementById('status').innerText = "Tasweer scan ho rahi hai, baraye meharbani intezar karein...";
-            document.getElementById('status').style.color = "#fde047";
-            document.getElementById('loader').style.display = "block";
-            
-            // Purana data clear karein
-            document.getElementById('nameBox').value = "";
-            document.getElementById('priceBox').value = "";
-            document.getElementById('codeBox').value = "";
-            document.getElementById('sizeBox').value = "";
-            document.getElementById('descBox').value = "";
+    <div class="box" onclick="copyText('descBox')">
+        <label>Description Detail</label>
+        <textarea id="descBox" class="display-input" readonly></textarea>
+        <button class="copy-btn">Copy</button>
+    </div>
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                Tesseract.recognize(
-                    event.target.result,
-                    'eng',
-                    { logger: m => console.log(m) }
-                ).then(({ data: { text } }) => {
-                    document.getElementById('status').innerText = "Data mukammal taur par nikal aya hai!";
-                    document.getElementById('status').style.color = "#4ade80";
-                    document.getElementById('loader').style.display = "none";
-                    parseText(text);
-                });
-            };
-            reader.readAsDataURL(file);
-        });
+    <div class="box" onclick="copyText('sizeBox')">
+        <label>Size / Color</label>
+        <input type="text" id="sizeBox" class="display-input" readonly>
+        <button class="copy-btn">Copy</button>
+    </div>
 
-        function parseText(text) {
-            // Text ko lines mein break karein aur khali lines khatam karein
-            let lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    <div class="box" onclick="copyText('imgBox')">
+        <label>Image Address (Link)</label>
+        <input type="text" id="imgBox" class="display-input" readonly>
+        <button class="copy-btn">Copy</button>
+    </div>
+</div>
 
-            // 1. Product Name (Aksar sab se pehli line hoti hai jo Price ya Code nahi hoti)
-            let productName = "Nahi mila";
-            for(let i = 0; i < lines.length; i++) {
-                if(!lines[i].match(/Rs\.?/i) && !lines[i].match(/Product Code/i) && !lines[i].match(/Size/i)) {
-                    productName = lines[i];
-                    break;
-                }
-            }
-            document.getElementById('nameBox').value = productName;
+<script>
+async function fetchData() {
+    const url = document.getElementById('urlInput').value;
+    if (!url) return alert("Pehle link paste karein!");
 
-            // 2. Price (Jaise Rs. 3,530)
-            let priceMatch = text.match(/(Rs\.?\s*[0-9,]+)/i);
-            document.getElementById('priceBox').value = priceMatch ? priceMatch[1] : 'Nahi mila';
+    const status = document.getElementById('status');
+    const loader = document.getElementById('loader');
+    
+    status.innerText = "Data nikala ja raha hai...";
+    status.style.color = "#fde047";
+    loader.style.display = "block";
 
-            // 3. Product Code
-            let codeMatch = text.match(/Product Code:\s*([A-Z0-9]+)/i);
-            document.getElementById('codeBox').value = codeMatch ? codeMatch[1] : 'Nahi mila';
+    try {
+        // Using a CORS proxy to fetch the HTML
+        const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+        const response = await fetch(proxyUrl);
+        const data = await response.json();
+        const html = data.contents;
 
-            // 4. Size
-            let sizeMatch = text.match(/Size\s*:\s*([A-Za-z]+)/i);
-            document.getElementById('sizeBox').value = sizeMatch ? sizeMatch[1] : 'Nahi mila';
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
 
-            // 5. Description Details (Sirf zaroori lines)
-            let descLines = [];
-            for (let line of lines) {
-                // Agar line mein yeh cheezein nahi hain to usay description mein daal dein
-                if (line.length > 3 && 
-                    !line.match(/Rs\./i) && 
-                    !line.match(/Product Code/i) && 
-                    !line.match(/Size\s*:/i) && 
-                    !line.match(/Note:/i) &&
-                    line !== productName) { // Product name ko description mein dobara add na kare
-                    
-                    // Extra bullets ya nishan saaf karein
-                    line = line.replace(/^[•*-\.]\s*/, '');
-                    descLines.push('• ' + line);
-                }
-            }
-            document.getElementById('descBox').value = descLines.join('\n');
-        }
+        // Extraction Logic (Website ke generic tags ke mutabiq)
+        document.getElementById('nameBox').value = doc.querySelector('h1')?.innerText || doc.title || "Nahi mila";
+        
+        // Price dhundne ki koshish
+        let price = doc.querySelector('[class*="price"], [id*="price"]')?.innerText || "Nahi mila";
+        document.getElementById('priceBox').value = price.trim();
 
-        // Copy karne ka function
-        function copyText(elementId) {
-            let copyElement = document.getElementById(elementId);
-            
-            // Text ko select aur copy karein
-            copyElement.select();
-            copyElement.setSelectionRange(0, 99999); // Mobile ke liye
-            navigator.clipboard.writeText(copyElement.value).then(() => {
-                // Copy hone ke baad button ka color aur text change karein
-                let btn = copyElement.parentElement.querySelector('.copy-btn');
-                let originalText = btn.innerText;
-                btn.innerText = "Copied!";
-                btn.style.background = "#4ade80";
-                btn.style.color = "#0f172a";
-                
-                // 1.5 second baad button ko wapis normal kar dein
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.style.background = "#0284c7";
-                    btn.style.color = "white";
-                }, 1500);
-            });
-        }
-    </script>
+        // Description
+        let desc = doc.querySelector('[class*="description"], [id*="description"], #details')?.innerText || "Details link mein check karein";
+        document.getElementById('descBox').value = desc.trim().substring(0, 500) + "...";
+
+        // Size / Color
+        let size = doc.querySelector('[class*="size"], [class*="variant"]')?.innerText || "Default / Standard";
+        document.getElementById('sizeBox').value = size.trim();
+
+        // Image URL
+        let img = doc.querySelector('meta[property="og:image"]')?.content || doc.querySelector('img')?.src || "Nahi mila";
+        document.getElementById('imgBox').value = img;
+
+        status.innerText = "Data kamyabi se nikal liya gaya!";
+        status.style.color = "#4ade80";
+    } catch (error) {
+        status.innerText = "Error: Link access nahi ho saka.";
+        status.style.color = "#ef4444";
+    } finally {
+        loader.style.display = "none";
+    }
+}
+
+function copyText(id) {
+    const input = document.getElementById(id);
+    if (!input.value) return;
+
+    // Clipboard copy logic
+    navigator.clipboard.writeText(input.value).then(() => {
+        const box = input.parentElement;
+        const btn = box.querySelector('.copy-btn');
+        const originalText = btn.innerText;
+        
+        btn.innerText = "Copied!";
+        btn.style.background = "#4ade80";
+        
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.background = "#0284c7";
+        }, 1200);
+    });
+}
+</script>
+
 </body>
 </html>
