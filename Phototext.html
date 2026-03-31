@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Link Extractor</title>
+    <title>AI Screenshot Extractor</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
-        /* Stylish Dark Mode Interface */
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Segoe UI', sans-serif; 
             background-color: #0f172a; 
             color: #f8fafc; 
             padding: 15px; 
@@ -15,15 +15,15 @@
         }
         .container { 
             width: 100%; max-width: 550px; 
-            background: rgba(30, 41, 59, 0.8); 
-            padding: 20px; border-radius: 20px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-            backdrop-filter: blur(12px);
+            background: rgba(30, 41, 59, 0.85); 
+            padding: 25px; border-radius: 20px; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(255,255,255,0.1);
         }
-        h2 { text-align: center; color: #38bdf8; font-size: 22px; margin-bottom: 20px; }
+        h2 { text-align: center; color: #38bdf8; margin-bottom: 20px; font-weight: 700; }
         
-        .input-group { display: flex; gap: 8px; margin-bottom: 20px; }
+        .input-group { display: flex; gap: 8px; margin-bottom: 15px; }
         input[type="text"]#urlInput { 
             flex: 1; padding: 12px; border-radius: 10px; 
             border: 1px solid #334155; background: #1e293b; color: white; outline: none;
@@ -34,180 +34,173 @@
         }
 
         .box { 
-            background: #1e293b; padding: 12px 15px; border-radius: 12px; 
-            margin-bottom: 12px; position: relative; border: 1px solid #334155; 
-            cursor: pointer; transition: 0.2s;
+            background: #1e293b; padding: 15px; border-radius: 12px; 
+            margin-bottom: 12px; position: relative; border: 1px solid #475569; 
+            cursor: pointer;
         }
-        .box:active { transform: scale(0.98); background: #334155; }
-        .box label { font-weight: 600; color: #38bdf8; display: block; margin-bottom: 5px; font-size: 12px; text-transform: uppercase; }
+        .box label { font-weight: 600; color: #38bdf8; display: block; margin-bottom: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* Readonly taake keyboard na khule */
+        /* Mobile keyboard block */
         .display-input { 
-            width: calc(100% - 70px); background: transparent; border: none; 
-            color: #f8fafc; font-size: 15px; outline: none; cursor: pointer;
-            pointer-events: none; /* Mobile keyboard fix */
+            width: calc(100% - 60px); background: transparent; border: none; 
+            color: #f8fafc; font-size: 15px; outline: none; 
+            pointer-events: none; /* User can't click to type */
         }
-        textarea.display-input { width: 100%; height: 70px; pointer-events: none; }
+        textarea.display-input { width: 100%; height: 80px; }
 
         .copy-btn { 
             position: absolute; right: 12px; top: 12px; 
-            background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; 
-            padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;
+            background: #0284c7; border: none; color: white; 
+            padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;
         }
 
-        #status { text-align: center; font-size: 13px; margin-bottom: 10px; min-height: 20px; }
+        #status { text-align: center; font-size: 14px; margin-bottom: 10px; color: #fde047; }
         .loader { 
-            display: none; border: 3px solid #334155; border-top: 3px solid #38bdf8; 
-            border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto;
+            display: none; border: 4px solid #334155; border-top: 4px solid #38bdf8; 
+            border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        #screenshotPreview { width: 100%; border-radius: 10px; margin-top: 15px; display: none; border: 1px solid #38bdf8; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Link Details Extractor</h2>
+    <h2>AI Link Extractor (Screenshot)</h2>
     
     <div class="input-group">
-        <input type="text" id="urlInput" placeholder="Yahan product link paste karein...">
-        <button id="fetchBtn" onclick="fetchData()">Extract</button>
+        <input type="text" id="urlInput" placeholder="Paste link here...">
+        <button id="fetchBtn" onclick="startExtraction()">Extract</button>
     </div>
     
     <div class="loader" id="loader"></div>
-    <div id="status"></div>
+    <div id="status">Ready to scan...</div>
 
     <div class="box" onclick="copyText('nameBox')">
         <label>Product Name</label>
-        <input type="text" id="nameBox" class="display-input" readonly placeholder="...">
+        <input type="text" id="nameBox" class="display-input" readonly placeholder="Waiting...">
         <button class="copy-btn">Copy</button>
     </div>
 
     <div class="box" onclick="copyText('codeBox')">
-        <label>Product Code / SKU</label>
-        <input type="text" id="codeBox" class="display-input" readonly placeholder="...">
+        <label>Product Code</label>
+        <input type="text" id="codeBox" class="display-input" readonly placeholder="Waiting...">
         <button class="copy-btn">Copy</button>
     </div>
 
     <div class="box" onclick="copyText('priceBox')">
         <label>Price</label>
-        <input type="text" id="priceBox" class="display-input" readonly placeholder="...">
+        <input type="text" id="priceBox" class="display-input" readonly placeholder="Waiting...">
         <button class="copy-btn">Copy</button>
     </div>
 
     <div class="box" onclick="copyText('descBox')">
         <label>Description Detail</label>
-        <textarea id="descBox" class="display-input" readonly placeholder="..."></textarea>
+        <textarea id="descBox" class="display-input" readonly placeholder="Waiting..."></textarea>
         <button class="copy-btn">Copy</button>
     </div>
 
     <div class="box" onclick="copyText('sizeBox')">
         <label>Size / Color</label>
-        <input type="text" id="sizeBox" class="display-input" readonly placeholder="...">
+        <input type="text" id="sizeBox" class="display-input" readonly placeholder="Waiting...">
         <button class="copy-btn">Copy</button>
     </div>
 
     <div class="box" onclick="copyText('imgBox')">
-        <label>Image Address</label>
-        <input type="text" id="imgBox" class="display-input" readonly placeholder="...">
+        <label>Screenshot Link</label>
+        <input type="text" id="imgBox" class="display-input" readonly placeholder="Waiting...">
         <button class="copy-btn">Copy</button>
     </div>
+
+    <img id="screenshotPreview" alt="Page Screenshot">
 </div>
 
 <script>
-async function fetchData() {
+async function startExtraction() {
     const url = document.getElementById('urlInput').value;
-    if (!url) return;
+    if (!url) return alert("Pehle link paste karein!");
 
     const status = document.getElementById('status');
     const loader = document.getElementById('loader');
+    const imgPreview = document.getElementById('screenshotPreview');
     
-    status.innerText = "Scanning page...";
-    status.style.color = "#fde047";
+    status.innerText = "Google is taking a screenshot (15-20s)...";
     loader.style.display = "block";
-
-    // Clear previous data
-    const boxes = ['nameBox', 'codeBox', 'priceBox', 'descBox', 'sizeBox', 'imgBox'];
-    boxes.forEach(id => document.getElementById(id).value = "");
+    imgPreview.style.display = "none";
 
     try {
-        // Using AllOrigins with a cache-buster for better access
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&disableCache=true`;
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error();
+        // Step 1: Get Screenshot using Google PageSpeed API
+        const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&category=performance`;
+        const response = await fetch(apiUrl);
+        const json = await response.json();
         
-        const data = await response.json();
-        const html = data.contents;
+        // Extract base64 image data
+        const base64Data = json.lighthouseResult.audits['final-screenshot'].details.data;
+        imgPreview.src = base64Data;
+        imgPreview.style.display = "block";
+        document.getElementById('imgBox').value = url;
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
+        status.innerText = "Screenshot taken! Now reading text (OCR)...";
 
-        // --- Extraction Logic ---
-
-        // 1. Name
-        document.getElementById('nameBox').value = 
-            doc.querySelector('h1')?.innerText || 
-            doc.querySelector('meta[property="og:title"]')?.content || 
-            doc.title.split('-')[0].trim();
-
-        // 2. Product Code (Aggressive Search)
-        let pageText = doc.body.innerText;
-        let codeMatch = pageText.match(/(?:SKU|Code|Product ID|PID)[:\s]*([A-Z0-9-]+)/i) || 
-                        html.match(/"sku"\s*:\s*"([^"]+)"/i);
-        document.getElementById('codeBox').value = codeMatch ? codeMatch[1] : "N/A";
-
-        // 3. Price
-        let priceMatch = pageText.match(/(?:Rs\.?|PKR)\s*([0-9,]+)/i) || 
-                         doc.querySelector('[class*="price"]')?.innerText;
-        document.getElementById('priceBox').value = priceMatch ? (typeof priceMatch === 'string' ? priceMatch : priceMatch[0]) : "Price not found";
-
-        // 4. Description
-        let desc = doc.querySelector('meta[name="description"]')?.content || 
-                   doc.querySelector('[class*="description"]')?.innerText || "";
-        document.getElementById('descBox').value = desc.trim().substring(0, 300);
-
-        // 5. Size/Color
-        let sizeMatch = pageText.match(/(?:Size|Color)[:\s]*([A-Za-z0-9\s,]+)/i);
-        document.getElementById('sizeBox').value = sizeMatch ? sizeMatch[1].split('\n')[0] : "Check on link";
-
-        // 6. Image
-        let img = doc.querySelector('meta[property="og:image"]')?.content || 
-                  doc.querySelector('link[rel="image_src"]')?.href ||
-                  doc.querySelector('img[src*="products"]')?.src;
-        document.getElementById('imgBox').value = img || "No image link";
-
-        status.innerText = "Data Extracted Successfully!";
+        // Step 2: Use Tesseract to read text from the screenshot
+        const { data: { text } } = await Tesseract.recognize(base64Data, 'eng');
+        
+        status.innerText = "Extraction Complete!";
         status.style.color = "#4ade80";
+        parseOCRData(text);
+
     } catch (error) {
-        status.innerText = "Error: Site protected or link broken. Try another link.";
+        console.error(error);
+        status.innerText = "Error: Website could not be captured.";
         status.style.color = "#ef4444";
     } finally {
         loader.style.display = "none";
     }
 }
 
+function parseOCRData(text) {
+    // Cleaner text for matching
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+
+    // 1. Price
+    let priceMatch = text.match(/(?:Rs\.?|PKR)\s*([0-9,]+)/i);
+    document.getElementById('priceBox').value = priceMatch ? priceMatch[0] : "Check Screenshot";
+
+    // 2. Product Code
+    let codeMatch = text.match(/(?:Code|SKU|MZ)[:\s]*([A-Z0-9-]+)/i);
+    document.getElementById('codeBox').value = codeMatch ? codeMatch[1] : "N/A";
+
+    // 3. Name (Usually one of the first few lines)
+    document.getElementById('nameBox').value = lines[0] || "Nahi mila";
+
+    // 4. Size / Color
+    let sizeMatch = text.match(/(?:Size|Color)[:\s]*([A-Za-z0-9\s]+)/i);
+    document.getElementById('sizeBox').value = sizeMatch ? sizeMatch[1].split('\n')[0] : "Check Image";
+
+    // 5. Description
+    let descLines = lines.slice(1, 6); // Just taking a few middle lines as description
+    document.getElementById('descBox').value = descLines.join('\n');
+}
+
 function copyText(id) {
     const input = document.getElementById(id);
-    if (!input.value || input.value === "...") return;
+    if (!input.value) return;
 
-    // Use the clipboard API
     navigator.clipboard.writeText(input.value).then(() => {
         const box = input.parentElement;
         const btn = box.querySelector('.copy-btn');
         const originalText = btn.innerText;
         
         btn.innerText = "COPIED";
-        btn.style.background = "#38bdf8";
+        btn.style.background = "#4ade80";
         btn.style.color = "#0f172a";
         
         setTimeout(() => {
             btn.innerText = originalText;
-            btn.style.background = "transparent";
-            btn.style.color = "#38bdf8";
+            btn.style.background = "#0284c7";
+            btn.style.color = "white";
         }, 1000);
-    }).catch(err => {
-        // Fallback for older browsers
-        input.select();
-        document.execCommand('copy');
     });
 }
 </script>
