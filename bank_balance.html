@@ -59,7 +59,6 @@
         .grad-balance { background: var(--blue-3d-grad); color: white; }
         .grad-income { background: linear-gradient(145deg, #00b894, #008967); color: white; }
         .grad-expense { background: linear-gradient(145deg, #d63031, #a91e1e); color: white; }
-        .grad-withdraw { background: linear-gradient(145deg, #e17055, #c0392b); color: white; }
 
         .history-card { overflow: hidden; padding: 0 !important; cursor: default; }
         .history-header-3d {
@@ -89,7 +88,6 @@
         .inc-text { color: #000000; font-size: 1.5rem; }
         .exp-text { color: #d63031; font-size: 1.5rem; }
         .adj-text { color: #0984e3; font-size: 1.5rem; }
-        .with-text { color: #e17055; font-size: 1.5rem; }
         [data-theme="dark"] .inc-text { color: #ffffff; }
 
         .table-custom thead th { background: #f8f9fa; color: #636e72; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; padding: 15px; border-bottom: 2px solid #edf2f7; }
@@ -101,18 +99,11 @@
         .fab-btn {
             position: fixed; bottom: 40px; right: 40px; width: 75px; height: 75px; border-radius: 50%;
             background: var(--accent-blue); color: white; border: none; font-size: 35px; box-shadow: 0 10px 25px rgba(9, 132, 227, 0.4);
-            z-index: 1000; transition: 0.3s; display: flex; align-items: center; justify-content: center;
+            z-index: 1000; transition: 0.3s;
         }
-
-        .fab-withdraw {
-            position: fixed; bottom: 130px; right: 45px; width: 65px; height: 65px; border-radius: 50%;
-            background: #e17055; color: white; border: none; font-size: 28px; box-shadow: 0 10px 25px rgba(225, 112, 85, 0.4);
-            z-index: 1000; transition: 0.3s; display: flex; align-items: center; justify-content: center;
-        }
-        .fab-withdraw:hover { transform: scale(1.1); background: #d63031; }
 
         .fab-home {
-            position: fixed; bottom: 215px; right: 47px; width: 60px; height: 60px; border-radius: 50%;
+            position: fixed; bottom: 130px; right: 47px; width: 60px; height: 60px; border-radius: 50%;
             background: #2d3436; color: white; display: flex; align-items: center; justify-content: center;
             font-size: 26px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); text-decoration: none; z-index: 1000; transition: 0.3s;
         }
@@ -163,6 +154,7 @@
         height: 18px;
     }
 
+    /* Mobile screens ke liye thoda adjust karne ke liye */
     @media (max-width: 768px) {
         .top-home-btn {
             top: 15px;
@@ -188,8 +180,6 @@
     <i class="bi bi-house-door-fill"></i>
 </a>
 
-<button class="fab-withdraw" onclick="openWithdrawModal()" title="Withdraw Funds"><i class="bi bi-cash-stack"></i></button>
-
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center gap-3">
@@ -213,10 +203,9 @@
     </div>
 
     <div class="row g-4 mb-5">
-        <div class="col-md-3" onclick="resetChartToAll()"><div class="card-3d grad-balance"><h6>Total Balance</h6><h2 id="totalBalance">Rs. 0</h2></div></div>
-        <div class="col-md-3" onclick="updateView('Income')"><div class="card-3d grad-income"><h6>Total Income</h6><h2 id="totalIncome">Rs. 0</h2></div></div>
-        <div class="col-md-3" onclick="updateView('Expense')"><div class="card-3d grad-expense"><h6>Total Expense</h6><h2 id="totalExpense">Rs. 0</h2></div></div>
-        <div class="col-md-3" onclick="updateView('Withdraw')"><div class="card-3d grad-withdraw"><h6>Total Withdraw</h6><h2 id="totalWithdraw">Rs. 0</h2></div></div>
+        <div class="col-md-4" onclick="resetChartToAll()"><div class="card-3d grad-balance"><h6>Total Balance</h6><h2 id="totalBalance">Rs. 0</h2></div></div>
+        <div class="col-md-4" onclick="updateView('Income')"><div class="card-3d grad-income"><h6>Total Income</h6><h2 id="totalIncome">Rs. 0</h2></div></div>
+        <div class="col-md-4" onclick="updateView('Expense')"><div class="card-3d grad-expense"><h6>Total Expense</h6><h2 id="totalExpense">Rs. 0</h2></div></div>
     </div>
 
     <h5 class="fw-bold mb-3"><i class="bi bi-wallet2 me-2"></i>Bank Accounts (Click to filter Chart)</h5>
@@ -249,7 +238,6 @@
             <button onclick="filterByType('Income')" id="statInc" class="stat-btn-box inc-text">Income: Rs. 0</button>
             <button onclick="filterByType('Expense')" id="statExp" class="stat-btn-box exp-text">Expense: Rs. 0</button>
             <button onclick="filterByType('Adjustment')" id="statAdj" class="stat-btn-box adj-text">Adjustment: Rs. 0</button>
-            <button onclick="filterByType('Withdraw')" id="statWith" class="stat-btn-box with-text">Withdraw: Rs. 0</button>
         </div>
 
         <div class="p-4">
@@ -312,37 +300,6 @@
     </div>
 </div>
 
-<div class="modal fade" id="withdrawModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 p-4 border-0 shadow-lg">
-            <h5 class="fw-bold mb-4 text-danger"><i class="bi bi-cash-stack me-2"></i>Withdraw Funds</h5>
-            <form id="withdrawForm">
-                <div class="mb-3">
-                    <label class="small fw-bold">Select Bank / Source</label>
-                    <select id="withdrawBank" class="form-select" required onchange="calcWithdrawBalance()"></select>
-                </div>
-                <div class="mb-3">
-                    <label class="small fw-bold">Date</label>
-                    <input type="date" id="withdrawDate" class="form-control bg-light" required readonly>
-                </div>
-                <div class="mb-3">
-                    <label class="small fw-bold">Current Balance (Rs.)</label>
-                    <input type="number" id="withdrawCurrentBal" class="form-control bg-light text-primary fw-bold" readonly>
-                </div>
-                <div class="mb-3">
-                    <label class="small fw-bold text-danger">Withdraw Amount (Rs.)</label>
-                    <input type="number" id="withdrawAmt" class="form-control border-danger" required oninput="calcWithdrawBalance()">
-                </div>
-                <div class="mb-4">
-                    <label class="small fw-bold">Remaining Balance (Rs.)</label>
-                    <input type="number" id="withdrawRemBal" class="form-control bg-light text-success fw-bold" readonly>
-                </div>
-                <button type="submit" class="btn btn-danger w-100 py-2 fw-bold"><i class="bi bi-check-circle me-2"></i>Save Record</button>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
@@ -363,7 +320,6 @@
     const bModal = new bootstrap.Modal(document.getElementById('bankModal'));
     const eModal = new bootstrap.Modal(document.getElementById('entryModal'));
     const tModal = new bootstrap.Modal(document.getElementById('transferModal'));
-    const wModal = new bootstrap.Modal(document.getElementById('withdrawModal')); // Withdraw Modal Instantiated
     
     const errorToast = new bootstrap.Toast(document.getElementById('errorToast'), { delay: 5000 });
 
@@ -395,16 +351,13 @@
             const balance = allTransactions.filter(t => t.bankId === bank.id).reduce((s, t) => {
                 const amt = parseFloat(t.amount);
                 if(t.type === 'Income' || t.type === 'Adjustment In') return s + amt;
-                if(t.type === 'Expense' || t.type === 'Adjustment Out' || t.type === 'Withdraw') return s - amt;
+                if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
                 return s;
             }, 0);
             container.innerHTML += `<div class="card-3d bank-card-mini" onclick="selectBank('${bank.id}')"><h6>${bank.name}</h6><span class="acc-num">${bank.number || '---'}</span><div class="bal-amt">Rs. ${balance.toLocaleString()}</div></div>`;
         });
         const options = allBanks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-        document.getElementById('entryBank').innerHTML = options; 
-        document.getElementById('fromBank').innerHTML = options; 
-        document.getElementById('toBank').innerHTML = options;
-        document.getElementById('withdrawBank').innerHTML = options; // Bind to withdraw
+        document.getElementById('entryBank').innerHTML = options; document.getElementById('fromBank').innerHTML = options; document.getElementById('toBank').innerHTML = options;
     }
 
     function updateSummary() {
@@ -412,12 +365,9 @@
         let tE = allTransactions.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
         let tAdjIn = allTransactions.filter(t => t.type === 'Adjustment In').reduce((s, t) => s + parseFloat(t.amount), 0);
         let tAdjOut = allTransactions.filter(t => t.type === 'Adjustment Out').reduce((s, t) => s + parseFloat(t.amount), 0);
-        let tW = allTransactions.filter(t => t.type === 'Withdraw').reduce((s, t) => s + parseFloat(t.amount), 0);
-        
         document.getElementById('totalIncome').innerText = `Rs. ${tI.toLocaleString()}`;
         document.getElementById('totalExpense').innerText = `Rs. ${tE.toLocaleString()}`;
-        document.getElementById('totalWithdraw').innerText = `Rs. ${tW.toLocaleString()}`;
-        document.getElementById('totalBalance').innerText = `Rs. ${(tI + tAdjIn - tE - tAdjOut - tW).toLocaleString()}`;
+        document.getElementById('totalBalance').innerText = `Rs. ${(tI + tAdjIn - tE - tAdjOut).toLocaleString()}`;
     }
 
     window.initChart = () => {
@@ -426,22 +376,12 @@
         let chartData = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : allTransactions;
         const bankName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
         document.getElementById('chartTitle').innerText = `Showing: ${bankName}`;
-        const dates = [...new Set(chartData.filter(t => t.type === 'Income' || t.type === 'Expense' || t.type === 'Withdraw').map(t => t.date))].sort();
-        
+        const dates = [...new Set(chartData.filter(t => t.type === 'Income' || t.type === 'Expense').map(t => t.date))].sort();
         const incData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Income').reduce((s, c) => s + parseFloat(c.amount), 0));
         const expData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Expense').reduce((s, c) => s + parseFloat(c.amount), 0));
-        const withData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Withdraw').reduce((s, c) => s + parseFloat(c.amount), 0));
-
         myChart = new Chart(ctx, { 
             type: 'bar', 
-            data: { 
-                labels: dates, 
-                datasets: [
-                    { label: 'Income', data: incData, backgroundColor: '#00b894', borderRadius: 8, hidden: currentFilter === 'Expense' || currentFilter === 'Withdraw', barThickness: 20, minBarLength: 5 }, 
-                    { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income' || currentFilter === 'Withdraw', barThickness: 20, minBarLength: 5 },
-                    { label: 'Withdraw', data: withData, backgroundColor: '#e17055', borderRadius: 8, hidden: currentFilter === 'Income' || currentFilter === 'Expense', barThickness: 20, minBarLength: 5 }
-                ] 
-            }, 
+            data: { labels: dates, datasets: [{ label: 'Income', data: incData, backgroundColor: '#00b894', borderRadius: 8, hidden: currentFilter === 'Expense', barThickness: 25, minBarLength: 5 }, { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 25, minBarLength: 5 }] }, 
             options: { 
                 responsive: true, maintainAspectRatio: false,
                 scales: { y: { type: 'logarithmic', beginAtZero: false, ticks: { callback: function(value) { if (value === 0) return "0"; if ([1, 10, 100, 1000, 10000, 100000, 1000000, 2500000].includes(value)) return 'Rs.' + value.toLocaleString(); } } } },
@@ -477,19 +417,13 @@
         const fromDate = document.getElementById('filterFromDate').value; const toDate = document.getElementById('filterToDate').value;
         if(fromDate) filteredTrans = filteredTrans.filter(t => t.date >= fromDate);
         if(toDate) filteredTrans = filteredTrans.filter(t => t.date <= toDate);
-        
         const bInc = filteredTrans.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
         const bExp = filteredTrans.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
         const bAdj = filteredTrans.filter(t => t.type.includes('Adjustment')).reduce((s, t) => s + parseFloat(t.amount), 0);
-        const bWith = filteredTrans.filter(t => t.type === 'Withdraw').reduce((s, t) => s + parseFloat(t.amount), 0);
-
         document.getElementById('statInc').innerText = `Income: Rs. ${bInc.toLocaleString()}`;
         document.getElementById('statExp').innerText = `Expense: Rs. ${bExp.toLocaleString()}`;
         document.getElementById('statAdj').innerText = `Adjustment: Rs. ${bAdj.toLocaleString()}`;
-        document.getElementById('statWith').innerText = `Withdraw: Rs. ${bWith.toLocaleString()}`;
-
         if(historyTypeFilter !== 'All') filteredTrans = filteredTrans.filter(t => historyTypeFilter === 'Adjustment' ? t.type.includes('Adjustment') : t.type === historyTypeFilter);
-        
         document.getElementById('transactionBody').innerHTML = filteredTrans.map(t => {
             let tCls = (t.type === 'Income' || t.type === 'Adjustment In') ? 'text-success' : 'text-danger';
             let bName = allBanks.find(b => b.id === t.bankId)?.name || 'Unknown';
@@ -510,7 +444,6 @@
     window.resetDateFilters = () => { document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; window.applyFilters(); };
     window.resetAllFilters = () => { historyTypeFilter = 'All'; document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; };
 
-    // Transfer Logic
     document.getElementById('transferForm').onsubmit = (e) => {
         e.preventDefault();
         const from = document.getElementById('fromBank').value; 
@@ -524,70 +457,30 @@
 
         if(from === to) {
             document.getElementById('errorMessage').innerText = "Select different banks for transfer!";
-            errorToast.show(); return;
+            errorToast.show();
+            return;
         }
 
         const currentFromBalance = allTransactions.filter(t => t.bankId === from).reduce((s, t) => {
             const tAmt = parseFloat(t.amount);
             if(t.type === 'Income' || t.type === 'Adjustment In') return s + tAmt;
-            if(t.type === 'Expense' || t.type === 'Adjustment Out' || t.type === 'Withdraw') return s - tAmt;
+            if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - tAmt;
             return s;
         }, 0);
 
         if(amt > currentFromBalance) {
-            document.getElementById('errorMessage').innerText = `Insufficient Balance! Your current balance in ${fromName} is Rs. ${currentFromBalance.toLocaleString()}.`;
-            errorToast.show(); return;
+            document.getElementById('errorMessage').innerText = `Insufficient Balance! Your current balance in ${fromName} is Rs. ${currentFromBalance.toLocaleString()}. You cannot transfer Rs. ${amt.toLocaleString()}.`;
+            errorToast.show();
+            return;
         }
 
         push(ref(db, `bank_transactions/${from}`), { type: 'Adjustment Out', amount: amt, date: dt, remarks: `Transfer To ${toName}` });
         push(ref(db, `bank_transactions/${to}`), { type: 'Adjustment In', amount: amt, date: dt, remarks: `Transfer From ${fromName}` });
         
-        tModal.hide(); document.getElementById('transferForm').reset();
+        tModal.hide(); 
+        document.getElementById('transferForm').reset();
     };
 
-    // Calculate Dynamic Balance for Withdraw Modal
-    window.calcWithdrawBalance = () => {
-        const bId = document.getElementById('withdrawBank').value;
-        if(!bId) return;
-        
-        const bankBalance = allTransactions.filter(t => t.bankId === bId).reduce((s, t) => {
-            const a = parseFloat(t.amount);
-            if(t.type === 'Income' || t.type === 'Adjustment In') return s + a;
-            if(t.type === 'Expense' || t.type === 'Adjustment Out' || t.type === 'Withdraw') return s - a;
-            return s;
-        }, 0);
-
-        document.getElementById('withdrawCurrentBal').value = bankBalance;
-        
-        let withdrawAmt = parseFloat(document.getElementById('withdrawAmt').value) || 0;
-        let remBal = bankBalance - withdrawAmt;
-        document.getElementById('withdrawRemBal').value = remBal;
-    };
-
-    // Withdraw Form Submission
-    document.getElementById('withdrawForm').onsubmit = (e) => {
-        e.preventDefault();
-        const bId = document.getElementById('withdrawBank').value;
-        const amt = parseFloat(document.getElementById('withdrawAmt').value);
-        const dt = document.getElementById('withdrawDate').value;
-        const currentBal = parseFloat(document.getElementById('withdrawCurrentBal').value);
-
-        if(amt > currentBal) {
-            document.getElementById('errorMessage').innerText = "Withdrawal amount is greater than Current Balance!";
-            errorToast.show(); return;
-        }
-
-        push(ref(db, `bank_transactions/${bId}`), { type: 'Withdraw', amount: amt, date: dt, remarks: 'Cash Withdrawal' });
-        wModal.hide();
-    };
-
-    window.openWithdrawModal = () => { 
-        document.getElementById('withdrawForm').reset(); 
-        document.getElementById('withdrawDate').value = new Date().toISOString().split('T')[0]; 
-        calcWithdrawBalance();
-        wModal.show(); 
-    };
-    
     window.openTransferModal = () => { document.getElementById('transferDate').value = new Date().toISOString().split('T')[0]; tModal.show(); };
     window.deleteEntry = (bId, tId) => { if(confirm("Delete record?")) remove(ref(db, `bank_transactions/${bId}/${tId}`)); };
     window.openBankModal = () => bModal.show();
