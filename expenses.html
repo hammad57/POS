@@ -56,7 +56,7 @@
         .bg-income { background: linear-gradient(135deg, #11998e, #38ef7d); }
         .bg-expense { background: linear-gradient(135deg, #cb2d3e, #ef473a); }
         .bg-profit { background: linear-gradient(135deg, #2193b0, #6dd5ed); }
-        .bg-today { background: linear-gradient(135deg, #1e3c72, #2a5298); }
+        .bg-withdraw { background: linear-gradient(135deg, #f2994a, #f2c94c); }
         
         .chart-container { background: var(--container-bg); padding: 35px; border-radius: 25px; box-shadow: var(--shadow-3d); border: 1px solid var(--border-color); margin-top: 20px; }
 
@@ -65,6 +65,10 @@
         .table-custom tbody td { background-color: var(--input-bg) !important; border-color: var(--border-color); color: var(--text-color); padding: 12px; }
 
         .fab-add { position: fixed; right: 50px; bottom: 50px; width: 80px; height: 80px; border-radius: 50%; background: #0d6efd; color: white; display: flex; align-items: center; justify-content: center; font-size: 35px; box-shadow: 0 10px 20px rgba(13, 110, 253, 0.4); border: none; z-index: 1000; }
+        
+        /* New Withdraw FAB positioned above the add button */
+        .fab-withdraw { position: fixed; right: 57.5px; bottom: 145px; width: 65px; height: 65px; border-radius: 50%; background: #ff9800; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 10px 20px rgba(255, 152, 0, 0.4); border: none; z-index: 1000; transition: transform 0.2s; }
+        .fab-withdraw:hover { transform: scale(1.1); }
         
         .form-control, .form-select { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; }
         .form-locked { background: rgba(128, 128, 128, 0.1) !important; cursor: not-allowed; font-weight: bold; }
@@ -116,6 +120,8 @@
 
 <button class="fab-add" onclick="openModal()"><i class="bi bi-plus-lg"></i></button>
 
+<button class="fab-withdraw" onclick="openWithdrawModal()" title="Withdraw Amount"><i class="bi bi-wallet2"></i></button>
+
 <div class="main-wrapper">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -150,7 +156,7 @@
         <div class="col"><div class="summary-card bg-income"><h6>Total Income</h6><h2 id="totalIncVal">0</h2></div></div>
         <div class="col"><div class="summary-card bg-expense"><h6>Total Expense</h6><h2 id="totalExpVal">0</h2></div></div>
         <div class="col"><div class="summary-card bg-profit"><h6>Current Balance</h6><h2 id="balanceVal">0</h2></div></div>
-        <div class="col"><div class="summary-card bg-today"><h6>Today Profit</h6><h2 id="todayProfitVal">0</h2></div></div>
+        <div class="col"><div class="summary-card bg-withdraw"><h6>Total Withdraw</h6><h2 id="totalWithdrawVal">0</h2></div></div>
     </div>
 
     <div class="chart-container">
@@ -282,6 +288,43 @@
     </div>
 </div>
 
+<div class="modal fade" id="withdrawModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-warning"><i class="bi bi-wallet2 me-2"></i>Withdraw Cash</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="withdrawForm">
+                    <input type="hidden" id="withdrawEditKey">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="small fw-bold">Date</label>
+                            <input type="date" id="withdrawDate" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-bold text-success">Total Balance (Available)</label>
+                            <input type="number" id="withdrawCurrentBal" class="form-control form-locked" readonly step="0.01">
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-bold" style="color: #ff9800;">Withdraw Amount</label>
+                            <input type="number" id="withdrawAmount" class="form-control" style="border-color: #ff9800;" step="0.01" value="0" required oninput="calculateWithdrawRemaining()">
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-bold text-primary">Remaining Balance</label>
+                            <input type="number" id="withdrawRemaining" class="form-control form-locked text-primary" readonly step="0.01">
+                        </div>
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn w-100 fw-bold py-3 shadow text-white" style="background-color: #ff9800;">SAVE WITHDRAWAL</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="calculatorModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
@@ -334,6 +377,7 @@
     let globalLastBalance = 0;
 
     const modalObj = new bootstrap.Modal(document.getElementById('entryModal'));
+    const withdrawModalObj = new bootstrap.Modal(document.getElementById('withdrawModal'));
     const calcModalObj = new bootstrap.Modal(document.getElementById('calculatorModal'));
     const ledgerModalObj = new bootstrap.Modal(document.getElementById('ledgerModal'));
     const today = new Date().toISOString().split('T')[0];
@@ -385,7 +429,6 @@
         if(!selectedMonth) { resetFilter(); return; }
         const currentYear = new Date().getFullYear();
         filterStart = `${currentYear}-${selectedMonth}-01`;
-        // Last day of month
         const lastDay = new Date(currentYear, selectedMonth, 0).getDate();
         filterEnd = `${currentYear}-${selectedMonth}-${lastDay}`;
         refreshUI();
@@ -396,9 +439,12 @@
         body.innerHTML = '';
         const grouped = {};
         allData.forEach(t => {
-            if (!grouped[t.date]) { grouped[t.date] = { inc: 0, exp: 0, items: [] }; }
+            if (!grouped[t.date]) { grouped[t.date] = { inc: 0, exp: 0, with: 0, items: [] }; }
+            
             if (t.type === 'Income') grouped[t.date].inc += t.amount;
-            else grouped[t.date].exp += t.amount;
+            else if (t.type === 'Expense') grouped[t.date].exp += t.amount;
+            else if (t.type === 'Withdraw') grouped[t.date].with += t.amount; // Handles withdrawal deduction
+            
             grouped[t.date].items.push(t);
         });
 
@@ -409,17 +455,24 @@
             const day = grouped[date];
             const opening = runningBalance;
             const mid = opening + day.inc;
-            const closing = mid - day.exp;
+            const totalDeductions = day.exp + day.with;
+            const closing = mid - totalDeductions;
 
             if ((!filterStart || date >= filterStart) && (!filterEnd || date <= filterEnd)) {
                 const remarksList = day.items.filter(i => i.remarks && i.remarks !== "N/A").map(i => `• ${i.remarks}`).join('<br>');
-                const actions = day.items.map(i => `
+                
+                const actions = day.items.map(i => {
+                    let badgeClass = 'bg-danger';
+                    if (i.type === 'Income') badgeClass = 'bg-success';
+                    if (i.type === 'Withdraw') badgeClass = 'bg-warning text-dark';
+                    
+                    return `
                     <div class="d-flex justify-content-center gap-2 mb-1">
-                        <span class="badge ${i.type==='Income'?'bg-success':'bg-danger'}" style="width:55px;">${i.amount}</span>
+                        <span class="badge ${badgeClass}" style="width:55px;">${i.amount}</span>
                         <button class="btn btn-sm btn-light py-0 border" onclick="editEntry('${i.id}')"><i class="bi bi-pencil text-primary"></i></button>
                         <button class="btn btn-sm btn-light py-0 border" onclick="deleteEntry('${i.id}')"><i class="bi bi-trash text-danger"></i></button>
-                    </div>
-                `).join('');
+                    </div>`
+                }).join('');
 
                 body.innerHTML += `
                     <tr>
@@ -427,7 +480,7 @@
                         <td class="text-center">${opening.toFixed(2)}</td>
                         <td class="text-center text-success fw-bold">+${day.inc.toFixed(2)}</td>
                         <td class="text-center text-secondary">${mid.toFixed(2)}</td>
-                        <td class="text-center text-danger fw-bold">-${day.exp.toFixed(2)}</td>
+                        <td class="text-center text-danger fw-bold">-${totalDeductions.toFixed(2)}</td>
                         <td class="text-center fw-bold text-primary">${closing.toFixed(2)}</td>
                         <td><span style="font-size:0.75rem;">${remarksList || '-'}</span></td>
                         <td>${actions}</td>
@@ -441,15 +494,16 @@
     };
 
     function updateDashboard(finalBal) {
-        let tInc = 0, tExp = 0, tDay = 0;
+        let tInc = 0, tExp = 0, tWith = 0;
         allData.forEach(t => {
-            if(t.type === 'Income') tInc += t.amount; else tExp += t.amount;
-            if(t.date === today) tDay += (t.type === 'Income' ? t.amount : -t.amount);
+            if(t.type === 'Income') tInc += t.amount; 
+            else if(t.type === 'Expense') tExp += t.amount;
+            else if(t.type === 'Withdraw') tWith += t.amount;
         });
         document.getElementById('totalIncVal').innerText = tInc.toFixed(0);
         document.getElementById('totalExpVal').innerText = tExp.toFixed(0);
-        document.getElementById('balanceVal').innerText = (tInc - tExp).toFixed(0);
-        document.getElementById('todayProfitVal').innerText = tDay.toFixed(0);
+        document.getElementById('totalWithdrawVal').innerText = tWith.toFixed(0);
+        document.getElementById('balanceVal').innerText = (tInc - tExp - tWith).toFixed(0);
     }
 
     // Ledger Download Functions
@@ -466,13 +520,11 @@
         const lTo = document.getElementById('ledgerTo').value;
         const lType = document.getElementById('ledgerType').value;
         
-        // Temporarily filter table for download
         const originalStart = filterStart;
         const originalEnd = filterEnd;
         filterStart = lFrom;
         filterEnd = lTo;
         
-        // Hide Actions column for export
         const style = document.createElement('style');
         style.innerHTML = '#summaryTable th:last-child, #summaryTable td:last-child { display: none !important; }';
         document.head.appendChild(style);
@@ -492,7 +544,6 @@
             link.click();
         }
 
-        // Restore everything
         document.head.removeChild(style);
         filterStart = originalStart;
         filterEnd = originalEnd;
@@ -500,6 +551,7 @@
         ledgerModalObj.hide();
     };
 
+    // Calculate Modal Balances
     window.calculateLiveBalance = () => {
         const b = parseFloat(document.getElementById('openBal').value) || 0;
         const i = parseFloat(document.getElementById('incomeInput').value) || 0;
@@ -516,6 +568,13 @@
         calculateLiveBalance();
     };
 
+    // Withdraw specific calculations
+    window.calculateWithdrawRemaining = () => {
+        const bal = parseFloat(document.getElementById('withdrawCurrentBal').value) || 0;
+        const w = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+        document.getElementById('withdrawRemaining').value = (bal - w).toFixed(2);
+    };
+
     window.openModal = () => {
         document.getElementById('entryForm').reset();
         document.getElementById('editKey').value = "";
@@ -525,9 +584,29 @@
         modalObj.show();
     };
 
+    window.openWithdrawModal = () => {
+        document.getElementById('withdrawForm').reset();
+        document.getElementById('withdrawEditKey').value = "";
+        document.getElementById('withdrawDate').value = today;
+        document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2);
+        document.getElementById('withdrawRemaining').value = globalLastBalance.toFixed(2);
+        withdrawModalObj.show();
+    };
+
     window.editEntry = (id) => {
         const item = allData.find(i => i.id === id);
         if(!item) return;
+
+        if (item.type === 'Withdraw') {
+            document.getElementById('withdrawEditKey').value = item.id;
+            document.getElementById('withdrawDate').value = item.date;
+            document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2);
+            document.getElementById('withdrawAmount').value = item.amount;
+            calculateWithdrawRemaining();
+            withdrawModalObj.show();
+            return;
+        }
+
         document.getElementById('editKey').value = item.id;
         document.getElementById('entryDate').value = item.date;
         document.getElementById('entryRemarks').value = item.remarks === "N/A" ? "" : item.remarks;
@@ -562,6 +641,21 @@
         modalObj.hide();
     };
 
+    document.getElementById('withdrawForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const key = document.getElementById('withdrawEditKey').value;
+        const date = document.getElementById('withdrawDate').value;
+        const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+        if(key) {
+            await set(ref(db, 'transactions/'+key), { type: 'Withdraw', date, amount, remarks: 'Cash Withdrawal' });
+        } else {
+            if(amount > 0) {
+                await push(dbRef, { type: 'Withdraw', date, amount, remarks: 'Cash Withdrawal' });
+            }
+        }
+        withdrawModalObj.hide();
+    };
+
     window.applyFilter = () => { filterStart = document.getElementById('fromDate').value; filterEnd = document.getElementById('toDate').value; refreshUI(); };
     window.resetFilter = () => { filterStart = null; filterEnd = null; document.getElementById('monthFilter').value = ""; refreshUI(); };
     window.toggleChartType = (type) => { chartType = type; initChart(); };
@@ -571,14 +665,15 @@
         if(myChart) myChart.destroy();
         const dates = [...new Set(allData.map(d => d.date))].sort().slice(-10);
         const incs = dates.map(d => allData.filter(x => x.date === d && x.type === 'Income').reduce((a,b)=>a+b.amount,0));
-        const exps = dates.map(d => allData.filter(x => x.date === d && x.type === 'Expense').reduce((a,b)=>a+b.amount,0));
+        // Combine expense and withdraw logic in chart for accurate downward flow
+        const exps = dates.map(d => allData.filter(x => x.date === d && (x.type === 'Expense' || x.type === 'Withdraw')).reduce((a,b)=>a+b.amount,0));
         myChart = new Chart(ctx, {
             type: chartType,
             data: {
                 labels: dates.map(d => d.split('-').reverse().slice(0,2).join('/')),
                 datasets: [
                     { label: 'Income', data: incs, borderColor: '#2ecc71', backgroundColor: 'rgba(46, 204, 113, 0.5)', fill: true, tension: 0.4 },
-                    { label: 'Expense', data: exps, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.5)', fill: true, tension: 0.4 }
+                    { label: 'Expense & Withdrawals', data: exps, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.5)', fill: true, tension: 0.4 }
                 ]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true } } }
@@ -588,13 +683,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Improved Back Button Logic
     let backPressCount = 0;
     window.history.pushState(null, null, window.location.href);
     window.onpopstate = function () {
         if(confirm("Are you sure you want to exit and close this page?")) {
             window.close();
-            // Fallback for some browsers
             window.location.href = "about:blank";
         } else {
             window.history.pushState(null, null, window.location.href);
