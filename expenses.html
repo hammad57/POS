@@ -57,6 +57,8 @@
         .bg-expense { background: linear-gradient(135deg, #cb2d3e, #ef473a); }
         .bg-profit { background: linear-gradient(135deg, #2193b0, #6dd5ed); }
         .bg-withdraw { background: linear-gradient(135deg, #f2994a, #f2c94c); }
+        .bg-loan { background: linear-gradient(135deg, #8e2de2, #4a00e0); }
+        .bg-netprofit { background: linear-gradient(135deg, #00b09b, #96c93d); }
         
         .chart-container { background: var(--container-bg); padding: 35px; border-radius: 25px; box-shadow: var(--shadow-3d); border: 1px solid var(--border-color); margin-top: 20px; }
 
@@ -66,7 +68,6 @@
 
         .fab-add { position: fixed; right: 50px; bottom: 50px; width: 80px; height: 80px; border-radius: 50%; background: #0d6efd; color: white; display: flex; align-items: center; justify-content: center; font-size: 35px; box-shadow: 0 10px 20px rgba(13, 110, 253, 0.4); border: none; z-index: 1000; }
         
-        /* New Withdraw FAB positioned above the add button */
         .fab-withdraw { position: fixed; right: 57.5px; bottom: 145px; width: 65px; height: 65px; border-radius: 50%; background: #ff9800; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 10px 20px rgba(255, 152, 0, 0.4); border: none; z-index: 1000; transition: transform 0.2s; }
         .fab-withdraw:hover { transform: scale(1.1); }
         
@@ -157,6 +158,8 @@
         <div class="col"><div class="summary-card bg-expense"><h6>Total Expense</h6><h2 id="totalExpVal">0</h2></div></div>
         <div class="col"><div class="summary-card bg-profit"><h6>Current Balance</h6><h2 id="balanceVal">0</h2></div></div>
         <div class="col"><div class="summary-card bg-withdraw"><h6>Total Withdraw</h6><h2 id="totalWithdrawVal">0</h2></div></div>
+        <div class="col"><div class="summary-card bg-loan"><h6>Total Loan</h6><h2 id="loanVal">0</h2></div></div>
+        <div class="col"><div class="summary-card bg-netprofit"><h6>Net Profit</h6><h2 id="profitVal">0</h2></div></div>
     </div>
 
     <div class="chart-container">
@@ -292,7 +295,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold text-warning"><i class="bi bi-wallet2 me-2"></i>Withdraw Cash</h5>
+                <h5 class="modal-title fw-bold text-warning"><i class="bi bi-wallet2 me-2"></i>Withdraw / Loan Mgt</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
@@ -304,19 +307,26 @@
                             <input type="date" id="withdrawDate" class="form-control" required>
                         </div>
                         <div class="col-12">
-                            <label class="small fw-bold text-success">Total Balance (Available)</label>
+                            <label class="small fw-bold text-success">Total Balance (Available in Drawer)</label>
                             <input type="number" id="withdrawCurrentBal" class="form-control form-locked" readonly step="0.01">
                         </div>
-                        <div class="col-12">
-                            <label class="small fw-bold" style="color: #ff9800;">Withdraw Amount</label>
-                            <input type="number" id="withdrawAmount" class="form-control" style="border-color: #ff9800;" step="0.01" value="0" required oninput="calculateWithdrawRemaining()">
+                        
+                        <div class="col-12 mt-4">
+                            <label class="small fw-bold" style="color: #8e2de2;">Loan Amount (If entering new target loan)</label>
+                            <input type="number" id="loanAmount" class="form-control" style="border-color: #8e2de2; background-color: rgba(142, 45, 226, 0.05);" step="0.01" value="0">
                         </div>
+
+                        <div class="col-12 mt-4">
+                            <label class="small fw-bold" style="color: #ff9800;">Withdraw Amount (Deducts from Loan/Balance)</label>
+                            <input type="number" id="withdrawAmount" class="form-control" style="border-color: #ff9800; background-color: rgba(255, 152, 0, 0.05);" step="0.01" value="0" oninput="calculateWithdrawRemaining()">
+                        </div>
+                        
                         <div class="col-12">
-                            <label class="small fw-bold text-primary">Remaining Balance</label>
+                            <label class="small fw-bold text-primary">Remaining Cash Balance</label>
                             <input type="number" id="withdrawRemaining" class="form-control form-locked text-primary" readonly step="0.01">
                         </div>
                         <div class="col-12 mt-4">
-                            <button type="submit" class="btn w-100 fw-bold py-3 shadow text-white" style="background-color: #ff9800;">SAVE WITHDRAWAL</button>
+                            <button type="submit" class="btn w-100 fw-bold py-3 shadow text-white" style="background-color: #ff9800;">SAVE ENTRY</button>
                         </div>
                     </div>
                 </form>
@@ -443,7 +453,7 @@
             
             if (t.type === 'Income') grouped[t.date].inc += t.amount;
             else if (t.type === 'Expense') grouped[t.date].exp += t.amount;
-            else if (t.type === 'Withdraw') grouped[t.date].with += t.amount; // Handles withdrawal deduction
+            else if (t.type === 'Withdraw') grouped[t.date].with += t.amount; 
             
             grouped[t.date].items.push(t);
         });
@@ -463,12 +473,14 @@
                 
                 const actions = day.items.map(i => {
                     let badgeClass = 'bg-danger';
+                    let bgStyle = '';
                     if (i.type === 'Income') badgeClass = 'bg-success';
                     if (i.type === 'Withdraw') badgeClass = 'bg-warning text-dark';
+                    if (i.type === 'Loan') { badgeClass = 'text-white'; bgStyle = 'background-color: #8e2de2;'; }
                     
                     return `
                     <div class="d-flex justify-content-center gap-2 mb-1">
-                        <span class="badge ${badgeClass}" style="width:55px;">${i.amount}</span>
+                        <span class="badge ${badgeClass}" style="width:55px; ${bgStyle}">${i.amount}</span>
                         <button class="btn btn-sm btn-light py-0 border" onclick="editEntry('${i.id}')"><i class="bi bi-pencil text-primary"></i></button>
                         <button class="btn btn-sm btn-light py-0 border" onclick="deleteEntry('${i.id}')"><i class="bi bi-trash text-danger"></i></button>
                     </div>`
@@ -494,16 +506,31 @@
     };
 
     function updateDashboard(finalBal) {
-        let tInc = 0, tExp = 0, tWith = 0;
+        let tInc = 0, tExp = 0, tWith = 0, tLoanTotal = 0;
         allData.forEach(t => {
             if(t.type === 'Income') tInc += t.amount; 
             else if(t.type === 'Expense') tExp += t.amount;
             else if(t.type === 'Withdraw') tWith += t.amount;
+            else if(t.type === 'Loan') tLoanTotal += t.amount;
         });
+        
+        let currentLoan = tLoanTotal - tWith;
+        let currentProfit = 0;
+        
+        // Agar withdraw ki amount loan se zyada ho jaye, to wo automatically Profit ban jayega
+        if(currentLoan < 0) {
+            currentProfit = Math.abs(currentLoan);
+            currentLoan = 0;
+        }
+
         document.getElementById('totalIncVal').innerText = tInc.toFixed(0);
         document.getElementById('totalExpVal').innerText = tExp.toFixed(0);
         document.getElementById('totalWithdrawVal').innerText = tWith.toFixed(0);
         document.getElementById('balanceVal').innerText = (tInc - tExp - tWith).toFixed(0);
+        
+        // Loan & Profit UI Values
+        document.getElementById('loanVal').innerText = currentLoan.toFixed(0);
+        document.getElementById('profitVal').innerText = currentProfit.toFixed(0);
     }
 
     // Ledger Download Functions
@@ -590,6 +617,8 @@
         document.getElementById('withdrawDate').value = today;
         document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2);
         document.getElementById('withdrawRemaining').value = globalLastBalance.toFixed(2);
+        document.getElementById('loanAmount').value = 0;
+        document.getElementById('withdrawAmount').value = 0;
         withdrawModalObj.show();
     };
 
@@ -597,11 +626,19 @@
         const item = allData.find(i => i.id === id);
         if(!item) return;
 
-        if (item.type === 'Withdraw') {
+        if (item.type === 'Withdraw' || item.type === 'Loan') {
             document.getElementById('withdrawEditKey').value = item.id;
             document.getElementById('withdrawDate').value = item.date;
             document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2);
-            document.getElementById('withdrawAmount').value = item.amount;
+            
+            if(item.type === 'Withdraw') {
+                document.getElementById('withdrawAmount').value = item.amount;
+                document.getElementById('loanAmount').value = 0;
+            } else {
+                document.getElementById('withdrawAmount').value = 0;
+                document.getElementById('loanAmount').value = item.amount;
+            }
+            
             calculateWithdrawRemaining();
             withdrawModalObj.show();
             return;
@@ -646,11 +683,23 @@
         const key = document.getElementById('withdrawEditKey').value;
         const date = document.getElementById('withdrawDate').value;
         const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+        const loanAmount = parseFloat(document.getElementById('loanAmount').value) || 0;
+
         if(key) {
-            await set(ref(db, 'transactions/'+key), { type: 'Withdraw', date, amount, remarks: 'Cash Withdrawal' });
+            const existingItem = allData.find(i => i.id === key);
+            const existingType = existingItem ? existingItem.type : 'Withdraw';
+
+            if(existingType === 'Loan') {
+                await set(ref(db, 'transactions/'+key), { type: 'Loan', date, amount: loanAmount, remarks: 'Loan Target Setup' });
+            } else {
+                await set(ref(db, 'transactions/'+key), { type: 'Withdraw', date, amount, remarks: 'Cash Withdrawal' });
+            }
         } else {
             if(amount > 0) {
                 await push(dbRef, { type: 'Withdraw', date, amount, remarks: 'Cash Withdrawal' });
+            }
+            if(loanAmount > 0) {
+                await push(dbRef, { type: 'Loan', date, amount: loanAmount, remarks: 'Loan Target Setup' });
             }
         }
         withdrawModalObj.hide();
@@ -665,7 +714,6 @@
         if(myChart) myChart.destroy();
         const dates = [...new Set(allData.map(d => d.date))].sort().slice(-10);
         const incs = dates.map(d => allData.filter(x => x.date === d && x.type === 'Income').reduce((a,b)=>a+b.amount,0));
-        // Combine expense and withdraw logic in chart for accurate downward flow
         const exps = dates.map(d => allData.filter(x => x.date === d && (x.type === 'Expense' || x.type === 'Withdraw')).reduce((a,b)=>a+b.amount,0));
         myChart = new Chart(ctx, {
             type: chartType,
