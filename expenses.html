@@ -405,7 +405,7 @@
             const day = grouped[date];
             const opening = runningBalance;
             const mid = opening + day.inc;
-            const totalDeductions = day.exp + day.with;
+            const totalDeductions = day.exp;
             const closing = mid - totalDeductions;
 
             if ((!filterStart || date >= filterStart) && (!filterEnd || date <= filterEnd)) {
