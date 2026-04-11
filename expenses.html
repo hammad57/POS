@@ -446,7 +446,7 @@
         document.getElementById('totalIncVal').innerText = tInc.toFixed(0);
         document.getElementById('totalExpVal').innerText = tExp.toFixed(0);
         document.getElementById('totalWithdrawVal').innerText = tWith.toFixed(0);
-        document.getElementById('balanceVal').innerText = (tInc - tExp - tWith).toFixed(0);
+        document.getElementById('balanceVal').innerText = (tInc - tExp).toFixed(0); // Ab sirf Income aur Expense minus hon gy
     }
 
     window.openWithdrawModal = () => {
