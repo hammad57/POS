@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
         :root {
@@ -221,14 +222,18 @@
                     <div class="col-12">
                         <label class="small fw-bold">Choose Type</label>
                         <select id="ledgerType" class="form-select">
-                            <option value="Both">Expense and Income</option>
-                            <option value="Income">Only Income</option>
-                            <option value="Expense">Only Expense</option>
+                            <option value="All">All</option>
+                            <option value="Income">Income</option>
+                            <option value="Expense">Expense</option>
+                            <option value="Profit">Profit</option>
+                            <option value="Loose">Loose</option>
+                            <option value="current balance">current balance</option>
                         </select>
                     </div>
                     <div class="col-12 mt-4">
-                        <button onclick="downloadLedger('pdf')" class="btn btn-danger w-100 fw-bold mb-2 py-3 shadow">DOWNLOAD AS PDF</button>
-                        <button onclick="downloadLedger('image')" class="btn btn-success w-100 fw-bold py-3 shadow">DOWNLOAD AS PICTURE</button>
+                        <button onclick="downloadLedger('pdf')" class="btn btn-danger w-100 fw-bold mb-2 py-2 shadow">DOWNLOAD PDF</button>
+                        <button onclick="downloadLedger('excel')" class="btn btn-success w-100 fw-bold mb-2 py-2 shadow">DOWNLOAD EXCEL</button>
+                        <button onclick="downloadLedger('image')" class="btn btn-info w-100 fw-bold py-2 shadow text-white">DOWNLOAD PICTURE</button>
                     </div>
                 </div>
             </div>
@@ -536,7 +541,10 @@
     // Ledger Download Functions
     window.openLedgerModal = () => {
         const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 2).toISOString().split('T')[0];
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const firstDay = `${year}-${month}-01`;
+        
         document.getElementById('ledgerFrom').value = firstDay;
         document.getElementById('ledgerTo').value = today;
         ledgerModalObj.show();
@@ -563,6 +571,9 @@
 
         if(format === 'pdf') {
             await html2pdf().set(opt).from(element).save();
+        } else if(format === 'excel') {
+            const wb = XLSX.utils.table_to_book(element, {sheet:"Ledger"});
+            XLSX.writeFile(wb, `Ledger_${lFrom}_to_${lTo}.xlsx`);
         } else {
             const canvas = await html2canvas(element);
             const link = document.createElement('a');
