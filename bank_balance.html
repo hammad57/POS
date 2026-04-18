@@ -1,516 +1,549 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1200, initial-scale=0.3, shrink-to-fit=no">
-    <title>3D Money Vault Pro | Professional Edition</title>
-    <a href="index.html" class="btn btn-outline-dark shadow-sm fw-bold"><i class="bi bi-house-door me-1"></i> Home</a>
+    <meta name="viewport" content="width=1200, initial-scale=0.3, shrink-to-fit=no"> 
+    <title>Muluk Hussain - Professional Financial Tracker 3D</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
         :root {
-            --bg-body: #f0f4f8;
-            --card-main: #ffffff;
-            --text-color: #2d3436;
-            --shadow-3d: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
-            --accent-blue: #0984e3;
-            --blue-3d-grad: linear-gradient(145deg, #0984e3, #0056b3);
-            --danger-grad: linear-gradient(145deg, #ff7675, #d63031);
+            --bg-body: #e0e5ec;
+            --container-bg: #f2f5f9;
+            --text-color: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color: rgba(255, 255, 255, 0.5);
+            --shadow-3d: 9px 9px 16px rgba(163,177,198,0.5), -9px -9px 16px rgba(255,255,255, 0.8);
+            --table-header-bg: #2c3e50;
+            --table-header-text: #ffffff;
+            --input-bg: #ffffff;
+            --input-text: #333333;
         }
 
-        [data-theme="dark"] {
-            --bg-body: #1e272e;
-            --card-main: #2d3436;
+        html[data-theme="dark"] {
+            --bg-body: #121212;
+            --container-bg: #1e1e24;
             --text-color: #f5f6fa;
-            --shadow-3d: 6px 6px 12px #151a1e, -4px -4px 10px #3c444b;
+            --text-muted: #a4b0be;
+            --border-color: #2b2b36;
+            --shadow-3d: 8px 8px 15px #0a0a0c, -8px -8px 15px #2a2a32;
+            --table-header-bg: #0f3460;
+            --table-header-text: #e9ecef;
+            --input-bg: #2b2b36;
+            --input-text: #ffffff;
         }
 
-        body { background-color: var(--bg-body); font-family: 'Poppins', sans-serif; color: var(--text-color); padding: 25px; transition: 0.3s; }
-        .main-container { width: 1150px; margin: 0 auto; }
-
-        .card-3d {
-            background: var(--card-main);
-            border-radius: 20px;
-            box-shadow: var(--shadow-3d);
-            border: none;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            padding: 20px;
-            cursor: pointer;
-        }
-        .card-3d:hover { transform: translateY(-5px); }
-
-        .error-toast-3d {
-            background: var(--danger-grad) !important;
-            border-radius: 15px !important;
-            box-shadow: 0 10px 30px rgba(214, 48, 49, 0.4) !important;
-            border: none !important;
-            color: white !important;
+        html[data-theme="glass"] {
+            --bg-body: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --container-bg: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff;
+            --border-color: rgba(255, 255, 255, 0.2);
+            --table-header-bg: rgba(0, 0, 0, 0.3);
+            --input-bg: rgba(255, 255, 255, 0.2);
         }
 
-        .bank-card-mini { min-width: 190px; border-left: 5px solid var(--accent-blue); padding: 15px; }
-        .bank-card-mini .bal-amt { font-size: 1.1rem; font-weight: 700; color: var(--accent-blue); }
-        .bank-card-mini .acc-num { font-size: 0.75rem; color: #636e72; display: block; }
-
-        .grad-balance { background: var(--blue-3d-grad); color: white; }
-        .grad-income { background: linear-gradient(145deg, #00b894, #008967); color: white; }
-        .grad-expense { background: linear-gradient(145deg, #d63031, #a91e1e); color: white; }
-
-        .history-card { overflow: hidden; padding: 0 !important; cursor: default; }
-        .history-header-3d {
-            background: var(--blue-3d-grad);
-            color: white;
-            padding: 18px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+        body { background: var(--bg-body); color: var(--text-color); padding: 20px; font-family: 'Poppins', sans-serif; min-width: 1200px; transition: all 0.4s ease; }
+        .main-wrapper { width: 1150px; margin: 0 auto; }
         
-        .history-filter-bar {
-            padding: 15px 25px;
-            background: rgba(9, 132, 227, 0.08);
-            display: flex; gap: 20px; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-        .filter-input-group { display: flex; align-items: center; gap: 10px; }
-        .filter-input-group label { font-size: 0.85rem; font-weight: 600; margin: 0; color: var(--accent-blue); }
-        .date-input { border: 1px solid #ced4da; border-radius: 8px; padding: 5px 10px; font-size: 0.9rem; outline: none; }
-
-        .history-stats-bar { padding: 15px 25px; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .stat-btn-box { background: none; border: none; padding: 0 20px; font-weight: 800; cursor: pointer; transition: 0.2s; text-align: left; }
-        .stat-btn-box:hover { transform: scale(1.05); opacity: 0.8; }
-        .stat-btn-box.active { border-bottom: 3px solid var(--accent-blue); }
-
-        .inc-text { color: #000000; font-size: 1.5rem; }
-        .exp-text { color: #d63031; font-size: 1.5rem; }
-        .adj-text { color: #0984e3; font-size: 1.5rem; }
-        [data-theme="dark"] .inc-text { color: #ffffff; }
-
-        .table-custom thead th { background: #f8f9fa; color: #636e72; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; padding: 15px; border-bottom: 2px solid #edf2f7; }
-        [data-theme="dark"] .table-custom thead th { background: #34495e; color: #ecf0f1; border-color: #2c3e50; }
-
-        .chart-wrapper { background: var(--card-main); border-radius: 25px; padding: 25px; box-shadow: var(--shadow-3d); }
+        .summary-card { border-radius: 20px; color: white; padding: 25px 15px; margin-bottom: 20px; box-shadow: 0 15px 25px rgba(0,0,0,0.2); transition: 0.3s; cursor: pointer; }
+        .summary-card:hover { transform: translateY(-5px); }
+        .bg-income { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .bg-expense { background: linear-gradient(135deg, #cb2d3e, #ef473a); }
+        .bg-profit { background: linear-gradient(135deg, #2193b0, #6dd5ed); }
+        .bg-withdraw { background: linear-gradient(135deg, #f2994a, #f2c94c); }
         
-        /* Floating Buttons Style */
-        .fab-btn {
-            position: fixed; bottom: 40px; right: 40px; width: 75px; height: 75px; border-radius: 50%;
-            background: var(--accent-blue); color: white; border: none; font-size: 35px; box-shadow: 0 10px 25px rgba(9, 132, 227, 0.4);
-            z-index: 1000; transition: 0.3s;
-        }
+        .chart-container { background: var(--container-bg); padding: 35px; border-radius: 25px; box-shadow: var(--shadow-3d); border: 1px solid var(--border-color); margin-top: 20px; overflow: hidden; }
+        .chart-scroll-area { width: 100%; overflow-x: auto; cursor: grab; padding-bottom: 10px; }
+        .chart-scroll-area:active { cursor: grabbing; }
+        #chartBox { min-width: 1000px; height: 350px; }
 
-        .fab-home {
-            position: fixed; bottom: 130px; right: 47px; width: 60px; height: 60px; border-radius: 50%;
-            background: #2d3436; color: white; display: flex; align-items: center; justify-content: center;
-            font-size: 26px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); text-decoration: none; z-index: 1000; transition: 0.3s;
+        .table-custom { border-collapse: separate; border-radius: 15px; box-shadow: var(--shadow-3d); width: 100%; overflow: hidden; }
+        .table-custom thead th { background-color: var(--table-header-bg) !important; color: var(--table-header-text) !important; padding: 15px; }
+        .table-custom tbody td { background-color: var(--input-bg) !important; border-color: var(--border-color); color: var(--text-color); padding: 12px; }
+
+        .month-header-row { cursor: pointer; background: rgba(0,0,0,0.05) !important; transition: 0.3s; }
+        .month-header-row:hover { background: rgba(0,0,0,0.1) !important; }
+        .month-header-row td { font-weight: 700 !important; color: var(--text-color) !important; padding: 15px !important; border-left: 5px solid #0d6efd !important; }
+
+        .fab-add { position: fixed; right: 50px; bottom: 50px; width: 80px; height: 80px; border-radius: 50%; background: #0d6efd; color: white; display: flex; align-items: center; justify-content: center; font-size: 35px; box-shadow: 0 10px 20px rgba(13, 110, 253, 0.4); border: none; z-index: 1000; }
+        
+        .fab-withdraw { position: fixed; right: 57.5px; bottom: 145px; width: 65px; height: 65px; border-radius: 50%; background: #ff9800; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 10px 20px rgba(255, 152, 0, 0.4); border: none; z-index: 1000; transition: transform 0.2s; }
+        .fab-withdraw:hover { transform: scale(1.1); }
+        
+        .form-control, .form-select { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; }
+        .form-locked { background: rgba(128, 128, 128, 0.1) !important; cursor: not-allowed; font-weight: bold; }
+
+        .modal-content { background: var(--container-bg); border-radius: 25px; border: 1px solid var(--border-color); color: var(--text-color); }
+
+        .calc-btn-trigger { cursor: pointer; color: #0d6efd; font-size: 1.3rem; transition: 0.3s; margin-left: 10px; }
+        .calc-btn-trigger:hover { transform: scale(1.2); color: #0056b3; }
+        
+        #calculatorModal .modal-content { 
+            background: #1e1e24; 
+            border: 2px solid #333; 
+            width: 340px; 
+            margin: auto; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
-        .fab-home:hover { transform: scale(1.1); color: #00d2ff; background: #000; }
-        [data-theme="dark"] .fab-home { background: #0984e3; }
+        .calc-display { 
+            background: #000; 
+            color: #00ff00; 
+            font-size: 2.2rem; 
+            text-align: right; 
+            padding: 20px; 
+            border-radius: 15px; 
+            margin-bottom: 15px; 
+            font-family: 'Courier New', monospace; 
+            min-height: 80px; 
+            border: 2px solid #444;
+            box-shadow: inset 0 0 10px rgba(0,255,0,0.2);
+        }
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .btn-calc { 
+            border: none; 
+            padding: 18px; 
+            border-radius: 15px; 
+            font-weight: bold; 
+            font-size: 1.2rem; 
+            background: #2d2d35; 
+            color: white; 
+            transition: 0.2s; 
+            box-shadow: 4px 4px 8px #121216, -2px -2px 6px #3a3a44;
+        }
+        .btn-calc:active { transform: scale(0.95); box-shadow: inset 2px 2px 5px #000; }
+        .btn-op { background: #3d3d4a; color: #ff9800; }
+        .btn-eq { background: #0d6efd; color: white; grid-column: span 2; }
+        .btn-clear { background: #dc3545; color: white; }
     </style>
 </head>
-<body data-theme="light">
-<a href="https://hammad57.github.io/POS/index.html" class="top-home-btn" title="Go to Dashboard">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-    </svg>
-    Home
-</a>
+<body>
 
-<style>
-    .top-home-btn {
-        position: fixed;
-        top: 20px;
-        left: 300px;
-        background: linear-gradient(135deg, #4f46e5, #3b82f6);
-        color: #ffffff !important;
-        text-decoration: none !important;
-        padding: 10px 20px;
-        border-radius: 50px;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        font-weight: 600;
-        font-size: 15px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-        z-index: 9999;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
+<button class="fab-add" onclick="openModal()"><i class="bi bi-plus-lg"></i></button>
+<button class="fab-withdraw" onclick="openWithdrawModal()" title="Withdraw Amount"><i class="bi bi-wallet2"></i></button>
 
-    .top-home-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
-        background: linear-gradient(135deg, #4338ca, #2563eb);
-        color: #ffffff !important;
-    }
-
-    .top-home-btn svg {
-        width: 18px;
-        height: 18px;
-    }
-
-    /* Mobile screens ke liye thoda adjust karne ke liye */
-    @media (max-width: 768px) {
-        .top-home-btn {
-            top: 15px;
-            left: 15px;
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-    }
-</style>
-<div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 2000;">
-    <div id="errorToast" class="toast error-toast-3d" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body d-flex align-items-center gap-3 py-3 px-4">
-                <i class="bi bi-exclamation-octagon-fill fs-3"></i>
-                <div id="errorMessage" style="font-weight: 500;"></div>
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    </div>
-</div>
-
-<a href="https://hammad57.github.io/POS/index.html" class="fab-home" title="Go to Dashboard">
-    <i class="bi bi-house-door-fill"></i>
-</a>
-
-<div class="main-container">
+<div class="main-wrapper">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="d-flex align-items-center gap-3">
-            <div class="card-3d p-2 rounded-circle" style="width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
-                <i class="bi bi-bank2 text-primary fs-4"></i>
-            </div>
-            <h2 class="fw-bold mb-0">Money Vault <span class="text-primary">3D Pro</span></h2>
+        <div>
+            <h2 class="fw-bold m-0"><i class="bi bi-cpu me-2 text-primary"></i>Muluk Hussain Analytics</h2>
+            <p class="text-muted small m-0">Smart Financial Management System v4.0</p>
         </div>
-        <div class="d-flex gap-3">
-            <button class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm" onclick="openTransferModal()">
-                <i class="bi bi-arrow-left-right me-2"></i> Transfer
-            </button>
-            <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="openBankModal()">
-                <i class="bi bi-plus-circle me-2"></i> Add Bank
-            </button>
-            <select id="themeSelector" class="form-select border-0 shadow-sm rounded-pill" style="width: 130px;" onchange="changeTheme(this.value)">
-                <option value="light">☀️ Light</option>
-                <option value="dark">🌙 Dark</option>
+        <div class="d-flex gap-3 align-items-center">
+            <a href="index.html" class="btn btn-outline-dark shadow-sm fw-bold"><i class="bi bi-house-door me-1"></i> Home</a>
+            
+            <select id="monthFilter" class="form-select border-0 shadow-sm fw-bold" style="width: 160px;" onchange="applyMonthFilter()">
+                <option value="">📅 All Months</option>
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+            </select>
+            <select id="appTheme" class="form-select border-0 shadow-sm fw-bold" style="width: 180px;" onchange="saveTheme()">
+                <option value="light">☀️ Light Theme</option>
+                <option value="dark">🌙 Dark Theme</option>
+                <option value="glass">🧊 Glassmorphism</option>
             </select>
         </div>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="col-md-4" onclick="resetChartToAll()"><div class="card-3d grad-balance"><h6>Total Balance</h6><h2 id="totalBalance">Rs. 0</h2></div></div>
-        <div class="col-md-4" onclick="updateView('Income')"><div class="card-3d grad-income"><h6>Total Income</h6><h2 id="totalIncome">Rs. 0</h2></div></div>
-        <div class="col-md-4" onclick="updateView('Expense')"><div class="card-3d grad-expense"><h6>Total Expense</h6><h2 id="totalExpense">Rs. 0</h2></div></div>
+    <div class="row text-center mb-2 justify-content-center">
+        <div class="col-md-3"><div class="summary-card bg-income" onclick="filterByType('Income')"><h6>Total Income</h6><h2 id="totalIncVal">0</h2></div></div>
+        <div class="col-md-3"><div class="summary-card bg-expense" onclick="filterByType('Expense')"><h6>Total Expense</h6><h2 id="totalExpVal">0</h2></div></div>
+        <div class="col-md-3"><div class="summary-card bg-profit" onclick="resetFilter()"><h6>Current Balance</h6><h2 id="balanceVal">0</h2></div></div>
+        <div class="col-md-3"><div class="summary-card bg-withdraw" onclick="showWithdrawHistoryModal()"><h6>Total Withdraw</h6><h2 id="totalWithdrawVal">0</h2></div></div>
     </div>
 
-    <h5 class="fw-bold mb-3"><i class="bi bi-wallet2 me-2"></i>Bank Accounts (Click to filter Chart)</h5>
-    <div id="bankCardsContainer" class="d-flex flex-wrap gap-3 mb-5"></div>
+    <div class="chart-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="btn-group shadow-sm">
+                <button class="btn btn-primary" onclick="toggleChartType('bar')">Bar Chart</button>
+                <button class="btn btn-outline-primary" onclick="toggleChartType('line')">Flow Chart</button>
+                <button class="btn btn-dark ms-2" onclick="openLedgerModal()"><i class="bi bi-file-earmark-pdf me-1"></i> Download Ledger</button>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <input type="date" id="fromDate" class="form-control form-control-sm">
+                <input type="date" id="toDate" class="form-control form-control-sm">
+                <button class="btn btn-dark btn-sm px-3" onclick="applyFilter()">Filter</button>
+                <button class="btn btn-secondary btn-sm" onclick="resetFilter()">Reset</button>
+            </div>
+        </div>
 
-    <div class="chart-wrapper mb-5">
-        <h6 id="chartTitle" class="fw-bold text-muted mb-3">Showing: All Accounts</h6>
-        <div style="height: 380px;"><canvas id="mainChart"></canvas></div>
+        <div class="chart-scroll-area" id="chartScrollArea">
+            <div id="chartBox">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <div class="table-responsive mt-5">
+            <table class="table table-custom align-middle" id="summaryTable">
+                <thead>
+                    <tr>
+                        <th class="text-center">Date</th>
+                        <th class="text-center">Opening Bal</th>
+                        <th class="text-center">Income (+)</th>
+                        <th class="text-center">Mid Balance</th>
+                        <th class="text-center">Expense (-)</th>
+                        <th class="text-center">Final Balance</th>
+                        <th class="text-start">Remarks / Details</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryTableBody"></tbody>
+            </table>
+        </div>
     </div>
+</div>
 
-    <div class="card-3d history-card mb-5" id="bankDetailSection" style="display:none;">
-        <div class="history-header-3d">
-            <h4 id="selectedBankTitle" class="fw-bold m-0"><i class="bi bi-clock-history me-2"></i>History</h4>
-            <button class="btn btn-link text-white p-0" onclick="closeHistory()"><i class="bi bi-x-circle-fill fs-3"></i></button>
-        </div>
-
-        <div class="history-filter-bar">
-            <div class="filter-input-group">
-                <label><i class="bi bi-calendar-event me-1"></i> From:</label>
-                <input type="date" id="filterFromDate" class="date-input" onchange="applyFilters()">
+<div class="modal fade" id="withdrawModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-warning"><i class="bi bi-wallet2 me-2"></i>Withdraw Amount</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="filter-input-group">
-                <label>To:</label>
-                <input type="date" id="filterToDate" class="date-input" onchange="applyFilters()">
-            </div>
-            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="resetDateFilters()">Clear Filter</button>
-        </div>
-        
-        <div class="history-stats-bar d-flex align-items-center">
-            <button onclick="filterByType('Income')" id="statInc" class="stat-btn-box inc-text">Income: Rs. 0</button>
-            <button onclick="filterByType('Expense')" id="statExp" class="stat-btn-box exp-text">Expense: Rs. 0</button>
-            <button onclick="filterByType('Adjustment')" id="statAdj" class="stat-btn-box adj-text">Adjustment: Rs. 0</button>
-        </div>
-
-        <div class="p-4">
-            <div class="table-responsive">
-                <table class="table table-custom align-middle">
-                    <thead>
-                        <tr><th>Date</th><th>Type</th><th>Amount</th><th>Remarks</th><th class="text-center">Actions</th></tr>
-                    </thead>
-                    <tbody id="transactionBody"></tbody>
-                </table>
+            <div class="modal-body p-4">
+                <form id="withdrawForm">
+                    <input type="hidden" id="withdrawEditKey">
+                    <div class="row g-3">
+                        <div class="col-12"><label class="small fw-bold">Date</label><input type="date" id="withdrawDate" class="form-control" required></div>
+                        <div class="col-12"><label class="small fw-bold text-success">Current Balance (In Drawer)</label><input type="number" id="withdrawCurrentBal" class="form-control form-locked" readonly step="0.01"></div>
+                        <div class="col-12"><label class="small fw-bold" style="color: #ff9800;">Withdraw Amount</label><input type="number" id="withdrawAmount" class="form-control" style="border-color: #ff9800;" step="0.01" value="0" required></div>
+                        <div class="col-12"><label class="small fw-bold">Remarks (Note)</label><textarea id="withdrawRemarks" class="form-control" rows="2" placeholder="Withdraw reason..."></textarea></div>
+                        <div class="col-12 mt-4"><button type="submit" class="btn w-100 fw-bold py-3 shadow text-white" style="background-color: #ff9800;">SAVE WITHDRAW</button></div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-<button class="fab-btn" onclick="openTransactionModal()"><i class="bi bi-plus-lg"></i></button>
-
-<div class="modal fade" id="bankModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 p-4 border-0">
-            <h5 class="fw-bold mb-3">Add New Bank</h5>
-            <form id="bankForm">
-                <input type="text" id="newBankName" class="form-control mb-3" placeholder="Bank Name" required>
-                <input type="text" id="newBankNumber" class="form-control mb-3" placeholder="Account Number">
-                <button type="submit" class="btn btn-primary w-100">Save Bank</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="transferModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 p-4 border-0">
-            <h5 class="fw-bold mb-4 text-warning"><i class="bi bi-arrow-left-right me-2"></i>Inter-Bank Transfer</h5>
-            <form id="transferForm">
-                <div class="mb-3"><label class="small fw-bold">From Bank</label><select id="fromBank" class="form-select" required></select></div>
-                <div class="mb-3"><label class="small fw-bold">To Bank</label><select id="toBank" class="form-select" required></select></div>
-                <div class="mb-3"><label class="small fw-bold">Amount</label><input type="number" id="transferAmt" class="form-control" required></div>
-                <div class="mb-3"><label class="small fw-bold">Date</label><input type="date" id="transferDate" class="form-control" required></div>
-                <button type="submit" class="btn btn-warning w-100 py-2 fw-bold">Transfer Now</button>
-            </form>
+<div class="modal fade" id="withdrawHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-0"><h5 class="modal-title fw-bold text-warning"><i class="bi bi-clock-history me-2"></i>Withdrawal History</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body p-0"><div class="table-responsive"><table class="table table-hover m-0"><thead class="table-light"><tr><th class="ps-4">Date</th><th>Amount</th><th>Remarks</th><th class="text-center">Action</th></tr></thead><tbody id="withdrawHistoryBody"></tbody></table></div></div>
         </div>
     </div>
 </div>
 
 <div class="modal fade" id="entryModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 p-4 border-0">
-            <h5 class="fw-bold mb-4 text-primary" id="modalTitle">New Transaction</h5>
-            <form id="entryForm">
-                <input type="hidden" id="editKey">
-                <div class="mb-3"><label class="small fw-bold">Select Bank</label><select id="entryBank" class="form-select" required></select></div>
-                <div class="mb-3"><label class="small fw-bold">Type</label><select id="entryType" class="form-select"><option value="Income">Income</option><option value="Expense">Expense</option></select></div>
-                <div class="mb-3"><label class="small fw-bold">Amount</label><input type="number" id="entryAmt" class="form-control" required></div>
-                <div class="mb-3"><label class="small fw-bold">Date</label><input type="date" id="entryDate" class="form-control" required></div>
-                <div class="mb-4"><label class="small fw-bold">Remarks</label><textarea id="entryRemarks" class="form-control" rows="2"></textarea></div>
-                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Save Record</button>
-            </form>
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <div class="d-flex justify-content-between w-100 align-items-center"><h5 class="modal-title fw-bold m-0"><i class="bi bi-plus-circle-fill me-2"></i>New Transaction</h5><i class="bi bi-calculator calc-btn-trigger" onclick="openCalculator()" title="Open Built-in Calculator"></i></div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="entryForm">
+                    <input type="hidden" id="editKey">
+                    <div class="row g-3">
+                        <div class="col-12"><label class="small fw-bold">Date Selection</label><input type="date" id="entryDate" class="form-control" required></div>
+                        <div class="col-12"><label class="small fw-bold">Opening Balance</label><input type="number" id="openBal" class="form-control form-locked" readonly step="0.01"></div>
+                        <div class="col-12"><label class="small fw-bold text-primary">Today Drawer (Cash in hand)</label><input type="number" id="todayDrawer" class="form-control border-primary" step="0.01" value="0" oninput="calculateFromDrawer()"></div>
+                        <div class="col-6"><label class="small fw-bold text-success">Income Amount</label><input type="number" id="incomeInput" class="form-control border-success" step="0.01" value="0" oninput="calculateLiveBalance()"></div>
+                        <div class="col-6"><label class="small fw-bold text-danger">Expense Amount</label><input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateLiveBalance()"></div>
+                        <div class="col-12"><label class="small fw-bold">Transaction Remarks</label><textarea id="entryRemarks" class="form-control" rows="2" placeholder="Enter purpose..."></textarea></div>
+                        <div class="col-12"><label class="small fw-bold text-primary">Final Balance</label><input type="number" id="finalBalance" class="form-control form-locked text-primary" readonly step="0.01"></div>
+                        <div class="col-12 mt-4"><button type="submit" class="btn btn-primary w-100 fw-bold py-3 shadow">SAVE TRANSACTION</button></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ledgerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0"><h5 class="modal-title fw-bold">Download Ledger</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body p-4"><div class="row g-3"><div class="col-6"><label class="small fw-bold">From</label><input type="date" id="ledgerFrom" class="form-control"></div><div class="col-6"><label class="small fw-bold">To</label><input type="date" id="ledgerTo" class="form-control"></div><div class="col-12 mt-4"><button onclick="downloadLedger('pdf')" class="btn btn-danger w-100 mb-2">DOWNLOAD PDF</button><button onclick="downloadLedger('excel')" class="btn btn-success w-100 mb-2">DOWNLOAD EXCEL</button><button onclick="downloadLedger('image')" class="btn btn-info w-100 text-white">DOWNLOAD PICTURE</button></div></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="calculatorModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3"><h6 class="text-white-50 m-0">PRO CALCULATOR</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="calc-display" id="calcDisplay">0</div>
+                <div class="calc-grid">
+                    <button class="btn-calc btn-clear" onclick="clearCalc()">C</button><button class="btn-calc btn-op" onclick="backspaceCalc()">⌫</button><button class="btn-calc btn-op" onclick="pressCalc('/')">÷</button><button class="btn-calc btn-op" onclick="pressCalc('*')">×</button>
+                    <button class="btn-calc" onclick="pressCalc('7')">7</button><button class="btn-calc" onclick="pressCalc('8')">8</button><button class="btn-calc" onclick="pressCalc('9')">9</button><button class="btn-calc btn-op" onclick="pressCalc('-')">-</button>
+                    <button class="btn-calc" onclick="pressCalc('4')">4</button><button class="btn-calc" onclick="pressCalc('5')">5</button><button class="btn-calc" onclick="pressCalc('6')">6</button><button class="btn-calc btn-op" onclick="pressCalc('+')">+</button>
+                    <button class="btn-calc" onclick="pressCalc('1')">1</button><button class="btn-calc" onclick="pressCalc('2')">2</button><button class="btn-calc" onclick="pressCalc('3')">3</button><button class="btn-calc btn-eq" onclick="solveCalc()">=</button>
+                    <button class="btn-calc" style="grid-column: span 2;" onclick="pressCalc('0')">0</button><button class="btn-calc" onclick="pressCalc('.')">.</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-    Chart.register(ChartDataLabels);
-    const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/", projectId: "own-live-steam-web" };
+    const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/" };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const dbRef = ref(db, 'transactions');
+    const themeRef = ref(db, 'settings/theme');
 
-    let allBanks = [];
-    let allTransactions = [];
-    let currentFilter = 'All';
-    let historyTypeFilter = 'All';
+    let allData = [];
+    let filterStart = null;
+    let filterEnd = null;
+    let typeFilter = null; 
     let myChart = null;
-    let selectedBankId = null;
-    let chartBankId = null; 
+    let chartType = 'bar'; 
+    let globalLastBalance = 0;
 
-    const bModal = new bootstrap.Modal(document.getElementById('bankModal'));
-    const eModal = new bootstrap.Modal(document.getElementById('entryModal'));
-    const tModal = new bootstrap.Modal(document.getElementById('transferModal'));
-    
-    const errorToast = new bootstrap.Toast(document.getElementById('errorToast'), { delay: 5000 });
+    const modalObj = new bootstrap.Modal(document.getElementById('entryModal'));
+    const withdrawModalObj = new bootstrap.Modal(document.getElementById('withdrawModal'));
+    const withdrawHistoryModalObj = new bootstrap.Modal(document.getElementById('withdrawHistoryModal'));
+    const calcModalObj = new bootstrap.Modal(document.getElementById('calculatorModal'));
+    const ledgerModalObj = new bootstrap.Modal(document.getElementById('ledgerModal'));
+    const today = new Date().toISOString().split('T')[0];
+    const currentMonthKey = today.substring(0, 7);
 
-    onValue(ref(db, 'settings/theme'), (snap) => {
-        const savedTheme = snap.val() || 'light';
-        document.body.setAttribute('data-theme', savedTheme);
-        document.getElementById('themeSelector').value = savedTheme;
-        if(myChart) initChart();
-    });
+    // Draggable Chart
+    const slider = document.getElementById('chartScrollArea');
+    let isDown = false, startX, scrollLeft;
+    slider.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft; });
+    slider.addEventListener('mouseleave', () => { isDown = false; });
+    slider.addEventListener('mouseup', () => { isDown = false; });
+    slider.addEventListener('mousemove', (e) => { if(!isDown) return; e.preventDefault(); const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 2; slider.scrollLeft = scrollLeft - walk; });
 
-    onValue(ref(db, 'bank_accounts'), (snap) => {
-        allBanks = []; snap.forEach(c => { allBanks.push({ id: c.key, ...c.val() }); });
-        renderBanks();
-    });
+    // Calculator logic
+    let calcExpression = "";
+    window.openCalculator = () => { calcExpression = ""; document.getElementById('calcDisplay').innerText = "0"; calcModalObj.show(); };
+    window.pressCalc = (val) => { calcExpression += val; document.getElementById('calcDisplay').innerText = calcExpression; };
+    window.clearCalc = () => { calcExpression = ""; document.getElementById('calcDisplay').innerText = "0"; };
+    window.backspaceCalc = () => { calcExpression = calcExpression.slice(0, -1); document.getElementById('calcDisplay').innerText = calcExpression || "0"; };
+    window.solveCalc = () => { try { calcExpression = eval(calcExpression).toString(); document.getElementById('calcDisplay').innerText = calcExpression; } catch { document.getElementById('calcDisplay').innerText = "Error"; calcExpression = ""; } };
 
-    onValue(ref(db, 'bank_transactions'), (snap) => {
-        allTransactions = [];
-        snap.forEach(bNode => { bNode.forEach(tNode => { allTransactions.push({ id: tNode.key, bankId: bNode.key, ...tNode.val() }); }); });
-        renderBanks();
-        updateSummary();
-        initChart();
-        if(selectedBankId || chartBankId === null) window.applyFilters();
-    });
+    // Theme logic
+    onValue(themeRef, (snap) => { const t = snap.val() || 'light'; document.documentElement.setAttribute('data-theme', t); document.getElementById('appTheme').value = t; });
+    window.saveTheme = () => set(themeRef, document.getElementById('appTheme').value);
 
-    function renderBanks() {
-        const container = document.getElementById('bankCardsContainer');
-        container.innerHTML = '';
-        allBanks.forEach(bank => {
-            const balance = allTransactions.filter(t => t.bankId === bank.id).reduce((s, t) => {
-                const amt = parseFloat(t.amount);
-                if(t.type === 'Income' || t.type === 'Adjustment In') return s + amt;
-                if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
-                return s;
-            }, 0);
-            container.innerHTML += `<div class="card-3d bank-card-mini" onclick="selectBank('${bank.id}')"><h6>${bank.name}</h6><span class="acc-num">${bank.number || '---'}</span><div class="bal-amt">Rs. ${balance.toLocaleString()}</div></div>`;
+    // Month Toggle Logic
+    window.toggleMonthRows = (monthKey) => {
+        const rows = document.querySelectorAll(`.month-row-${monthKey}`);
+        const icon = document.getElementById(`icon-${monthKey}`);
+        rows.forEach(r => {
+            if(r.style.display === 'none') {
+                r.style.display = 'table-row';
+                if(icon) icon.className = "bi bi-chevron-down me-2";
+            } else {
+                r.style.display = 'none';
+                if(icon) icon.className = "bi bi-chevron-right me-2";
+            }
         });
-        const options = allBanks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-        document.getElementById('entryBank').innerHTML = options; document.getElementById('fromBank').innerHTML = options; document.getElementById('toBank').innerHTML = options;
+    };
+
+    // Data Sync
+    onValue(dbRef, (snap) => {
+        allData = [];
+        snap.forEach(c => { allData.push({ id: c.key, ...c.val() }); });
+        refreshUI();
+    });
+
+    window.refreshUI = function() {
+        const body = document.getElementById('summaryTableBody');
+        body.innerHTML = '';
+        
+        // Filter data by date and type
+        let filteredData = allData;
+        if(filterStart && filterEnd) {
+            filteredData = allData.filter(t => t.date >= filterStart && t.date <= filterEnd);
+        }
+        if(typeFilter) {
+            filteredData = filteredData.filter(t => t.type === typeFilter);
+        }
+
+        const grouped = {};
+        allData.forEach(t => {
+            if (!grouped[t.date]) { grouped[t.date] = { inc: 0, exp: 0, with: 0, items: [] }; }
+            if (t.type === 'Income') grouped[t.date].inc += t.amount;
+            else if (t.type === 'Expense') grouped[t.date].exp += t.amount;
+            else if (t.type === 'Withdraw') grouped[t.date].with += t.amount;
+            grouped[t.date].items.push(t);
+        });
+
+        const sortedDates = Object.keys(grouped).sort((a,b) => new Date(a) - new Date(b));
+        let runningBalance = 0;
+        const monthGroups = {};
+
+        sortedDates.forEach((date) => {
+            const day = grouped[date];
+            const opening = runningBalance;
+            const mid = opening + day.inc;
+            const totalDeductions = day.exp + day.with;
+            const closing = mid - totalDeductions;
+            
+            const hasDataInFilter = filteredData.some(fd => fd.date === date);
+            
+            if(hasDataInFilter) {
+                const monthKey = date.substring(0, 7);
+                if(!monthGroups[monthKey]) monthGroups[monthKey] = { rowsHtml: "", closingBalance: 0 };
+
+                const itemsToShow = typeFilter ? day.items.filter(i => i.type === typeFilter) : day.items;
+                const remarksList = itemsToShow.filter(i => i.remarks && i.remarks !== "N/A").map(i => `• ${i.remarks}`).join('<br>');
+                const actions = itemsToShow.map(i => `
+                    <div class="d-flex justify-content-center gap-2 mb-1">
+                        <span class="badge ${i.type==='Income'?'bg-success':i.type==='Withdraw'?'bg-warning text-dark':'bg-danger'}" style="width:55px;">${i.amount}</span>
+                        <button class="btn btn-sm btn-light py-0 border" onclick="editEntry('${i.id}')"><i class="bi bi-pencil text-primary"></i></button>
+                        <button class="btn btn-sm btn-light py-0 border" onclick="deleteEntry('${i.id}')"><i class="bi bi-trash text-danger"></i></button>
+                    </div>`).join('');
+
+                const isCurrentMonth = (monthKey === currentMonthKey);
+                const rowStyle = isCurrentMonth ? "" : "display:none;";
+
+                monthGroups[monthKey].rowsHtml += `
+                    <tr class="month-row-${monthKey}" style="${rowStyle}">
+                        <td class="text-center fw-bold small">${date.split('-').reverse().join('/')}</td>
+                        <td class="text-center">${opening.toFixed(2)}</td>
+                        <td class="text-center text-success fw-bold">+${day.inc.toFixed(2)}</td>
+                        <td class="text-center text-secondary">${mid.toFixed(2)}</td>
+                        <td class="text-center text-danger fw-bold">-${totalDeductions.toFixed(2)}</td>
+                        <td class="text-center fw-bold text-primary">${closing.toFixed(2)}</td>
+                        <td><span style="font-size:0.75rem;">${remarksList || '-'}</span></td>
+                        <td>${actions}</td>
+                    </tr>`;
+                monthGroups[monthKey].closingBalance = closing;
+            }
+            runningBalance = closing;
+        });
+
+        const sortedMonths = Object.keys(monthGroups).sort().reverse();
+        sortedMonths.forEach(mKey => {
+            const mDate = new Date(mKey + "-01");
+            const mLabel = mDate.toLocaleString('default', { month: 'short', year: 'numeric' });
+            const isCurrent = (mKey === currentMonthKey);
+            body.innerHTML += `
+                <tr class="month-header-row" onclick="toggleMonthRows('${mKey}')">
+                    <td colspan="8">
+                        <i id="icon-${mKey}" class="bi ${isCurrent?'bi-chevron-down':'bi-chevron-right'} me-2"></i>
+                        ${mLabel} - <span class="text-primary">Closing: Rs.${monthGroups[mKey].closingBalance.toFixed(2)}</span>
+                    </td>
+                </tr>`;
+            body.innerHTML += monthGroups[mKey].rowsHtml;
+        });
+
+        globalLastBalance = runningBalance;
+        updateDashboard();
+        initChart();
+    };
+
+    window.applyFilter = () => { filterStart = document.getElementById('fromDate').value; filterEnd = document.getElementById('toDate').value; refreshUI(); };
+    window.resetFilter = () => { filterStart = null; filterEnd = null; typeFilter = null; document.getElementById('monthFilter').value = ""; document.getElementById('fromDate').value = ""; document.getElementById('toDate').value = ""; refreshUI(); };
+    window.applyMonthFilter = () => { const m = document.getElementById('monthFilter').value; if(!m) { resetFilter(); return; } const y = new Date().getFullYear(); filterStart = `${y}-${m}-01`; filterEnd = `${y}-${m}-${new Date(y, m, 0).getDate()}`; refreshUI(); };
+    window.filterByType = (type) => { typeFilter = type; refreshUI(); };
+
+    function updateDashboard() {
+        let tInc = 0, tExp = 0, tWith = 0;
+        allData.forEach(t => {
+            if(t.type === 'Income') tInc += t.amount; 
+            else if(t.type === 'Expense') tExp += t.amount;
+            else if(t.type === 'Withdraw') tWith += t.amount;
+        });
+        document.getElementById('totalIncVal').innerText = tInc.toFixed(0);
+        document.getElementById('totalExpVal').innerText = tExp.toFixed(0);
+        document.getElementById('totalWithdrawVal').innerText = tWith.toFixed(0);
+        document.getElementById('balanceVal').innerText = (tInc - tExp - tWith).toFixed(0);
     }
 
-    function updateSummary() {
-        let tI = allTransactions.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
-        let tE = allTransactions.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
-        let tAdjIn = allTransactions.filter(t => t.type === 'Adjustment In').reduce((s, t) => s + parseFloat(t.amount), 0);
-        let tAdjOut = allTransactions.filter(t => t.type === 'Adjustment Out').reduce((s, t) => s + parseFloat(t.amount), 0);
-        document.getElementById('totalIncome').innerText = `Rs. ${tI.toLocaleString()}`;
-        document.getElementById('totalExpense').innerText = `Rs. ${tE.toLocaleString()}`;
-        document.getElementById('totalBalance').innerText = `Rs. ${(tI + tAdjIn - tE - tAdjOut).toLocaleString()}`;
-    }
+    window.calculateFromDrawer = () => { const dr = parseFloat(document.getElementById('todayDrawer').value) || 0, op = parseFloat(document.getElementById('openBal').value) || 0, ex = parseFloat(document.getElementById('expenseInput').value) || 0; document.getElementById('incomeInput').value = (dr + ex).toFixed(2); calculateLiveBalance(); };
+    window.calculateLiveBalance = () => { const b = parseFloat(document.getElementById('openBal').value) || 0, i = parseFloat(document.getElementById('incomeInput').value) || 0, e = parseFloat(document.getElementById('expenseInput').value) || 0; document.getElementById('finalBalance').value = (b + i - e).toFixed(2); };
+    window.openModal = () => { document.getElementById('entryForm').reset(); document.getElementById('editKey').value = ""; document.getElementById('entryDate').value = today; document.getElementById('openBal').value = globalLastBalance.toFixed(2); modalObj.show(); };
+    window.openWithdrawModal = () => { document.getElementById('withdrawForm').reset(); document.getElementById('withdrawEditKey').value = ""; document.getElementById('withdrawDate').value = today; document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2); withdrawModalObj.show(); };
 
-    window.initChart = () => {
+    document.getElementById('entryForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const key = document.getElementById('editKey').value, date = document.getElementById('entryDate').value, inc = parseFloat(document.getElementById('incomeInput').value) || 0, exp = parseFloat(document.getElementById('expenseInput').value) || 0, rem = document.getElementById('entryRemarks').value || "N/A";
+        if(key) { const type = inc > 0 ? 'Income' : 'Expense', amount = inc > 0 ? inc : exp; await set(ref(db, 'transactions/'+key), { type, date, amount, remarks: rem }); }
+        else { if(inc !== 0) await push(dbRef, { type: 'Income', date, amount: inc, remarks: rem }); if(exp !== 0) await push(dbRef, { type: 'Expense', date, amount: exp, remarks: rem }); }
+        modalObj.hide();
+    };
+
+    document.getElementById('withdrawForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const key = document.getElementById('withdrawEditKey').value, date = document.getElementById('withdrawDate').value, amount = parseFloat(document.getElementById('withdrawAmount').value) || 0, remarks = document.getElementById('withdrawRemarks').value || "Withdrawal";
+        if(key) await set(ref(db, 'transactions/'+key), { type: 'Withdraw', date, amount, remarks });
+        else if(amount > 0) await push(dbRef, { type: 'Withdraw', date, amount, remarks });
+        withdrawModalObj.hide();
+    };
+
+    window.editEntry = (id) => {
+        const item = allData.find(i => i.id === id); if(!item) return;
+        if (item.type === 'Withdraw') {
+            document.getElementById('withdrawEditKey').value = item.id; document.getElementById('withdrawDate').value = item.date; document.getElementById('withdrawAmount').value = item.amount; document.getElementById('withdrawRemarks').value = item.remarks; document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2); withdrawModalObj.show();
+        } else {
+            document.getElementById('editKey').value = item.id; document.getElementById('entryDate').value = item.date; document.getElementById('entryRemarks').value = item.remarks === "N/A" ? "" : item.remarks;
+            if(item.type === 'Income') { document.getElementById('incomeInput').value = item.amount; document.getElementById('expenseInput').value = 0; }
+            else { document.getElementById('incomeInput').value = 0; document.getElementById('expenseInput').value = item.amount; }
+            calculateLiveBalance(); modalObj.show();
+        }
+    };
+
+    window.deleteEntry = (id) => { if(confirm("Confirm Delete?")) remove(ref(db, 'transactions/'+id)); };
+    window.toggleChartType = (t) => { chartType = t; initChart(); };
+
+    function initChart() {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(myChart) myChart.destroy();
-        let chartData = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : allTransactions;
-        const bankName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
-        document.getElementById('chartTitle').innerText = `Showing: ${bankName}`;
-        const dates = [...new Set(chartData.filter(t => t.type === 'Income' || t.type === 'Expense').map(t => t.date))].sort();
-        const incData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Income').reduce((s, c) => s + parseFloat(c.amount), 0));
-        const expData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Expense').reduce((s, c) => s + parseFloat(c.amount), 0));
-        myChart = new Chart(ctx, { 
-            type: 'bar', 
-            data: { labels: dates, datasets: [{ label: 'Income', data: incData, backgroundColor: '#00b894', borderRadius: 8, hidden: currentFilter === 'Expense', barThickness: 25, minBarLength: 5 }, { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 25, minBarLength: 5 }] }, 
-            options: { 
-                responsive: true, maintainAspectRatio: false,
-                scales: { y: { type: 'logarithmic', beginAtZero: false, ticks: { callback: function(value) { if (value === 0) return "0"; if ([1, 10, 100, 1000, 10000, 100000, 1000000, 2500000].includes(value)) return 'Rs.' + value.toLocaleString(); } } } },
-                plugins: { datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold', size: 10 }, formatter: (v) => v > 0 ? 'Rs.' + v.toLocaleString() : '', clip: false, padding: 4 } },
-                onClick: (e, elements) => {
-                    if (elements.length > 0) {
-                        const element = elements[0]; const datasetIndex = element.datasetIndex; const index = element.index;
-                        const clickedDate = myChart.data.labels[index]; const clickedType = myChart.data.datasets[datasetIndex].label;
-                        document.getElementById('bankDetailSection').style.display = 'block';
-                        const bName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
-                        document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bName} - ${clickedType} (${clickedDate})`;
-                        document.getElementById('filterFromDate').value = clickedDate; document.getElementById('filterToDate').value = clickedDate;
-                        historyTypeFilter = clickedType; window.applyFilters();
-                        document.getElementById('bankDetailSection').scrollIntoView({ behavior: 'smooth' });
-                    }
-                }
-            } 
+        const dates = [...new Set(allData.map(d => d.date))].sort();
+        const incs = dates.map(d => allData.filter(x => x.date === d && x.type === 'Income').reduce((a,b)=>a+b.amount,0));
+        const exps = dates.map(d => allData.filter(x => x.date === d && (x.type === 'Expense' || x.type === 'Withdraw')).reduce((a,b)=>a+b.amount,0));
+        document.getElementById('chartBox').style.width = Math.max(1000, dates.length * 80) + "px";
+        myChart = new Chart(ctx, {
+            type: chartType,
+            data: {
+                labels: dates.map(d => d.split('-').reverse().slice(0,2).join('/')),
+                datasets: [
+                    { label: 'Income', data: incs, borderColor: '#2ecc71', backgroundColor: 'rgba(46, 204, 113, 0.5)', fill: true, tension: 0.4 },
+                    { label: 'Expense & Withdraw', data: exps, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.5)', fill: true, tension: 0.4 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-color') } } } }
         });
-    };
+        setTimeout(() => { slider.scrollLeft = slider.scrollWidth; }, 100);
+    }
 
-    window.selectBank = (id) => {
-        selectedBankId = id; chartBankId = id;
-        document.getElementById('bankDetailSection').style.display = 'block';
-        const bank = allBanks.find(b => b.id === id);
-        document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bank.name} History`;
-        window.resetAllFilters(); window.applyFilters(); initChart();
-    };
-
-    window.resetChartToAll = () => { chartBankId = null; currentFilter = 'All'; initChart(); document.getElementById('bankDetailSection').style.display = 'none'; };
-
-    window.applyFilters = () => {
-        let filteredTrans = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : [...allTransactions];
-        const fromDate = document.getElementById('filterFromDate').value; const toDate = document.getElementById('filterToDate').value;
-        if(fromDate) filteredTrans = filteredTrans.filter(t => t.date >= fromDate);
-        if(toDate) filteredTrans = filteredTrans.filter(t => t.date <= toDate);
-        const bInc = filteredTrans.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
-        const bExp = filteredTrans.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
-        const bAdj = filteredTrans.filter(t => t.type.includes('Adjustment')).reduce((s, t) => s + parseFloat(t.amount), 0);
-        document.getElementById('statInc').innerText = `Income: Rs. ${bInc.toLocaleString()}`;
-        document.getElementById('statExp').innerText = `Expense: Rs. ${bExp.toLocaleString()}`;
-        document.getElementById('statAdj').innerText = `Adjustment: Rs. ${bAdj.toLocaleString()}`;
-        if(historyTypeFilter !== 'All') filteredTrans = filteredTrans.filter(t => historyTypeFilter === 'Adjustment' ? t.type.includes('Adjustment') : t.type === historyTypeFilter);
-        document.getElementById('transactionBody').innerHTML = filteredTrans.map(t => {
-            let tCls = (t.type === 'Income' || t.type === 'Adjustment In') ? 'text-success' : 'text-danger';
-            let bName = allBanks.find(b => b.id === t.bankId)?.name || 'Unknown';
-            let displayRemarks = chartBankId ? (t.remarks || '---') : `<span class="badge bg-light text-dark border me-1">${bName}</span> ${t.remarks || '---'}`;
-            return `<tr><td>${t.date}</td><td class="${tCls} fw-bold">${t.type.replace('Adjustment ','')}</td><td>Rs. ${parseFloat(t.amount).toLocaleString()}</td><td>${displayRemarks}</td><td class="text-center"><button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button></td></tr>`
-        }).join('');
-    };
-
-    window.editEntry = (tId) => {
-        const t = allTransactions.find(trans => trans.id === tId); if (!t) return;
-        document.getElementById('editKey').value = t.id; document.getElementById('entryBank').value = t.bankId; document.getElementById('entryBank').disabled = true;
-        document.getElementById('entryType').value = t.type; document.getElementById('entryAmt').value = t.amount;
-        document.getElementById('entryDate').value = t.date; document.getElementById('entryRemarks').value = t.remarks || '';
-        document.getElementById('modalTitle').innerText = 'Edit Transaction'; eModal.show();
-    };
-
-    window.filterByType = (type) => { historyTypeFilter = (historyTypeFilter === type) ? 'All' : type; window.applyFilters(); };
-    window.resetDateFilters = () => { document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; window.applyFilters(); };
-    window.resetAllFilters = () => { historyTypeFilter = 'All'; document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; };
-
-    document.getElementById('transferForm').onsubmit = (e) => {
-        e.preventDefault();
-        const from = document.getElementById('fromBank').value; 
-        const to = document.getElementById('toBank').value;
-        const amt = parseFloat(document.getElementById('transferAmt').value); 
-        const dt = document.getElementById('transferDate').value;
-        
-        const fromBankObj = allBanks.find(b => b.id === from);
-        const fromName = fromBankObj.name; 
-        const toName = allBanks.find(b => b.id === to).name;
-
-        if(from === to) {
-            document.getElementById('errorMessage').innerText = "Select different banks for transfer!";
-            errorToast.show();
-            return;
-        }
-
-        const currentFromBalance = allTransactions.filter(t => t.bankId === from).reduce((s, t) => {
-            const tAmt = parseFloat(t.amount);
-            if(t.type === 'Income' || t.type === 'Adjustment In') return s + tAmt;
-            if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - tAmt;
-            return s;
-        }, 0);
-
-        if(amt > currentFromBalance) {
-            document.getElementById('errorMessage').innerText = `Insufficient Balance! Your current balance in ${fromName} is Rs. ${currentFromBalance.toLocaleString()}. You cannot transfer Rs. ${amt.toLocaleString()}.`;
-            errorToast.show();
-            return;
-        }
-
-        push(ref(db, `bank_transactions/${from}`), { type: 'Adjustment Out', amount: amt, date: dt, remarks: `Transfer To ${toName}` });
-        push(ref(db, `bank_transactions/${to}`), { type: 'Adjustment In', amount: amt, date: dt, remarks: `Transfer From ${fromName}` });
-        
-        tModal.hide(); 
-        document.getElementById('transferForm').reset();
-    };
-
-    window.openTransferModal = () => { document.getElementById('transferDate').value = new Date().toISOString().split('T')[0]; tModal.show(); };
-    window.deleteEntry = (bId, tId) => { if(confirm("Delete record?")) remove(ref(db, `bank_transactions/${bId}/${tId}`)); };
-    window.openBankModal = () => bModal.show();
-    window.openTransactionModal = () => { document.getElementById('entryForm').reset(); document.getElementById('editKey').value = ''; document.getElementById('entryBank').disabled = false; document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; eModal.show(); };
-    
-    document.getElementById('bankForm').onsubmit = (e) => { e.preventDefault(); push(ref(db, 'bank_accounts'), { name: document.getElementById('newBankName').value, number: document.getElementById('newBankNumber').value }); bModal.hide(); };
-    
-    document.getElementById('entryForm').onsubmit = (e) => { 
-        e.preventDefault(); const bId = document.getElementById('entryBank').value; const tId = document.getElementById('editKey').value;
-        const data = { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value }; 
-        if (tId) update(ref(db, `bank_transactions/${bId}/${tId}`), data); else push(ref(db, `bank_transactions/${bId}`), data); eModal.hide(); 
-    };
-
-    window.updateView = (v) => { 
-        currentFilter = v; initChart(); document.getElementById('bankDetailSection').style.display = 'block';
-        const bName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
-        document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bName} - ${v} Details`;
-        document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = '';
-        historyTypeFilter = v; window.applyFilters(); document.getElementById('bankDetailSection').scrollIntoView({ behavior: 'smooth' });
+    window.openLedgerModal = () => { document.getElementById('ledgerFrom').value = today.substring(0,8) + '01'; document.getElementById('ledgerTo').value = today; ledgerModalObj.show(); };
+    window.downloadLedger = async (format) => {
+        const lFrom = document.getElementById('ledgerFrom').value, lTo = document.getElementById('ledgerTo').value;
+        const element = document.getElementById('summaryTable');
+        if(format === 'pdf') await html2pdf().from(element).save(`Ledger_${lFrom}.pdf`);
+        else if(format === 'excel') XLSX.writeFile(XLSX.utils.table_to_book(element), `Ledger_${lFrom}.xlsx`);
+        else { const canvas = await html2canvas(element); const link = document.createElement('a'); link.download = `Ledger.png`; link.href = canvas.toDataURL(); link.click(); }
+        ledgerModalObj.hide();
     };
     
-    window.changeTheme = (v) => { set(ref(db, 'settings/theme'), v); };
-    window.closeHistory = () => { document.getElementById('bankDetailSection').style.display = 'none'; selectedBankId = null; chartBankId = null; initChart(); };
+    window.showWithdrawHistoryModal = () => {
+        const histBody = document.getElementById('withdrawHistoryBody'); histBody.innerHTML = "";
+        const withdraws = allData.filter(t => t.type === 'Withdraw').sort((a,b) => new Date(b.date) - new Date(a.date));
+        withdraws.forEach(w => {
+            histBody.innerHTML += `<tr><td class="ps-4">${w.date.split('-').reverse().join('/')}</td><td class="fw-bold text-warning">${w.amount}</td><td class="small">${w.remarks || '-'}</td><td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${w.id}'); bootstrap.Modal.getInstance(document.getElementById('withdrawHistoryModal')).hide();">Delete</button></td></tr>`;
+        });
+        withdrawHistoryModalObj.show();
+    };
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    window.history.pushState(null, null, window.location.href);
-    window.onpopstate = function () {
-        window.location.href = "https://hammad57.github.io/POS/index.html";
-    };
-</script>
 </body>
 </html>
