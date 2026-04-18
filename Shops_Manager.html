@@ -79,7 +79,14 @@
                 <input type="text" id="s_name" placeholder="Shop Name" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
                 <input type="text" id="s_mobile" placeholder="Mobile Number" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
                 <input type="text" id="s_address" placeholder="Address" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
-                <input type="text" id="s_location" placeholder="Google Map Link (Location)" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
+                
+                <div class="relative">
+                    <input type="text" id="s_location" placeholder="Google Map Link (Location)" class="w-full bg-gray-700 border-none rounded-lg p-3 pr-10 text-white">
+                    <button onclick="fetchCurrentLocation()" id="locationPinBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 hover:text-red-400 transition-all" title="Detect Current Location">
+                        <i class="fas fa-map-marker-alt text-lg"></i>
+                    </button>
+                </div>
+
                 <div class="flex space-x-2 pt-2">
                     <button onclick="saveShop()" class="flex-1 bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-700">Save Shop</button>
                     <button onclick="toggleModal('shopModal')" class="flex-1 bg-gray-600 p-3 rounded-lg font-bold hover:bg-gray-700">Cancel</button>
@@ -117,31 +124,66 @@
         const db = firebase.database();
         let shopsDataMap = {};
 
-        // --- NEW: IndexedDB Logic for Image Caching ---
+        // IndexedDB for Image Cache
         const request = indexedDB.open("ImageCacheDB", 1);
         let idb;
-        request.onupgradeneeded = e => {
-            e.target.result.createObjectStore("images");
-        };
+        request.onupgradeneeded = e => { e.target.result.createObjectStore("images"); };
         request.onsuccess = e => { idb = e.target.result; };
 
         function getCachedImage(id) {
             return new Promise(resolve => {
+                if(!idb) return resolve(null);
                 const trans = idb.transaction("images", "readonly");
                 const store = trans.objectStore("images");
                 const req = store.get(id);
                 req.onsuccess = () => resolve(req.result);
             });
         }
-
         function setCachedImage(id, data) {
+            if(!idb) return;
             const trans = idb.transaction("images", "readwrite");
             trans.objectStore("images").put(data, id);
         }
-        // --- End of Caching Logic ---
 
         function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
         document.getElementById('e_date').valueAsDate = new Date();
+
+        // --- NEW: Function to Fetch Location and Address ---
+        async function fetchCurrentLocation() {
+            const pinBtn = document.getElementById('locationPinBtn');
+            const originalIcon = pinBtn.innerHTML;
+            pinBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-blue-400"></i>';
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    // 1. Create Google Map Link
+                    const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
+                    document.getElementById('s_location').value = mapLink;
+
+                    try {
+                        // 2. Fetch Readable Address using OpenStreetMap (Free API)
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
+                        const data = await response.json();
+                        if (data.display_name) {
+                            document.getElementById('s_address').value = data.display_name;
+                        }
+                    } catch (error) {
+                        console.error("Address loading failed", error);
+                    }
+                    
+                    pinBtn.innerHTML = originalIcon;
+                }, (error) => {
+                    alert("Location access denied. Please enable GPS.");
+                    pinBtn.innerHTML = originalIcon;
+                }, { enableHighAccuracy: true });
+            } else {
+                alert("Your browser does not support Geolocation.");
+                pinBtn.innerHTML = originalIcon;
+            }
+        }
 
         function saveShop() {
             const name = document.getElementById('s_name').value.trim();
@@ -260,54 +302,33 @@
             container.innerHTML = html;
         });
 
-        // --- OPTIMIZED: Fetch with Instant Cache ---
         async function fetchAndShowImage(expenseId, btnElement) {
             const imgElement = document.getElementById('fullImage');
             const loadingElement = document.getElementById('imageLoading');
-
-            // Check Cache First
             const cachedData = await getCachedImage(expenseId);
             if (cachedData) {
-                // Instant Show
                 imgElement.src = cachedData;
                 imgElement.classList.remove('hidden');
                 loadingElement.classList.add('hidden');
                 toggleModal('imageViewer');
                 return;
             }
-
-            // If not in cache, fetch from Firebase
             const originalText = btnElement.innerHTML;
             btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
             btnElement.disabled = true;
-
-            db.ref('expense_images/' + expenseId).once('value')
-            .then((snapshot) => {
+            db.ref('expense_images/' + expenseId).once('value').then((snapshot) => {
                 btnElement.innerHTML = originalText;
                 btnElement.disabled = false;
-
                 if (snapshot.exists() && snapshot.val().length > 0) {
                     const imageData = snapshot.val()[0];
-                    setCachedImage(expenseId, imageData); // Save to cache for next time
-
+                    setCachedImage(expenseId, imageData);
                     imgElement.classList.add('hidden');
                     loadingElement.classList.remove('hidden');
                     toggleModal('imageViewer');
-
-                    imgElement.onload = function() {
-                        loadingElement.classList.add('hidden');
-                        imgElement.classList.remove('hidden');
-                    }
+                    imgElement.onload = function() { loadingElement.classList.add('hidden'); imgElement.classList.remove('hidden'); }
                     imgElement.src = imageData;
-                } else {
-                    alert("No attachment found.");
-                }
-            })
-            .catch(err => {
-                alert("Error loading image.");
-                btnElement.innerHTML = originalText;
-                btnElement.disabled = false;
-            });
+                } else { alert("No attachment found."); }
+            }).catch(err => { alert("Error loading image."); btnElement.innerHTML = originalText; btnElement.disabled = false; });
         }
 
         window.history.pushState(null, null, window.location.href);
