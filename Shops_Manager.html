@@ -9,11 +9,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        /* Custom scrollbar for a cleaner look */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 3px; }
-        /* Smooth accordion transition */
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
     </style>
@@ -48,27 +46,15 @@
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
-
     .top-home-btn:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
         background: linear-gradient(135deg, #4338ca, #2563eb);
         color: #ffffff !important;
     }
-
-    .top-home-btn svg {
-        width: 18px;
-        height: 18px;
-    }
-
-    /* Mobile screens ke liye thoda adjust karne ke liye */
+    .top-home-btn svg { width: 18px; height: 18px; }
     @media (max-width: 768px) {
-        .top-home-btn {
-            top: 15px;
-            left: 15px;
-            padding: 8px 16px;
-            font-size: 14px;
-        }
+        .top-home-btn { top: 15px; left: 15px; padding: 8px 16px; font-size: 14px; }
     }
 </style>
     <header class="bg-gray-800 p-4 shadow-lg sticky top-0 z-10 flex justify-between items-center border-b border-blue-500">
@@ -106,33 +92,11 @@
         <div class="bg-gray-800 rounded-2xl w-full max-w-md p-6 border border-gray-700 my-auto">
             <h2 class="text-xl font-bold mb-4 text-green-400">Add New Entry</h2>
             <div class="space-y-4">
-                <div>
-                    <label class="text-xs text-gray-400 ml-1">Date</label>
-                    <input type="date" id="e_date" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
-                </div>
-                
-                <div>
-                    <label class="text-xs text-gray-400 ml-1">Select Seller / Shop</label>
-                    <select id="e_shop_list" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white">
-                        <option value="">Choose a seller...</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="text-xs text-gray-400 ml-1">Expended Amount</label>
-                    <input type="number" id="e_amount" placeholder="0.00" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white font-mono text-lg">
-                </div>
-
-                <div>
-                    <label class="text-xs text-gray-400 ml-1 font-bold">Attachments (HD Images)</label>
-                    <input type="file" id="e_files" accept="image/*" multiple capture="environment" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700">
-                </div>
-
-                <div>
-                    <label class="text-xs text-gray-400 ml-1">Remarks</label>
-                    <textarea id="e_remarks" rows="3" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'" placeholder="Any special notes..." class="w-full bg-gray-700 border-none rounded-lg p-3 text-white resize-none"></textarea>
-                </div>
-
+                <div><label class="text-xs text-gray-400 ml-1">Date</label><input type="date" id="e_date" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white"></div>
+                <div><label class="text-xs text-gray-400 ml-1">Select Seller / Shop</label><select id="e_shop_list" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white"><option value="">Choose a seller...</option></select></div>
+                <div><label class="text-xs text-gray-400 ml-1">Expended Amount</label><input type="number" id="e_amount" placeholder="0.00" class="w-full bg-gray-700 border-none rounded-lg p-3 text-white font-mono text-lg"></div>
+                <div><label class="text-xs text-gray-400 ml-1 font-bold">Attachments (HD Images)</label><input type="file" id="e_files" accept="image/*" multiple capture="environment" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700"></div>
+                <div><label class="text-xs text-gray-400 ml-1">Remarks</label><textarea id="e_remarks" rows="3" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'" placeholder="Any special notes..." class="w-full bg-gray-700 border-none rounded-lg p-3 text-white resize-none"></textarea></div>
                 <div class="flex space-x-2 pt-2">
                     <button id="saveExpenseBtn" onclick="saveExpense()" class="flex-1 bg-green-600 p-3 rounded-lg font-bold hover:bg-green-700">Save Data</button>
                     <button onclick="toggleModal('expenseModal')" class="flex-1 bg-gray-600 p-3 rounded-lg font-bold hover:bg-gray-700">Close</button>
@@ -148,57 +112,63 @@
     </div>
 
     <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/"
-        };
+        const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        let shopsDataMap = {};
 
-        let shopsDataMap = {}; // Global variable to store shop addresses & locations
+        // --- NEW: IndexedDB Logic for Image Caching ---
+        const request = indexedDB.open("ImageCacheDB", 1);
+        let idb;
+        request.onupgradeneeded = e => {
+            e.target.result.createObjectStore("images");
+        };
+        request.onsuccess = e => { idb = e.target.result; };
 
-        function toggleModal(id) {
-            document.getElementById(id).classList.toggle('hidden');
+        function getCachedImage(id) {
+            return new Promise(resolve => {
+                const trans = idb.transaction("images", "readonly");
+                const store = trans.objectStore("images");
+                const req = store.get(id);
+                req.onsuccess = () => resolve(req.result);
+            });
         }
 
+        function setCachedImage(id, data) {
+            const trans = idb.transaction("images", "readwrite");
+            trans.objectStore("images").put(data, id);
+        }
+        // --- End of Caching Logic ---
+
+        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
         document.getElementById('e_date').valueAsDate = new Date();
 
-        // Save New Shop
         function saveShop() {
             const name = document.getElementById('s_name').value.trim();
             const mobile = document.getElementById('s_mobile').value;
             const address = document.getElementById('s_address').value;
             const location = document.getElementById('s_location').value;
-
             if(!name) return alert("Shop name is required!");
-
-            db.ref('shops').push({ name, mobile, address, location })
-            .then(() => {
+            db.ref('shops').push({ name, mobile, address, location }).then(() => {
                 alert("Shop saved successfully!");
-                document.getElementById('s_name').value = '';
-                document.getElementById('s_mobile').value = '';
-                document.getElementById('s_address').value = '';
-                document.getElementById('s_location').value = '';
+                document.getElementById('s_name').value = ''; document.getElementById('s_mobile').value = '';
+                document.getElementById('s_address').value = ''; document.getElementById('s_location').value = '';
                 toggleModal('shopModal');
             });
         }
 
-        // Load Shops into Memory and Dropdown
         db.ref('shops').on('value', (snapshot) => {
             const dropdown = document.getElementById('e_shop_list');
             dropdown.innerHTML = '<option value="">Choose a seller...</option>';
-            shopsDataMap = {}; // Reset map
-            
+            shopsDataMap = {};
             snapshot.forEach((child) => {
                 const shop = child.val();
-                shopsDataMap[shop.name] = shop; // Store shop details for main dashboard
+                shopsDataMap[shop.name] = shop;
                 dropdown.innerHTML += `<option value="${shop.name}">${shop.name}</option>`;
             });
         });
 
-        function openExpenseModal() {
-            toggleModal('expenseModal');
-        }
+        function openExpenseModal() { toggleModal('expenseModal'); }
 
         async function getImagesBase64(files) {
             const promises = Array.from(files).map(file => {
@@ -211,7 +181,6 @@
             return Promise.all(promises);
         }
 
-        // Save Expense (Separating Image and Data for speed)
         async function saveExpense() {
             const btn = document.getElementById('saveExpenseBtn');
             const date = document.getElementById('e_date').value;
@@ -219,75 +188,43 @@
             const amount = parseFloat(document.getElementById('e_amount').value) || 0;
             const remarks = document.getElementById('e_remarks').value;
             const files = document.getElementById('e_files').files;
-
             if(!shop || amount <= 0) return alert("Please select a shop and enter a valid amount!");
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
             const hasAttachment = files.length > 0;
             const newExpenseRef = db.ref('expenses').push();
             const expenseId = newExpenseRef.key;
-
-            // Save text data to 'expenses' node
-            await newExpenseRef.set({
-                date, shop, amount, remarks, hasAttachment,
-                timestamp: Date.now()
-            });
-
-            // Save heavy images to a separate 'expense_images' node using the same ID
+            await newExpenseRef.set({ date, shop, amount, remarks, hasAttachment, timestamp: Date.now() });
             if (hasAttachment) {
                 const imagesBase64 = await getImagesBase64(files);
                 await db.ref('expense_images/' + expenseId).set(imagesBase64);
             }
-
             alert("Entry Recorded Successfully!");
-            btn.disabled = false;
-            btn.innerText = "Save Data";
-            document.getElementById('e_amount').value = '';
-            document.getElementById('e_remarks').value = '';
-            document.getElementById('e_files').value = '';
+            btn.disabled = false; btn.innerText = "Save Data";
+            document.getElementById('e_amount').value = ''; document.getElementById('e_remarks').value = ''; document.getElementById('e_files').value = '';
             toggleModal('expenseModal');
         }
 
-        // Load Dashboard Data (Grouped by Seller)
         db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
             const container = document.getElementById('dashboardList');
             container.innerHTML = "";
-            
-            if(!snapshot.exists()) {
-                container.innerHTML = '<div class="text-center text-gray-500 py-10">No records found.</div>';
-                return;
-            }
-
-            // Grouping Logic
+            if(!snapshot.exists()) { container.innerHTML = '<div class="text-center text-gray-500 py-10">No records found.</div>'; return; }
             let groupedData = {};
             snapshot.forEach((child) => {
                 const data = child.val();
                 const key = child.key;
                 const sellerName = data.shop;
-
                 if (!groupedData[sellerName]) {
-                    groupedData[sellerName] = {
-                        totalAmount: 0,
-                        entries: [],
-                        shopDetails: shopsDataMap[sellerName] || {} // Get Address & Location from global map
-                    };
+                    groupedData[sellerName] = { totalAmount: 0, entries: [], shopDetails: shopsDataMap[sellerName] || {} };
                 }
-                
                 groupedData[sellerName].totalAmount += parseFloat(data.amount);
                 groupedData[sellerName].entries.push({ id: key, ...data });
             });
-
-            // Render HTML
             let html = "";
             for (const seller in groupedData) {
                 const group = groupedData[seller];
                 const address = group.shopDetails.address || "No Address Saved";
                 const location = group.shopDetails.location || "#";
-
                 let entriesHtml = "";
-                // Reverse entries to show latest first inside the group
                 group.entries.slice().reverse().forEach(entry => {
                     entriesHtml += `
                         <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 mt-2 flex justify-between items-center">
@@ -306,34 +243,40 @@
                         </div>
                     `;
                 });
-
                 html += `
                 <details class="bg-gray-800 border border-gray-600 rounded-xl shadow-md mb-4 overflow-hidden group">
                     <summary class="p-4 cursor-pointer flex justify-between items-center bg-gray-700 hover:bg-gray-600 transition">
                         <div class="flex flex-col">
-                            <h2 class="text-xl font-bold text-white flex items-center">
-                                <i class="fas fa-store text-blue-400 mr-2"></i> ${seller}
-                            </h2>
-                            <div class="flex items-center text-xs text-gray-400 mt-1">
-                                <i class="fas fa-map-marker-alt text-red-500 mr-1"></i> ${address}
+                            <h2 class="text-xl font-bold text-white flex items-center"><i class="fas fa-store text-blue-400 mr-2"></i> ${seller}</h2>
+                            <div class="flex items-center text-xs text-gray-400 mt-1"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> ${address}
                                 ${location !== "#" ? `<a href="${location}" target="_blank" class="ml-2 text-blue-400 hover:text-blue-300 underline"><i class="fas fa-external-link-alt"></i> Map</a>` : ''}
                             </div>
                         </div>
-                        <div class="text-right">
-                            <p class="text-xs text-gray-400 mb-1">Total Paid</p>
-                            <p class="text-xl font-black text-green-500">Rs ${group.totalAmount.toLocaleString()}</p>
-                        </div>
+                        <div class="text-right"><p class="text-xs text-gray-400 mb-1">Total Paid</p><p class="text-xl font-black text-green-500">Rs ${group.totalAmount.toLocaleString()}</p></div>
                     </summary>
-                    <div class="p-4 bg-gray-900 border-t border-gray-600">
-                        ${entriesHtml}
-                    </div>
+                    <div class="p-4 bg-gray-900 border-t border-gray-600">${entriesHtml}</div>
                 </details>`;
             }
             container.innerHTML = html;
         });
 
-        // Fetch Image On-Demand (Lazy Loading to keep page fast)
-        function fetchAndShowImage(expenseId, btnElement) {
+        // --- OPTIMIZED: Fetch with Instant Cache ---
+        async function fetchAndShowImage(expenseId, btnElement) {
+            const imgElement = document.getElementById('fullImage');
+            const loadingElement = document.getElementById('imageLoading');
+
+            // Check Cache First
+            const cachedData = await getCachedImage(expenseId);
+            if (cachedData) {
+                // Instant Show
+                imgElement.src = cachedData;
+                imgElement.classList.remove('hidden');
+                loadingElement.classList.add('hidden');
+                toggleModal('imageViewer');
+                return;
+            }
+
+            // If not in cache, fetch from Firebase
             const originalText = btnElement.innerHTML;
             btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
             btnElement.disabled = true;
@@ -344,9 +287,9 @@
                 btnElement.disabled = false;
 
                 if (snapshot.exists() && snapshot.val().length > 0) {
-                    const imgElement = document.getElementById('fullImage');
-                    const loadingElement = document.getElementById('imageLoading');
-                    
+                    const imageData = snapshot.val()[0];
+                    setCachedImage(expenseId, imageData); // Save to cache for next time
+
                     imgElement.classList.add('hidden');
                     loadingElement.classList.remove('hidden');
                     toggleModal('imageViewer');
@@ -355,9 +298,9 @@
                         loadingElement.classList.add('hidden');
                         imgElement.classList.remove('hidden');
                     }
-                    imgElement.src = snapshot.val()[0]; // Load first image
+                    imgElement.src = imageData;
                 } else {
-                    alert("No attachment found or image is corrupted.");
+                    alert("No attachment found.");
                 }
             })
             .catch(err => {
@@ -366,11 +309,9 @@
                 btnElement.disabled = false;
             });
         }
-        window.history.pushState(null, null, window.location.href);
-    window.onpopstate = function () {
-        window.location.href = "https://hammad57.github.io/POS/index.html";
-    };
 
+        window.history.pushState(null, null, window.location.href);
+        window.onpopstate = function () { window.location.href = "https://hammad57.github.io/POS/index.html"; };
     </script>
 </body>
 </html>
