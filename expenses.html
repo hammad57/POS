@@ -60,7 +60,11 @@
         .bg-profit { background: linear-gradient(135deg, #2193b0, #6dd5ed); }
         .bg-withdraw { background: linear-gradient(135deg, #f2994a, #f2c94c); }
         
+        /* Updated Chart Container for Drag/Scroll */
         .chart-container { background: var(--container-bg); padding: 35px; border-radius: 25px; box-shadow: var(--shadow-3d); border: 1px solid var(--border-color); margin-top: 20px; }
+        .chart-scroll-wrapper { width: 100%; overflow-x: auto; overflow-y: hidden; cursor: grab; }
+        .chart-scroll-wrapper:active { cursor: grabbing; }
+        #chartBox { height: 350px; min-width: 1000px; }
 
         .table-custom { border-collapse: separate; border-radius: 15px; box-shadow: var(--shadow-3d); width: 100%; overflow: hidden; }
         .table-custom thead th { background-color: var(--table-header-bg) !important; color: var(--table-header-text) !important; padding: 15px; }
@@ -69,23 +73,21 @@
         .fab-add { position: fixed; right: 50px; bottom: 50px; width: 80px; height: 80px; border-radius: 50%; background: #0d6efd; color: white; display: flex; align-items: center; justify-content: center; font-size: 35px; box-shadow: 0 10px 20px rgba(13, 110, 253, 0.4); border: none; z-index: 1000; }
         
         .fab-withdraw { position: fixed; right: 57.5px; bottom: 145px; width: 65px; height: 65px; border-radius: 50%; background: #ff9800; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 10px 20px rgba(255, 152, 0, 0.4); border: none; z-index: 1000; transition: transform 0.2s; }
-        .fab-withdraw:hover { transform: scale(1.1); }
         
         .form-control, .form-select { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; }
         .form-locked { background: rgba(128, 128, 128, 0.1) !important; cursor: not-allowed; font-weight: bold; }
 
         .modal-content { background: var(--container-bg); border-radius: 25px; border: 1px solid var(--border-color); color: var(--text-color); }
 
-        .calc-btn-trigger { cursor: pointer; color: #0d6efd; font-size: 1.3rem; transition: 0.3s; margin-left: 10px; }
-        .calc-btn-trigger:hover { transform: scale(1.2); color: #0056b3; }
-        
-        #calculatorModal .modal-content { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2); width: 320px; margin: auto; }
-        .calc-display { background: rgba(0, 0, 0, 0.2); color: white; font-size: 2rem; text-align: right; padding: 15px; border-radius: 15px; margin-bottom: 15px; font-family: monospace; min-height: 60px; word-wrap: break-word; }
-        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .btn-calc { border: none; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; background: rgba(255, 255, 255, 0.1); color: white; transition: 0.2s; }
-        .btn-calc:hover { background: rgba(255, 255, 255, 0.25); }
-        .btn-op { background: rgba(255, 159, 67, 0.3); }
+        /* Modern Calculator Style */
+        #calculatorModal .modal-content { background: #1a1a1a; color: white; width: 340px; margin: auto; border: 2px solid #333; }
+        .calc-display { background: #000; color: #00ff00; font-size: 2.2rem; text-align: right; padding: 20px; border-radius: 15px; margin-bottom: 20px; font-family: 'Courier New', monospace; box-shadow: inset 0 0 10px rgba(0,255,0,0.2); }
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .btn-calc { border: none; padding: 18px; border-radius: 12px; font-weight: bold; font-size: 1.2rem; background: #333; color: white; transition: 0.2s; }
+        .btn-calc:hover { background: #444; transform: scale(1.05); }
+        .btn-op { background: #ff9800; color: #000; }
         .btn-eq { background: #0d6efd; grid-column: span 2; }
+        .btn-clear { background: #d63031; }
     </style>
 </head>
 <body>
@@ -97,23 +99,15 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold m-0"><i class="bi bi-cpu me-2 text-primary"></i>Muluk Hussain Analytics</h2>
-            <p class="text-muted small m-0">Smart Financial Management System v4.0</p>
+            <p class="text-muted small m-0">Smart Financial Management System v4.5</p>
         </div>
         <div class="d-flex gap-3">
             <select id="monthFilter" class="form-select border-0 shadow-sm fw-bold" style="width: 160px;" onchange="applyMonthFilter()">
                 <option value="">📅 All Months</option>
-                <option value="01">January</option>
-                <option value="02">February</option>
-                <option value="03">March</option>
-                <option value="04">April</option>
-                <option value="05">May</option>
-                <option value="06">June</option>
-                <option value="07">July</option>
-                <option value="08">August</option>
-                <option value="09">September</option>
-                <option value="10">October</option>
-                <option value="11">November</option>
-                <option value="12">December</option>
+                <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+                <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+                <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+                <option value="10">October</option><option value="11">November</option><option value="12">December</option>
             </select>
             <select id="appTheme" class="form-select border-0 shadow-sm fw-bold" style="width: 180px;" onchange="saveTheme()">
                 <option value="light">☀️ Light Theme</option>
@@ -145,8 +139,10 @@
             </div>
         </div>
 
-        <div id="chartBox" style="height: 350px; width: 100%;">
-            <canvas id="mainChart"></canvas>
+        <div class="chart-scroll-wrapper" id="chartWrapper">
+            <div id="chartBox">
+                <canvas id="mainChart"></canvas>
+            </div>
         </div>
 
         <div class="table-responsive mt-5">
@@ -169,78 +165,13 @@
     </div>
 </div>
 
-<div class="modal fade" id="withdrawModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold text-warning"><i class="bi bi-wallet2 me-2"></i>Withdraw Amount</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <form id="withdrawForm">
-                    <input type="hidden" id="withdrawEditKey">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="small fw-bold">Date</label>
-                            <input type="date" id="withdrawDate" class="form-control" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-bold text-success">Current Balance (In Drawer)</label>
-                            <input type="number" id="withdrawCurrentBal" class="form-control form-locked" readonly step="0.01">
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-bold" style="color: #ff9800;">Withdraw Amount</label>
-                            <input type="number" id="withdrawAmount" class="form-control" style="border-color: #ff9800;" step="0.01" value="0" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-bold">Remarks (Note)</label>
-                            <textarea id="withdrawRemarks" class="form-control" rows="2" placeholder="Withdraw reason..."></textarea>
-                        </div>
-                        <div class="col-12 mt-4">
-                            <button type="submit" class="btn w-100 fw-bold py-3 shadow text-white" style="background-color: #ff9800;">SAVE WITHDRAW</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="withdrawHistoryModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold text-warning"><i class="bi bi-clock-history me-2"></i>Withdrawal History</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover m-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">Date</th>
-                                <th>Amount</th>
-                                <th>Remarks</th>
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="withdrawHistoryBody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="modal fade" id="entryModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0">
                 <div class="d-flex justify-content-between w-100 align-items-center">
                     <h5 class="modal-title fw-bold m-0"><i class="bi bi-plus-circle-fill me-2"></i>New Transaction</h5>
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-calculator calc-btn-trigger" onclick="openCalculator()" title="Open Built-in Calculator"></i>
-                    </div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="openCalculator()"><i class="bi bi-calculator"></i></button>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -266,7 +197,7 @@
                         </div>
                         <div class="col-6">
                             <label class="small fw-bold text-danger">Expense Amount</label>
-                            <input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateLiveBalance()">
+                            <input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateFromDrawer()">
                         </div>
                         <div class="col-12">
                             <label class="small fw-bold">Transaction Remarks</label>
@@ -286,35 +217,17 @@
     </div>
 </div>
 
-<div class="modal fade" id="ledgerModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold">Download Ledger</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="row g-3">
-                    <div class="col-6"><label class="small fw-bold">From</label><input type="date" id="ledgerFrom" class="form-control"></div>
-                    <div class="col-6"><label class="small fw-bold">To</label><input type="date" id="ledgerTo" class="form-control"></div>
-                    <div class="col-12 mt-4">
-                        <button onclick="downloadLedger('pdf')" class="btn btn-danger w-100 mb-2">DOWNLOAD PDF</button>
-                        <button onclick="downloadLedger('excel')" class="btn btn-success w-100 mb-2">DOWNLOAD EXCEL</button>
-                        <button onclick="downloadLedger('image')" class="btn btn-info w-100 text-white">DOWNLOAD PICTURE</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="modal fade" id="calculatorModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0">
+            <div class="modal-header border-0 bg-dark">
+                <h6 class="modal-title text-white">Financial Calculator</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
             <div class="modal-body">
                 <div class="calc-display" id="calcDisplay">0</div>
                 <div class="calc-grid">
-                    <button class="btn-calc btn-op" onclick="clearCalc()">C</button>
+                    <button class="btn-calc btn-clear" onclick="clearCalc()">C</button>
                     <button class="btn-calc btn-op" onclick="backspaceCalc()">⌫</button>
                     <button class="btn-calc btn-op" onclick="pressCalc('/')">÷</button>
                     <button class="btn-calc btn-op" onclick="pressCalc('*')">×</button>
@@ -336,6 +249,18 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="modal fade" id="withdrawModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header border-0"><h5 class="modal-title fw-bold text-warning"><i class="bi bi-wallet2 me-2"></i>Withdraw Amount</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><form id="withdrawForm"><input type="hidden" id="withdrawEditKey"><div class="row g-3"><div class="col-12"><label class="small fw-bold">Date</label><input type="date" id="withdrawDate" class="form-control" required></div><div class="col-12"><label class="small fw-bold text-success">Current Balance (In Drawer)</label><input type="number" id="withdrawCurrentBal" class="form-control form-locked" readonly step="0.01"></div><div class="col-12"><label class="small fw-bold" style="color: #ff9800;">Withdraw Amount</label><input type="number" id="withdrawAmount" class="form-control" style="border-color: #ff9800;" step="0.01" value="0" required></div><div class="col-12"><label class="small fw-bold">Remarks (Note)</label><textarea id="withdrawRemarks" class="form-control" rows="2" placeholder="Withdraw reason..."></textarea></div><div class="col-12 mt-4"><button type="submit" class="btn w-100 fw-bold py-3 shadow text-white" style="background-color: #ff9800;">SAVE WITHDRAW</button></div></div></form></div></div></div>
+</div>
+
+<div class="modal fade" id="withdrawHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-header border-0"><h5 class="modal-title fw-bold text-warning"><i class="bi bi-clock-history me-2"></i>Withdrawal History</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div class="table-responsive"><table class="table table-hover m-0"><thead class="table-light"><tr><th class="ps-4">Date</th><th>Amount</th><th>Remarks</th><th class="text-center">Action</th></tr></thead><tbody id="withdrawHistoryBody"></tbody></table></div></div></div></div>
+</div>
+
+<div class="modal fade" id="ledgerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header border-0"><h5 class="modal-title fw-bold">Download Ledger</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div class="row g-3"><div class="col-6"><label class="small fw-bold">From</label><input type="date" id="ledgerFrom" class="form-control"></div><div class="col-6"><label class="small fw-bold">To</label><input type="date" id="ledgerTo" class="form-control"></div><div class="col-12 mt-4"><button onclick="downloadLedger('pdf')" class="btn btn-danger w-100 mb-2">DOWNLOAD PDF</button><button onclick="downloadLedger('excel')" class="btn btn-success w-100 mb-2">DOWNLOAD EXCEL</button><button onclick="downloadLedger('image')" class="btn btn-info w-100 text-white">DOWNLOAD PICTURE</button></div></div></div></div></div>
 </div>
 
 <script type="module">
@@ -362,13 +287,28 @@
     const ledgerModalObj = new bootstrap.Modal(document.getElementById('ledgerModal'));
     const today = new Date().toISOString().split('T')[0];
 
-    // Calculator Logic
+    // Calculator Logic (New Fixed Design)
     let calcExpression = "";
     window.openCalculator = () => calcModalObj.show();
-    window.pressCalc = (val) => { calcExpression += val; document.getElementById('calcDisplay').innerText = calcExpression; };
-    window.clearCalc = () => { calcExpression = ""; document.getElementById('calcDisplay').innerText = "0"; };
-    window.backspaceCalc = () => { calcExpression = calcExpression.slice(0, -1); document.getElementById('calcDisplay').innerText = calcExpression || "0"; };
-    window.solveCalc = () => { try { calcExpression = eval(calcExpression).toString(); document.getElementById('calcDisplay').innerText = calcExpression; } catch { document.getElementById('calcDisplay').innerText = "Error"; calcExpression = ""; } };
+    window.pressCalc = (val) => { 
+        if(calcExpression === "0" || calcExpression === "Error") calcExpression = "";
+        calcExpression += val; 
+        document.getElementById('calcDisplay').innerText = calcExpression; 
+    };
+    window.clearCalc = () => { calcExpression = "0"; document.getElementById('calcDisplay').innerText = "0"; };
+    window.backspaceCalc = () => { 
+        calcExpression = calcExpression.slice(0, -1); 
+        document.getElementById('calcDisplay').innerText = calcExpression || "0"; 
+    };
+    window.solveCalc = () => { 
+        try { 
+            calcExpression = eval(calcExpression).toString(); 
+            document.getElementById('calcDisplay').innerText = calcExpression; 
+        } catch { 
+            document.getElementById('calcDisplay').innerText = "Error"; 
+            calcExpression = "0"; 
+        } 
+    };
 
     // Theme Logic
     onValue(themeRef, (snap) => {
@@ -446,73 +386,40 @@
         document.getElementById('totalIncVal').innerText = tInc.toFixed(0);
         document.getElementById('totalExpVal').innerText = tExp.toFixed(0);
         document.getElementById('totalWithdrawVal').innerText = tWith.toFixed(0);
-        document.getElementById('balanceVal').innerText = (tInc - tExp).toFixed(0); // Ab sirf Income aur Expense minus hon gy
+        document.getElementById('balanceVal').innerText = (tInc - tExp).toFixed(0); 
     }
 
-    window.openWithdrawModal = () => {
-        document.getElementById('withdrawForm').reset();
-        document.getElementById('withdrawEditKey').value = "";
-        document.getElementById('withdrawDate').value = today;
-        document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2);
-        withdrawModalObj.show();
-    };
+    // Fixed Calculation Logic
+    window.calculateFromDrawer = () => {
+        const drawer = parseFloat(document.getElementById('todayDrawer').value) || 0;
+        const opening = parseFloat(document.getElementById('openBal').value) || 0;
+        const expense = parseFloat(document.getElementById('expenseInput').value) || 0;
 
-    window.showWithdrawHistoryModal = () => {
-        const histBody = document.getElementById('withdrawHistoryBody');
-        histBody.innerHTML = "";
-        const withdraws = allData.filter(t => t.type === 'Withdraw').sort((a,b) => new Date(b.date) - new Date(a.date));
+        // Requirement: Opening Balance - today Drawer = Income amount (Adjusted for math logic)
+        // Correct Accounting Flow: Income = (Today Drawer - Opening Balance) + Expense
+        const calculatedIncome = drawer - opening + expense;
+        document.getElementById('incomeInput').value = calculatedIncome.toFixed(2);
         
-        withdraws.forEach(w => {
-            histBody.innerHTML += `
-                <tr>
-                    <td class="ps-4">${w.date.split('-').reverse().join('/')}</td>
-                    <td class="fw-bold text-warning">${w.amount}</td>
-                    <td class="small">${w.remarks || '-'}</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${w.id}'); bootstrap.Modal.getInstance(document.getElementById('withdrawHistoryModal')).hide();">Delete</button>
-                    </td>
-                </tr>`;
-        });
-        withdrawHistoryModalObj.show();
-    };
-
-    document.getElementById('withdrawForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const key = document.getElementById('withdrawEditKey').value;
-        const date = document.getElementById('withdrawDate').value;
-        const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
-        const remarks = document.getElementById('withdrawRemarks').value || "Withdrawal";
-
-        if(key) {
-            await set(ref(db, 'transactions/'+key), { type: 'Withdraw', date, amount, remarks });
-        } else {
-            if(amount > 0) await push(dbRef, { type: 'Withdraw', date, amount, remarks });
-        }
-        withdrawModalObj.hide();
-    };
-
-    // Standard Entry Logic
-    window.openModal = () => {
-        document.getElementById('entryForm').reset();
-        document.getElementById('editKey').value = "";
-        document.getElementById('entryDate').value = today;
-        document.getElementById('openBal').value = globalLastBalance.toFixed(2);
-        modalObj.show();
+        calculateLiveBalance();
     };
 
     window.calculateLiveBalance = () => {
         const b = parseFloat(document.getElementById('openBal').value) || 0;
         const i = parseFloat(document.getElementById('incomeInput').value) || 0;
         const e = parseFloat(document.getElementById('expenseInput').value) || 0;
+        
+        // Income - Expense = Final Balance (relative to opening)
+        // Total Final Balance = Opening + Income - Expense
         document.getElementById('finalBalance').value = (b + i - e).toFixed(2);
     };
 
-    window.calculateFromDrawer = () => {
-        const drawer = parseFloat(document.getElementById('todayDrawer').value) || 0;
-        const opening = parseFloat(document.getElementById('openBal').value) || 0;
-        const expense = parseFloat(document.getElementById('expenseInput').value) || 0;
-        document.getElementById('incomeInput').value = (drawer - opening + expense).toFixed(2);
-        calculateLiveBalance();
+    // Remaining Logic kept same for reliability
+    window.openModal = () => {
+        document.getElementById('entryForm').reset();
+        document.getElementById('editKey').value = "";
+        document.getElementById('entryDate').value = today;
+        document.getElementById('openBal').value = globalLastBalance.toFixed(2);
+        modalObj.show();
     };
 
     document.getElementById('entryForm').onsubmit = async (e) => {
@@ -531,6 +438,35 @@
             if(exp !== 0) await push(dbRef, { type: 'Expense', date, amount: exp, remarks: rem });
         }
         modalObj.hide();
+    };
+
+    window.openWithdrawModal = () => {
+        document.getElementById('withdrawForm').reset();
+        document.getElementById('withdrawEditKey').value = "";
+        document.getElementById('withdrawDate').value = today;
+        document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2);
+        withdrawModalObj.show();
+    };
+
+    window.showWithdrawHistoryModal = () => {
+        const histBody = document.getElementById('withdrawHistoryBody');
+        histBody.innerHTML = "";
+        const withdraws = allData.filter(t => t.type === 'Withdraw').sort((a,b) => new Date(b.date) - new Date(a.date));
+        withdraws.forEach(w => {
+            histBody.innerHTML += `<tr><td class="ps-4">${w.date.split('-').reverse().join('/')}</td><td class="fw-bold text-warning">${w.amount}</td><td class="small">${w.remarks || '-'}</td><td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${w.id}'); bootstrap.Modal.getInstance(document.getElementById('withdrawHistoryModal')).hide();">Delete</button></td></tr>`;
+        });
+        withdrawHistoryModalObj.show();
+    };
+
+    document.getElementById('withdrawForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const key = document.getElementById('withdrawEditKey').value;
+        const date = document.getElementById('withdrawDate').value;
+        const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+        const remarks = document.getElementById('withdrawRemarks').value || "Withdrawal";
+        if(key) await set(ref(db, 'transactions/'+key), { type: 'Withdraw', date, amount, remarks });
+        else if(amount > 0) await push(dbRef, { type: 'Withdraw', date, amount, remarks });
+        withdrawModalObj.hide();
     };
 
     window.editEntry = (id) => {
@@ -570,28 +506,32 @@
     function initChart() {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(myChart) myChart.destroy();
-        const dates = [...new Set(allData.map(d => d.date))].sort().slice(-10);
+        
+        // Increase width based on records to allow dragging/scrolling
+        const uniqueDates = [...new Set(allData.map(d => d.date))].sort();
+        const dates = uniqueDates.slice(-20); // Show last 20 days
+        const chartBox = document.getElementById('chartBox');
+        if(dates.length > 10) chartBox.style.width = (dates.length * 80) + 'px';
+        else chartBox.style.width = '100%';
+
         const incs = dates.map(d => allData.filter(x => x.date === d && x.type === 'Income').reduce((a,b)=>a+b.amount,0));
         const exps = dates.map(d => allData.filter(x => x.date === d && (x.type === 'Expense' || x.type === 'Withdraw')).reduce((a,b)=>a+b.amount,0));
+        
         myChart = new Chart(ctx, {
             type: chartType,
             data: {
                 labels: dates.map(d => d.split('-').reverse().slice(0,2).join('/')),
                 datasets: [
-                    { label: 'Income', data: incs, borderColor: '#2ecc71', backgroundColor: 'rgba(46, 204, 113, 0.5)', fill: true },
-                    { label: 'Expense & Withdraw', data: exps, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.5)', fill: true }
+                    { label: 'Income', data: incs, borderColor: '#2ecc71', backgroundColor: 'rgba(46, 204, 113, 0.5)', fill: true, tension: 0.3 },
+                    { label: 'Expense & Withdraw', data: exps, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.5)', fill: true, tension: 0.3 }
                 ]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
         });
     }
 
-    // Ledger Download
-    window.openLedgerModal = () => {
-        document.getElementById('ledgerFrom').value = today.substring(0,8) + '01';
-        document.getElementById('ledgerTo').value = today;
-        ledgerModalObj.show();
-    };
+    // Ledger Logic
+    window.openLedgerModal = () => { document.getElementById('ledgerFrom').value = today.substring(0,8) + '01'; document.getElementById('ledgerTo').value = today; ledgerModalObj.show(); };
     window.downloadLedger = async (format) => {
         const lFrom = document.getElementById('ledgerFrom').value;
         const lTo = document.getElementById('ledgerTo').value;
