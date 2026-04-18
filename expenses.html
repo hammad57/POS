@@ -69,7 +69,6 @@
         .table-custom thead th { background-color: var(--table-header-bg) !important; color: var(--table-header-text) !important; padding: 15px; }
         .table-custom tbody td { background-color: var(--input-bg) !important; border-color: var(--border-color); color: var(--text-color); padding: 12px; }
 
-        /* Month Grouping Styles */
         .month-header-row { cursor: pointer; background: rgba(0,0,0,0.05) !important; transition: 0.3s; }
         .month-header-row:hover { background: rgba(0,0,0,0.1) !important; }
         .month-header-row td { font-weight: 700 !important; color: var(--text-color) !important; padding: 15px !important; border-left: 5px solid #0d6efd !important; }
@@ -161,9 +160,9 @@
     </div>
 
     <div class="row text-center mb-2 justify-content-center">
-        <div class="col-md-3"><div class="summary-card bg-income"><h6>Total Income</h6><h2 id="totalIncVal">0</h2></div></div>
-        <div class="col-md-3"><div class="summary-card bg-expense"><h6>Total Expense</h6><h2 id="totalExpVal">0</h2></div></div>
-        <div class="col-md-3"><div class="summary-card bg-profit"><h6>Current Balance</h6><h2 id="balanceVal">0</h2></div></div>
+        <div class="col-md-3"><div class="summary-card bg-income" onclick="filterByType('Income')"><h6>Total Income</h6><h2 id="totalIncVal">0</h2></div></div>
+        <div class="col-md-3"><div class="summary-card bg-expense" onclick="filterByType('Expense')"><h6>Total Expense</h6><h2 id="totalExpVal">0</h2></div></div>
+        <div class="col-md-3"><div class="summary-card bg-profit" onclick="resetFilter()"><h6>Current Balance</h6><h2 id="balanceVal">0</h2></div></div>
         <div class="col-md-3"><div class="summary-card bg-withdraw" onclick="showWithdrawHistoryModal()"><h6>Total Withdraw</h6><h2 id="totalWithdrawVal">0</h2></div></div>
     </div>
 
@@ -219,25 +218,11 @@
                 <form id="withdrawForm">
                     <input type="hidden" id="withdrawEditKey">
                     <div class="row g-3">
-                        <div class="col-12">
-                            <label class="small fw-bold">Date</label>
-                            <input type="date" id="withdrawDate" class="form-control" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-bold text-success">Current Balance (In Drawer)</label>
-                            <input type="number" id="withdrawCurrentBal" class="form-control form-locked" readonly step="0.01">
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-bold" style="color: #ff9800;">Withdraw Amount</label>
-                            <input type="number" id="withdrawAmount" class="form-control" style="border-color: #ff9800;" step="0.01" value="0" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-bold">Remarks (Note)</label>
-                            <textarea id="withdrawRemarks" class="form-control" rows="2" placeholder="Withdraw reason..."></textarea>
-                        </div>
-                        <div class="col-12 mt-4">
-                            <button type="submit" class="btn w-100 fw-bold py-3 shadow text-white" style="background-color: #ff9800;">SAVE WITHDRAW</button>
-                        </div>
+                        <div class="col-12"><label class="small fw-bold">Date</label><input type="date" id="withdrawDate" class="form-control" required></div>
+                        <div class="col-12"><label class="small fw-bold text-success">Current Balance (In Drawer)</label><input type="number" id="withdrawCurrentBal" class="form-control form-locked" readonly step="0.01"></div>
+                        <div class="col-12"><label class="small fw-bold" style="color: #ff9800;">Withdraw Amount</label><input type="number" id="withdrawAmount" class="form-control" style="border-color: #ff9800;" step="0.01" value="0" required></div>
+                        <div class="col-12"><label class="small fw-bold">Remarks (Note)</label><textarea id="withdrawRemarks" class="form-control" rows="2" placeholder="Withdraw reason..."></textarea></div>
+                        <div class="col-12 mt-4"><button type="submit" class="btn w-100 fw-bold py-3 shadow text-white" style="background-color: #ff9800;">SAVE WITHDRAW</button></div>
                     </div>
                 </form>
             </div>
@@ -248,25 +233,8 @@
 <div class="modal fade" id="withdrawHistoryModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold text-warning"><i class="bi bi-clock-history me-2"></i>Withdrawal History</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover m-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">Date</th>
-                                <th>Amount</th>
-                                <th>Remarks</th>
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="withdrawHistoryBody"></tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="modal-header border-0"><h5 class="modal-title fw-bold text-warning"><i class="bi bi-clock-history me-2"></i>Withdrawal History</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body p-0"><div class="table-responsive"><table class="table table-hover m-0"><thead class="table-light"><tr><th class="ps-4">Date</th><th>Amount</th><th>Remarks</th><th class="text-center">Action</th></tr></thead><tbody id="withdrawHistoryBody"></tbody></table></div></div>
         </div>
     </div>
 </div>
@@ -275,49 +243,21 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0">
-                <div class="d-flex justify-content-between w-100 align-items-center">
-                    <h5 class="modal-title fw-bold m-0"><i class="bi bi-plus-circle-fill me-2"></i>New Transaction</h5>
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-calculator calc-btn-trigger" onclick="openCalculator()" title="Open Built-in Calculator"></i>
-                    </div>
-                </div>
+                <div class="d-flex justify-content-between w-100 align-items-center"><h5 class="modal-title fw-bold m-0"><i class="bi bi-plus-circle-fill me-2"></i>New Transaction</h5><i class="bi bi-calculator calc-btn-trigger" onclick="openCalculator()" title="Open Built-in Calculator"></i></div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <form id="entryForm">
                     <input type="hidden" id="editKey">
                     <div class="row g-3">
-                        <div class="col-12">
-                            <label class="small fw-bold">Date Selection</label>
-                            <input type="date" id="entryDate" class="form-control" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-bold">Opening Balance</label>
-                            <input type="number" id="openBal" class="form-control form-locked" readonly step="0.01">
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-bold text-primary">Today Drawer (Cash in hand)</label>
-                            <input type="number" id="todayDrawer" class="form-control border-primary" step="0.01" value="0" oninput="calculateFromDrawer()">
-                        </div>
-                        <div class="col-6">
-                            <label class="small fw-bold text-success">Income Amount</label>
-                            <input type="number" id="incomeInput" class="form-control border-success" step="0.01" value="0" oninput="calculateLiveBalance()">
-                        </div>
-                        <div class="col-6">
-                            <label class="small fw-bold text-danger">Expense Amount</label>
-                            <input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateLiveBalance()">
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-bold">Transaction Remarks</label>
-                            <textarea id="entryRemarks" class="form-control" rows="2" placeholder="Enter purpose..."></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-bold text-primary">Final Balance</label>
-                            <input type="number" id="finalBalance" class="form-control form-locked text-primary" readonly step="0.01">
-                        </div>
-                        <div class="col-12 mt-4">
-                            <button type="submit" class="btn btn-primary w-100 fw-bold py-3 shadow">SAVE TRANSACTION</button>
-                        </div>
+                        <div class="col-12"><label class="small fw-bold">Date Selection</label><input type="date" id="entryDate" class="form-control" required></div>
+                        <div class="col-12"><label class="small fw-bold">Opening Balance</label><input type="number" id="openBal" class="form-control form-locked" readonly step="0.01"></div>
+                        <div class="col-12"><label class="small fw-bold text-primary">Today Drawer (Cash in hand)</label><input type="number" id="todayDrawer" class="form-control border-primary" step="0.01" value="0" oninput="calculateFromDrawer()"></div>
+                        <div class="col-6"><label class="small fw-bold text-success">Income Amount</label><input type="number" id="incomeInput" class="form-control border-success" step="0.01" value="0" oninput="calculateLiveBalance()"></div>
+                        <div class="col-6"><label class="small fw-bold text-danger">Expense Amount</label><input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateLiveBalance()"></div>
+                        <div class="col-12"><label class="small fw-bold">Transaction Remarks</label><textarea id="entryRemarks" class="form-control" rows="2" placeholder="Enter purpose..."></textarea></div>
+                        <div class="col-12"><label class="small fw-bold text-primary">Final Balance</label><input type="number" id="finalBalance" class="form-control form-locked text-primary" readonly step="0.01"></div>
+                        <div class="col-12 mt-4"><button type="submit" class="btn btn-primary w-100 fw-bold py-3 shadow">SAVE TRANSACTION</button></div>
                     </div>
                 </form>
             </div>
@@ -328,21 +268,8 @@
 <div class="modal fade" id="ledgerModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold">Download Ledger</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="row g-3">
-                    <div class="col-6"><label class="small fw-bold">From</label><input type="date" id="ledgerFrom" class="form-control"></div>
-                    <div class="col-6"><label class="small fw-bold">To</label><input type="date" id="ledgerTo" class="form-control"></div>
-                    <div class="col-12 mt-4">
-                        <button onclick="downloadLedger('pdf')" class="btn btn-danger w-100 mb-2">DOWNLOAD PDF</button>
-                        <button onclick="downloadLedger('excel')" class="btn btn-success w-100 mb-2">DOWNLOAD EXCEL</button>
-                        <button onclick="downloadLedger('image')" class="btn btn-info w-100 text-white">DOWNLOAD PICTURE</button>
-                    </div>
-                </div>
-            </div>
+            <div class="modal-header border-0"><h5 class="modal-title fw-bold">Download Ledger</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body p-4"><div class="row g-3"><div class="col-6"><label class="small fw-bold">From</label><input type="date" id="ledgerFrom" class="form-control"></div><div class="col-6"><label class="small fw-bold">To</label><input type="date" id="ledgerTo" class="form-control"></div><div class="col-12 mt-4"><button onclick="downloadLedger('pdf')" class="btn btn-danger w-100 mb-2">DOWNLOAD PDF</button><button onclick="downloadLedger('excel')" class="btn btn-success w-100 mb-2">DOWNLOAD EXCEL</button><button onclick="downloadLedger('image')" class="btn btn-info w-100 text-white">DOWNLOAD PICTURE</button></div></div></div>
         </div>
     </div>
 </div>
@@ -351,34 +278,14 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0">
             <div class="modal-body p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="text-white-50 m-0">PRO CALCULATOR</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3"><h6 class="text-white-50 m-0">PRO CALCULATOR</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
                 <div class="calc-display" id="calcDisplay">0</div>
                 <div class="calc-grid">
-                    <button class="btn-calc btn-clear" onclick="clearCalc()">C</button>
-                    <button class="btn-calc btn-op" onclick="backspaceCalc()">⌫</button>
-                    <button class="btn-calc btn-op" onclick="pressCalc('/')">÷</button>
-                    <button class="btn-calc btn-op" onclick="pressCalc('*')">×</button>
-                    
-                    <button class="btn-calc" onclick="pressCalc('7')">7</button>
-                    <button class="btn-calc" onclick="pressCalc('8')">8</button>
-                    <button class="btn-calc" onclick="pressCalc('9')">9</button>
-                    <button class="btn-calc btn-op" onclick="pressCalc('-')">-</button>
-                    
-                    <button class="btn-calc" onclick="pressCalc('4')">4</button>
-                    <button class="btn-calc" onclick="pressCalc('5')">5</button>
-                    <button class="btn-calc" onclick="pressCalc('6')">6</button>
-                    <button class="btn-calc btn-op" onclick="pressCalc('+')">+</button>
-                    
-                    <button class="btn-calc" onclick="pressCalc('1')">1</button>
-                    <button class="btn-calc" onclick="pressCalc('2')">2</button>
-                    <button class="btn-calc" onclick="pressCalc('3')">3</button>
-                    <button class="btn-calc btn-eq" onclick="solveCalc()">=</button>
-                    
-                    <button class="btn-calc" style="grid-column: span 2;" onclick="pressCalc('0')">0</button>
-                    <button class="btn-calc" onclick="pressCalc('.')">.</button>
+                    <button class="btn-calc btn-clear" onclick="clearCalc()">C</button><button class="btn-calc btn-op" onclick="backspaceCalc()">⌫</button><button class="btn-calc btn-op" onclick="pressCalc('/')">÷</button><button class="btn-calc btn-op" onclick="pressCalc('*')">×</button>
+                    <button class="btn-calc" onclick="pressCalc('7')">7</button><button class="btn-calc" onclick="pressCalc('8')">8</button><button class="btn-calc" onclick="pressCalc('9')">9</button><button class="btn-calc btn-op" onclick="pressCalc('-')">-</button>
+                    <button class="btn-calc" onclick="pressCalc('4')">4</button><button class="btn-calc" onclick="pressCalc('5')">5</button><button class="btn-calc" onclick="pressCalc('6')">6</button><button class="btn-calc btn-op" onclick="pressCalc('+')">+</button>
+                    <button class="btn-calc" onclick="pressCalc('1')">1</button><button class="btn-calc" onclick="pressCalc('2')">2</button><button class="btn-calc" onclick="pressCalc('3')">3</button><button class="btn-calc btn-eq" onclick="solveCalc()">=</button>
+                    <button class="btn-calc" style="grid-column: span 2;" onclick="pressCalc('0')">0</button><button class="btn-calc" onclick="pressCalc('.')">.</button>
                 </div>
             </div>
         </div>
@@ -398,6 +305,7 @@
     let allData = [];
     let filterStart = null;
     let filterEnd = null;
+    let typeFilter = null; // New: Filter by Income/Expense
     let myChart = null;
     let chartType = 'bar'; 
     let globalLastBalance = 0;
@@ -408,7 +316,7 @@
     const calcModalObj = new bootstrap.Modal(document.getElementById('calculatorModal'));
     const ledgerModalObj = new bootstrap.Modal(document.getElementById('ledgerModal'));
     const today = new Date().toISOString().split('T')[0];
-    const currentMonthKey = today.substring(0, 7); // e.g. "2026-04"
+    const currentMonthKey = today.substring(0, 7);
 
     // Draggable Chart
     const slider = document.getElementById('chartScrollArea');
@@ -456,6 +364,15 @@
         const body = document.getElementById('summaryTableBody');
         body.innerHTML = '';
         
+        // Step 1: Filter data by date and type
+        let filteredData = allData;
+        if(filterStart && filterEnd) {
+            filteredData = allData.filter(t => t.date >= filterStart && t.date <= filterEnd);
+        }
+        if(typeFilter) {
+            filteredData = filteredData.filter(t => t.type === typeFilter);
+        }
+
         const grouped = {};
         allData.forEach(t => {
             if (!grouped[t.date]) { grouped[t.date] = { inc: 0, exp: 0, with: 0, items: [] }; }
@@ -467,65 +384,63 @@
 
         const sortedDates = Object.keys(grouped).sort((a,b) => new Date(a) - new Date(b));
         let runningBalance = 0;
-        
-        // Month-wise storage for rendering
         const monthGroups = {};
 
         sortedDates.forEach((date) => {
             const day = grouped[date];
             const opening = runningBalance;
             const mid = opening + day.inc;
-            const totalDeductions = day.exp;
+            const totalDeductions = day.exp + day.with;
             const closing = mid - totalDeductions;
             
-            const monthKey = date.substring(0, 7); // "YYYY-MM"
-            if(!monthGroups[monthKey]) monthGroups[monthKey] = { rowsHtml: "", closingBalance: 0 };
-
-            const remarksList = day.items.filter(i => i.remarks && i.remarks !== "N/A").map(i => `• ${i.remarks}`).join('<br>');
-            const actions = day.items.map(i => `
-                <div class="d-flex justify-content-center gap-2 mb-1">
-                    <span class="badge ${i.type==='Income'?'bg-success':i.type==='Withdraw'?'bg-warning text-dark':'bg-danger'}" style="width:55px;">${i.amount}</span>
-                    <button class="btn btn-sm btn-light py-0 border" onclick="editEntry('${i.id}')"><i class="bi bi-pencil text-primary"></i></button>
-                    <button class="btn btn-sm btn-light py-0 border" onclick="deleteEntry('${i.id}')"><i class="bi bi-trash text-danger"></i></button>
-                </div>`).join('');
-
-            // Hide previous months by default
-            const isCurrentMonth = (monthKey === currentMonthKey);
-            const rowStyle = isCurrentMonth ? "" : "display:none;";
-
-            monthGroups[monthKey].rowsHtml += `
-                <tr class="month-row-${monthKey}" style="${rowStyle}">
-                    <td class="text-center fw-bold small">${date.split('-').reverse().join('/')}</td>
-                    <td class="text-center">${opening.toFixed(2)}</td>
-                    <td class="text-center text-success fw-bold">+${day.inc.toFixed(2)}</td>
-                    <td class="text-center text-secondary">${mid.toFixed(2)}</td>
-                    <td class="text-center text-danger fw-bold">-${totalDeductions.toFixed(2)}</td>
-                    <td class="text-center fw-bold text-primary">${closing.toFixed(2)}</td>
-                    <td><span style="font-size:0.75rem;">${remarksList || '-'}</span></td>
-                    <td>${actions}</td>
-                </tr>`;
+            // Check if this date should be visible based on filter
+            const hasDataInFilter = filteredData.some(fd => fd.date === date);
             
-            monthGroups[monthKey].closingBalance = closing;
+            if(hasDataInFilter) {
+                const monthKey = date.substring(0, 7);
+                if(!monthGroups[monthKey]) monthGroups[monthKey] = { rowsHtml: "", closingBalance: 0 };
+
+                // Apply type filter inside the date row items
+                const itemsToShow = typeFilter ? day.items.filter(i => i.type === typeFilter) : day.items;
+                const remarksList = itemsToShow.filter(i => i.remarks && i.remarks !== "N/A").map(i => `• ${i.remarks}`).join('<br>');
+                const actions = itemsToShow.map(i => `
+                    <div class="d-flex justify-content-center gap-2 mb-1">
+                        <span class="badge ${i.type==='Income'?'bg-success':i.type==='Withdraw'?'bg-warning text-dark':'bg-danger'}" style="width:55px;">${i.amount}</span>
+                        <button class="btn btn-sm btn-light py-0 border" onclick="editEntry('${i.id}')"><i class="bi bi-pencil text-primary"></i></button>
+                        <button class="btn btn-sm btn-light py-0 border" onclick="deleteEntry('${i.id}')"><i class="bi bi-trash text-danger"></i></button>
+                    </div>`).join('');
+
+                const isCurrentMonth = (monthKey === currentMonthKey);
+                const rowStyle = isCurrentMonth ? "" : "display:none;";
+
+                monthGroups[monthKey].rowsHtml += `
+                    <tr class="month-row-${monthKey}" style="${rowStyle}">
+                        <td class="text-center fw-bold small">${date.split('-').reverse().join('/')}</td>
+                        <td class="text-center">${opening.toFixed(2)}</td>
+                        <td class="text-center text-success fw-bold">+${day.inc.toFixed(2)}</td>
+                        <td class="text-center text-secondary">${mid.toFixed(2)}</td>
+                        <td class="text-center text-danger fw-bold">-${totalDeductions.toFixed(2)}</td>
+                        <td class="text-center fw-bold text-primary">${closing.toFixed(2)}</td>
+                        <td><span style="font-size:0.75rem;">${remarksList || '-'}</span></td>
+                        <td>${actions}</td>
+                    </tr>`;
+                monthGroups[monthKey].closingBalance = closing;
+            }
             runningBalance = closing;
         });
 
-        // Final Rendering (Sort months descending for newest first)
         const sortedMonths = Object.keys(monthGroups).sort().reverse();
         sortedMonths.forEach(mKey => {
             const mDate = new Date(mKey + "-01");
             const mLabel = mDate.toLocaleString('default', { month: 'short', year: 'numeric' });
             const isCurrent = (mKey === currentMonthKey);
-            const iconClass = isCurrent ? "bi bi-chevron-down me-2" : "bi bi-chevron-right me-2";
-
-            // Add Month Header/Tab
             body.innerHTML += `
                 <tr class="month-header-row" onclick="toggleMonthRows('${mKey}')">
                     <td colspan="8">
-                        <i id="icon-${mKey}" class="${iconClass}"></i>
+                        <i id="icon-${mKey}" class="bi ${isCurrent?'bi-chevron-down':'bi-chevron-right'} me-2"></i>
                         ${mLabel} - <span class="text-primary">Closing: Rs.${monthGroups[mKey].closingBalance.toFixed(2)}</span>
                     </td>
                 </tr>`;
-            // Add Month Content
             body.innerHTML += monthGroups[mKey].rowsHtml;
         });
 
@@ -533,6 +448,12 @@
         updateDashboard();
         initChart();
     };
+
+    // Filter Functions Fix
+    window.applyFilter = () => { filterStart = document.getElementById('fromDate').value; filterEnd = document.getElementById('toDate').value; refreshUI(); };
+    window.resetFilter = () => { filterStart = null; filterEnd = null; typeFilter = null; document.getElementById('monthFilter').value = ""; document.getElementById('fromDate').value = ""; document.getElementById('toDate').value = ""; refreshUI(); };
+    window.applyMonthFilter = () => { const m = document.getElementById('monthFilter').value; if(!m) { resetFilter(); return; } const y = new Date().getFullYear(); filterStart = `${y}-${m}-01`; filterEnd = `${y}-${m}-${new Date(y, m, 0).getDate()}`; refreshUI(); };
+    window.filterByType = (type) => { typeFilter = type; refreshUI(); };
 
     function updateDashboard() {
         let tInc = 0, tExp = 0, tWith = 0;
@@ -544,27 +465,12 @@
         document.getElementById('totalIncVal').innerText = tInc.toFixed(0);
         document.getElementById('totalExpVal').innerText = tExp.toFixed(0);
         document.getElementById('totalWithdrawVal').innerText = tWith.toFixed(0);
-        document.getElementById('balanceVal').innerText = (tInc - tExp).toFixed(0);
+        document.getElementById('balanceVal').innerText = (tInc - tExp - tWith).toFixed(0);
     }
 
-    // Formulas (Same as before)
-    window.calculateFromDrawer = () => {
-        const drawer = parseFloat(document.getElementById('todayDrawer').value) || 0;
-        const opening = parseFloat(document.getElementById('openBal').value) || 0;
-        const expense = parseFloat(document.getElementById('expenseInput').value) || 0;
-        const income = drawer + expense;
-        document.getElementById('incomeInput').value = income.toFixed(2);
-        calculateLiveBalance();
-    };
-
-    window.calculateLiveBalance = () => {
-        const b = parseFloat(document.getElementById('openBal').value) || 0;
-        const i = parseFloat(document.getElementById('incomeInput').value) || 0;
-        const e = parseFloat(document.getElementById('expenseInput').value) || 0;
-        document.getElementById('finalBalance').value = (b + i - e).toFixed(2);
-    };
-
-    // CRUD Ops (Same)
+    // Formulas & CRUD same
+    window.calculateFromDrawer = () => { const dr = parseFloat(document.getElementById('todayDrawer').value) || 0, op = parseFloat(document.getElementById('openBal').value) || 0, ex = parseFloat(document.getElementById('expenseInput').value) || 0; document.getElementById('incomeInput').value = (dr + ex).toFixed(2); calculateLiveBalance(); };
+    window.calculateLiveBalance = () => { const b = parseFloat(document.getElementById('openBal').value) || 0, i = parseFloat(document.getElementById('incomeInput').value) || 0, e = parseFloat(document.getElementById('expenseInput').value) || 0; document.getElementById('finalBalance').value = (b + i - e).toFixed(2); };
     window.openModal = () => { document.getElementById('entryForm').reset(); document.getElementById('editKey').value = ""; document.getElementById('entryDate').value = today; document.getElementById('openBal').value = globalLastBalance.toFixed(2); modalObj.show(); };
     window.openWithdrawModal = () => { document.getElementById('withdrawForm').reset(); document.getElementById('withdrawEditKey').value = ""; document.getElementById('withdrawDate').value = today; document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2); withdrawModalObj.show(); };
 
@@ -585,8 +491,7 @@
     };
 
     window.editEntry = (id) => {
-        const item = allData.find(i => i.id === id);
-        if(!item) return;
+        const item = allData.find(i => i.id === id); if(!item) return;
         if (item.type === 'Withdraw') {
             document.getElementById('withdrawEditKey').value = item.id; document.getElementById('withdrawDate').value = item.date; document.getElementById('withdrawAmount').value = item.amount; document.getElementById('withdrawRemarks').value = item.remarks; document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2); withdrawModalObj.show();
         } else {
@@ -598,9 +503,6 @@
     };
 
     window.deleteEntry = (id) => { if(confirm("Confirm Delete?")) remove(ref(db, 'transactions/'+id)); };
-    window.applyFilter = () => { filterStart = document.getElementById('fromDate').value; filterEnd = document.getElementById('toDate').value; refreshUI(); };
-    window.resetFilter = () => { filterStart = null; filterEnd = null; document.getElementById('monthFilter').value = ""; refreshUI(); };
-    window.applyMonthFilter = () => { const m = document.getElementById('monthFilter').value; if(!m) { resetFilter(); return; } const y = new Date().getFullYear(); filterStart = `${y}-${m}-01`; filterEnd = `${y}-${m}-${new Date(y, m, 0).getDate()}`; refreshUI(); };
     window.toggleChartType = (t) => { chartType = t; initChart(); };
 
     function initChart() {
