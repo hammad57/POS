@@ -60,7 +60,6 @@
         .bg-profit { background: linear-gradient(135deg, #2193b0, #6dd5ed); }
         .bg-withdraw { background: linear-gradient(135deg, #f2994a, #f2c94c); }
         
-        /* Draggable Chart Container */
         .chart-container { background: var(--container-bg); padding: 35px; border-radius: 25px; box-shadow: var(--shadow-3d); border: 1px solid var(--border-color); margin-top: 20px; overflow: hidden; }
         .chart-scroll-area { width: 100%; overflow-x: auto; cursor: grab; padding-bottom: 10px; }
         .chart-scroll-area:active { cursor: grabbing; }
@@ -69,6 +68,11 @@
         .table-custom { border-collapse: separate; border-radius: 15px; box-shadow: var(--shadow-3d); width: 100%; overflow: hidden; }
         .table-custom thead th { background-color: var(--table-header-bg) !important; color: var(--table-header-text) !important; padding: 15px; }
         .table-custom tbody td { background-color: var(--input-bg) !important; border-color: var(--border-color); color: var(--text-color); padding: 12px; }
+
+        /* Month Grouping Styles */
+        .month-header-row { cursor: pointer; background: rgba(0,0,0,0.05) !important; transition: 0.3s; }
+        .month-header-row:hover { background: rgba(0,0,0,0.1) !important; }
+        .month-header-row td { font-weight: 700 !important; color: var(--text-color) !important; padding: 15px !important; border-left: 5px solid #0d6efd !important; }
 
         .fab-add { position: fixed; right: 50px; bottom: 50px; width: 80px; height: 80px; border-radius: 50%; background: #0d6efd; color: white; display: flex; align-items: center; justify-content: center; font-size: 35px; box-shadow: 0 10px 20px rgba(13, 110, 253, 0.4); border: none; z-index: 1000; }
         
@@ -83,7 +87,6 @@
         .calc-btn-trigger { cursor: pointer; color: #0d6efd; font-size: 1.3rem; transition: 0.3s; margin-left: 10px; }
         .calc-btn-trigger:hover { transform: scale(1.2); color: #0056b3; }
         
-        /* New Improved Calculator UI */
         #calculatorModal .modal-content { 
             background: #1e1e24; 
             border: 2px solid #333; 
@@ -405,30 +408,17 @@
     const calcModalObj = new bootstrap.Modal(document.getElementById('calculatorModal'));
     const ledgerModalObj = new bootstrap.Modal(document.getElementById('ledgerModal'));
     const today = new Date().toISOString().split('T')[0];
+    const currentMonthKey = today.substring(0, 7); // e.g. "2026-04"
 
-    // Chart Draggable Scroll Logic
+    // Draggable Chart
     const slider = document.getElementById('chartScrollArea');
-    let isDown = false;
-    let startX;
-    let scrollLeft;
-
-    slider.addEventListener('mousedown', (e) => {
-        isDown = true;
-        slider.classList.add('active');
-        startX = e.pageX - slider.offsetLeft;
-        scrollLeft = slider.scrollLeft;
-    });
+    let isDown = false, startX, scrollLeft;
+    slider.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft; });
     slider.addEventListener('mouseleave', () => { isDown = false; });
     slider.addEventListener('mouseup', () => { isDown = false; });
-    slider.addEventListener('mousemove', (e) => {
-        if(!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - slider.offsetLeft;
-        const walk = (x - startX) * 2;
-        slider.scrollLeft = scrollLeft - walk;
-    });
+    slider.addEventListener('mousemove', (e) => { if(!isDown) return; e.preventDefault(); const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 2; slider.scrollLeft = scrollLeft - walk; });
 
-    // Calculator Logic
+    // Calculator logic
     let calcExpression = "";
     window.openCalculator = () => { calcExpression = ""; document.getElementById('calcDisplay').innerText = "0"; calcModalObj.show(); };
     window.pressCalc = (val) => { calcExpression += val; document.getElementById('calcDisplay').innerText = calcExpression; };
@@ -436,13 +426,24 @@
     window.backspaceCalc = () => { calcExpression = calcExpression.slice(0, -1); document.getElementById('calcDisplay').innerText = calcExpression || "0"; };
     window.solveCalc = () => { try { calcExpression = eval(calcExpression).toString(); document.getElementById('calcDisplay').innerText = calcExpression; } catch { document.getElementById('calcDisplay').innerText = "Error"; calcExpression = ""; } };
 
-    // Theme Logic
-    onValue(themeRef, (snap) => {
-        const t = snap.val() || 'light';
-        document.documentElement.setAttribute('data-theme', t);
-        document.getElementById('appTheme').value = t;
-    });
+    // Theme logic
+    onValue(themeRef, (snap) => { const t = snap.val() || 'light'; document.documentElement.setAttribute('data-theme', t); document.getElementById('appTheme').value = t; });
     window.saveTheme = () => set(themeRef, document.getElementById('appTheme').value);
+
+    // Month Toggle Logic
+    window.toggleMonthRows = (monthKey) => {
+        const rows = document.querySelectorAll(`.month-row-${monthKey}`);
+        const icon = document.getElementById(`icon-${monthKey}`);
+        rows.forEach(r => {
+            if(r.style.display === 'none') {
+                r.style.display = 'table-row';
+                if(icon) icon.className = "bi bi-chevron-down me-2";
+            } else {
+                r.style.display = 'none';
+                if(icon) icon.className = "bi bi-chevron-right me-2";
+            }
+        });
+    };
 
     // Data Sync
     onValue(dbRef, (snap) => {
@@ -454,8 +455,8 @@
     window.refreshUI = function() {
         const body = document.getElementById('summaryTableBody');
         body.innerHTML = '';
-        const grouped = {};
         
+        const grouped = {};
         allData.forEach(t => {
             if (!grouped[t.date]) { grouped[t.date] = { inc: 0, exp: 0, with: 0, items: [] }; }
             if (t.type === 'Income') grouped[t.date].inc += t.amount;
@@ -466,6 +467,9 @@
 
         const sortedDates = Object.keys(grouped).sort((a,b) => new Date(a) - new Date(b));
         let runningBalance = 0;
+        
+        // Month-wise storage for rendering
+        const monthGroups = {};
 
         sortedDates.forEach((date) => {
             const day = grouped[date];
@@ -473,30 +477,58 @@
             const mid = opening + day.inc;
             const totalDeductions = day.exp;
             const closing = mid - totalDeductions;
+            
+            const monthKey = date.substring(0, 7); // "YYYY-MM"
+            if(!monthGroups[monthKey]) monthGroups[monthKey] = { rowsHtml: "", closingBalance: 0 };
 
-            if ((!filterStart || date >= filterStart) && (!filterEnd || date <= filterEnd)) {
-                const remarksList = day.items.filter(i => i.remarks && i.remarks !== "N/A").map(i => `• ${i.remarks}`).join('<br>');
-                const actions = day.items.map(i => `
-                    <div class="d-flex justify-content-center gap-2 mb-1">
-                        <span class="badge ${i.type==='Income'?'bg-success':i.type==='Withdraw'?'bg-warning text-dark':'bg-danger'}" style="width:55px;">${i.amount}</span>
-                        <button class="btn btn-sm btn-light py-0 border" onclick="editEntry('${i.id}')"><i class="bi bi-pencil text-primary"></i></button>
-                        <button class="btn btn-sm btn-light py-0 border" onclick="deleteEntry('${i.id}')"><i class="bi bi-trash text-danger"></i></button>
-                    </div>`).join('');
+            const remarksList = day.items.filter(i => i.remarks && i.remarks !== "N/A").map(i => `• ${i.remarks}`).join('<br>');
+            const actions = day.items.map(i => `
+                <div class="d-flex justify-content-center gap-2 mb-1">
+                    <span class="badge ${i.type==='Income'?'bg-success':i.type==='Withdraw'?'bg-warning text-dark':'bg-danger'}" style="width:55px;">${i.amount}</span>
+                    <button class="btn btn-sm btn-light py-0 border" onclick="editEntry('${i.id}')"><i class="bi bi-pencil text-primary"></i></button>
+                    <button class="btn btn-sm btn-light py-0 border" onclick="deleteEntry('${i.id}')"><i class="bi bi-trash text-danger"></i></button>
+                </div>`).join('');
 
-                body.innerHTML += `
-                    <tr>
-                        <td class="text-center fw-bold small">${date.split('-').reverse().join('/')}</td>
-                        <td class="text-center">${opening.toFixed(2)}</td>
-                        <td class="text-center text-success fw-bold">+${day.inc.toFixed(2)}</td>
-                        <td class="text-center text-secondary">${mid.toFixed(2)}</td>
-                        <td class="text-center text-danger fw-bold">-${totalDeductions.toFixed(2)}</td>
-                        <td class="text-center fw-bold text-primary">${closing.toFixed(2)}</td>
-                        <td><span style="font-size:0.75rem;">${remarksList || '-'}</span></td>
-                        <td>${actions}</td>
-                    </tr>`;
-            }
+            // Hide previous months by default
+            const isCurrentMonth = (monthKey === currentMonthKey);
+            const rowStyle = isCurrentMonth ? "" : "display:none;";
+
+            monthGroups[monthKey].rowsHtml += `
+                <tr class="month-row-${monthKey}" style="${rowStyle}">
+                    <td class="text-center fw-bold small">${date.split('-').reverse().join('/')}</td>
+                    <td class="text-center">${opening.toFixed(2)}</td>
+                    <td class="text-center text-success fw-bold">+${day.inc.toFixed(2)}</td>
+                    <td class="text-center text-secondary">${mid.toFixed(2)}</td>
+                    <td class="text-center text-danger fw-bold">-${totalDeductions.toFixed(2)}</td>
+                    <td class="text-center fw-bold text-primary">${closing.toFixed(2)}</td>
+                    <td><span style="font-size:0.75rem;">${remarksList || '-'}</span></td>
+                    <td>${actions}</td>
+                </tr>`;
+            
+            monthGroups[monthKey].closingBalance = closing;
             runningBalance = closing;
         });
+
+        // Final Rendering (Sort months descending for newest first)
+        const sortedMonths = Object.keys(monthGroups).sort().reverse();
+        sortedMonths.forEach(mKey => {
+            const mDate = new Date(mKey + "-01");
+            const mLabel = mDate.toLocaleString('default', { month: 'short', year: 'numeric' });
+            const isCurrent = (mKey === currentMonthKey);
+            const iconClass = isCurrent ? "bi bi-chevron-down me-2" : "bi bi-chevron-right me-2";
+
+            // Add Month Header/Tab
+            body.innerHTML += `
+                <tr class="month-header-row" onclick="toggleMonthRows('${mKey}')">
+                    <td colspan="8">
+                        <i id="icon-${mKey}" class="${iconClass}"></i>
+                        ${mLabel} - <span class="text-primary">Closing: Rs.${monthGroups[mKey].closingBalance.toFixed(2)}</span>
+                    </td>
+                </tr>`;
+            // Add Month Content
+            body.innerHTML += monthGroups[mKey].rowsHtml;
+        });
+
         globalLastBalance = runningBalance;
         updateDashboard();
         initChart();
@@ -515,17 +547,13 @@
         document.getElementById('balanceVal').innerText = (tInc - tExp).toFixed(0);
     }
 
-    // Logic Fix: calculateFromDrawer (As per user formula)
+    // Formulas (Same as before)
     window.calculateFromDrawer = () => {
         const drawer = parseFloat(document.getElementById('todayDrawer').value) || 0;
         const opening = parseFloat(document.getElementById('openBal').value) || 0;
         const expense = parseFloat(document.getElementById('expenseInput').value) || 0;
-        
-        // Formula: Income amount = Today Drawer + Expense
         const income = drawer + expense;
         document.getElementById('incomeInput').value = income.toFixed(2);
-        
-        // Formula: Final Balance = Opening Balance + Income - Expense
         calculateLiveBalance();
     };
 
@@ -536,121 +564,52 @@
         document.getElementById('finalBalance').value = (b + i - e).toFixed(2);
     };
 
-    window.openWithdrawModal = () => {
-        document.getElementById('withdrawForm').reset();
-        document.getElementById('withdrawEditKey').value = "";
-        document.getElementById('withdrawDate').value = today;
-        document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2);
-        withdrawModalObj.show();
-    };
+    // CRUD Ops (Same)
+    window.openModal = () => { document.getElementById('entryForm').reset(); document.getElementById('editKey').value = ""; document.getElementById('entryDate').value = today; document.getElementById('openBal').value = globalLastBalance.toFixed(2); modalObj.show(); };
+    window.openWithdrawModal = () => { document.getElementById('withdrawForm').reset(); document.getElementById('withdrawEditKey').value = ""; document.getElementById('withdrawDate').value = today; document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2); withdrawModalObj.show(); };
 
-    window.showWithdrawHistoryModal = () => {
-        const histBody = document.getElementById('withdrawHistoryBody');
-        histBody.innerHTML = "";
-        const withdraws = allData.filter(t => t.type === 'Withdraw').sort((a,b) => new Date(b.date) - new Date(a.date));
-        
-        withdraws.forEach(w => {
-            histBody.innerHTML += `
-                <tr>
-                    <td class="ps-4">${w.date.split('-').reverse().join('/')}</td>
-                    <td class="fw-bold text-warning">${w.amount}</td>
-                    <td class="small">${w.remarks || '-'}</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${w.id}'); bootstrap.Modal.getInstance(document.getElementById('withdrawHistoryModal')).hide();">Delete</button>
-                    </td>
-                </tr>`;
-        });
-        withdrawHistoryModalObj.show();
+    document.getElementById('entryForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const key = document.getElementById('editKey').value, date = document.getElementById('entryDate').value, inc = parseFloat(document.getElementById('incomeInput').value) || 0, exp = parseFloat(document.getElementById('expenseInput').value) || 0, rem = document.getElementById('entryRemarks').value || "N/A";
+        if(key) { const type = inc > 0 ? 'Income' : 'Expense', amount = inc > 0 ? inc : exp; await set(ref(db, 'transactions/'+key), { type, date, amount, remarks: rem }); }
+        else { if(inc !== 0) await push(dbRef, { type: 'Income', date, amount: inc, remarks: rem }); if(exp !== 0) await push(dbRef, { type: 'Expense', date, amount: exp, remarks: rem }); }
+        modalObj.hide();
     };
 
     document.getElementById('withdrawForm').onsubmit = async (e) => {
         e.preventDefault();
-        const key = document.getElementById('withdrawEditKey').value;
-        const date = document.getElementById('withdrawDate').value;
-        const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
-        const remarks = document.getElementById('withdrawRemarks').value || "Withdrawal";
-
-        if(key) {
-            await set(ref(db, 'transactions/'+key), { type: 'Withdraw', date, amount, remarks });
-        } else {
-            if(amount > 0) await push(dbRef, { type: 'Withdraw', date, amount, remarks });
-        }
+        const key = document.getElementById('withdrawEditKey').value, date = document.getElementById('withdrawDate').value, amount = parseFloat(document.getElementById('withdrawAmount').value) || 0, remarks = document.getElementById('withdrawRemarks').value || "Withdrawal";
+        if(key) await set(ref(db, 'transactions/'+key), { type: 'Withdraw', date, amount, remarks });
+        else if(amount > 0) await push(dbRef, { type: 'Withdraw', date, amount, remarks });
         withdrawModalObj.hide();
-    };
-
-    window.openModal = () => {
-        document.getElementById('entryForm').reset();
-        document.getElementById('editKey').value = "";
-        document.getElementById('entryDate').value = today;
-        document.getElementById('openBal').value = globalLastBalance.toFixed(2);
-        modalObj.show();
-    };
-
-    document.getElementById('entryForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const key = document.getElementById('editKey').value;
-        const date = document.getElementById('entryDate').value;
-        const inc = parseFloat(document.getElementById('incomeInput').value) || 0;
-        const exp = parseFloat(document.getElementById('expenseInput').value) || 0;
-        const rem = document.getElementById('entryRemarks').value || "N/A";
-        if(key) {
-            const type = inc > 0 ? 'Income' : 'Expense';
-            const amount = inc > 0 ? inc : exp;
-            await set(ref(db, 'transactions/'+key), { type, date, amount, remarks: rem });
-        } else {
-            if(inc !== 0) await push(dbRef, { type: 'Income', date, amount: inc, remarks: rem });
-            if(exp !== 0) await push(dbRef, { type: 'Expense', date, amount: exp, remarks: rem });
-        }
-        modalObj.hide();
     };
 
     window.editEntry = (id) => {
         const item = allData.find(i => i.id === id);
         if(!item) return;
         if (item.type === 'Withdraw') {
-            document.getElementById('withdrawEditKey').value = item.id;
-            document.getElementById('withdrawDate').value = item.date;
-            document.getElementById('withdrawAmount').value = item.amount;
-            document.getElementById('withdrawRemarks').value = item.remarks;
-            document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2);
-            withdrawModalObj.show();
+            document.getElementById('withdrawEditKey').value = item.id; document.getElementById('withdrawDate').value = item.date; document.getElementById('withdrawAmount').value = item.amount; document.getElementById('withdrawRemarks').value = item.remarks; document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2); withdrawModalObj.show();
         } else {
-            document.getElementById('editKey').value = item.id;
-            document.getElementById('entryDate').value = item.date;
-            document.getElementById('entryRemarks').value = item.remarks === "N/A" ? "" : item.remarks;
+            document.getElementById('editKey').value = item.id; document.getElementById('entryDate').value = item.date; document.getElementById('entryRemarks').value = item.remarks === "N/A" ? "" : item.remarks;
             if(item.type === 'Income') { document.getElementById('incomeInput').value = item.amount; document.getElementById('expenseInput').value = 0; }
             else { document.getElementById('incomeInput').value = 0; document.getElementById('expenseInput').value = item.amount; }
-            calculateLiveBalance();
-            modalObj.show();
+            calculateLiveBalance(); modalObj.show();
         }
     };
 
     window.deleteEntry = (id) => { if(confirm("Confirm Delete?")) remove(ref(db, 'transactions/'+id)); };
     window.applyFilter = () => { filterStart = document.getElementById('fromDate').value; filterEnd = document.getElementById('toDate').value; refreshUI(); };
     window.resetFilter = () => { filterStart = null; filterEnd = null; document.getElementById('monthFilter').value = ""; refreshUI(); };
-    window.applyMonthFilter = () => {
-        const m = document.getElementById('monthFilter').value;
-        if(!m) { resetFilter(); return; }
-        const y = new Date().getFullYear();
-        filterStart = `${y}-${m}-01`;
-        filterEnd = `${y}-${m}-${new Date(y, m, 0).getDate()}`;
-        refreshUI();
-    };
+    window.applyMonthFilter = () => { const m = document.getElementById('monthFilter').value; if(!m) { resetFilter(); return; } const y = new Date().getFullYear(); filterStart = `${y}-${m}-01`; filterEnd = `${y}-${m}-${new Date(y, m, 0).getDate()}`; refreshUI(); };
     window.toggleChartType = (t) => { chartType = t; initChart(); };
 
     function initChart() {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(myChart) myChart.destroy();
-        
-        // Showing more data for scrolling
         const dates = [...new Set(allData.map(d => d.date))].sort();
         const incs = dates.map(d => allData.filter(x => x.date === d && x.type === 'Income').reduce((a,b)=>a+b.amount,0));
         const exps = dates.map(d => allData.filter(x => x.date === d && (x.type === 'Expense' || x.type === 'Withdraw')).reduce((a,b)=>a+b.amount,0));
-        
-        // Dynamically adjust chart width based on number of records
-        const chartBox = document.getElementById('chartBox');
-        chartBox.style.width = Math.max(1000, dates.length * 80) + "px";
-
+        document.getElementById('chartBox').style.width = Math.max(1000, dates.length * 80) + "px";
         myChart = new Chart(ctx, {
             type: chartType,
             data: {
@@ -660,40 +619,28 @@
                     { label: 'Expense & Withdraw', data: exps, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.5)', fill: true, tension: 0.4 }
                 ]
             },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-color') } }
-                },
-                scales: {
-                    x: { ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-muted') } },
-                    y: { ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-muted') } }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-color') } } } }
         });
-
-        // Scroll to the end of the chart to see latest records first
         setTimeout(() => { slider.scrollLeft = slider.scrollWidth; }, 100);
     }
 
-    // Ledger Download
-    window.openLedgerModal = () => {
-        document.getElementById('ledgerFrom').value = today.substring(0,8) + '01';
-        document.getElementById('ledgerTo').value = today;
-        ledgerModalObj.show();
-    };
+    window.openLedgerModal = () => { document.getElementById('ledgerFrom').value = today.substring(0,8) + '01'; document.getElementById('ledgerTo').value = today; ledgerModalObj.show(); };
     window.downloadLedger = async (format) => {
-        const lFrom = document.getElementById('ledgerFrom').value;
-        const lTo = document.getElementById('ledgerTo').value;
-        const originalStart = filterStart, originalEnd = filterEnd;
-        filterStart = lFrom; filterEnd = lTo;
-        refreshUI();
+        const lFrom = document.getElementById('ledgerFrom').value, lTo = document.getElementById('ledgerTo').value;
         const element = document.getElementById('summaryTable');
         if(format === 'pdf') await html2pdf().from(element).save(`Ledger_${lFrom}.pdf`);
         else if(format === 'excel') XLSX.writeFile(XLSX.utils.table_to_book(element), `Ledger_${lFrom}.xlsx`);
         else { const canvas = await html2canvas(element); const link = document.createElement('a'); link.download = `Ledger.png`; link.href = canvas.toDataURL(); link.click(); }
-        filterStart = originalStart; filterEnd = originalEnd; refreshUI(); ledgerModalObj.hide();
+        ledgerModalObj.hide();
+    };
+    
+    window.showWithdrawHistoryModal = () => {
+        const histBody = document.getElementById('withdrawHistoryBody'); histBody.innerHTML = "";
+        const withdraws = allData.filter(t => t.type === 'Withdraw').sort((a,b) => new Date(b.date) - new Date(a.date));
+        withdraws.forEach(w => {
+            histBody.innerHTML += `<tr><td class="ps-4">${w.date.split('-').reverse().join('/')}</td><td class="fw-bold text-warning">${w.amount}</td><td class="small">${w.remarks || '-'}</td><td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${w.id}'); bootstrap.Modal.getInstance(document.getElementById('withdrawHistoryModal')).hide();">Delete</button></td></tr>`;
+        });
+        withdrawHistoryModalObj.show();
     };
 </script>
 
