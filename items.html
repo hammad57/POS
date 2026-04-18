@@ -4,11 +4,14 @@
     <title>Hammad Mart - Manager</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     
     <style>
-        :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; --red: #ef4444; --blue: #3b82f6; }
+        :root { --primary: #1e293b; --accent: #22c55e; --light: #f1f5f9; --white: #ffffff; --red: #ef4444; --blue: #3b82f6; --dark-blue: #1e40af; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding-bottom: 80px; }
         
         /* Sync UI */
@@ -41,17 +44,17 @@
         .btn-secondary { background: #64748b; color: white; }
         .btn-blue { background: var(--blue); color: white; width: 100%; margin-top: 10px; }
 
+        /* Calculator Specific */
+        .calc-btn { background: #e2e8f0; color: #1e293b; font-size: 18px; border-radius: 8px; padding: 15px; border: none; cursor: pointer; }
+        .calc-btn:active { background: #cbd5e1; }
+        .calc-screen { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 10px; text-align: right; font-size: 24px; font-weight: bold; border: 1px solid #e2e8f0; min-height: 40px; overflow: hidden; }
+
         /* Queue Styling */
         .queue-container { margin-top: 20px; border-top: 2px dashed #cbd5e1; padding-top: 15px; }
         .queue-item { display: flex; align-items: center; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--blue); }
         .queue-info { flex: 1; font-size: 13px; }
 
-        /* Camera UI */
-        #camera-preview { width: 100%; border-radius: 10px; display: none; margin-top: 10px; background: #000; }
-        #capture-btn { display: none; background: var(--red); margin-top: 10px; width: 100%; }
-        #img-preview-container { margin-top: 10px; display: none; text-align: center; }
-        #img-preview-container img { max-width: 100px; border-radius: 8px; border: 2px solid var(--accent); }
-
+        /* Product List */
         .product-item { display: flex; align-items: center; padding: 15px; background: white; border-bottom: 1px solid #f1f5f9; gap: 12px; }
         .product-img { width: 50px; height: 50px; object-fit: contain; background: #f8fafc; border-radius: 8px; }
         .product-info { flex: 1; }
@@ -62,11 +65,22 @@
         .edit-btn { background: #3b82f6; color: white; padding: 8px; border-radius: 6px; border:none; cursor: pointer; }
         .del-btn { background: var(--red); color: white; padding: 8px; border-radius: 6px; border:none; cursor: pointer; }
 
-        .search-box { position: sticky; top: 115px; z-index: 90; background: var(--light); padding: 10px 0; }
+        .search-box { position: sticky; top: 115px; z-index: 90; background: var(--light); padding: 10px 0; display: flex; gap: 10px; }
         #reader { width: 100%; border-radius: 15px; overflow: hidden; display: none; margin-bottom: 15px; }
 
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; }
-        .modal { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; }
+        /* Modal Styles */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+        .modal { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+        
+        .download-option { display: block; width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; text-align: left; font-weight: bold; position: relative; }
+        .download-option:hover { background: #f1f5f9; }
+        .download-option input { width: auto; position: absolute; right: 15px; top: 15px; }
+
+        /* Hidden Export Table */
+        #export-table-container { position: absolute; left: -9999px; top: -9999px; background: white; padding: 20px; }
+        .export-table { border-collapse: collapse; width: 100%; }
+        .export-table th, .export-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .export-table th { background-color: #f2f2f2; }
     </style>
 </head>
 <body>
@@ -81,6 +95,54 @@
                 <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
                 <button class="btn" style="background: var(--red); color: white;" onclick="confirmDeleteAction()">Delete</button>
             </div>
+        </div>
+    </div>
+
+    <div id="calculator-modal" class="modal-overlay">
+        <div class="modal">
+            <h3 style="margin-top:0;">Calculator</h3>
+            <div class="calc-screen" id="calc-display">0</div>
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">
+                <button class="calc-btn" onclick="calcAction('C')" style="background:var(--red); color:white;">C</button>
+                <button class="calc-btn" onclick="calcAction('DEL')">⌫</button>
+                <button class="calc-btn" onclick="calcAction('/')">÷</button>
+                <button class="calc-btn" onclick="calcAction('*')">×</button>
+                <button class="calc-btn" onclick="calcNum('7')">7</button>
+                <button class="calc-btn" onclick="calcNum('8')">8</button>
+                <button class="calc-btn" onclick="calcNum('9')">9</button>
+                <button class="calc-btn" onclick="calcAction('-')">-</button>
+                <button class="calc-btn" onclick="calcNum('4')">4</button>
+                <button class="calc-btn" onclick="calcNum('5')">5</button>
+                <button class="calc-btn" onclick="calcNum('6')">6</button>
+                <button class="calc-btn" onclick="calcAction('+')">+</button>
+                <button class="calc-btn" onclick="calcNum('1')">1</button>
+                <button class="calc-btn" onclick="calcNum('2')">2</button>
+                <button class="calc-btn" onclick="calcNum('3')">3</button>
+                <button class="calc-btn" onclick="calcAction('=')" style="grid-row: span 2; background:var(--accent); color:white;">=</button>
+                <button class="calc-btn" onclick="calcNum('0')" style="grid-column: span 2;">0</button>
+                <button class="calc-btn" onclick="calcNum('.')">.</button>
+            </div>
+            <button class="btn btn-secondary" onclick="toggleCalculator()" style="width:100%; margin-top:15px;">Close</button>
+        </div>
+    </div>
+
+    <div id="download-modal" class="modal-overlay">
+        <div class="modal" style="text-align: left;">
+            <h3 style="text-align: center; margin-top: 0;">Download Stock</h3>
+            
+            <p style="font-size: 13px; font-weight: bold; color: #64748b;">Choose Format:</p>
+            <div class="download-option" onclick="processDownload('PDF')">📄 Download as PDF File</div>
+            <div class="download-option" onclick="processDownload('Excel')">📊 Download as Excel Sheet</div>
+            <div class="download-option" onclick="processDownload('Image')">🖼️ Download as Image</div>
+            
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;">
+            
+            <label style="display: flex; align-items: center; cursor: pointer; background: #f1f5f9; padding: 10px; border-radius: 8px;">
+                <input type="checkbox" id="include-images" style="width: auto; margin-right: 10px;">
+                <span>Include Product Pictures</span>
+            </label>
+
+            <button class="btn btn-secondary" onclick="closeDownloadModal()" style="width:100%; margin-top:15px;">Cancel</button>
         </div>
     </div>
 
@@ -140,7 +202,11 @@
                 <button class="btn btn-blue" onclick="addToQueue()">+ ADD TO QUEUE</button>
                 <button class="btn btn-primary" id="saveBtn" onclick="saveProduct()">SAVE NOW ✓</button>
             </div>
-            <button class="btn btn-secondary" style="width:100%; margin-top:10px;" onclick="resetForm()">CLEAR FORM</button>
+            
+            <div class="btn-grid" style="margin-top:10px;">
+                <button class="btn btn-secondary" onclick="resetForm()">CLEAR FORM</button>
+                <button class="btn" style="background:var(--primary); color:white;" onclick="toggleCalculator()">🖩 CALCULATOR</button>
+            </div>
 
             <div id="bulk-section" class="queue-container" style="display:none;">
                 <h4 style="margin:0 0 10px 0; color:var(--blue);">Pending Items (<span id="queue-count">0</span>)</h4>
@@ -151,9 +217,14 @@
     </div>
 
     <div id="list-view" class="container" style="display:none;">
-        <div class="search-box"><input type="text" id="listSearch" placeholder="Search products..." oninput="filterList()"></div>
+        <button class="btn btn-blue" style="margin-bottom: 10px; background: var(--dark-blue);" onclick="openDownloadModal()">📥 Download Stock Report</button>
+        <div class="search-box">
+            <input type="text" id="listSearch" placeholder="Search products..." oninput="filterList()">
+        </div>
         <div class="card" style="padding:0; overflow:hidden;" id="product-list"></div>
     </div>
+
+    <div id="export-table-container"></div>
 
     <script>
         const SHEET_API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
@@ -163,6 +234,120 @@
         let scanner = null;
         let stream = null;
         let productToDelete = null;
+
+        // --- Calculator Logic ---
+        let calcVal = "0";
+        function toggleCalculator() {
+            const modal = document.getElementById('calculator-modal');
+            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+        }
+        function calcNum(num) {
+            if(calcVal === "0") calcVal = num; else calcVal += num;
+            document.getElementById('calc-display').innerText = calcVal;
+        }
+        function calcAction(action) {
+            if(action === 'C') calcVal = "0";
+            else if(action === 'DEL') calcVal = calcVal.length > 1 ? calcVal.slice(0, -1) : "0";
+            else if(action === '=') { try { calcVal = eval(calcVal).toString(); } catch { calcVal = "Error"; } }
+            else calcVal += action;
+            document.getElementById('calc-display').innerText = calcVal;
+        }
+
+        // --- Download & Export Logic ---
+        function openDownloadModal() { document.getElementById('download-modal').style.display = 'flex'; }
+        function closeDownloadModal() { document.getElementById('download-modal').style.display = 'none'; }
+
+        async function processDownload(type) {
+            const includeImg = document.getElementById('include-images').checked;
+            closeDownloadModal();
+            showLoader(`Preparing ${type}...`);
+
+            // Prepare Data with Profit Calculation
+            const reportData = allProducts.map(p => {
+                const purchase = parseFloat(p.pp) || 0;
+                const sale = parseFloat(p.price) || 0;
+                return {
+                    id: p.id,
+                    name: `${p.en}${p.ur ? ' / ' + p.ur : ''}`,
+                    purchase: purchase,
+                    sale: sale,
+                    profit: (sale - purchase),
+                    img: p.img || ""
+                };
+            });
+
+            if (type === 'Excel') {
+                const worksheet = XLSX.utils.json_to_sheet(reportData.map(i => ({
+                    "Product Code": i.id,
+                    "Product Name": i.name,
+                    "Purchase Price": i.purchase,
+                    "Sale Price": i.sale,
+                    "Profit per Item": i.profit
+                })));
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Stock");
+                XLSX.writeFile(workbook, `Hammad_Mart_Stock_${new Date().toLocaleDateString()}.xlsx`);
+            } 
+            else if (type === 'PDF') {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                doc.text("Hammad Mart - Stock Report", 14, 15);
+                
+                const tableBody = reportData.map(i => [i.id, i.name, i.purchase, i.sale, i.profit]);
+                
+                doc.autoTable({
+                    head: [['Code', 'Product Name', 'Purchase', 'Sale', 'Profit']],
+                    body: tableBody,
+                    startY: 20,
+                    theme: 'grid'
+                });
+                doc.save(`Stock_Report_${new Date().toLocaleDateString()}.pdf`);
+            }
+            else if (type === 'Image') {
+                const container = document.getElementById('export-table-container');
+                let html = `
+                    <div style="padding:20px; background:white; width:800px;">
+                        <h2 style="text-align:center;">Hammad Mart - Stock Report</h2>
+                        <table class="export-table">
+                            <thead>
+                                <tr>
+                                    ${includeImg ? '<th>Image</th>' : ''}
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Purchase</th>
+                                    <th>Sale</th>
+                                    <th>Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${reportData.map(i => `
+                                    <tr>
+                                        ${includeImg ? `<td><img src="${i.img}" width="40" height="40" style="object-fit:contain;"></td>` : ''}
+                                        <td>${i.id}</td>
+                                        <td>${i.name}</td>
+                                        <td>Rs. ${i.purchase}</td>
+                                        <td>Rs. ${i.sale}</td>
+                                        <td style="color:green; font-weight:bold;">Rs. ${i.profit}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                container.innerHTML = html;
+                
+                // Wait for images to load if needed
+                setTimeout(async () => {
+                    const canvas = await html2canvas(container, { useCORS: true, scale: 2 });
+                    const link = document.createElement('a');
+                    link.download = `Stock_Report_${new Date().toLocaleDateString()}.png`;
+                    link.href = canvas.toDataURL();
+                    link.click();
+                    container.innerHTML = "";
+                }, 1000);
+            }
+            hideLoader();
+        }
 
         // --- Camera Management ---
         async function startCamera() {
@@ -200,7 +385,6 @@
             const id = document.getElementById('pID').value;
             const en = document.getElementById('enName').value;
             const price = document.getElementById('price').value;
-
             if(!id || !en || !price) { alert("ID, Name, and Price are required!"); return; }
 
             const item = {
@@ -236,39 +420,25 @@
                         <button class="del-btn" onclick="removeFromQueue(${index})" style="padding:5px 10px;">✕</button>
                     </div>
                 `).join('');
-            } else {
-                section.style.display = 'none';
-            }
+            } else { section.style.display = 'none'; }
         }
 
-        function removeFromQueue(index) {
-            bulkQueue.splice(index, 1);
-            updateQueueUI();
-        }
+        function removeFromQueue(index) { bulkQueue.splice(index, 1); updateQueueUI(); }
 
         async function uploadBulk() {
             if(bulkQueue.length === 0) return;
-            
             showLoader(`Uploading 1 of ${bulkQueue.length}...`);
-            
             try {
                 for(let i = 0; i < bulkQueue.length; i++) {
                     showLoader(`Uploading ${i+1} of ${bulkQueue.length}...`);
-                    await fetch(SHEET_API, { 
-                        method: "POST", 
-                        mode: "no-cors", 
-                        body: JSON.stringify(bulkQueue[i]) 
-                    });
+                    await fetch(SHEET_API, { method: "POST", mode: "no-cors", body: JSON.stringify(bulkQueue[i]) });
                 }
                 bulkQueue = [];
                 updateQueueUI();
                 await syncData();
                 alert("All items uploaded successfully!");
-            } catch(e) {
-                alert("Some items failed to upload. Check internet.");
-            } finally {
-                hideLoader();
-            }
+            } catch(e) { alert("Some items failed to upload. Check internet."); }
+            finally { hideLoader(); }
         }
 
         // --- Core Sync Logic ---
@@ -306,11 +476,11 @@
             const listDiv = document.getElementById('product-list');
             listDiv.innerHTML = data.map(p => `
                 <div class="product-item">
-                    <img class="product-img" src="${p.img || 'https://via.placeholder.com/50'}">
+                    <img class="product-img" src="${p.img || 'https://via.placeholder.com/50'}" onerror="this.src='https://via.placeholder.com/50'">
                     <div class="product-info">
-                        <h4>${p.en}</h4>
+                        <h4>${p.en} ${p.ur ? '<span dir="rtl">(' + p.ur + ')</span>' : ''}</h4>
                         <span class="price-tag">Rs. ${p.price}</span>
-                        <p style="font-size:10px; margin:0;">ID: ${p.id}</p>
+                        <p style="font-size:10px; margin:0; opacity:0.6;">ID: ${p.id} | Unit: ${p.unit}</p>
                     </div>
                     <div class="action-btns">
                         <button class="edit-btn" onclick="editProduct('${p.id}')">✏️</button>
