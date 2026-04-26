@@ -3,88 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Card Vault | Muluk Hussain</title>
+    <title>Professional Card Vault</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
     <style>
-        /* Modal visibility logic */
-        .modal { display: none; transition: all 0.3s ease; }
-        .modal.active { display: flex; z-index: 100; }
-        
-        /* Custom UI Enhancements */
-        .glass-nav { background: rgba(79, 70, 229, 0.95); backdrop-filter: blur(10px); }
-        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
-        .floating-btn { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .floating-btn:hover { transform: scale(1.1) rotate(90deg); }
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .modal { display: none; transition: all 0.3s ease-in-out; }
+        .modal.active { display: flex; z-index: 1000; }
+        .card-grad { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
+        .floating-add { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .floating-add:hover { transform: scale(1.1) rotate(90deg); }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans">
+<body class="bg-[#f0f2f5] text-slate-800 font-sans min-h-screen">
 
-    <nav class="glass-nav text-white shadow-lg sticky top-0 z-50 h-16 flex items-center px-6 justify-between">
-        <div class="flex items-center space-x-3">
-            <i class="fa-solid fa-vault text-2xl"></i>
-            <h1 class="text-xl font-bold tracking-tight">Card Vault</h1>
+    <header class="card-grad text-white p-6 shadow-xl sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-lg"><i class="fa-solid fa-vault text-2xl"></i></div>
+                <h1 class="text-2xl font-black tracking-tight uppercase">Card Vault</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span id="adminBadge" class="hidden bg-yellow-400 text-xs text-black font-bold px-2 py-1 rounded">ADMIN</span>
+                <button id="loginBtn" class="bg-white text-indigo-600 px-6 py-2 rounded-full font-bold shadow-lg hover:bg-slate-100 transition">Login</button>
+            </div>
         </div>
-        <div class="flex items-center gap-4">
-            <span id="userEmail" class="text-xs font-medium hidden sm:block opacity-80"></span>
-            <button id="authBtn" class="bg-white text-indigo-600 px-5 py-1.5 rounded-full text-sm font-bold shadow-md hover:bg-indigo-50 transition-all active:scale-95">
-                Login
-            </button>
-        </div>
-    </nav>
+    </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-10 mb-24">
-        <div id="cardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div id="loadingStatus" class="col-span-full text-center py-20">
-                <i class="fa-solid fa-spinner fa-spin text-4xl text-indigo-600 mb-4"></i>
-                <p class="text-slate-500 font-medium">Syncing with Firebase...</p>
+    <main class="max-w-7xl mx-auto p-6">
+        <div id="cardGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div id="loader" class="col-span-full text-center py-20">
+                <div class="animate-spin text-4xl text-indigo-600 mb-4"><i class="fa-solid fa-spinner"></i></div>
+                <p class="font-medium text-slate-500">Securing Connection...</p>
             </div>
         </div>
     </main>
 
-    <button id="addCardBtn" title="Add New Card" class="floating-btn fixed bottom-8 right-8 bg-indigo-600 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center z-50 text-2xl">
+    <button id="openAddModal" class="floating-add fixed bottom-8 right-8 w-16 h-16 card-grad text-white rounded-full shadow-2xl flex items-center justify-center text-3xl z-50">
         <i class="fa-solid fa-plus"></i>
     </button>
 
-    <div id="addModal" class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-sm items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+    <div id="addModal" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
             <div class="p-6 border-b flex justify-between items-center bg-slate-50">
-                <h2 class="text-xl font-bold text-slate-800">Add New Secure Card</h2>
-                <button id="closeAddModal" class="text-slate-400 hover:text-red-500 text-3xl transition-colors">&times;</button>
+                <h2 class="text-xl font-bold">Add New Document</h2>
+                <button id="closeAddModal" class="text-2xl hover:text-red-500">&times;</button>
             </div>
             
-            <form id="cardForm" class="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
-                <label class="block text-xs font-bold text-slate-500 uppercase">Select Category</label>
-                <select id="cardType" class="w-full border-2 border-slate-100 rounded-xl p-3 focus:border-indigo-500 outline-none transition">
-                    <option value="payment">Bank / Payment Card</option>
-                    <option value="cnic">CNIC / ID Card</option>
-                    <option value="visiting">Visiting / Business Card</option>
-                    <option value="other">Other Documents</option>
-                </select>
+            <div class="p-6 overflow-y-auto">
+                <div id="qr-section" class="mb-6 hidden">
+                    <div id="reader"></div>
+                    <button id="stopScan" class="w-full mt-2 bg-red-100 text-red-600 py-2 rounded-lg font-bold">Stop Scanner</button>
+                </div>
 
-                <div id="dynamicFields" class="space-y-4">
+                <form id="cardForm" class="space-y-4">
+                    <div class="flex gap-2">
+                        <select id="typeSelect" class="flex-1 border-2 border-slate-100 p-3 rounded-xl outline-none focus:border-indigo-500 font-semibold bg-slate-50">
+                            <option value="payment">💳 Payment Card</option>
+                            <option value="visiting">📇 Visiting Card</option>
+                            <option value="cnic">🆔 CNIC Card</option>
+                            <option value="other">📄 Other Document</option>
+                        </select>
+                        <button type="button" id="startScan" class="bg-indigo-100 text-indigo-600 px-4 rounded-xl hover:bg-indigo-200 transition">
+                            <i class="fa-solid fa-qrcode"></i> Scan
+                        </button>
                     </div>
 
-                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all mt-6">
-                    SECURELY SAVE
-                </button>
-            </form>
+                    <div id="formFields" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        </div>
+
+                    <div class="grid grid-cols-2 gap-4 border-t pt-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase">Front Image</label>
+                            <input type="file" id="imgFront" class="text-xs w-full mt-1">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase">Back Image</label>
+                            <input type="file" id="imgBack" class="text-xs w-full mt-1">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full card-grad text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:opacity-90 transition transform active:scale-95">
+                        SAVE TO VAULT
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
-    <div id="viewModal" class="modal fixed inset-0 bg-slate-900/80 backdrop-blur-md items-center justify-center p-4">
-        <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden relative shadow-2xl">
-            <button id="closeViewModal" class="absolute top-4 right-5 text-3xl text-slate-400 z-10 hover:text-red-500">&times;</button>
-            <div id="viewContent"></div>
+    <div id="viewModal" class="modal fixed inset-0 bg-black/80 backdrop-blur-md items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative">
+            <button id="closeViewModal" class="absolute top-4 right-5 text-white bg-black/20 w-8 h-8 rounded-full z-10">&times;</button>
+            <div id="cardDetailContent"></div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-        // Permanent Firebase Configuration
+        // *****************************************************************
+        // FIREBASE CONFIG (Automatically using your previously provided keys)
+        // *****************************************************************
         const firebaseConfig = {
             apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
             authDomain: "own-live-steam-web.firebaseapp.com",
@@ -101,147 +129,200 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        let userSession = null;
         const ADMIN_EMAIL = "mysw786@gmail.com";
+        let currentUser = null;
 
-        // DOM Elements
-        const container = document.getElementById('cardsContainer');
-        const addBtn = document.getElementById('addCardBtn');
-        const addModal = document.getElementById('addModal');
-        const cardType = document.getElementById('cardType');
-        const dynamicFields = document.getElementById('dynamicFields');
+        // UI Elements
+        const grid = document.getElementById('cardGrid');
+        const formFields = document.getElementById('formFields');
+        const typeSelect = document.getElementById('typeSelect');
         const cardForm = document.getElementById('cardForm');
-        const authBtn = document.getElementById('authBtn');
+        
+        // Modal Toggles
+        const openAdd = document.getElementById('openAddModal');
+        const addModal = document.getElementById('addModal');
+        const viewModal = document.getElementById('viewModal');
 
-        // Auth Logic
+        openAdd.onclick = () => addModal.classList.add('active');
+        document.getElementById('closeAddModal').onclick = () => addModal.classList.remove('active');
+        document.getElementById('closeViewModal').onclick = () => viewModal.classList.remove('active');
+
+        // Auth Listener
         onAuthStateChanged(auth, (user) => {
-            userSession = user;
+            currentUser = user;
+            const loginBtn = document.getElementById('loginBtn');
+            const badge = document.getElementById('adminBadge');
             if(user) {
-                authBtn.innerText = "Logout";
-                document.getElementById('userEmail').innerText = user.email;
-                document.getElementById('userEmail').classList.remove('hidden');
+                loginBtn.innerText = "Logout";
+                if(user.email === ADMIN_EMAIL) badge.classList.remove('hidden');
             } else {
-                authBtn.innerText = "Login";
-                document.getElementById('userEmail').classList.add('hidden');
+                loginBtn.innerText = "Login";
+                badge.classList.add('hidden');
             }
         });
 
-        authBtn.onclick = async () => {
-            if(userSession) await signOut(auth);
-            else {
-                try {
-                    await signInWithPopup(auth, provider);
-                } catch (e) {
-                    alert("Authentication Error: Please enable Google Auth in Firebase Console.");
-                }
-            }
+        document.getElementById('loginBtn').onclick = () => {
+            if(currentUser) signOut(auth);
+            else signInWithPopup(auth, provider);
         };
 
-        // Modal Controls
-        addBtn.onclick = () => addModal.classList.add('active');
-        document.getElementById('closeAddModal').onclick = () => addModal.classList.remove('active');
-        document.getElementById('closeViewModal').onclick = () => document.getElementById('viewModal').classList.remove('active');
-
-        // Dynamic Form UI
-        const renderForm = () => {
-            const type = cardType.value;
-            let fields = `<input type="text" id="title" placeholder="Entry Title (e.g. HBL Debit)" class="w-full border-2 border-slate-100 rounded-xl p-3 outline-none focus:border-indigo-500" required>`;
+        // Form Fields Generator
+        const renderFields = () => {
+            const type = typeSelect.value;
+            let html = `<div class="col-span-full"><input type="text" id="title" placeholder="Entry Title (e.g. My Bank Card)" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none" required></div>`;
             
             if(type === 'payment') {
-                fields += `
-                    <input type="text" id="acc_num" placeholder="Card / Account Number" class="w-full border-2 border-slate-100 rounded-xl p-3 outline-none">
-                    <input type="text" id="holder" placeholder="Holder Name" class="w-full border-2 border-slate-100 rounded-xl p-3 outline-none">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="expiry" placeholder="Expiry (MM/YY)" class="w-full border-2 border-slate-100 rounded-xl p-3 outline-none">
-                        <input type="password" id="cvv" placeholder="CVV" class="w-full border-2 border-slate-100 rounded-xl p-3 outline-none">
-                    </div>`;
+                html += `
+                    <input type="text" id="acc_num" placeholder="Account Number" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="holder" placeholder="Holder Name" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="issue" placeholder="Issue Date" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="expiry" placeholder="Expiry Date" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="sec_date" placeholder="Security Date (MM/YY)" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="password" id="sec_code" placeholder="Security Code (Hidden)" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                `;
+            } else if(type === 'visiting') {
+                html += `
+                    <input type="text" id="name" placeholder="Full Name" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="num1" placeholder="Contact 1" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="num2" placeholder="Contact 2" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="num3" placeholder="Contact 3" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="email" id="email" placeholder="Email Address" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="loc" placeholder="Location" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                `;
             } else if(type === 'cnic') {
-                fields += `<input type="text" id="cnic_num" placeholder="13 Digit CNIC Number" class="w-full border-2 border-slate-100 rounded-xl p-3 outline-none">`;
+                html += `
+                    <input type="text" id="name" placeholder="Name on CNIC" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="cnic_num" placeholder="CNIC Number" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="dob" placeholder="Date of Birth" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="issue" placeholder="Issue Date" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="expiry" placeholder="Expiry Date" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                `;
             } else {
-                fields += `<textarea id="notes" placeholder="Enter card details or notes..." class="w-full border-2 border-slate-100 rounded-xl p-3 outline-none h-24"></textarea>`;
+                html += `
+                    <input type="text" id="name" placeholder="Full Name" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="num" placeholder="Contact Number" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="email" id="email" placeholder="Email" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="address" placeholder="Address" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="issue" placeholder="Issue Date" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <input type="text" id="expiry" placeholder="Expiry Date" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none">
+                    <textarea id="remarks" placeholder="Remarks" class="col-span-full border-2 border-slate-100 p-3 rounded-xl outline-none"></textarea>
+                `;
             }
-            dynamicFields.innerHTML = fields;
+            formFields.innerHTML = html;
         };
-        cardType.onchange = renderForm;
-        renderForm();
 
-        // Database: Save
+        typeSelect.onchange = renderFields;
+        renderFields();
+
+        // Save Data
         cardForm.onsubmit = async (e) => {
             e.preventDefault();
-            const data = { type: cardType.value, date: new Date().toLocaleDateString() };
-            cardForm.querySelectorAll('input, select, textarea').forEach(el => data[el.id] = el.value);
+            const data = { type: typeSelect.value, timestamp: Date.now() };
+            const inputs = cardForm.querySelectorAll('input:not([type="file"]), textarea');
+            inputs.forEach(i => data[i.id] = i.value);
 
             try {
                 await push(ref(db, 'cards/'), data);
                 cardForm.reset();
-                renderForm();
                 addModal.classList.remove('active');
-            } catch (err) { alert("Save failed: " + err.message); }
+                renderFields();
+            } catch (err) { alert(err.message); }
         };
 
-        // Database: Sync & Display
+        // Realtime Fetching
         onValue(ref(db, 'cards/'), (snapshot) => {
-            document.getElementById('loadingStatus').style.display = 'none';
-            container.innerHTML = '';
+            document.getElementById('loader').style.display = 'none';
+            grid.innerHTML = '';
             const data = snapshot.val();
-            
             if(!data) {
-                container.innerHTML = '<div class="col-span-full text-center text-slate-400 py-10"><i class="fa-regular fa-folder-open text-5xl mb-4 block"></i> No cards found. Start by clicking the "+" button.</div>';
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400">Empty Vault. Click + to add your first card.</div>`;
                 return;
             }
 
-            Object.keys(data).forEach(key => {
-                const item = data[key];
+            Object.keys(data).forEach(id => {
+                const item = data[id];
                 const card = document.createElement('div');
-                card.className = "bg-white p-6 rounded-3xl shadow-sm border border-slate-100 card-hover transition-all cursor-pointer relative group";
+                card.className = "bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all group relative cursor-pointer";
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="bg-indigo-50 text-indigo-600 text-[10px] font-extrabold uppercase px-3 py-1 rounded-full">${item.type}</span>
-                        <button onclick="window.delCard('${key}')" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
+                    <div class="flex justify-between items-start">
+                        <div class="bg-indigo-50 text-indigo-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">${item.type}</div>
+                        <button onclick="window.delCard('${id}')" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
-                    <h3 class="font-bold text-slate-800 text-lg mb-1">${item.title}</h3>
-                    <p class="text-slate-400 text-xs font-mono">${item.acc_num || item.cnic_num || 'Secure Content'}</p>
+                    <div class="mt-6">
+                        <h3 class="text-xl font-bold text-slate-800">${item.title}</h3>
+                        <p class="text-indigo-600 font-mono font-medium mt-1">${item.acc_num || item.cnic_num || item.name || 'Protected Content'}</p>
+                    </div>
+                    <div class="mt-8 flex justify-between items-center text-[11px] font-bold text-slate-400 uppercase tracking-tighter">
+                        <div>Issue: ${item.issue || '---'}</div>
+                        <div class="text-red-400">Expiry: ${item.expiry || '---'}</div>
+                    </div>
                 `;
-                card.onclick = (e) => { if(!e.target.closest('button')) showDetails(item); };
-                container.appendChild(card);
+                card.onclick = (e) => { if(!e.target.closest('button')) viewCard(item); };
+                grid.appendChild(card);
             });
         });
 
-        // Delete Card
+        // Global Delete
         window.delCard = (id) => {
-            if(confirm("Are you sure you want to delete this card?")) remove(ref(db, 'cards/' + id));
+            if(confirm("Delete this card permanently?")) remove(ref(db, 'cards/' + id));
         };
 
-        // Details View Logic
-        const showDetails = (item) => {
-            const isAdmin = userSession && userSession.email === ADMIN_EMAIL;
-            let detailBody = `
-                <div class="bg-indigo-600 p-8 text-white">
-                    <h2 class="text-2xl font-bold mb-1">${item.title}</h2>
-                    <p class="text-indigo-200 text-xs uppercase tracking-widest font-bold">${item.type} | ${item.date}</p>
+        // View Detail Logic
+        const viewCard = (item) => {
+            const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
+            let content = `
+                <div class="card-grad p-8 text-white">
+                    <p class="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">${item.type}</p>
+                    <h2 class="text-3xl font-black">${item.title}</h2>
                 </div>
-                <div class="p-8 space-y-5">
+                <div class="p-8 space-y-4 max-h-[60vh] overflow-y-auto">
             `;
 
-            Object.entries(item).forEach(([k, v]) => {
-                if(['title', 'type', 'date', 'cvv'].includes(k)) return;
-                detailBody += `<div><label class="text-[10px] font-bold text-slate-400 uppercase">${k.replace('_',' ')}</label><p class="text-slate-800 font-semibold">${v}</p></div>`;
+            Object.entries(item).forEach(([key, val]) => {
+                if(['type', 'title', 'timestamp', 'sec_code'].includes(key)) return;
+                content += `<div><label class="text-[10px] font-bold text-slate-400 uppercase">${key.replace('_',' ')}</label><p class="text-slate-700 font-bold">${val || '---'}</p></div>`;
             });
 
             if(item.type === 'payment') {
-                detailBody += `
-                    <div class="bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-200">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase">CVV / Security Pin</label>
-                        <p class="text-indigo-600 font-bold text-xl tracking-tighter">${isAdmin ? (item.cvv || '---') : '•••• (Restricted)'}</p>
-                    </div>`;
+                content += `
+                    <div class="bg-red-50 p-4 rounded-2xl border-2 border-dashed border-red-100">
+                        <label class="text-[10px] font-bold text-red-400 uppercase">Security Code</label>
+                        <p class="text-red-600 font-black text-2xl tracking-tighter">${isAdmin ? (item.sec_code || '---') : '•••• (Admin Only)'}</p>
+                    </div>
+                `;
             }
 
-            detailBody += `</div>`;
-            document.getElementById('viewContent').innerHTML = detailBody;
-            document.getElementById('viewModal').classList.add('active');
+            content += `
+                <div class="grid grid-cols-2 gap-2 mt-4">
+                    <div class="bg-slate-100 h-32 rounded-xl flex items-center justify-center text-[10px] text-slate-400 font-bold uppercase">Front Pic</div>
+                    <div class="bg-slate-100 h-32 rounded-xl flex items-center justify-center text-[10px] text-slate-400 font-bold uppercase">Back Pic</div>
+                </div>
+            </div>`;
+            
+            document.getElementById('cardDetailContent').innerHTML = content;
+            viewModal.classList.add('active');
         };
+
+        // QR Scanner Logic
+        let html5QrCode;
+        document.getElementById('startScan').onclick = () => {
+            document.getElementById('qr-section').classList.remove('hidden');
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
+                (decodedText) => {
+                    document.getElementById('title').value = "Scanned Card";
+                    if(document.getElementById('acc_num')) document.getElementById('acc_num').value = decodedText;
+                    stopScanner();
+                }
+            );
+        };
+
+        const stopScanner = () => {
+            if(html5QrCode) html5QrCode.stop().then(() => {
+                document.getElementById('qr-section').classList.add('hidden');
+            });
+        };
+        document.getElementById('stopScan').onclick = stopScanner;
 
     </script>
 </body>
