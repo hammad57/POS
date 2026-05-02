@@ -8,8 +8,7 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     
     <style>
@@ -52,9 +51,40 @@
             color: white !important;
         }
 
-        .bank-card-mini { min-width: 190px; border-left: 5px solid var(--accent-blue); padding: 15px; }
-        .bank-card-mini .bal-amt { font-size: 1.1rem; font-weight: 700; color: var(--accent-blue); }
-        .bank-card-mini .acc-num { font-size: 0.75rem; color: #636e72; display: block; }
+        /* ----- UPDATED: 4 Tabs Per Row & Stylish 3D Design ----- */
+        .bank-card-mini { 
+            flex: 0 0 calc(25% - 12px); 
+            max-width: calc(25% - 12px);
+            border-left: 5px solid var(--accent-blue); 
+            padding: 25px 20px; 
+            border-radius: 18px;
+            box-shadow: 8px 8px 18px #c8d0e7, -8px -8px 18px #ffffff;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        [data-theme="dark"] .bank-card-mini { box-shadow: 6px 6px 12px #151a1e, -4px -4px 10px #3c444b; }
+        .bank-card-mini:hover { transform: translateY(-5px) scale(1.02); }
+        .bank-card-mini .bal-amt { font-size: 1.3rem; font-weight: 700; color: var(--accent-blue); margin-top: 5px; }
+        .bank-card-mini .acc-num { font-size: 0.85rem; color: #636e72; display: block; }
+        
+        @media (max-width: 900px) { .bank-card-mini { flex: 0 0 calc(50% - 8px); max-width: calc(50% - 8px); } }
+
+        /* ----- UPDATED: Active Selection Colours ----- */
+        .active-tab {
+            background: var(--blue-3d-grad) !important;
+            border-left: 5px solid #00d2ff !important;
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 15px 30px rgba(9, 132, 227, 0.4) !important;
+        }
+        .active-tab h6, .active-tab .bal-amt, .active-tab .acc-num { color: #ffffff !important; }
+
+        .main-card-wrapper { transition: all 0.3s ease; border: 3px solid transparent; }
+        .active-main-card {
+            border: 3px solid #ffeaa7 !important;
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.3) !important;
+            opacity: 1 !important;
+        }
+        .inactive-main-card { opacity: 0.6; transform: scale(0.97); }
 
         .grad-balance { background: var(--blue-3d-grad); color: white; }
         .grad-income { background: linear-gradient(145deg, #00b894, #008967); color: white; }
@@ -85,10 +115,9 @@
         .stat-btn-box:hover { transform: scale(1.05); opacity: 0.8; }
         .stat-btn-box.active { border-bottom: 3px solid var(--accent-blue); }
 
-        .inc-text { color: #000000; font-size: 1.5rem; }
+        .inc-text { color: #00b894; font-size: 1.5rem; }
         .exp-text { color: #d63031; font-size: 1.5rem; }
         .adj-text { color: #0984e3; font-size: 1.5rem; }
-        [data-theme="dark"] .inc-text { color: #ffffff; }
 
         .table-custom thead th { background: #f8f9fa; color: #636e72; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; padding: 15px; border-bottom: 2px solid #edf2f7; }
         [data-theme="dark"] .table-custom thead th { background: #34495e; color: #ecf0f1; border-color: #2c3e50; }
@@ -149,21 +178,13 @@
         color: #ffffff !important;
     }
 
-    .top-home-btn svg {
-        width: 18px;
-        height: 18px;
-    }
+    .top-home-btn svg { width: 18px; height: 18px; }
 
-    /* Mobile screens ke liye thoda adjust karne ke liye */
     @media (max-width: 768px) {
-        .top-home-btn {
-            top: 15px;
-            left: 15px;
-            padding: 8px 16px;
-            font-size: 14px;
-        }
+        .top-home-btn { top: 15px; left: 15px; padding: 8px 16px; font-size: 14px; }
     }
 </style>
+
 <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 2000;">
     <div id="errorToast" class="toast error-toast-3d" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
@@ -202,20 +223,29 @@
         </div>
     </div>
 
+    <!-- Top 3 Cards -->
     <div class="row g-4 mb-5">
-        <div class="col-md-4" onclick="resetChartToAll()"><div class="card-3d grad-balance"><h6>Total Balance</h6><h2 id="totalBalance">Rs. 0</h2></div></div>
-        <div class="col-md-4" onclick="updateView('Income')"><div class="card-3d grad-income"><h6>Total Income</h6><h2 id="totalIncome">Rs. 0</h2></div></div>
-        <div class="col-md-4" onclick="updateView('Expense')"><div class="card-3d grad-expense"><h6>Total Expense</h6><h2 id="totalExpense">Rs. 0</h2></div></div>
+        <div class="col-md-4" onclick="resetChartToAll()"><div id="cardBal" class="card-3d grad-balance main-card-wrapper"><h6>Total Balance</h6><h2 id="totalBalance">Rs. 0</h2></div></div>
+        <div class="col-md-4" onclick="updateView('Income')"><div id="cardInc" class="card-3d grad-income main-card-wrapper"><h6>Total Income</h6><h2 id="totalIncome">Rs. 0</h2></div></div>
+        <div class="col-md-4" onclick="updateView('Expense')"><div id="cardExp" class="card-3d grad-expense main-card-wrapper"><h6>Total Expense</h6><h2 id="totalExpense">Rs. 0</h2></div></div>
     </div>
 
     <h5 class="fw-bold mb-3"><i class="bi bi-wallet2 me-2"></i>Bank Accounts (Click to filter Chart)</h5>
+    
+    <!-- Bank Tabs (4 per row layout) -->
     <div id="bankCardsContainer" class="d-flex flex-wrap gap-3 mb-5"></div>
 
-    <div class="chart-wrapper mb-5">
+    <!-- UPDATED: Chart Initially Hidden & Made Draggable/Scrollable -->
+    <div class="chart-wrapper mb-5" id="mainChartWrapper" style="display: none;">
         <h6 id="chartTitle" class="fw-bold text-muted mb-3">Showing: All Accounts</h6>
-        <div style="height: 380px;"><canvas id="mainChart"></canvas></div>
+        <div style="width: 100%; overflow-x: auto; overflow-y: hidden; padding-bottom: 10px;">
+            <div id="chartInnerContainer" style="height: 380px; width: 100%;">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
     </div>
 
+    <!-- History Details Initially Hidden -->
     <div class="card-3d history-card mb-5" id="bankDetailSection" style="display:none;">
         <div class="history-header-3d">
             <h4 id="selectedBankTitle" class="fw-bold m-0"><i class="bi bi-clock-history me-2"></i>History</h4>
@@ -323,6 +353,22 @@
     
     const errorToast = new bootstrap.Toast(document.getElementById('errorToast'), { delay: 5000 });
 
+    // Helpler function to control highlighting of Top 3 Cards
+    function highlightTopCard(cardType) {
+        ['cardBal', 'cardInc', 'cardExp'].forEach(id => {
+            document.getElementById(id).classList.remove('active-main-card', 'inactive-main-card');
+        });
+        if (!cardType) return; // Means a bank is selected, clear top selections
+        
+        ['cardBal', 'cardInc', 'cardExp'].forEach(id => {
+            document.getElementById(id).classList.add('inactive-main-card');
+        });
+
+        if (cardType === 'Balance') document.getElementById('cardBal').classList.replace('inactive-main-card', 'active-main-card');
+        else if (cardType === 'Income') document.getElementById('cardInc').classList.replace('inactive-main-card', 'active-main-card');
+        else if (cardType === 'Expense') document.getElementById('cardExp').classList.replace('inactive-main-card', 'active-main-card');
+    }
+
     onValue(ref(db, 'settings/theme'), (snap) => {
         const savedTheme = snap.val() || 'light';
         document.body.setAttribute('data-theme', savedTheme);
@@ -340,7 +386,9 @@
         snap.forEach(bNode => { bNode.forEach(tNode => { allTransactions.push({ id: tNode.key, bankId: bNode.key, ...tNode.val() }); }); });
         renderBanks();
         updateSummary();
-        initChart();
+        if (myChart !== null || document.getElementById('mainChartWrapper').style.display === 'block') {
+            initChart();
+        }
         if(selectedBankId || chartBankId === null) window.applyFilters();
     });
 
@@ -354,7 +402,11 @@
                 if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
                 return s;
             }, 0);
-            container.innerHTML += `<div class="card-3d bank-card-mini" onclick="selectBank('${bank.id}')"><h6>${bank.name}</h6><span class="acc-num">${bank.number || '---'}</span><div class="bal-amt">Rs. ${balance.toLocaleString()}</div></div>`;
+            
+            // Add active class if this bank is currently selected
+            const activeClass = (selectedBankId === bank.id) ? 'active-tab' : '';
+            
+            container.innerHTML += `<div class="card-3d bank-card-mini ${activeClass}" onclick="selectBank('${bank.id}')"><h6>${bank.name}</h6><span class="acc-num">${bank.number || '---'}</span><div class="bal-amt">Rs. ${balance.toLocaleString()}</div></div>`;
         });
         const options = allBanks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
         document.getElementById('entryBank').innerHTML = options; document.getElementById('fromBank').innerHTML = options; document.getElementById('toBank').innerHTML = options;
@@ -373,12 +425,20 @@
     window.initChart = () => {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(myChart) myChart.destroy();
+        
         let chartData = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : allTransactions;
         const bankName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
         document.getElementById('chartTitle').innerText = `Showing: ${bankName}`;
         const dates = [...new Set(chartData.filter(t => t.type === 'Income' || t.type === 'Expense').map(t => t.date))].sort();
+        
+        // Dynamically adjust width for scrolling so entries don't mix up
+        const chartInner = document.getElementById('chartInnerContainer');
+        const requiredWidth = dates.length * 70; // Assigning 70px per date group
+        chartInner.style.width = requiredWidth > chartInner.parentElement.clientWidth ? requiredWidth + 'px' : '100%';
+
         const incData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Income').reduce((s, c) => s + parseFloat(c.amount), 0));
         const expData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Expense').reduce((s, c) => s + parseFloat(c.amount), 0));
+        
         myChart = new Chart(ctx, { 
             type: 'bar', 
             data: { labels: dates, datasets: [{ label: 'Income', data: incData, backgroundColor: '#00b894', borderRadius: 8, hidden: currentFilter === 'Expense', barThickness: 25, minBarLength: 5 }, { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 25, minBarLength: 5 }] }, 
@@ -404,13 +464,49 @@
 
     window.selectBank = (id) => {
         selectedBankId = id; chartBankId = id;
+        highlightTopCard(null); // Clear top card active state
+        
+        // Show Full Page Sections
+        document.getElementById('mainChartWrapper').style.display = 'block';
         document.getElementById('bankDetailSection').style.display = 'block';
+        
         const bank = allBanks.find(b => b.id === id);
         document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bank.name} History`;
+        
+        renderBanks(); // Update tabs UI
         window.resetAllFilters(); window.applyFilters(); initChart();
     };
 
-    window.resetChartToAll = () => { chartBankId = null; currentFilter = 'All'; initChart(); document.getElementById('bankDetailSection').style.display = 'none'; };
+    window.resetChartToAll = () => { 
+        chartBankId = null; currentFilter = 'All'; selectedBankId = null; 
+        highlightTopCard('Balance'); 
+        
+        // Show Full Page Sections
+        document.getElementById('mainChartWrapper').style.display = 'block';
+        document.getElementById('bankDetailSection').style.display = 'block';
+        document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> All Accounts History`;
+
+        renderBanks(); // Clear active tab UI
+        initChart(); 
+        window.resetAllFilters(); window.applyFilters(); 
+    };
+
+    window.updateView = (v) => { 
+        currentFilter = v; chartBankId = null; selectedBankId = null;
+        highlightTopCard(v);
+        
+        // Show Full Page Sections
+        document.getElementById('mainChartWrapper').style.display = 'block';
+        document.getElementById('bankDetailSection').style.display = 'block';
+        document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> All Accounts - ${v} Details`;
+        document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = '';
+        
+        renderBanks(); // Clear active tab UI
+        initChart(); 
+        
+        historyTypeFilter = v; window.applyFilters(); 
+        document.getElementById('bankDetailSection').scrollIntoView({ behavior: 'smooth' });
+    };
 
     window.applyFilters = () => {
         let filteredTrans = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : [...allTransactions];
@@ -493,17 +589,15 @@
         const data = { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value }; 
         if (tId) update(ref(db, `bank_transactions/${bId}/${tId}`), data); else push(ref(db, `bank_transactions/${bId}`), data); eModal.hide(); 
     };
-
-    window.updateView = (v) => { 
-        currentFilter = v; initChart(); document.getElementById('bankDetailSection').style.display = 'block';
-        const bName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
-        document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bName} - ${v} Details`;
-        document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = '';
-        historyTypeFilter = v; window.applyFilters(); document.getElementById('bankDetailSection').scrollIntoView({ behavior: 'smooth' });
-    };
     
     window.changeTheme = (v) => { set(ref(db, 'settings/theme'), v); };
-    window.closeHistory = () => { document.getElementById('bankDetailSection').style.display = 'none'; selectedBankId = null; chartBankId = null; initChart(); };
+    
+    window.closeHistory = () => { 
+        document.getElementById('bankDetailSection').style.display = 'none'; 
+        // Optional: If you want to hide the chart as well when closing history, uncomment below:
+        // document.getElementById('mainChartWrapper').style.display = 'none';
+        // selectedBankId = null; chartBankId = null; highlightTopCard(null); renderBanks(); 
+    };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
