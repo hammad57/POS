@@ -226,33 +226,34 @@
                             <input type="date" id="entryDate" class="form-control" required>
                         </div>
                         
-                        <!-- Manual Entry Textbox (Total Drawer) -->
+                        <!-- Today Drawer (Cash in hand) - Updated Labels per image_fb695b.png -->
                         <div class="col-12">
-                            <label class="small fw-bold text-primary">Manual Entry (Total Drawer)</label>
-                            <input type="number" id="manualEntry" class="form-control border-primary" step="0.01" placeholder="e.g. 10000" oninput="calculateCustomLogic()">
+                            <label class="small fw-bold text-primary">Today Drawer (Cash in hand)</label>
+                            <input type="number" id="manualEntry" class="form-control border-primary" step="0.01" placeholder="e.g. 14030" oninput="calculateCustomLogic()">
                         </div>
 
-                        <!-- Held Amount -->
+                        <!-- Held Amount (Previous) - Updated per image_fb695b.png -->
                         <div class="col-12">
-                            <label class="small fw-bold text-info">Held Amount</label>
-                            <input type="number" id="heldAmount" class="form-control border-info" step="0.01" placeholder="e.g. 2000" oninput="calculateCustomLogic()">
+                            <label class="small fw-bold text-info">Held Amount (Previous)</label>
+                            <input type="number" id="heldAmount" class="form-control border-info" step="0.01" placeholder="e.g. 14035" oninput="calculateCustomLogic()">
                         </div>
 
-                        <!-- Expense Amount -->
+                        <!-- Expense Amount - Updated per image_fb695b.png -->
                         <div class="col-12">
                             <label class="small fw-bold text-danger">Expense Amount</label>
                             <input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateCustomLogic()">
                         </div>
 
-                        <!-- Income Amount (Auto Calculated) -->
+                        <!-- Income Amount (Calculated) - Updated per image_fb695b.png -->
                         <div class="col-12">
-                            <label class="small fw-bold text-success">Income Amount (Auto Calculated)</label>
+                            <label class="small fw-bold text-success">Income Amount (Calculated)</label>
                             <input type="number" id="incomeInput" class="form-control border-success form-locked" readonly step="0.01" value="0">
                         </div>
 
-                        <div class="col-12 d-none">
-                            <label class="small fw-bold">Opening Balance Reference</label>
-                            <input type="number" id="openBal" class="form-control" readonly step="0.01">
+                        <!-- Opening Balance Reference - Visible as per image_fb695b.png -->
+                        <div class="col-12">
+                            <label class="small fw-bold">Opening Balance</label>
+                            <input type="number" id="openBal" class="form-control form-locked" readonly step="0.01">
                         </div>
 
                         <div class="col-12">
@@ -260,8 +261,9 @@
                             <textarea id="entryRemarks" class="form-control" rows="2" placeholder="Enter purpose..."></textarea>
                         </div>
                         
+                        <!-- Final Balance - Updated per image_fb695b.png -->
                         <div class="col-12">
-                            <label class="small fw-bold text-primary">Expected Final Balance</label>
+                            <label class="small fw-bold text-primary">Final Balance</label>
                             <input type="number" id="finalBalance" class="form-control form-locked text-primary" readonly step="0.01">
                         </div>
 
@@ -435,19 +437,19 @@
         document.getElementById('todayProfitVal').innerText = tDay.toFixed(0);
     }
 
-    // UPDATED LOGIC: Income = Manual - Held + Expense
+    // FORMULA: Income = Drawer - Held + Expense[cite: 3]
     window.calculateCustomLogic = () => {
         const manual = parseFloat(document.getElementById('manualEntry').value) || 0;
         const held = parseFloat(document.getElementById('heldAmount').value) || 0;
         const exp = parseFloat(document.getElementById('expenseInput').value) || 0;
         const openBal = parseFloat(document.getElementById('openBal').value) || 0;
 
-        // Formula Applied[cite: 3]
+        // Current Formula: $14030 - $14035 + $1 = -4$[cite: 3]
         const calculatedIncome = manual - held + exp;
         
         document.getElementById('incomeInput').value = calculatedIncome.toFixed(2);
         
-        // Final balance calculation for preview
+        // Final balance calculation: Opening + Income - Expense
         document.getElementById('finalBalance').value = (openBal + calculatedIncome - exp).toFixed(2);
     };
 
