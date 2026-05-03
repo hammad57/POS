@@ -225,30 +225,47 @@
                             <label class="small fw-bold">Date Selection</label>
                             <input type="date" id="entryDate" class="form-control" required>
                         </div>
+                        
+                        <!-- TABDEELI: Manual Entry Textbox -->
                         <div class="col-12">
-                            <label class="small fw-bold">Current Opening Balance</label>
-                            <input type="number" id="openBal" class="form-control form-locked" readonly step="0.01">
+                            <label class="small fw-bold text-primary">Manual Entry (Blank Textbox)</label>
+                            <input type="number" id="manualEntry" class="form-control border-primary" step="0.01" placeholder="e.g. 123456" oninput="calculateCustomLogic()">
                         </div>
+
+                        <!-- TABDEELI: Held Amount -->
                         <div class="col-12">
-                            <label class="small fw-bold text-primary">Today Drawer</label>
-                            <input type="number" id="todayDrawer" class="form-control border-primary" step="0.01" value="0" oninput="calculateFromDrawer()">
+                            <label class="small fw-bold text-info">Held Amount (Total Amount)</label>
+                            <input type="number" id="heldAmount" class="form-control border-info" step="0.01" placeholder="e.g. 78999" oninput="calculateCustomLogic()">
                         </div>
-                        <div class="col-6">
-                            <label class="small fw-bold text-success">Income Amount</label>
-                            <input type="number" id="incomeInput" class="form-control border-success" step="0.01" value="0" oninput="calculateLiveBalance()">
+
+                        <!-- TABDEELI: Expense Amount -->
+                        <div class="col-12">
+                            <label class="small fw-bold text-danger">Expense Amount (Daily Expense)</label>
+                            <input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateCustomLogic()">
                         </div>
-                        <div class="col-6">
-                            <label class="small fw-bold text-danger">Expense Amount</label>
-                            <input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateLiveBalance()">
+
+                        <!-- TABDEELI: Income Amount (Now calculated based on your formula) -->
+                        <div class="col-12">
+                            <label class="small fw-bold text-success">Income Amount (Auto Calculated)</label>
+                            <input type="number" id="incomeInput" class="form-control border-success form-locked" readonly step="0.01" value="0">
                         </div>
+
+                        <!-- Purany Fields for Calculation Support -->
+                        <div class="col-12 d-none">
+                            <label class="small fw-bold">Opening Balance Reference</label>
+                            <input type="number" id="openBal" class="form-control" readonly step="0.01">
+                        </div>
+
                         <div class="col-12">
                             <label class="small fw-bold">Transaction Remarks</label>
                             <textarea id="entryRemarks" class="form-control" rows="2" placeholder="Enter purpose..."></textarea>
                         </div>
+                        
                         <div class="col-12">
                             <label class="small fw-bold text-primary">Expected Final Balance</label>
                             <input type="number" id="finalBalance" class="form-control form-locked text-primary" readonly step="0.01">
                         </div>
+
                         <div class="col-12 mt-4">
                             <button type="submit" class="btn btn-primary w-100 fw-bold py-3 shadow">SAVE TRANSACTION</button>
                         </div>
@@ -419,20 +436,20 @@
         document.getElementById('todayProfitVal').innerText = tDay.toFixed(0);
     }
 
-    window.calculateLiveBalance = () => {
-        const b = parseFloat(document.getElementById('openBal').value) || 0;
-        const i = parseFloat(document.getElementById('incomeInput').value) || 0;
-        const e = parseFloat(document.getElementById('expenseInput').value) || 0;
-        document.getElementById('finalBalance').value = (b + i - e).toFixed(2);
-    };
+    // TABDEELI: New Logic Calculation
+    window.calculateCustomLogic = () => {
+        const manual = parseFloat(document.getElementById('manualEntry').value) || 0;
+        const held = parseFloat(document.getElementById('heldAmount').value) || 0;
+        const exp = parseFloat(document.getElementById('expenseInput').value) || 0;
+        const openBal = parseFloat(document.getElementById('openBal').value) || 0;
 
-    window.calculateFromDrawer = () => {
-        const drawer = parseFloat(document.getElementById('todayDrawer').value) || 0;
-        const opening = parseFloat(document.getElementById('openBal').value) || 0;
-        const expense = parseFloat(document.getElementById('expenseInput').value) || 0;
-        const calculatedIncome = drawer - opening + expense;
+        // Formula: Income Amount = Blank textbox - Held amount + Expense Amount
+        const calculatedIncome = manual - held + exp;
+        
         document.getElementById('incomeInput').value = calculatedIncome.toFixed(2);
-        calculateLiveBalance();
+        
+        // Final balance calculation for preview
+        document.getElementById('finalBalance').value = (openBal + calculatedIncome - exp).toFixed(2);
     };
 
     window.openModal = () => {
@@ -440,7 +457,9 @@
         document.getElementById('editKey').value = "";
         document.getElementById('entryDate').value = today;
         document.getElementById('openBal').value = globalLastBalance.toFixed(2);
-        calculateLiveBalance();
+        document.getElementById('manualEntry').value = "";
+        document.getElementById('heldAmount').value = "";
+        calculateCustomLogic();
         modalObj.show();
     };
 
@@ -457,7 +476,8 @@
             document.getElementById('incomeInput').value = 0; 
             document.getElementById('expenseInput').value = item.amount; 
         }
-        calculateLiveBalance();
+        // In edit mode, manual entries are hidden/not required as we edit direct amounts
+        document.getElementById('finalBalance').value = (parseFloat(document.getElementById('openBal').value) + (item.type==='Income'?item.amount:0) - (item.type==='Expense'?item.amount:0)).toFixed(2);
         modalObj.show();
     };
 
@@ -472,10 +492,11 @@
         const rem = document.getElementById('entryRemarks').value || "N/A";
 
         if(key) {
-            const type = inc > 0 ? 'Income' : 'Expense';
-            const amount = inc > 0 ? inc : exp;
+            const type = inc !== 0 ? 'Income' : 'Expense';
+            const amount = inc !== 0 ? inc : exp;
             await set(ref(db, 'transactions/'+key), { type, date, amount, remarks: rem });
         } else {
+            // Saving based on the new logic
             if(inc !== 0) await push(dbRef, { type: 'Income', date, amount: inc, remarks: rem });
             if(exp !== 0) await push(dbRef, { type: 'Expense', date, amount: exp, remarks: rem });
         }
