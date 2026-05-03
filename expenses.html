@@ -103,7 +103,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold m-0"><i class="bi bi-cpu me-2 text-primary"></i>Muluk Hussain Analytics</h2>
-            <p class="text-muted small m-0">Smart Financial Management System v4.1</p>
+            <p class="text-muted small m-0">Smart Financial Management System v4.2</p>
         </div>
         <div class="d-flex gap-3">
             <select id="appTheme" class="form-select border-0 shadow-sm fw-bold" style="width: 180px;" onchange="saveTheme()">
@@ -178,13 +178,15 @@
                             <label class="small fw-bold">Date Selection</label>
                             <input type="date" id="entryDate" class="form-control" required>
                         </div>
-                        <div class="col-12">
-                            <label class="small fw-bold text-primary">Today Drawer (Cash in hand)</label>
-                            <input type="number" id="manualEntry" class="form-control border-primary" step="0.01" oninput="calculateCustomLogic()">
-                        </div>
+                        <!-- Swapped Fields: Held Amount moves up[cite: 3] -->
                         <div class="col-12">
                             <label class="small fw-bold text-info">Held Amount (Previous)</label>
                             <input type="number" id="heldAmount" class="form-control border-info" step="0.01" oninput="calculateCustomLogic()">
+                        </div>
+                        <!-- Today Drawer moves down[cite: 3] -->
+                        <div class="col-12">
+                            <label class="small fw-bold text-primary">Today Drawer (Cash in hand)</label>
+                            <input type="number" id="manualEntry" class="form-control border-primary" step="0.01" oninput="calculateCustomLogic()">
                         </div>
                         <div class="col-12">
                             <label class="small fw-bold text-danger">Expense Amount</label>
@@ -325,7 +327,6 @@
                 if ((!filterStart || date >= filterStart) && (!filterEnd || date <= filterEnd)) {
                     const remarks = day.items.filter(i => i.remarks && i.remarks !== "N/A").map(i => `• ${i.remarks}`).join('<br>');
                     
-                    // Fixed Action Display Logic to avoid double signs[cite: 3]
                     const actions = day.items.map(i => {
                         const sign = (i.type === 'Income' && i.amount >= 0) ? '+' : '';
                         return `
@@ -336,7 +337,6 @@
                         </div>`;
                     }).join('');
 
-                    // Fixed Table Row signs[cite: 3]
                     const rowIncSign = day.inc >= 0 ? '+' : '';
                     const rowExpSign = day.exp >= 0 ? '-' : '+';
                     const expVal = Math.abs(day.exp);
