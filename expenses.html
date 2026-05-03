@@ -239,6 +239,7 @@
     </div>
 </div>
 
+<!-- ENTRY MODAL UPDATED WITH NEW CALCULATION LOGIC -->
 <div class="modal fade" id="entryModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -251,12 +252,28 @@
                     <input type="hidden" id="editKey">
                     <div class="row g-3">
                         <div class="col-12"><label class="small fw-bold">Date Selection</label><input type="date" id="entryDate" class="form-control" required></div>
-                        <div class="col-12"><label class="small fw-bold">Opening Balance</label><input type="number" id="openBal" class="form-control form-locked" readonly step="0.01"></div>
-                        <div class="col-12"><label class="small fw-bold text-primary">Today Drawer (Cash in hand)</label><input type="number" id="todayDrawer" class="form-control border-primary" step="0.01" value="0" oninput="calculateFromDrawer()"></div>
-                        <div class="col-6"><label class="small fw-bold text-success">Income Amount</label><input type="number" id="incomeInput" class="form-control border-success" step="0.01" value="0" oninput="calculateLiveBalance()"></div>
-                        <div class="col-6"><label class="small fw-bold text-danger">Expense Amount</label><input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateLiveBalance()"></div>
-                        <div class="col-12"><label class="small fw-bold">Transaction Remarks</label><textarea id="entryRemarks" class="form-control" rows="2" placeholder="Enter purpose..."></textarea></div>
-                        <div class="col-12"><label class="small fw-bold text-primary">Final Balance</label><input type="number" id="finalBalance" class="form-control form-locked text-primary" readonly step="0.01"></div>
+                        
+                        <div class="col-12"><label class="small fw-bold">Today Drawer (Cash in hand)</label>
+                        <input type="number" id="todayDrawer" class="form-control border-primary" step="0.01" value="0" oninput="calculateCustomIncome()"></div>
+                        
+                        <div class="col-6"><label class="small fw-bold">Held Amount (Previous)</label>
+                        <input type="number" id="heldAmount" class="form-control" step="0.01" value="0" oninput="calculateCustomIncome()"></div>
+                        
+                        <div class="col-6"><label class="small fw-bold text-danger">Expense Amount</label>
+                        <input type="number" id="expenseInput" class="form-control border-danger" step="0.01" value="0" oninput="calculateCustomIncome()"></div>
+                        
+                        <div class="col-12"><label class="small fw-bold text-success">Income Amount (Calculated)</label>
+                        <input type="number" id="incomeInput" class="form-control border-success form-locked" readonly step="0.01" value="0"></div>
+
+                        <div class="col-12"><label class="small fw-bold">Opening Balance</label>
+                        <input type="number" id="openBal" class="form-control form-locked" readonly step="0.01"></div>
+                        
+                        <div class="col-12"><label class="small fw-bold">Transaction Remarks</label>
+                        <textarea id="entryRemarks" class="form-control" rows="2" placeholder="Enter purpose..."></textarea></div>
+                        
+                        <div class="col-12"><label class="small fw-bold text-primary">Final Balance</label>
+                        <input type="number" id="finalBalance" class="form-control form-locked text-primary" readonly step="0.01"></div>
+                        
                         <div class="col-12 mt-4"><button type="submit" class="btn btn-primary w-100 fw-bold py-3 shadow">SAVE TRANSACTION</button></div>
                     </div>
                 </form>
@@ -305,7 +322,7 @@
     let allData = [];
     let filterStart = null;
     let filterEnd = null;
-    let typeFilter = null; // New: Filter by Income/Expense
+    let typeFilter = null; 
     let myChart = null;
     let chartType = 'bar'; 
     let globalLastBalance = 0;
@@ -364,7 +381,6 @@
         const body = document.getElementById('summaryTableBody');
         body.innerHTML = '';
         
-        // Step 1: Filter data by date and type
         let filteredData = allData;
         if(filterStart && filterEnd) {
             filteredData = allData.filter(t => t.date >= filterStart && t.date <= filterEnd);
@@ -393,14 +409,12 @@
             const totalDeductions = day.exp + day.with;
             const closing = mid - totalDeductions;
             
-            // Check if this date should be visible based on filter
             const hasDataInFilter = filteredData.some(fd => fd.date === date);
             
             if(hasDataInFilter) {
                 const monthKey = date.substring(0, 7);
                 if(!monthGroups[monthKey]) monthGroups[monthKey] = { rowsHtml: "", closingBalance: 0 };
 
-                // Apply type filter inside the date row items
                 const itemsToShow = typeFilter ? day.items.filter(i => i.type === typeFilter) : day.items;
                 const remarksList = itemsToShow.filter(i => i.remarks && i.remarks !== "N/A").map(i => `• ${i.remarks}`).join('<br>');
                 const actions = itemsToShow.map(i => `
@@ -449,7 +463,6 @@
         initChart();
     };
 
-    // Filter Functions Fix
     window.applyFilter = () => { filterStart = document.getElementById('fromDate').value; filterEnd = document.getElementById('toDate').value; refreshUI(); };
     window.resetFilter = () => { filterStart = null; filterEnd = null; typeFilter = null; document.getElementById('monthFilter').value = ""; document.getElementById('fromDate').value = ""; document.getElementById('toDate').value = ""; refreshUI(); };
     window.applyMonthFilter = () => { const m = document.getElementById('monthFilter').value; if(!m) { resetFilter(); return; } const y = new Date().getFullYear(); filterStart = `${y}-${m}-01`; filterEnd = `${y}-${m}-${new Date(y, m, 0).getDate()}`; refreshUI(); };
@@ -468,23 +481,67 @@
         document.getElementById('balanceVal').innerText = (tInc - tExp - tWith).toFixed(0);
     }
 
-    // Formulas & CRUD same
-    window.calculateFromDrawer = () => { const dr = parseFloat(document.getElementById('todayDrawer').value) || 0, op = parseFloat(document.getElementById('openBal').value) || 0, ex = parseFloat(document.getElementById('expenseInput').value) || 0; document.getElementById('incomeInput').value = (dr + ex).toFixed(2); calculateLiveBalance(); };
-    window.calculateLiveBalance = () => { const b = parseFloat(document.getElementById('openBal').value) || 0, i = parseFloat(document.getElementById('incomeInput').value) || 0, e = parseFloat(document.getElementById('expenseInput').value) || 0; document.getElementById('finalBalance').value = (b + i - e).toFixed(2); };
-    window.openModal = () => { document.getElementById('entryForm').reset(); document.getElementById('editKey').value = ""; document.getElementById('entryDate').value = today; document.getElementById('openBal').value = globalLastBalance.toFixed(2); modalObj.show(); };
-    window.openWithdrawModal = () => { document.getElementById('withdrawForm').reset(); document.getElementById('withdrawEditKey').value = ""; document.getElementById('withdrawDate').value = today; document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2); withdrawModalObj.show(); };
+    // NEW CUSTOM CALCULATION LOGIC: Income = Drawer - Held + Expense
+    window.calculateCustomIncome = () => {
+        const drawer = parseFloat(document.getElementById('todayDrawer').value) || 0;
+        const held = parseFloat(document.getElementById('heldAmount').value) || 0;
+        const expense = parseFloat(document.getElementById('expenseInput').value) || 0;
+        
+        // Income Amount = Blank textbox (drawer) - Held amount + Expense Amount
+        const calculatedIncome = drawer - held + expense;
+        document.getElementById('incomeInput').value = calculatedIncome.toFixed(2);
+        
+        calculateLiveBalance();
+    };
+
+    window.calculateLiveBalance = () => { 
+        const b = parseFloat(document.getElementById('openBal').value) || 0, 
+              i = parseFloat(document.getElementById('incomeInput').value) || 0, 
+              e = parseFloat(document.getElementById('expenseInput').value) || 0; 
+        document.getElementById('finalBalance').value = (b + i - e).toFixed(2); 
+    };
+
+    window.openModal = () => { 
+        document.getElementById('entryForm').reset(); 
+        document.getElementById('editKey').value = ""; 
+        document.getElementById('entryDate').value = today; 
+        document.getElementById('openBal').value = globalLastBalance.toFixed(2); 
+        modalObj.show(); 
+    };
+
+    window.openWithdrawModal = () => { 
+        document.getElementById('withdrawForm').reset(); 
+        document.getElementById('withdrawEditKey').value = ""; 
+        document.getElementById('withdrawDate').value = today; 
+        document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2); 
+        withdrawModalObj.show(); 
+    };
 
     document.getElementById('entryForm').onsubmit = async (e) => {
         e.preventDefault();
-        const key = document.getElementById('editKey').value, date = document.getElementById('entryDate').value, inc = parseFloat(document.getElementById('incomeInput').value) || 0, exp = parseFloat(document.getElementById('expenseInput').value) || 0, rem = document.getElementById('entryRemarks').value || "N/A";
-        if(key) { const type = inc > 0 ? 'Income' : 'Expense', amount = inc > 0 ? inc : exp; await set(ref(db, 'transactions/'+key), { type, date, amount, remarks: rem }); }
-        else { if(inc !== 0) await push(dbRef, { type: 'Income', date, amount: inc, remarks: rem }); if(exp !== 0) await push(dbRef, { type: 'Expense', date, amount: exp, remarks: rem }); }
+        const key = document.getElementById('editKey').value, 
+              date = document.getElementById('entryDate').value, 
+              inc = parseFloat(document.getElementById('incomeInput').value) || 0, 
+              exp = parseFloat(document.getElementById('expenseInput').value) || 0, 
+              rem = document.getElementById('entryRemarks').value || "N/A";
+        
+        if(key) { 
+            const type = inc > 0 ? 'Income' : 'Expense', amount = inc > 0 ? inc : exp; 
+            await set(ref(db, 'transactions/'+key), { type, date, amount, remarks: rem }); 
+        }
+        else { 
+            if(inc !== 0) await push(dbRef, { type: 'Income', date, amount: inc, remarks: rem }); 
+            if(exp !== 0) await push(dbRef, { type: 'Expense', date, amount: exp, remarks: rem }); 
+        }
         modalObj.hide();
     };
 
     document.getElementById('withdrawForm').onsubmit = async (e) => {
         e.preventDefault();
-        const key = document.getElementById('withdrawEditKey').value, date = document.getElementById('withdrawDate').value, amount = parseFloat(document.getElementById('withdrawAmount').value) || 0, remarks = document.getElementById('withdrawRemarks').value || "Withdrawal";
+        const key = document.getElementById('withdrawEditKey').value, 
+              date = document.getElementById('withdrawDate').value, 
+              amount = parseFloat(document.getElementById('withdrawAmount').value) || 0, 
+              remarks = document.getElementById('withdrawRemarks').value || "Withdrawal";
         if(key) await set(ref(db, 'transactions/'+key), { type: 'Withdraw', date, amount, remarks });
         else if(amount > 0) await push(dbRef, { type: 'Withdraw', date, amount, remarks });
         withdrawModalObj.hide();
@@ -493,11 +550,23 @@
     window.editEntry = (id) => {
         const item = allData.find(i => i.id === id); if(!item) return;
         if (item.type === 'Withdraw') {
-            document.getElementById('withdrawEditKey').value = item.id; document.getElementById('withdrawDate').value = item.date; document.getElementById('withdrawAmount').value = item.amount; document.getElementById('withdrawRemarks').value = item.remarks; document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2); withdrawModalObj.show();
+            document.getElementById('withdrawEditKey').value = item.id; 
+            document.getElementById('withdrawDate').value = item.date; 
+            document.getElementById('withdrawAmount').value = item.amount; 
+            document.getElementById('withdrawRemarks').value = item.remarks; 
+            document.getElementById('withdrawCurrentBal').value = globalLastBalance.toFixed(2); 
+            withdrawModalObj.show();
         } else {
-            document.getElementById('editKey').value = item.id; document.getElementById('entryDate').value = item.date; document.getElementById('entryRemarks').value = item.remarks === "N/A" ? "" : item.remarks;
-            if(item.type === 'Income') { document.getElementById('incomeInput').value = item.amount; document.getElementById('expenseInput').value = 0; }
-            else { document.getElementById('incomeInput').value = 0; document.getElementById('expenseInput').value = item.amount; }
+            document.getElementById('editKey').value = item.id; 
+            document.getElementById('entryDate').value = item.date; 
+            document.getElementById('entryRemarks').value = item.remarks === "N/A" ? "" : item.remarks;
+            if(item.type === 'Income') { 
+                document.getElementById('incomeInput').value = item.amount; 
+                document.getElementById('expenseInput').value = 0; 
+            } else { 
+                document.getElementById('incomeInput').value = 0; 
+                document.getElementById('expenseInput').value = item.amount; 
+            }
             calculateLiveBalance(); modalObj.show();
         }
     };
