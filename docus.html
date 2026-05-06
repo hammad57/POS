@@ -3,140 +3,298 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Docus Pro - Base64 DB Scanner</title>
+    <title>Docus Pro - Smart Document Manager</title>
     
-    <!-- PDF & Cropping Tools -->
+    <!-- PDF, Cropping & Firebase Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --primary: #2563eb; --success: #16a34a; --danger: #dc2626; --dark: #1e293b; }
-        body { font-family: sans-serif; margin: 0; background: #f1f5f9; }
-        .header { background: var(--dark); color: white; padding: 15px; text-align: center; font-weight: bold; }
-        .container { max-width: 600px; margin: auto; padding: 15px; }
-
-        /* Actions */
-        .btn-row { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
-        .btn-cam { background: var(--primary); }
-        .btn-gal { background: var(--success); }
-
-        /* Camera & Cropper Fullscreen */
-        #camera-ui, #crop-ui { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: black; z-index: 1000; flex-direction: column; 
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --dark: #0f172a;
+            --bg: #f8fafc;
         }
-        video { width: 100%; height: 80%; object-fit: cover; }
-        .controls { height: 20%; display: flex; justify-content: space-around; align-items: center; background: #000; }
-        .shutter { width: 70px; height: 70px; background: white; border-radius: 50%; border: 5px solid #444; }
 
-        /* Crop Layout */
-        .crop-box { flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        #to-crop { max-width: 100%; }
-
-        /* Scanned Pages List */
-        #pages-list { 
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; 
-            padding: 10px; background: white; border-radius: 8px; min-height: 50px;
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            background: var(--bg);
+            color: var(--dark);
+            user-select: none;
         }
-        .thumb-container { position: relative; aspect-ratio: 3/4; border: 2px solid var(--primary); border-radius: 4px; overflow: hidden; }
-        .thumb-img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Document List */
-        .doc-item { 
-            background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        /* Header */
+        .header {
+            background: var(--dark);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        /* Action Buttons */
+        .main-nav {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+
+        .btn-camera { background: var(--primary); color: white; }
+        .btn-gallery { background: var(--success); color: white; }
+        .btn:active { transform: scale(0.96); }
+
+        /* Fullscreen Overlays (Camera & Crop) */
+        #cam-screen, #crop-screen {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 2000;
+            flex-direction: column;
+        }
+
+        #video { width: 100%; height: 80%; object-fit: cover; }
+        
+        .ui-controls {
+            height: 20%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(0,0,0,0.9);
+            padding: 0 20px;
+        }
+
+        .capture-btn {
+            width: 75px; height: 75px;
+            background: white;
+            border-radius: 50%;
+            border: 6px solid #333;
+            box-shadow: 0 0 0 4px white;
+        }
+
+        /* Cropper UI */
+        .crop-container { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        #image-to-crop { max-width: 100%; }
+
+        /* Draft List (Immediate Preview) */
+        .section-title { 
+            display: none; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin: 20px 0 10px;
         }
         
-        #flash { position: fixed; top:0; left:0; width:100%; height:100%; background:white; opacity:0; pointer-events:none; z-index:1100; }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .preview-item {
+            position: relative;
+            aspect-ratio: 3/4;
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .badge {
+            position: absolute; top: 5px; right: 5px;
+            background: var(--primary); color: white;
+            font-size: 10px; padding: 2px 6px; border-radius: 5px;
+        }
+
+        /* Saved Documents List */
+        .doc-card {
+            background: white;
+            padding: 16px;
+            border-radius: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .doc-info b { display: block; color: var(--dark); margin-bottom: 4px; }
+        .doc-info span { font-size: 0.8rem; color: #64748b; }
+
+        .doc-btns { display: flex; gap: 8px; }
+        .btn-sm { padding: 8px 12px; font-size: 0.8rem; border-radius: 8px; }
+
+        /* Professional Effects */
+        #flash-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; opacity: 0; pointer-events: none; z-index: 3000;
+        }
         @keyframes flashEffect { 0% { opacity: 0.8; } 100% { opacity: 0; } }
 
-        #loading { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); color:white; z-index:2000; justify-content:center; align-items:center; }
+        #loading-screen {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); color: white; z-index: 4000;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3; border-top: 4px solid var(--primary);
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
     </style>
 </head>
 <body>
 
-<audio id="shutter-sound" src="https://www.soundjay.com/mechanical/camera-shutter-click-08.mp3"></audio>
-<div id="flash"></div>
-<div id="loading">Saving to Database... Please wait...</div>
+<!-- Capture Feedback Assets -->
+<audio id="shutter-sound" src="https://assets.mixkit.co/active_storage/sfx/702/702-preview.mp3" preload="auto"></audio>
+<div id="flash-overlay"></div>
 
-<div class="header">DOCUS - SMART SCANNER</div>
+<!-- Loading Overlay -->
+<div id="loading-screen">
+    <div class="loader"></div>
+    <div id="loading-text">Finalizing Document...</div>
+</div>
+
+<div class="header">
+    <h2 style="margin:0;">DOCUS PRO</h2>
+</div>
 
 <div class="container">
-    <div class="btn-row">
-        <button class="btn btn-cam" onclick="startCamera()">📸 Open Camera</button>
-        <button class="btn btn-gal" onclick="document.getElementById('file-input').click()">📁 Gallery</button>
-        <input type="file" id="file-input" hidden accept="image/*" onchange="loadFromGallery(this)">
+    <!-- Weekly Backup Notification logic is in script -->
+    
+    <div class="main-nav">
+        <button class="btn btn-camera" onclick="openCamera()">📸 Capture</button>
+        <button class="btn btn-gallery" onclick="document.getElementById('gallery-input').click()">📁 Gallery</button>
+        <input type="file" id="gallery-input" hidden accept="image/*" onchange="handleGallery(this)">
     </div>
 
-    <!-- Scanned Pages (Confirmed) -->
-    <div id="scanned-section" style="display:none;">
-        <div style="display:flex; justify-content: space-between; align-items: center;">
-            <strong id="page-count">Pages: 0</strong>
-            <button class="btn btn-gal" style="flex:none; padding: 8px 15px;" onclick="saveFinalDoc()">Save PDF</button>
-        </div>
-        <div id="pages-list"></div>
+    <!-- Multi-page Draft List -->
+    <div id="draft-section-head" class="section-title">
+        <span>Current Pages (<span id="page-count">0</span>)</span>
+        <button class="btn btn-gallery btn-sm" onclick="finalizeDoc()" style="flex:none;">Save PDF</button>
     </div>
+    <div id="draft-container" class="preview-grid"></div>
 
-    <hr>
-    <h3>All Documents</h3>
-    <div id="db-list"></div>
+    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 25px 0;">
+
+    <h3>Saved History</h3>
+    <div id="saved-list">
+        <p style="text-align: center; color: #94a3b8; padding: 20px;">No documents yet.</p>
+    </div>
 </div>
 
 <!-- Camera UI -->
-<div id="camera-ui">
+<div id="cam-screen">
     <video id="video" autoplay playsinline></video>
-    <div class="controls">
-        <button class="btn btn-danger" onclick="closeCamera()">Cancel</button>
-        <div class="shutter" onclick="capturePhoto()"></div>
-        <div style="width:70px"></div>
+    <div class="ui-controls">
+        <button class="btn btn-danger" style="flex:none; width:80px" onclick="stopCamera()">Back</button>
+        <div class="capture-btn" onclick="captureSnapshot()"></div>
+        <div style="width:80px"></div>
     </div>
 </div>
 
-<!-- Crop UI -->
-<div id="crop-ui">
-    <div class="crop-box"><img id="to-crop"></div>
-    <div class="controls" style="background: #111;">
-        <button class="btn btn-danger" onclick="cancelCrop()">Retake</button>
-        <button class="btn btn-gal" onclick="confirmCrop()">Confirm Crop</button>
+<!-- Cropper UI -->
+<div id="crop-screen">
+    <div class="crop-container"><img id="image-to-crop"></div>
+    <div class="ui-controls" style="background: #111;">
+        <button class="btn btn-danger" style="flex:none; width:100px" onclick="retake()">Retake</button>
+        <button class="btn btn-green" style="flex:none; width:150px" onclick="confirmCrop()">Confirm Page</button>
     </div>
 </div>
 
 <script>
-    // Firebase Config
+    // --- Firebase Configuration ---
     const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let stream = null;
     let cropper = null;
-    let croppedImages = []; // Stores Base64 of each page
+    let currentPages = []; // Stores Base64 images
 
-    // --- Camera Functions ---
-    async function startCamera() {
+    // --- 1. Weekly Backup Logic (As requested for index.html context) ---
+    function checkSundayBackup() {
+        const today = new Date();
+        const isSunday = today.getDay() === 0;
+        const weekID = "week_" + Math.ceil(today.getDate() / 7) + "_" + (today.getMonth()+1);
+        const lastBackup = localStorage.getItem('pos_backup_done');
+
+        if (isSunday && lastBackup !== weekID) {
+            if (confirm("Sunday Alert: Kya aap apne database ka weekly backup banana chahte hain?")) {
+                runBackup(weekID);
+            }
+        }
+    }
+
+    async function runBackup(id) {
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            const snapshot = await db.ref('/').once('value');
+            const allData = snapshot.val();
+            await db.ref('weekly_backups/' + id).set({
+                timestamp: new Date().toLocaleString(),
+                data: allData
+            });
+            localStorage.setItem('pos_backup_done', id);
+            alert("Backup saved to '/weekly_backups' successfully.");
+        } catch (e) { alert("Backup error!"); }
+    }
+
+    // --- 2. Camera & Image Handlers ---
+    async function openCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment', width: { ideal: 1920 } } 
+            });
             document.getElementById('video').srcObject = stream;
-            document.getElementById('camera-ui').style.display = 'flex';
-        } catch (e) { alert("Camera Error"); }
+            document.getElementById('cam-screen').style.display = 'flex';
+        } catch (e) { alert("Camera Permission Required."); }
     }
 
-    function closeCamera() {
+    function stopCamera() {
         if (stream) stream.getTracks().forEach(t => t.stop());
-        document.getElementById('camera-ui').style.display = 'none';
+        document.getElementById('cam-screen').style.display = 'none';
     }
 
-    function capturePhoto() {
-        // Sound & Flash
+    function captureSnapshot() {
+        // Shutter Sound & Flash
         document.getElementById('shutter-sound').play();
-        const flash = document.getElementById('flash');
-        flash.style.animation = 'flashEffect 0.1s';
+        const flash = document.getElementById('flash-overlay');
+        flash.style.animation = 'flashEffect 0.1s linear';
         setTimeout(() => flash.style.animation = '', 100);
 
         const v = document.getElementById('video');
@@ -144,59 +302,66 @@
         canvas.width = v.videoWidth; canvas.height = v.videoHeight;
         canvas.getContext('2d').drawImage(v, 0, 0);
         
-        closeCamera();
-        openCropper(canvas.toDataURL('image/jpeg', 0.9));
+        stopCamera();
+        startCropping(canvas.toDataURL('image/jpeg', 0.9));
     }
 
-    function loadFromGallery(input) {
+    function handleGallery(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
-            reader.onload = e => openCropper(e.target.result);
+            reader.onload = e => startCropping(e.target.result);
             reader.readAsDataURL(input.files[0]);
         }
     }
 
-    // --- Cropper Functions ---
-    function openCropper(src) {
-        const img = document.getElementById('to-crop');
+    // --- 3. Cropping Logic ---
+    function startCropping(src) {
+        const img = document.getElementById('image-to-crop');
         img.src = src;
-        document.getElementById('crop-ui').style.display = 'flex';
+        document.getElementById('crop-screen').style.display = 'flex';
+        
         if (cropper) cropper.destroy();
-        cropper = new Cropper(img, { viewMode: 1, autoCropArea: 1 });
+        cropper = new Cropper(img, { viewMode: 1, autoCropArea: 0.9 });
     }
 
-    function cancelCrop() {
-        document.getElementById('crop-ui').style.display = 'none';
-        startCamera();
+    function retake() {
+        document.getElementById('crop-screen').style.display = 'none';
+        openCamera();
     }
 
     function confirmCrop() {
         const canvas = cropper.getCroppedCanvas({ maxWidth: 1200 });
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        const base64 = canvas.toDataURL('image/jpeg', 0.8);
         
-        croppedImages.push(dataUrl);
-        renderPreviews();
+        currentPages.push(base64);
+        renderDrafts();
         
-        document.getElementById('crop-ui').style.display = 'none';
-        document.getElementById('scanned-section').style.display = 'block';
-        alert("Page added. You can add more or click Save.");
+        document.getElementById('crop-screen').style.display = 'none';
+        document.getElementById('draft-section-head').style.display = 'flex';
+        
+        // Professional Workflow: Immediately open camera for next page
+        openCamera();
     }
 
-    function renderPreviews() {
-        const list = document.getElementById('pages-list');
-        list.innerHTML = '';
-        croppedImages.forEach((data, i) => {
-            list.innerHTML += `<div class="thumb-container"><img src="${data}" class="thumb-img"></div>`;
+    function renderDrafts() {
+        const container = document.getElementById('draft-container');
+        container.innerHTML = '';
+        currentPages.forEach((data, i) => {
+            container.innerHTML += `
+                <div class="preview-item">
+                    <img src="${data}">
+                    <div class="badge">Page ${i+1}</div>
+                </div>`;
         });
-        document.getElementById('page-count').innerText = "Pages: " + croppedImages.length;
+        document.getElementById('page-count').innerText = currentPages.length;
     }
 
-    // --- Save to RTDB (As Base64 Code) ---
-    async function saveFinalDoc() {
-        const docName = prompt("Document Name:", "Doc_" + Date.now());
-        if (!docName) return;
+    // --- 4. Database Save (As Code/Base64) ---
+    async function finalizeDoc() {
+        const name = prompt("File ka name dein:", "Scan_" + Date.now());
+        if (!name) return;
 
-        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('loading-screen').style.display = 'flex';
 
         try {
             const { jsPDF } = window.jspdf;
@@ -204,59 +369,64 @@
             const w = pdf.internal.pageSize.getWidth();
             const h = pdf.internal.pageSize.getHeight();
 
-            croppedImages.forEach((img, i) => {
+            currentPages.forEach((img, i) => {
                 if (i > 0) pdf.addPage();
                 pdf.addImage(img, 'JPEG', 0, 0, w, h);
             });
 
-            // Convert PDF to Base64 String
-            const pdfBase64 = pdf.output('datauristring');
+            // Convert PDF to Base64 String (Code)
+            const pdfDataCode = pdf.output('datauristring');
 
             // Save to Realtime Database
             await db.ref('docus_files').push({
-                name: docName,
-                code: pdfBase64, // Storing full file as code
+                name: name,
+                code: pdfDataCode,
                 date: new Date().toLocaleString(),
                 timestamp: Date.now()
             });
 
-            alert("Saved to Database successfully!");
-            location.reload();
+            alert("Document RTDB mein save ho gaya!");
+            location.reload(); 
         } catch (e) {
-            alert("Error saving: " + e.message);
+            alert("Save failed: " + e.message);
         } finally {
-            document.getElementById('loading').style.display = 'none';
+            document.getElementById('loading-screen').style.display = 'none';
         }
     }
 
-    // --- Load List ---
-    db.ref('docus_files').on('value', snap => {
-        const list = document.getElementById('db-list');
+    // --- 5. Display Saved List ---
+    db.ref('docus_files').orderByChild('timestamp').on('value', snap => {
+        const list = document.getElementById('saved-list');
         list.innerHTML = '';
-        if(!snap.exists()) return;
         
+        if(!snap.exists()) {
+            list.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">No saved files found.</p>';
+            return;
+        }
+
+        let items = [];
         snap.forEach(child => {
             const doc = child.val();
-            const row = `
-                <div class="doc-item">
-                    <div>
-                        <strong>${doc.name}</strong><br>
-                        <small>${doc.date}</small>
+            items.unshift(`
+                <div class="doc-card">
+                    <div class="doc-info">
+                        <b>${doc.name}</b>
+                        <span>${doc.date}</span>
                     </div>
-                    <div>
-                        <button class="btn btn-cam" style="padding:5px 10px" onclick="viewFile('${child.key}')">View</button>
-                        <button class="btn btn-gal" style="padding:5px 10px" onclick="downloadFile('${child.key}')">⬇️</button>
+                    <div class="doc-btns">
+                        <button class="btn btn-camera btn-sm" onclick="viewFile('${child.key}')">View</button>
+                        <button class="btn btn-gallery btn-sm" onclick="downloadFile('${child.key}')">⬇️</button>
                     </div>
                 </div>
-            `;
-            list.insertAdjacentHTML('afterbegin', row);
+            `);
         });
+        list.innerHTML = items.join('');
     });
 
     function viewFile(key) {
         db.ref('docus_files/' + key).once('value', s => {
             const win = window.open();
-            win.document.write(`<iframe src="${s.val().code}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+            win.document.write(`<iframe src="${s.val().code}" frameborder="0" style="width:100%; height:100%;" allowfullscreen></iframe>`);
         });
     }
 
@@ -268,6 +438,9 @@
             link.click();
         });
     }
+
+    // Initialize Backup Check
+    window.onload = checkSundayBackup;
 </script>
 
 </body>
