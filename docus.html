@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docus - Smart Document Scanner</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --danger: #dc2626;
+            --success: #16a34a;
+            --dark: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .header {
+            background: var(--dark);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 15px;
+        }
+
+        /* Camera Section */
+        #camera-section {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        video {
+            width: 100%;
+            display: block;
+        }
+
+        .camera-controls {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-capture { background: white; color: black; border-radius: 50%; width: 60px; height: 60px; padding: 0; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+
+        /* Preview Section */
+        #preview-container {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+
+        .preview-img {
+            width: 80px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 2px solid var(--primary);
+        }
+
+        /* List Section */
+        .doc-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .doc-info h4 { margin: 0; font-size: 1rem; }
+        .doc-info p { margin: 2px 0 0; font-size: 0.8rem; color: #64748b; }
+
+        .actions { display: flex; gap: 8px; }
+        
+        #loading-overlay {
+            position: fixed;
+            top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+<div id="loading-overlay">
+    <div style="font-size: 1.5rem;">Processing PDF...</div>
+    <p>Please wait...</p>
+</div>
+
+<div class="header">
+    <h1>Docus</h1>
+</div>
+
+<div class="container">
+    <!-- Action Buttons -->
+    <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+        <button class="btn btn-primary" onclick="startCamera()" style="flex: 1;">+ Scan New Document</button>
+    </div>
+
+    <!-- Camera Interface -->
+    <div id="camera-section">
+        <video id="video" autoplay playsinline></video>
+        <div class="camera-controls">
+            <button class="btn btn-danger" onclick="stopCamera()">Cancel</button>
+            <button class="btn btn-capture" onclick="takePhoto()">📸</button>
+            <button id="finish-btn" class="btn btn-success" onclick="prepareUpload()" style="display: none;">Finish (<span id="count">0</span>)</button>
+        </div>
+    </div>
+
+    <div id="preview-container"></div>
+
+    <hr>
+
+    <!-- Document List -->
+    <h3>Saved Documents</h3>
+    <div id="document-list">
+        <!-- Files will appear here -->
+        <p style="text-align: center; color: #94a3b8;">No documents found.</p>
+    </div>
+</div>
+
+<script>
+    // --- FIREBASE CONFIGURATION ---
+    const firebaseConfig = {
+        databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
+        // Yahan apni mazeed Firebase settings (apiKey, storageBucket wagera) add karein:
+        storageBucket: "own-live-steam-web.appspot.com" 
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const storage = firebase.storage();
+
+    // --- VARIABLES ---
+    let stream = null;
+    let capturedImages = [];
+    const video = document.getElementById('video');
+    const previewContainer = document.getElementById('preview-container');
+    const finishBtn = document.getElementById('finish-btn');
+    const countSpan = document.getElementById('count');
+
+    // --- CAMERA FUNCTIONS ---
+    async function startCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" }, 
+                audio: false 
+            });
+            video.srcObject = stream;
+            document.getElementById('camera-section').style.display = 'block';
+            capturedImages = [];
+            updatePreview();
+        } catch (err) {
+            alert("Camera access denied or not available.");
+        }
+    }
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        document.getElementById('camera-section').style.display = 'none';
+    }
+
+    function takePhoto() {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        
+        const imgData = canvas.toDataURL('image/jpeg', 0.8);
+        capturedImages.push(imgData);
+        
+        updatePreview();
+    }
+
+    function updatePreview() {
+        previewContainer.innerHTML = '';
+        capturedImages.forEach(src => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'preview-img';
+            previewContainer.appendChild(img);
+        });
+
+        if (capturedImages.length > 0) {
+            finishBtn.style.display = 'block';
+            countSpan.innerText = capturedImages.length;
+        } else {
+            finishBtn.style.display = 'none';
+        }
+    }
+
+    // --- PDF & UPLOAD LOGIC ---
+    async function prepareUpload() {
+        const fileName = prompt("Enter Document Name:", "New Document");
+        if (!fileName) return;
+
+        document.getElementById('loading-overlay').style.display = 'flex';
+        stopCamera();
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+
+            for (let i = 0; i < capturedImages.length; i++) {
+                if (i > 0) pdf.addPage();
+                
+                // Image dimensions ko PDF page ke mutabiq adjust krna
+                const imgProps = pdf.getImageProperties(capturedImages[i]);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                pdf.addImage(capturedImages[i], 'JPEG', 0, 0, pdfWidth, pdfHeight);
+            }
+
+            const pdfBlob = pdf.output('blob');
+            uploadToFirebase(pdfBlob, fileName);
+
+        } catch (error) {
+            console.error(error);
+            alert("Error creating PDF.");
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+    }
+
+    function uploadToFirebase(blob, name) {
+        const timestamp = Date.now();
+        const fullFileName = `${name}_${timestamp}.pdf`;
+        const storageRef = storage.ref('documents/' + fullFileName);
+
+        storageRef.put(blob).then(snapshot => {
+            return snapshot.ref.getDownloadURL();
+        }).then(url => {
+            // Save Metadata to Realtime Database
+            return db.ref('docus_files').push({
+                name: name,
+                url: url,
+                date: new Date().toLocaleString(),
+                timestamp: timestamp
+            });
+        }).then(() => {
+            alert("File saved successfully!");
+            location.reload();
+        }).catch(err => {
+            alert("Upload failed: " + err.message);
+        }).finally(() => {
+            document.getElementById('loading-overlay').style.display = 'none';
+        });
+    }
+
+    // --- LISTING DOCUMENTS ---
+    function loadDocuments() {
+        const listDiv = document.getElementById('document-list');
+        
+        db.ref('docus_files').orderByChild('timestamp').on('value', snapshot => {
+            listDiv.innerHTML = '';
+            if (!snapshot.exists()) {
+                listDiv.innerHTML = '<p style="text-align: center; color: #94a3b8;">No documents found.</p>';
+                return;
+            }
+
+            snapshot.forEach(child => {
+                const data = child.val();
+                const card = `
+                    <div class="doc-card">
+                        <div class="doc-info">
+                            <h4>${data.name}</h4>
+                            <p>${data.date}</p>
+                        </div>
+                        <div class="actions">
+                            <button class="btn btn-primary" onclick="window.open('${data.url}', '_blank')" style="padding: 5px 10px; font-size: 0.8rem;">View</button>
+                            <a href="${data.url}" download="${data.name}.pdf" class="btn btn-success" style="padding: 5px 10px; font-size: 0.8rem; text-decoration: none;">Download</a>
+                        </div>
+                    </div>
+                `;
+                listDiv.insertAdjacentHTML('afterbegin', card);
+            });
+        });
+    }
+
+    // Initialize list
+    loadDocuments();
+</script>
+
+</body>
+</html>
