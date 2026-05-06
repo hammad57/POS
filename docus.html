@@ -2,11 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Docus - Smart Document Scanner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Docus Pro - Document Scanner</title>
     
     <!-- External Libraries -->
+    <!-- PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Cropping Tool (CSS + JS) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <!-- Firebase (Compat Mode) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
@@ -14,188 +19,324 @@
     <style>
         :root {
             --primary: #2563eb;
-            --danger: #dc2626;
             --success: #16a34a;
+            --danger: #dc2626;
             --dark: #1e293b;
+            --black: #000;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             margin: 0;
-            background-color: #f8fafc;
+            background-color: #f1f5f9;
             color: var(--dark);
+            overflow-x: hidden;
         }
 
+        /* --- Header & Container --- */
         .header {
             background: var(--dark);
             color: white;
-            padding: 1rem;
+            padding: 1.2rem 1rem;
             text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
+        .header h1 { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
 
         .container {
             max-width: 600px;
             margin: auto;
-            padding: 15px;
+            padding: 20px;
+            padding-bottom: 100px; /* Space for footer/actions */
         }
 
-        /* Camera Section */
+        /* --- Utility Classes & Buttons --- */
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        
+        .btn-sm { padding: 8px 14px; font-size: 0.85rem; border-radius: 8px; }
+
+        /* --- Action Area (Camera/Upload) --- */
+        .main-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .main-actions .btn { flex: 1; height: 55px; }
+
+        /* --- Camera Interface --- */
         #camera-section {
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            margin-bottom: 20px;
             display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--black);
+            z-index: 100;
+            flex-direction: column;
         }
 
         video {
             width: 100%;
-            display: block;
+            height: 80%;
+            object-fit: cover;
         }
 
         .camera-controls {
             position: absolute;
-            bottom: 20px;
+            bottom: 0; width: 100%;
+            height: 20%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .btn-capture {
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            background: white;
+            border: 5px solid #ccc;
+            box-shadow: 0 0 0 5px white;
+            padding: 0;
+        }
+        .btn-capture:active { background: #eee; }
+
+        /* --- Screen Flash & Sound --- */
+        #flash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; opacity: 0; z-index: 101; pointer-events: none;
+        }
+        @keyframes flashAnim {
+            0% { opacity: 0.9; }
+            100% { opacity: 0; }
+        }
+
+        /* --- Cropping Modal --- */
+        #crop-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 200;
+            flex-direction: column;
+        }
+        .crop-container {
+            flex: 1;
             width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
             display: flex;
             justify-content: center;
-            gap: 20px;
+            align-items: center;
+            overflow: hidden;
         }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
+        #crop-image {
+            max-width: 100%;
+            max-height: 100%;
         }
-
-        .btn-capture { background: white; color: black; border-radius: 50%; width: 60px; height: 60px; padding: 0; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-
-        /* Preview Section */
-        #preview-container {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding: 10px 0;
-        }
-
-        .preview-img {
-            width: 80px;
-            height: 110px;
-            object-fit: cover;
-            border-radius: 4px;
-            border: 2px solid var(--primary);
-        }
-
-        /* List Section */
-        .doc-card {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
+        .crop-actions {
+            height: 80px;
+            background: #111;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            padding: 0 20px;
         }
 
-        .doc-info h4 { margin: 0; font-size: 1rem; }
-        .doc-info p { margin: 2px 0 0; font-size: 0.8rem; color: #64748b; }
-
-        .actions { display: flex; gap: 8px; }
-        
-        #loading-overlay {
-            position: fixed;
-            top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.7);
-            color: white;
+        /* --- Page Preview (Multi-page) --- */
+        #pages-section {
+            margin-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 20px;
             display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
         }
+        #preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .preview-wrapper {
+            position: relative;
+            aspect-ratio: 3/4;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+        }
+        .preview-img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+        .page-count {
+            position: absolute; bottom: 5px; left: 5px;
+            background: rgba(0,0,0,0.7); color: white;
+            font-size: 0.7rem; padding: 2px 6px; border-radius: 4px;
+        }
+
+        /* --- Saved Documents List --- */
+        #document-list { margin-top: 20px; }
+        .doc-card {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .doc-info h4 { margin: 0 0 4px; font-size: 1rem; font-weight: 700; color: #0f172a;}
+        .doc-info p { margin: 0; font-size: 0.8rem; color: #64748b; }
+        .doc-actions { display: flex; gap: 8px; }
+
+        /* --- Overlays --- */
+        #loading-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.85); color: white;
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 1000; font-weight: 600; gap: 10px;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
+<!-- Shutter Sound -->
+<audio id="shutter-sound" preload="auto">
+    <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_1e30954b42.mp3" type="audio/mpeg">
+</audio>
+
+<!-- Screen Flash Effect -->
+<div id="flash"></div>
+
+<!-- Loading Overlay -->
 <div id="loading-overlay">
-    <div style="font-size: 1.5rem;">Processing PDF...</div>
-    <p>Please wait...</p>
+    <div class="spinner"></div>
+    <div id="loading-text" style="font-size: 1.2rem;">Processing PDF...</div>
+    <p style="margin:0; font-weight: 400; color: #aaa;">Please wait</p>
 </div>
 
+<!-- Header -->
 <div class="header">
-    <h1>Docus</h1>
+    <h1>Docus Pro</h1>
 </div>
 
 <div class="container">
-    <!-- Action Buttons -->
-    <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-        <button class="btn btn-primary" onclick="startCamera()" style="flex: 1;">+ Scan New Document</button>
+    <!-- Main Actions -->
+    <div class="main-actions">
+        <button class="btn btn-primary" onclick="startCamera()">📸 Open Camera</button>
+        <!-- Hidden File Input for Gallery -->
+        <input type="file" id="gallery-input" accept="image/*" style="display: none;" onchange="handleGalleryUpload(this)">
+        <button class="btn btn-success" onclick="document.getElementById('gallery-input').click()">📁 Upload Gallery</button>
     </div>
 
     <!-- Camera Interface -->
     <div id="camera-section">
         <video id="video" autoplay playsinline></video>
         <div class="camera-controls">
-            <button class="btn btn-danger" onclick="stopCamera()">Cancel</button>
-            <button class="btn btn-capture" onclick="takePhoto()">📸</button>
-            <button id="finish-btn" class="btn btn-success" onclick="prepareUpload()" style="display: none;">Finish (<span id="count">0</span>)</button>
+            <button class="btn btn-danger btn-sm" onclick="stopCamera()">Exit</button>
+            <button class="btn-capture" onclick="takePhoto()"></button>
+            <div style="width: 60px;"></div> <!-- Spacer -->
         </div>
     </div>
 
-    <div id="preview-container"></div>
+    <!-- Cropping Modal -->
+    <div id="crop-modal">
+        <div class="crop-container">
+            <img id="crop-image" src="" alt="To Crop">
+        </div>
+        <div class="crop-actions">
+            <button class="btn btn-danger btn-sm" onclick="cancelCrop()">Retake/Cancel</button>
+            <h3 style="color: white; margin: 0; font-size: 1rem;">Crop Document</h3>
+            <button class="btn btn-success" onclick="saveCrop()">Confirm Crop</button>
+        </div>
+    </div>
 
-    <hr>
+    <!-- Multi-page Preview & Finalize -->
+    <div id="pages-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0;">Scanned Pages</h3>
+            <button class="btn btn-primary btn-sm" onclick="prepareUpload()">Finish & Save PDF</button>
+        </div>
+        <div id="preview-container">
+            <!-- Cropped Pages arrive here -->
+        </div>
+    </div>
+
+    <hr style="border: 0; border-top: 2px solid #e2e8f0; margin: 25px 0;">
 
     <!-- Document List -->
-    <h3>Saved Documents</h3>
+    <h3 style="margin-bottom: 15px; color: #0f172a;">Saved Documents</h3>
     <div id="document-list">
         <!-- Files will appear here -->
-        <p style="text-align: center; color: #94a3b8;">No documents found.</p>
+        <p style="text-align: center; color: #94a3b8; padding: 20px;">No documents found.</p>
     </div>
 </div>
 
 <script>
     // --- FIREBASE CONFIGURATION ---
+    // PASTE YOUR COMPLETE FIREBASE CONFIG HERE, INCLUDING apiKey and storageBucket
     const firebaseConfig = {
         databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
-        // Yahan apni mazeed Firebase settings (apiKey, storageBucket wagera) add karein:
-        storageBucket: "own-live-steam-web.appspot.com" 
+        storageBucket: "own-live-steam-web.appspot.com" // ZAROORI: Ye add karein
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const storage = firebase.storage();
 
-    // --- VARIABLES ---
+    // --- GLOBAL VARIABLES ---
     let stream = null;
-    let capturedImages = [];
-    const video = document.getElementById('video');
-    const previewContainer = document.getElementById('preview-container');
-    const finishBtn = document.getElementById('finish-btn');
-    const countSpan = document.getElementById('count');
+    let cropper = null;
+    let finalCroppedImages = []; // Stores base64 of cropped pages
+    let currentProcessingSource = null; // 'camera' or 'gallery'
 
-    // --- CAMERA FUNCTIONS ---
+    const video = document.getElementById('video');
+    const shutterSound = document.getElementById('shutter-sound');
+    const flashEl = document.getElementById('flash');
+    const cropModal = document.getElementById('crop-modal');
+    const cropImage = document.getElementById('crop-image');
+    const pagesSection = document.getElementById('pages-section');
+    const previewContainer = document.getElementById('preview-container');
+
+    // ==========================================
+    // 1. professional Feedback & Camera
+    // ==========================================
     async function startCamera() {
+        resetScannerState();
+        currentProcessingSource = 'camera';
         try {
             stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment" }, 
+                video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }, 
                 audio: false 
             });
             video.srcObject = stream;
-            document.getElementById('camera-section').style.display = 'block';
-            capturedImages = [];
-            updatePreview();
+            document.getElementById('camera-section').style.display = 'flex';
         } catch (err) {
-            alert("Camera access denied or not available.");
+            alert("Camera access denied or not available. Please allow camera permissions.");
         }
     }
 
@@ -206,77 +347,195 @@
         document.getElementById('camera-section').style.display = 'none';
     }
 
+    function triggerCaptureFeedback() {
+        // 1. Sound
+        shutterSound.currentTime = 0;
+        shutterSound.play().catch(()=>{}); // Catch mobile blockage
+
+        // 2. Visual Flash
+        flashEl.style.animation = 'flashAnim 0.1s ease-out';
+        setTimeout(() => flashEl.style.animation = '', 100);
+    }
+
     function takePhoto() {
+        triggerCaptureFeedback();
+
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
         
-        const imgData = canvas.toDataURL('image/jpeg', 0.8);
-        capturedImages.push(imgData);
+        const imgData = canvas.toDataURL('image/jpeg', 0.9);
         
-        updatePreview();
+        stopCamera();
+        openCropModal(imgData);
     }
 
-    function updatePreview() {
-        previewContainer.innerHTML = '';
-        capturedImages.forEach(src => {
-            const img = document.createElement('img');
-            img.src = src;
-            img.className = 'preview-img';
-            previewContainer.appendChild(img);
-        });
-
-        if (capturedImages.length > 0) {
-            finishBtn.style.display = 'block';
-            countSpan.innerText = capturedImages.length;
-        } else {
-            finishBtn.style.display = 'none';
+    // ==========================================
+    // 2. Gallery Upload Integration
+    // ==========================================
+    function handleGalleryUpload(input) {
+        if (input.files && input.files[0]) {
+            resetScannerState();
+            currentProcessingSource = 'gallery';
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                openCropModal(e.target.result);
+            }
+            reader.readAsDataURL(input.files[0]);
+            // Reset input so same file can be chosen again
+            input.value = "";
         }
     }
 
-    // --- PDF & UPLOAD LOGIC ---
+    // ==========================================
+    // 3. Cropping Logic (Professional)
+    // ==========================================
+    function openCropModal(imageSrc) {
+        cropImage.src = imageSrc;
+        cropModal.style.display = 'flex';
+
+        if (cropper) cropper.destroy(); // Destroy previous instance
+
+        // Initialize Cropper.js
+        cropper = new Cropper(cropImage, {
+            viewMode: 1, // Restrict crop box to within the canvas
+            dragMode: 'move',
+            autoCropArea: 0.8, // 80% of image covered initially
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+        });
+    }
+
+    function cancelCrop() {
+        cropModal.style.display = 'none';
+        cropper.destroy();
+        
+        if (currentProcessingSource === 'camera') {
+            startCamera(); // Go back to live camera
+        } else {
+            // If gallery, just return to main screen
+            if (finalCroppedImages.length === 0) pagesSection.style.display = 'none';
+        }
+    }
+
+    function saveCrop() {
+        if (!cropper) return;
+
+        // Get high-quality cropped canvas
+        const canvas = cropper.getCroppedCanvas({
+            maxWidth: 2048, // Limit size for performance/storage
+            maxHeight: 2048,
+            fillColor: '#fff',
+            imageSmoothingQuality: 'high'
+        });
+
+        const croppedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+        finalCroppedImages.push(croppedBase64);
+        
+        updatePagePreview();
+        
+        cropModal.style.display = 'none';
+        cropper.destroy();
+
+        // Professional workflow: After crop, show option for NEXT picture
+        pagesSection.style.display = 'block';
+        
+        if (currentProcessingSource === 'camera') {
+            alert("Page added. Opening camera for next page (or click Exit).");
+            startCamera(); // Automatically open camera for next document page
+        } else {
+            alert("Page added from gallery.");
+        }
+    }
+
+    function updatePagePreview() {
+        previewContainer.innerHTML = '';
+        finalCroppedImages.forEach((src, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'preview-wrapper';
+            
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'preview-img';
+            
+            const count = document.createElement('div');
+            count.className = 'page-count';
+            count.innerText = `Page ${index + 1}`;
+            
+            wrapper.appendChild(img);
+            wrapper.appendChild(count);
+            previewContainer.appendChild(wrapper);
+        });
+    }
+
+    function resetScannerState() {
+        finalCroppedImages = [];
+        previewContainer.innerHTML = '';
+        pagesSection.style.display = 'none';
+    }
+
+    // ==========================================
+    // 4. PDF Generation & Firebase Upload
+    // ==========================================
     async function prepareUpload() {
-        const fileName = prompt("Enter Document Name:", "New Document");
-        if (!fileName) return;
+        if (finalCroppedImages.length === 0) {
+            alert("No pages scanned yet.");
+            return;
+        }
+
+        const fileName = prompt("Enter PDF Document Name:", "Scanned_Doc");
+        if (!fileName || fileName.trim() === "") {
+            alert("Document name is required to save.");
+            return;
+        }
 
         document.getElementById('loading-overlay').style.display = 'flex';
-        stopCamera();
+        document.getElementById('loading-text').innerText = "Generating PDF...";
 
         try {
+            // Using jsPDF to create multi-page PDF
             const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
+            
+            // Standard A4 page dimensions in mm (at 72 DPI, 1mm ~ 2.83 points)
+            // Use 'p' portrait, 'mm', 'a4'
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
 
-            for (let i = 0; i < capturedImages.length; i++) {
+            for (let i = 0; i < finalCroppedImages.length; i++) {
                 if (i > 0) pdf.addPage();
                 
-                // Image dimensions ko PDF page ke mutabiq adjust krna
-                const imgProps = pdf.getImageProperties(capturedImages[i]);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                
-                pdf.addImage(capturedImages[i], 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                // Add image to PDF, stretching to fit A4 page
+                pdf.addImage(finalCroppedImages[i], 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
             }
 
+            document.getElementById('loading-text').innerText = "Uploading to Cloud...";
             const pdfBlob = pdf.output('blob');
-            uploadToFirebase(pdfBlob, fileName);
+            uploadToFirebase(pdfBlob, fileName.trim());
 
         } catch (error) {
-            console.error(error);
-            alert("Error creating PDF.");
+            console.error("PDF Error:", error);
+            alert("Error creating PDF. Please try again.");
             document.getElementById('loading-overlay').style.display = 'none';
         }
     }
 
     function uploadToFirebase(blob, name) {
         const timestamp = Date.now();
-        const fullFileName = `${name}_${timestamp}.pdf`;
+        // File name unique banane ke liye timestamp use kiya
+        const fullFileName = `${name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}.pdf`;
         const storageRef = storage.ref('documents/' + fullFileName);
 
         storageRef.put(blob).then(snapshot => {
             return snapshot.ref.getDownloadURL();
         }).then(url => {
-            // Save Metadata to Realtime Database
+            // 5. Save Metadata to Realtime Database
             return db.ref('docus_files').push({
                 name: name,
                 url: url,
@@ -284,46 +543,54 @@
                 timestamp: timestamp
             });
         }).then(() => {
-            alert("File saved successfully!");
-            location.reload();
+            alert("Document saved successfully!");
+            document.getElementById('loading-overlay').style.display = 'none';
+            resetScannerState();
+            // List automatically updates due to .on('value') listener
         }).catch(err => {
-            alert("Upload failed: " + err.message);
-        }).finally(() => {
+            console.error("Upload Error:", err);
+            alert("Upload failed. Make sure Firebase Storage rules are public.");
             document.getElementById('loading-overlay').style.display = 'none';
         });
     }
 
-    // --- LISTING DOCUMENTS ---
+    // ==========================================
+    // 6. Professional Document Listing
+    // ==========================================
     function loadDocuments() {
         const listDiv = document.getElementById('document-list');
         
+        // Use .on('value') for real-time updates
         db.ref('docus_files').orderByChild('timestamp').on('value', snapshot => {
             listDiv.innerHTML = '';
+            
             if (!snapshot.exists()) {
-                listDiv.innerHTML = '<p style="text-align: center; color: #94a3b8;">No documents found.</p>';
+                listDiv.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 20px;">No documents found.</p>';
                 return;
             }
 
+            let cardsHtml = '';
             snapshot.forEach(child => {
                 const data = child.val();
-                const card = `
+                cardsHtml += `
                     <div class="doc-card">
                         <div class="doc-info">
                             <h4>${data.name}</h4>
                             <p>${data.date}</p>
                         </div>
-                        <div class="actions">
-                            <button class="btn btn-primary" onclick="window.open('${data.url}', '_blank')" style="padding: 5px 10px; font-size: 0.8rem;">View</button>
-                            <a href="${data.url}" download="${data.name}.pdf" class="btn btn-success" style="padding: 5px 10px; font-size: 0.8rem; text-decoration: none;">Download</a>
+                        <div class="doc-actions">
+                            <button class="btn btn-primary btn-sm" onclick="window.open('${data.url}', '_blank')">View</button>
+                            <a href="${data.url}" download="${data.name}.pdf" class="btn btn-success btn-sm" style="text-decoration: none;">Download</a>
                         </div>
                     </div>
                 `;
-                listDiv.insertAdjacentHTML('afterbegin', card);
             });
+            // Reverse order to show newest on top
+            listDiv.innerHTML = cardsHtml;
         });
     }
 
-    // Initialize list
+    // Initialize list on load
     loadDocuments();
 </script>
 
