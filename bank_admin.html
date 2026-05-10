@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1200, initial-scale=0.3, shrink-to-fit=no">
+    <title>Admin Control Panel | Money Vault Pro</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --bg-body: #f0f4f8;
+            --card-main: #ffffff;
+            --text-color: #2d3436;
+            --shadow-3d: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
+            --accent-blue: #0984e3;
+            --danger-grad: linear-gradient(145deg, #ff7675, #d63031);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #1e272e;
+            --card-main: #2d3436;
+            --text-color: #f5f6fa;
+            --shadow-3d: 6px 6px 12px #151a1e, -4px -4px 10px #3c444b;
+        }
+
+        body { background-color: var(--bg-body); font-family: 'Poppins', sans-serif; color: var(--text-color); padding: 25px; transition: 0.3s; }
+        .main-container { width: 1150px; margin: 0 auto; }
+
+        .card-3d {
+            background: var(--card-main);
+            border-radius: 20px;
+            box-shadow: var(--shadow-3d);
+            border: none;
+            padding: 25px;
+            position: relative;
+        }
+
+        .table-custom thead th { background: #f8f9fa; color: #636e72; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; padding: 15px; border-bottom: 2px solid #edf2f7; }
+        [data-theme="dark"] .table-custom thead th { background: #34495e; color: #ecf0f1; border-color: #2c3e50; }
+        [data-theme="dark"] .table-custom tbody td { color: #f5f6fa; border-color: #3c444b; }
+
+        .top-home-btn {
+            position: fixed; top: 20px; left: 20px;
+            background: linear-gradient(135deg, #e54646, #b63b3b);
+            color: #ffffff !important; text-decoration: none !important;
+            padding: 10px 20px; border-radius: 50px;
+            font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 15px rgba(229, 70, 70, 0.4); z-index: 9999;
+        }
+        
+        .action-btn { width: 35px; height: 35px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; margin: 0 3px; }
+        
+        .badge-excluded { background-color: #ffb142; color: #000; font-size: 0.75rem; padding: 5px 10px; border-radius: 20px; font-weight: bold; }
+        .badge-active { background-color: #2ed573; color: #000; font-size: 0.75rem; padding: 5px 10px; border-radius: 20px; font-weight: bold; }
+    </style>
+</head>
+<body data-theme="dark">
+
+<a href="bank_balance.html" class="top-home-btn" title="Back to Vault">
+    <i class="bi bi-arrow-left"></i> Back to Vault
+</a>
+
+<div class="main-container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <div class="card-3d p-2 rounded-circle" style="width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
+                <i class="bi bi-shield-lock-fill text-danger fs-4"></i>
+            </div>
+            <div>
+                <h2 class="fw-bold mb-0">Admin <span class="text-danger">Control Panel</span></h2>
+                <small class="text-muted">Manage Bank Accounts & Balances Direct Control</small>
+            </div>
+        </div>
+        <div>
+            <select id="themeSelector" class="form-select border-0 shadow-sm rounded-pill" style="width: 130px;" onchange="changeTheme(this.value)">
+                <option value="light">☀️ Light</option>
+                <option value="dark" selected>🌙 Dark</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="card-3d">
+        <h5 class="fw-bold mb-4"><i class="bi bi-bank2 me-2"></i>All Registered Banks</h5>
+        <div class="table-responsive">
+            <table class="table table-custom align-middle">
+                <thead>
+                    <tr>
+                        <th>Bank Name</th>
+                        <th>Account Number</th>
+                        <th>Status</th>
+                        <th>Current Balance</th>
+                        <th class="text-center">Admin Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="adminBankBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editBankModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 p-4 border-0">
+            <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square text-primary me-2"></i>Edit Bank Details</h5>
+            <form id="editBankForm">
+                <input type="hidden" id="editBankId">
+                <div class="mb-3">
+                    <label class="small fw-bold">Bank Name</label>
+                    <input type="text" id="editBankName" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold">Account Number</label>
+                    <input type="text" id="editBankNumber" class="form-control">
+                </div>
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" id="editExcludeStatus">
+                    <label class="form-check-label small fw-bold text-danger" for="editExcludeStatus">
+                        Exclude from Total Balance calculation
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 fw-bold">Update Bank</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="updateBalanceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 p-4 border-0" style="background: linear-gradient(145deg, #1e272e, #2d3436); color: white;">
+            <h5 class="fw-bold mb-1 text-warning"><i class="bi bi-lightning-charge-fill me-2"></i>Direct Balance Override</h5>
+            <p class="small text-muted mb-4" id="overrideBankNameDisplay"></p>
+            
+            <div class="text-center mb-4 p-3 rounded" style="background: rgba(0,0,0,0.2);">
+                <span class="small text-muted d-block">Current Calculated Balance</span>
+                <h3 class="fw-bold text-info mb-0" id="currentBalanceDisplay">Rs. 0</h3>
+            </div>
+
+            <form id="updateBalanceForm">
+                <input type="hidden" id="overrideBankId">
+                <input type="hidden" id="overrideCurrentBal">
+                <div class="mb-4">
+                    <label class="small fw-bold text-white mb-2">Enter Exact New Balance</label>
+                    <input type="number" id="newExactBalance" class="form-control form-control-lg bg-dark text-white border-secondary" required placeholder="e.g. 50000">
+                    <small class="text-warning mt-1 d-block"><i class="bi bi-info-circle me-1"></i>System will auto-create an adjustment entry to match this amount.</small>
+                </div>
+                <button type="submit" class="btn btn-warning w-100 fw-bold py-2 text-dark">Force Update Balance</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, onValue, set, remove, update, push } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    const firebaseConfig = { 
+        databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/", 
+        projectId: "own-live-steam-web" 
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let allBanks = [];
+    let allTransactions = [];
+
+    const editModal = new bootstrap.Modal(document.getElementById('editBankModal'));
+    const balanceModal = new bootstrap.Modal(document.getElementById('updateBalanceModal'));
+
+    // Theme Logic
+    onValue(ref(db, 'settings/theme'), (snap) => {
+        const savedTheme = snap.val() || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+        document.getElementById('themeSelector').value = savedTheme;
+    });
+
+    window.changeTheme = (v) => { set(ref(db, 'settings/theme'), v); };
+
+    // Fetch Data
+    onValue(ref(db, 'bank_accounts'), (snap) => {
+        allBanks = [];
+        snap.forEach(c => { allBanks.push({ id: c.key, ...c.val() }); });
+        renderAdminTable();
+    });
+
+    onValue(ref(db, 'bank_transactions'), (snap) => {
+        allTransactions = [];
+        snap.forEach(bNode => { 
+            bNode.forEach(tNode => { 
+                allTransactions.push({ id: tNode.key, bankId: bNode.key, ...tNode.val() }); 
+            }); 
+        });
+        renderAdminTable();
+    });
+
+    function calculateBankBalance(bankId) {
+        return allTransactions.filter(t => t.bankId === bankId).reduce((s, t) => {
+            const amt = parseFloat(t.amount);
+            if(t.type === 'Income' || t.type === 'Adjustment In') return s + amt;
+            if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
+            return s;
+        }, 0);
+    }
+
+    function renderAdminTable() {
+        const tbody = document.getElementById('adminBankBody');
+        tbody.innerHTML = '';
+        
+        allBanks.forEach(bank => {
+            const balance = calculateBankBalance(bank.id);
+            const statusBadge = bank.excludeFromBalance 
+                ? '<span class="badge-excluded">Excluded</span>' 
+                : '<span class="badge-active">Active</span>';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold">${bank.name}</td>
+                    <td class="text-muted small">${bank.number || 'N/A'}</td>
+                    <td>${statusBadge}</td>
+                    <td class="fw-bold fs-5 text-primary">Rs. ${balance.toLocaleString()}</td>
+                    <td class="text-center">
+                        <button class="btn btn-outline-info action-btn" title="Edit Bank Details" onclick="openEditBank('${bank.id}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-warning action-btn" title="Force Update Balance" onclick="openBalanceUpdate('${bank.id}', ${balance})">
+                            <i class="bi bi-currency-exchange"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary action-btn" title="Clear All History (Set to 0)" onclick="clearBankHistory('${bank.id}')">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                        <button class="btn btn-outline-danger action-btn" title="Delete Bank Completely" onclick="deleteBankCompletely('${bank.id}')">
+                            <i class="bi bi-trash3-fill"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // --- Admin Action Functions ---
+
+    window.openEditBank = (id) => {
+        const bank = allBanks.find(b => b.id === id);
+        if(!bank) return;
+        document.getElementById('editBankId').value = bank.id;
+        document.getElementById('editBankName').value = bank.name;
+        document.getElementById('editBankNumber').value = bank.number || '';
+        document.getElementById('editExcludeStatus').checked = bank.excludeFromBalance || false;
+        editModal.show();
+    };
+
+    document.getElementById('editBankForm').onsubmit = (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editBankId').value;
+        update(ref(db, `bank_accounts/${id}`), {
+            name: document.getElementById('editBankName').value,
+            number: document.getElementById('editBankNumber').value,
+            excludeFromBalance: document.getElementById('editExcludeStatus').checked
+        });
+        editModal.hide();
+    };
+
+    window.openBalanceUpdate = (id, currentBalance) => {
+        const bank = allBanks.find(b => b.id === id);
+        document.getElementById('overrideBankId').value = id;
+        document.getElementById('overrideCurrentBal').value = currentBalance;
+        document.getElementById('overrideBankNameDisplay').innerText = `Updating: ${bank.name}`;
+        document.getElementById('currentBalanceDisplay').innerText = `Rs. ${currentBalance.toLocaleString()}`;
+        document.getElementById('newExactBalance').value = currentBalance;
+        balanceModal.show();
+    };
+
+    document.getElementById('updateBalanceForm').onsubmit = (e) => {
+        e.preventDefault();
+        const bId = document.getElementById('overrideBankId').value;
+        const currentBal = parseFloat(document.getElementById('overrideCurrentBal').value);
+        const newBal = parseFloat(document.getElementById('newExactBalance').value);
+        
+        const difference = newBal - currentBal;
+        
+        if (difference !== 0) {
+            const transType = difference > 0 ? 'Adjustment In' : 'Adjustment Out';
+            const amount = Math.abs(difference);
+            const dateStr = new Date().toISOString().split('T')[0];
+            
+            // Push background adjustment transaction
+            push(ref(db, `bank_transactions/${bId}`), { 
+                type: transType, 
+                amount: amount, 
+                date: dateStr, 
+                remarks: `[Admin] Balance Forced to ${newBal.toLocaleString()}` 
+            });
+        }
+        balanceModal.hide();
+    };
+
+    window.clearBankHistory = (id) => {
+        const bank = allBanks.find(b => b.id === id);
+        if(confirm(`⚠️ WARNING: Are you sure you want to clear ALL transaction history for "${bank.name}"?\n\nThe balance will be reset to Rs. 0.`)) {
+            remove(ref(db, `bank_transactions/${id}`));
+        }
+    };
+
+    window.deleteBankCompletely = (id) => {
+        const bank = allBanks.find(b => b.id === id);
+        if(confirm(`🚨 CRITICAL ACTION 🚨\n\nAre you absolutely sure you want to completely DELETE "${bank.name}" and ALL its transaction history?\n\nThis cannot be undone!`)) {
+            // Delete Transactions First
+            remove(ref(db, `bank_transactions/${id}`));
+            // Delete Bank Node
+            remove(ref(db, `bank_accounts/${id}`));
+        }
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
