@@ -70,24 +70,9 @@
         .modal-btn { padding: 12px; width: 100%; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 10px; }
         .btn-save { background: var(--accent); color: white; }
         .btn-cancel { background: transparent; color: #94a3b8; border: 1px solid #334155; }
-
-        /* Backup Notification Styling */
-        #backup-notification { display: none; position: fixed; top: 0; left: 0; width: 100%; background: #3b82f6; color: white; padding: 15px; text-align: center; z-index: 5000; box-shadow: 0 4px 10px rgba(0,0,0,0.5); box-sizing: border-box; font-size: 14px; }
-        .backup-btn { background: white; color: #3b82f6; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; margin-left: 10px; cursor: pointer; transition: 0.2s; }
-        .backup-btn:hover { background: #f1f5f9; }
-        .backup-close { background: transparent; color: white; border: 1px solid white; padding: 8px 15px; border-radius: 5px; margin-left: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
-
-    <!-- Weekly Backup Notification Banner -->
-    <div id="backup-notification">
-        <span>⚠️ It's a new week! Please download a backup of your Firebase data.</span>
-        <div style="margin-top: 10px;">
-            <button class="backup-btn" id="backup-btn-text" onclick="performFirebaseBackup()">📥 Backup Now</button>
-            <button class="backup-close" onclick="closeBackupNotification()">Later</button>
-        </div>
-    </div>
 
     <div id="scanner-error-toast">Item not found!</div>
 
@@ -177,68 +162,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // --- Weekly Backup Logic ---
-        function getWeekNumber(d) {
-            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-            let yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            let weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-            return d.getUTCFullYear() + "-W" + weekNo;
-        }
-
-        function checkWeeklyBackup() {
-            const currentWeek = getWeekNumber(new Date());
-            const lastBackupWeek = localStorage.getItem('lastBackupWeek');
-            
-            // Show notification if it's a new week and backup hasn't been done yet
-            if (currentWeek !== lastBackupWeek) {
-                document.getElementById('backup-notification').style.display = 'block';
-            }
-        }
-
-        function closeBackupNotification() {
-            document.getElementById('backup-notification').style.display = 'none';
-        }
-
-        async function performFirebaseBackup() {
-            const btnText = document.getElementById('backup-btn-text');
-            btnText.innerText = "⏳ Backing up...";
-            
-            try {
-                // Fetch ALL data from root of Firebase
-                const snapshot = await db.ref('/').once('value');
-                const fullData = snapshot.val();
-                
-                if (fullData) {
-                    // Create a blob and download link
-                    const blob = new Blob([JSON.stringify(fullData, null, 2)], { type: "application/json" });
-                    const url = URL.createObjectURL(blob);
-                    
-                    const a = document.createElement('a');
-                    a.href = url;
-                    const dateStr = new Date().toISOString().split('T')[0];
-                    a.download = `HammadMart_Firebase_Backup_${dateStr}.json`;
-                    
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    
-                    // Save the week number so it doesn't ask again until next week
-                    localStorage.setItem('lastBackupWeek', getWeekNumber(new Date()));
-                    closeBackupNotification();
-                    alert("✅ Backup successfully downloaded!");
-                } else {
-                    alert("⚠️ No data found in database to backup.");
-                }
-            } catch (error) {
-                console.error("Backup Error: ", error);
-                alert("❌ Backup failed! Please check your internet connection.");
-            } finally {
-                btnText.innerText = "📥 Backup Now";
-            }
-        }
-
         // --- Menu & Modal Logic ---
         function toggleMenu() {
             const menu = document.getElementById('sideMenu');
@@ -290,8 +213,6 @@
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js').then(() => console.log("SW Registered"));
             }
-            // Trigger Backup Check on page load
-            setTimeout(checkWeeklyBackup, 1500); 
         };
 
         // --- Hybrid Data Fetcher ---
