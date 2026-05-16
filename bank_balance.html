@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
         :root {
@@ -51,7 +51,6 @@
         }
         .card-3d:hover { transform: translateY(-5px); box-shadow: var(--shadow-3d-hover); }
 
-        /* Active Tab/Card Styling */
         .card-3d.active-tab {
             background: var(--blue-3d-grad) !important;
             color: white !important;
@@ -158,6 +157,37 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .top-home-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6); background: linear-gradient(135deg, #4338ca, #2563eb); }
+
+        /* PDF CUSTOM STYLING (IMAGE-LIKE LAYOUT) */
+        #pdfTemplate {
+            display: none;
+            padding: 30px;
+            background: white;
+            color: #333;
+            width: 800px;
+        }
+        .pdf-header {
+            background: #b2b2b2;
+            padding: 15px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 5px;
+            margin-bottom: 30px;
+            border: 2px solid #333;
+        }
+        .pdf-row { display: flex; gap: 20px; margin-bottom: 10px; }
+        .pdf-box-main { flex: 1; border: 2px solid #333; padding: 10px; text-align: center; margin-bottom: 15px; }
+        .pdf-box-label { font-size: 12px; text-transform: uppercase; color: #666; display: block; border-bottom: 1px solid #eee; margin-bottom: 5px; }
+        .pdf-box-val { font-size: 22px; font-weight: 700; }
+        
+        .pdf-info-table { width: 100%; border-collapse: collapse; }
+        .pdf-info-table td { border: 1px solid #333; padding: 5px 10px; font-size: 11px; }
+        .pdf-info-label { background: #d9d9d9; font-weight: bold; width: 40%; text-transform: uppercase; }
+
+        .pdf-data-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        .pdf-data-table th { background: #d9d9d9; border: 1px solid #333; padding: 8px; font-size: 12px; text-align: left; }
+        .pdf-data-table td { border: 1px solid #333; padding: 8px; font-size: 12px; }
     </style>
 </head>
 <body data-theme="light">
@@ -286,6 +316,35 @@
 
 <button class="fab-btn" onclick="openTransactionModal()"><i class="bi bi-plus-lg"></i></button>
 
+<div id="pdfTemplate">
+    <div class="pdf-header">BANK STATEMENT</div>
+    <div class="pdf-row">
+        <div style="flex: 2;">
+            <div class="pdf-box-main">
+                <span class="pdf-box-label">Total Debit</span>
+                <span id="pdfTotalDebit" class="pdf-box-val">$0.00</span>
+            </div>
+            <div class="pdf-box-main">
+                <span class="pdf-box-label">Total Credit</span>
+                <span id="pdfTotalCredit" class="pdf-box-val">$0.00</span>
+            </div>
+        </div>
+        <div style="flex: 1.5;">
+            <table class="pdf-info-table">
+                <tr><td class="pdf-info-label">Account Name</td><td id="pdfAccName">Hammad Hussain</td></tr>
+                <tr><td class="pdf-info-label">Account Number</td><td id="pdfAccNum">---</td></tr>
+                <tr><td class="pdf-info-label">Statement Period</td><td id="pdfPeriod">All Time</td></tr>
+            </table>
+        </div>
+    </div>
+    <table class="pdf-data-table">
+        <thead>
+            <tr><th>Date</th><th>Type</th><th>Amount</th><th>Balance</th><th>Remarks</th></tr>
+        </thead>
+        <tbody id="pdfTableBody"></tbody>
+    </table>
+</div>
+
 <div class="modal fade" id="bankModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 p-4 border-0">
@@ -295,9 +354,7 @@
                 <input type="text" id="newBankNumber" class="form-control mb-3" placeholder="Account Number">
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="excludeFromBalance">
-                    <label class="form-check-label small fw-bold" for="excludeFromBalance">
-                        Exclude from Total Balance calculation
-                    </label>
+                    <label class="form-check-label small fw-bold" for="excludeFromBalance">Exclude from Total Balance calculation</label>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Save Bank</button>
             </form>
@@ -341,7 +398,6 @@
     <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content rounded-4 p-3 border-0 text-center shadow">
             <h6 class="fw-bold mb-3"><i class="bi bi-download me-2"></i>Download History</h6>
-            <p class="small text-muted mb-3">Choose how you want to save the current history.</p>
             <button class="btn btn-outline-primary rounded-pill mb-2 w-100 fw-bold" onclick="downloadPicture()"><i class="bi bi-image me-2"></i> As Picture</button>
             <button class="btn btn-danger rounded-pill w-100 fw-bold" onclick="downloadPDF()"><i class="bi bi-file-earmark-pdf me-2"></i> As PDF</button>
         </div>
@@ -409,16 +465,8 @@
                 if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
                 return s;
             }, 0);
-            
             const activeClass = (selectedBankId === bank.id) ? 'active-tab' : '';
-            const excludeIcon = bank.excludeFromBalance ? '<i class="bi bi-eye-slash-fill text-muted ms-2" title="Excluded from totals"></i>' : '';
-            
-            container.innerHTML += `
-                <div id="bankTab-${bank.id}" class="card-3d bank-card-mini ${activeClass}" onclick="selectBank('${bank.id}')">
-                    <h6>${bank.name} ${excludeIcon}</h6>
-                    <span class="acc-num">${bank.number || '---'}</span>
-                    <div class="bal-amt">Rs. ${balance.toLocaleString()}</div>
-                </div>`;
+            container.innerHTML += `<div id="bankTab-${bank.id}" class="card-3d bank-card-mini ${activeClass}" onclick="selectBank('${bank.id}')"><h6>${bank.name}</h6><span class="acc-num">${bank.number || '---'}</span><div class="bal-amt">Rs. ${balance.toLocaleString()}</div></div>`;
         });
         const options = allBanks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
         document.getElementById('entryBank').innerHTML = options; document.getElementById('fromBank').innerHTML = options; document.getElementById('toBank').innerHTML = options;
@@ -427,12 +475,10 @@
     function updateSummary() {
         const activeBankIds = allBanks.filter(b => !b.excludeFromBalance).map(b => b.id);
         const filteredTrans = allTransactions.filter(t => activeBankIds.includes(t.bankId));
-
         let tI = filteredTrans.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
         let tE = filteredTrans.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
         let tAdjIn = filteredTrans.filter(t => t.type === 'Adjustment In').reduce((s, t) => s + parseFloat(t.amount), 0);
         let tAdjOut = filteredTrans.filter(t => t.type === 'Adjustment Out').reduce((s, t) => s + parseFloat(t.amount), 0);
-        
         document.getElementById('totalIncome').innerText = `Rs. ${tI.toLocaleString()}`;
         document.getElementById('totalExpense').innerText = `Rs. ${tE.toLocaleString()}`;
         document.getElementById('totalBalance').innerText = `Rs. ${(tI + tAdjIn - tE - tAdjOut).toLocaleString()}`;
@@ -441,289 +487,79 @@
     window.updateMonthlyStats = () => {
         const selectedMonth = document.getElementById('monthSelector').value; 
         const activeBankIds = allBanks.filter(b => !b.excludeFromBalance).map(b => b.id);
-        
         let mInc = 0; let mExp = 0;
-        allTransactions.forEach(t => {
-            if(t.date.startsWith(selectedMonth) && activeBankIds.includes(t.bankId)) {
-                if(t.type === 'Income') mInc += parseFloat(t.amount);
-                if(t.type === 'Expense') mExp += parseFloat(t.amount);
-            }
-        });
+        allTransactions.forEach(t => { if(t.date.startsWith(selectedMonth) && activeBankIds.includes(t.bankId)) { if(t.type === 'Income') mInc += parseFloat(t.amount); if(t.type === 'Expense') mExp += parseFloat(t.amount); } });
         document.getElementById('monthlyIncome').innerText = `Rs. ${mInc.toLocaleString()}`;
         document.getElementById('monthlyExpense').innerText = `Rs. ${mExp.toLocaleString()}`;
     };
 
     window.setActiveCard = (type, id = null) => {
         document.querySelectorAll('.card-3d').forEach(c => c.classList.remove('active-tab'));
-        if (type === 'bank') {
-            const el = document.getElementById(`bankTab-${id}`);
-            if(el) el.classList.add('active-tab');
-        } else if (type === 'main') {
-            const el = document.getElementById(`mainCard-${id}`);
-            if(el) el.classList.add('active-tab');
-        }
+        if (type === 'bank') { document.getElementById(`bankTab-${id}`)?.classList.add('active-tab'); } else if (type === 'main') { document.getElementById(`mainCard-${id}`)?.classList.add('active-tab'); }
         document.getElementById('dashboardContent').style.display = 'block';
     };
 
     window.initChart = () => {
-        const ctx = document.getElementById('mainChart').getContext('2d');
-        if(myChart) myChart.destroy();
-        
-        let chartData = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : 
-                        allTransactions.filter(t => {
-                            const b = allBanks.find(bank => bank.id === t.bankId);
-                            return b && !b.excludeFromBalance;
-                        });
-
-        const bankName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
-        document.getElementById('chartTitle').innerText = `Showing: ${bankName}`;
+        const ctx = document.getElementById('mainChart').getContext('2d'); if(myChart) myChart.destroy();
+        let chartData = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : allTransactions.filter(t => { const b = allBanks.find(bank => bank.id === t.bankId); return b && !b.excludeFromBalance; });
         const dates = [...new Set(chartData.filter(t => t.type === 'Income' || t.type === 'Expense').map(t => t.date))].sort();
-        
-        const minWidthPerBar = 70;
-        const calculatedWidth = dates.length * minWidthPerBar;
-        const chartWrapper = document.getElementById('chartInnerWrapper');
-        if (calculatedWidth > chartWrapper.parentElement.offsetWidth) {
-            chartWrapper.style.width = calculatedWidth + 'px';
-        } else {
-            chartWrapper.style.width = '100%';
-        }
-
         const incData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Income').reduce((s, c) => s + parseFloat(c.amount), 0));
         const expData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Expense').reduce((s, c) => s + parseFloat(c.amount), 0));
-        
-        myChart = new Chart(ctx, { 
-            type: 'bar', 
-            data: { labels: dates, datasets: [{ label: 'Income', data: incData, backgroundColor: '#00b894', borderRadius: 8, hidden: currentFilter === 'Expense', barThickness: 25, minBarLength: 5 }, { label: 'Expense', data: expData, backgroundColor: '#d63031', borderRadius: 8, hidden: currentFilter === 'Income', barThickness: 25, minBarLength: 5 }] }, 
-            options: { 
-                responsive: true, maintainAspectRatio: false,
-                scales: { y: { type: 'logarithmic', beginAtZero: false, ticks: { callback: function(value) { if (value === 0) return "0"; if ([1, 10, 100, 1000, 10000, 100000, 1000000, 2500000].includes(value)) return 'Rs.' + value.toLocaleString(); } } } },
-                plugins: { datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold', size: 10 }, formatter: (v) => v > 0 ? 'Rs.' + v.toLocaleString() : '', clip: false, padding: 4 } },
-                onClick: (e, elements) => {
-                    if (elements.length > 0) {
-                        const element = elements[0]; const datasetIndex = element.datasetIndex; const index = element.index;
-                        const clickedDate = myChart.data.labels[index]; const clickedType = myChart.data.datasets[datasetIndex].label;
-                        const bName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
-                        document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bName} - ${clickedType} (${clickedDate})`;
-                        document.getElementById('filterFromDate').value = clickedDate; document.getElementById('filterToDate').value = clickedDate;
-                        historyTypeFilter = clickedType; window.applyFilters();
-                        document.getElementById('bankDetailSection').scrollIntoView({ behavior: 'smooth' });
-                    }
-                }
-            } 
-        });
+        myChart = new Chart(ctx, { type: 'bar', data: { labels: dates, datasets: [{ label: 'Income', data: incData, backgroundColor: '#00b894' }, { label: 'Expense', data: expData, backgroundColor: '#d63031' }] }, options: { responsive: true, maintainAspectRatio: false } });
     };
 
-    window.selectBank = (id) => {
-        selectedBankId = id; chartBankId = id;
-        window.setActiveCard('bank', id);
-        const bank = allBanks.find(b => b.id === id);
-        document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bank.name} History`;
-        window.resetAllFilters(); window.applyFilters(); initChart();
-        setTimeout(() => { document.getElementById('dashboardContent').scrollIntoView({ behavior: 'smooth' }); }, 100);
-    };
-
-    window.resetChartToAll = () => { 
-        chartBankId = null; currentFilter = 'All'; selectedBankId = null;
-        window.setActiveCard('main', 'Balance');
-        initChart(); 
-        window.resetAllFilters(); window.applyFilters();
-    };
+    window.selectBank = (id) => { selectedBankId = id; chartBankId = id; window.setActiveCard('bank', id); window.resetAllFilters(); window.applyFilters(); initChart(); };
+    window.resetChartToAll = () => { chartBankId = null; currentFilter = 'All'; selectedBankId = null; window.setActiveCard('main', 'Balance'); initChart(); window.resetAllFilters(); window.applyFilters(); };
 
     window.applyFilters = () => {
-        let filteredTrans = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : 
-                            allTransactions.filter(t => {
-                                const b = allBanks.find(bank => bank.id === t.bankId);
-                                return b && !b.excludeFromBalance;
-                            });
-
-        filteredTrans.sort((a, b) => {
-            if (a.date < b.date) return -1;
-            if (a.date > b.date) return 1;
-            if (a.id < b.id) return -1;
-            if (a.id > b.id) return 1;
-            return 0;
-        });
-
-        let currentRunBal = 0;
-        filteredTrans = filteredTrans.map(t => {
-            const amt = parseFloat(t.amount);
-            if (t.type === 'Income' || t.type === 'Adjustment In') {
-                currentRunBal += amt;
-            } else if (t.type === 'Expense' || t.type === 'Adjustment Out') {
-                currentRunBal -= amt;
-            }
-            return { ...t, runBal: currentRunBal };
-        });
-
-        const fromDate = document.getElementById('filterFromDate').value; const toDate = document.getElementById('filterToDate').value;
-        if(fromDate) filteredTrans = filteredTrans.filter(t => t.date >= fromDate);
-        if(toDate) filteredTrans = filteredTrans.filter(t => t.date <= toDate);
-        
+        let filteredTrans = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : allTransactions.filter(t => { const b = allBanks.find(bank => bank.id === t.bankId); return b && !b.excludeFromBalance; });
+        filteredTrans.sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+        let cur = 0; filteredTrans = filteredTrans.map(t => { const a = parseFloat(t.amount); if(t.type === 'Income' || t.type === 'Adjustment In') cur += a; else cur -= a; return {...t, runBal: cur}; });
+        const from = document.getElementById('filterFromDate').value; const to = document.getElementById('filterToDate').value;
+        if(from) filteredTrans = filteredTrans.filter(t => t.date >= from); if(to) filteredTrans = filteredTrans.filter(t => t.date <= to);
         const bInc = filteredTrans.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
         const bExp = filteredTrans.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
         const bAdj = filteredTrans.filter(t => t.type.includes('Adjustment')).reduce((s, t) => s + parseFloat(t.amount), 0);
-        
-        document.getElementById('statInc').innerText = `Income: Rs. ${bInc.toLocaleString()}`;
-        document.getElementById('statExp').innerText = `Expense: Rs. ${bExp.toLocaleString()}`;
-        document.getElementById('statAdj').innerText = `Adjustment: Rs. ${bAdj.toLocaleString()}`;
-        
+        document.getElementById('statInc').innerText = `Income: Rs. ${bInc.toLocaleString()}`; document.getElementById('statExp').innerText = `Expense: Rs. ${bExp.toLocaleString()}`; document.getElementById('statAdj').innerText = `Adjustment: Rs. ${bAdj.toLocaleString()}`;
         if(historyTypeFilter !== 'All') filteredTrans = filteredTrans.filter(t => historyTypeFilter === 'Adjustment' ? t.type.includes('Adjustment') : t.type === historyTypeFilter);
-        
-        document.getElementById('transactionBody').innerHTML = filteredTrans.map(t => {
-            let tCls = (t.type === 'Income' || t.type === 'Adjustment In') ? 'text-success' : 'text-danger';
-            let bName = allBanks.find(b => b.id === t.bankId)?.name || 'Unknown';
-            let displayRemarks = chartBankId ? (t.remarks || '---') : `<span class="badge bg-light text-dark border me-1">${bName}</span> ${t.remarks || '---'}`;
-            
-            // Added data-html2canvas-ignore to the Action column td
-            return `<tr>
-                <td>${t.date}</td>
-                <td class="${tCls} fw-bold">${t.type.replace('Adjustment ','')}</td>
-                <td>Rs. ${parseFloat(t.amount).toLocaleString()}</td>
-                <td class="text-primary fw-bold">Rs. ${t.runBal.toLocaleString()}</td>
-                <td>${displayRemarks}</td>
-                <td class="text-center" data-html2canvas-ignore="true">
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button>
-                </td>
-            </tr>`;
-        }).join('');
+        document.getElementById('transactionBody').innerHTML = filteredTrans.map(t => `<tr><td>${t.date}</td><td class="${(t.type==='Income'||t.type==='Adjustment In')?'text-success':'text-danger'} fw-bold">${t.type.replace('Adjustment ','')}</td><td>Rs. ${parseFloat(t.amount).toLocaleString()}</td><td class="text-primary fw-bold">Rs. ${t.runBal.toLocaleString()}</td><td>${t.remarks || '---'}</td><td class="text-center" data-html2canvas-ignore="true"><button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button></td></tr>`).join('');
+        window.currentFilteredData = filteredTrans;
     };
 
-    window.editEntry = (tId) => {
-        const t = allTransactions.find(trans => trans.id === tId); if (!t) return;
-        document.getElementById('editKey').value = t.id; document.getElementById('entryBank').value = t.bankId; document.getElementById('entryBank').disabled = true;
-        document.getElementById('entryType').value = t.type; document.getElementById('entryAmt').value = t.amount;
-        document.getElementById('entryDate').value = t.date; document.getElementById('entryRemarks').value = t.remarks || '';
-        document.getElementById('modalTitle').innerText = 'Edit Transaction'; eModal.show();
-    };
-
+    window.editEntry = (id) => { const t = allTransactions.find(x => x.id === id); if(!t) return; document.getElementById('editKey').value = t.id; document.getElementById('entryBank').value = t.bankId; document.getElementById('entryType').value = t.type; document.getElementById('entryAmt').value = t.amount; document.getElementById('entryDate').value = t.date; document.getElementById('entryRemarks').value = t.remarks || ''; eModal.show(); };
     window.filterByType = (type) => { historyTypeFilter = (historyTypeFilter === type) ? 'All' : type; window.applyFilters(); };
     window.resetDateFilters = () => { document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; window.applyFilters(); };
     window.resetAllFilters = () => { historyTypeFilter = 'All'; document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = ''; };
 
-    document.getElementById('transferForm').onsubmit = (e) => {
-        e.preventDefault();
-        const from = document.getElementById('fromBank').value; 
-        const to = document.getElementById('toBank').value;
-        const amt = parseFloat(document.getElementById('transferAmt').value); 
-        const dt = document.getElementById('transferDate').value;
-        
-        const fromBankObj = allBanks.find(b => b.id === from);
-        const fromName = fromBankObj.name; 
-        const toName = allBanks.find(b => b.id === to).name;
-
-        if(from === to) {
-            document.getElementById('errorMessage').innerText = "Select different banks for transfer!";
-            errorToast.show(); return;
-        }
-
-        const currentFromBalance = allTransactions.filter(t => t.bankId === from).reduce((s, t) => {
-            const tAmt = parseFloat(t.amount);
-            if(t.type === 'Income' || t.type === 'Adjustment In') return s + tAmt;
-            if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - tAmt;
-            return s;
-        }, 0);
-
-        if(amt > currentFromBalance) {
-            document.getElementById('errorMessage').innerText = `Insufficient Balance! Current balance in ${fromName} is Rs. ${currentFromBalance.toLocaleString()}.`;
-            errorToast.show(); return;
-        }
-
-        push(ref(db, `bank_transactions/${from}`), { type: 'Adjustment Out', amount: amt, date: dt, remarks: `Transfer To ${toName}` });
-        push(ref(db, `bank_transactions/${to}`), { type: 'Adjustment In', amount: amt, date: dt, remarks: `Transfer From ${fromName}` });
-        
-        tModal.hide(); document.getElementById('transferForm').reset();
-    };
-
-    window.openTransferModal = () => { document.getElementById('transferDate').value = new Date().toISOString().split('T')[0]; tModal.show(); };
-    window.deleteEntry = (bId, tId) => { if(confirm("Delete record?")) remove(ref(db, `bank_transactions/${bId}/${tId}`)); };
-    window.openBankModal = () => { document.getElementById('bankForm').reset(); bModal.show(); };
-    window.openTransactionModal = () => { document.getElementById('entryForm').reset(); document.getElementById('editKey').value = ''; document.getElementById('entryBank').disabled = false; document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; eModal.show(); };
+    window.openDownloadModal = () => new bootstrap.Modal(document.getElementById('downloadModal')).show();
     
-    // Download Functions
-    window.openDownloadModal = () => {
-        const dModal = new bootstrap.Modal(document.getElementById('downloadModal'));
-        dModal.show();
-    };
-
-    window.getDownloadFileName = () => {
-        let name = "Bank_History";
-        const titleEl = document.getElementById('selectedBankTitle');
-        if (titleEl) {
-            name = titleEl.innerText.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, '_');
-        }
-        return name;
-    };
-
-    window.downloadPicture = () => {
-        const element = document.getElementById('bankDetailSection');
-        html2canvas(element, { scale: 2 }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = window.getDownloadFileName() + '.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            bootstrap.Modal.getInstance(document.getElementById('downloadModal')).hide();
-        });
-    };
+    window.downloadPicture = () => { html2canvas(document.getElementById('bankDetailSection'), { scale: 2 }).then(canvas => { const link = document.createElement('a'); link.download = 'History.png'; link.href = canvas.toDataURL(); link.click(); }); };
 
     window.downloadPDF = () => {
-        const element = document.getElementById('bankDetailSection');
-        html2canvas(element, { scale: 2 }).then(canvas => {
-            const { jsPDF } = window.jspdf;
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-            
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(window.getDownloadFileName() + '.pdf');
-            bootstrap.Modal.getInstance(document.getElementById('downloadModal')).hide();
-        });
-    };
-    
-    document.getElementById('bankForm').onsubmit = (e) => { 
-        e.preventDefault(); 
-        push(ref(db, 'bank_accounts'), { 
-            name: document.getElementById('newBankName').value, 
-            number: document.getElementById('newBankNumber').value,
-            excludeFromBalance: document.getElementById('excludeFromBalance').checked
-        }); 
-        bModal.hide(); 
-    };
-    
-    document.getElementById('entryForm').onsubmit = (e) => { 
-        e.preventDefault(); const bId = document.getElementById('entryBank').value; const tId = document.getElementById('editKey').value;
-        const data = { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value }; 
-        if (tId) update(ref(db, `bank_transactions/${bId}/${tId}`), data); else push(ref(db, `bank_transactions/${bId}`), data); eModal.hide(); 
+        const data = window.currentFilteredData || [];
+        const bank = allBanks.find(b => b.id === chartBankId) || { name: 'All Accounts', number: '---' };
+        
+        const totalDebit = data.filter(t => t.type === 'Expense' || t.type === 'Adjustment Out').reduce((s,t) => s + parseFloat(t.amount), 0);
+        const totalCredit = data.filter(t => t.type === 'Income' || t.type === 'Adjustment In').reduce((s,t) => s + parseFloat(t.amount), 0);
+
+        document.getElementById('pdfTotalDebit').innerText = `Rs. ${totalDebit.toLocaleString()}`;
+        document.getElementById('pdfTotalCredit').innerText = `Rs. ${totalCredit.toLocaleString()}`;
+        document.getElementById('pdfAccName').innerText = bank.name;
+        document.getElementById('pdfAccNum').innerText = bank.number || '---';
+        document.getElementById('pdfPeriod').innerText = (document.getElementById('filterFromDate').value || 'Start') + ' to ' + (document.getElementById('filterToDate').value || 'End');
+
+        document.getElementById('pdfTableBody').innerHTML = data.map(t => `<tr><td>${t.date}</td><td>${t.type}</td><td>Rs. ${parseFloat(t.amount).toLocaleString()}</td><td>Rs. ${t.runBal.toLocaleString()}</td><td>${t.remarks || ''}</td></tr>`).join('');
+
+        const element = document.getElementById('pdfTemplate');
+        element.style.display = 'block';
+        html2pdf().from(element).set({ margin: 10, filename: `${bank.name}_Statement.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).save().then(() => { element.style.display = 'none'; });
     };
 
-    window.updateView = (v) => { 
-        currentFilter = v; 
-        chartBankId = null; selectedBankId = null;
-        const targetId = (v === 'Income' || v === 'Expense') ? v : 'Balance';
-        window.setActiveCard('main', targetId);
-        
-        initChart(); 
-        const bName = 'All Accounts';
-        document.getElementById('selectedBankTitle').innerHTML = `<i class="bi bi-clock-history me-2"></i> ${bName} - ${v} Details`;
-        document.getElementById('filterFromDate').value = ''; document.getElementById('filterToDate').value = '';
-        historyTypeFilter = v; window.applyFilters(); 
-        setTimeout(() => { document.getElementById('dashboardContent').scrollIntoView({ behavior: 'smooth' }); }, 100);
-    };
-    
-    window.changeTheme = (v) => { set(ref(db, 'settings/theme'), v); };
-    window.closeHistory = () => { 
-        document.getElementById('dashboardContent').style.display = 'none'; 
-        document.querySelectorAll('.card-3d').forEach(c => c.classList.remove('active-tab'));
-        selectedBankId = null; chartBankId = null; 
-    };
+    document.getElementById('entryForm').onsubmit = (e) => { e.preventDefault(); const bId = document.getElementById('entryBank').value; const tId = document.getElementById('editKey').value; const data = { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value }; if (tId) update(ref(db, `bank_transactions/${bId}/${tId}`), data); else push(ref(db, `bank_transactions/${bId}`), data); eModal.hide(); };
+    window.updateView = (v) => { currentFilter = v; chartBankId = null; selectedBankId = null; window.setActiveCard('main', (v==='Income'||v==='Expense')?v:'Balance'); initChart(); historyTypeFilter = v; window.applyFilters(); };
+    window.changeTheme = (v) => set(ref(db, 'settings/theme'), v);
+    window.closeHistory = () => { document.getElementById('dashboardContent').style.display = 'none'; document.querySelectorAll('.card-3d').forEach(c => c.classList.remove('active-tab')); selectedBankId = null; chartBankId = null; };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    window.history.pushState(null, null, window.location.href);
-    window.onpopstate = function () {
-        window.location.href = "https://hammad57.github.io/POS/index.html";
-    };
-</script>
 </body>
 </html>
