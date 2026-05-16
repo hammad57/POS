@@ -268,7 +268,7 @@
                 <div class="table-responsive">
                     <table class="table table-custom align-middle">
                         <thead>
-                            <tr><th>Date</th><th>Type</th><th>Amount</th><th>Remarks</th><th class="text-center">Actions</th></tr>
+                            <tr><th>Date</th><th>Type</th><th>Amount</th><th>Balance</th><th>Remarks</th><th class="text-center">Actions</th></tr>
                         </thead>
                         <tbody id="transactionBody"></tbody>
                     </table>
@@ -519,6 +519,28 @@
                                 return b && !b.excludeFromBalance;
                             });
 
+        // NAYI LOGIC: Running Balance Calculate karne ke liye pehle records ko date ke hisab se sort kiya hai
+        filteredTrans.sort((a, b) => {
+            if (a.date < b.date) return -1;
+            if (a.date > b.date) return 1;
+            // Agar dates same hon to Firebase id se time order maintain hoga
+            if (a.id < b.id) return -1;
+            if (a.id > b.id) return 1;
+            return 0;
+        });
+
+        // Running balance calculate karna start karte hain (Filter apply hone se pehle ta ke pichla record qaim rahe)
+        let currentRunBal = 0;
+        filteredTrans = filteredTrans.map(t => {
+            const amt = parseFloat(t.amount);
+            if (t.type === 'Income' || t.type === 'Adjustment In') {
+                currentRunBal += amt;
+            } else if (t.type === 'Expense' || t.type === 'Adjustment Out') {
+                currentRunBal -= amt;
+            }
+            return { ...t, runBal: currentRunBal };
+        });
+
         const fromDate = document.getElementById('filterFromDate').value; const toDate = document.getElementById('filterToDate').value;
         if(fromDate) filteredTrans = filteredTrans.filter(t => t.date >= fromDate);
         if(toDate) filteredTrans = filteredTrans.filter(t => t.date <= toDate);
@@ -537,7 +559,19 @@
             let tCls = (t.type === 'Income' || t.type === 'Adjustment In') ? 'text-success' : 'text-danger';
             let bName = allBanks.find(b => b.id === t.bankId)?.name || 'Unknown';
             let displayRemarks = chartBankId ? (t.remarks || '---') : `<span class="badge bg-light text-dark border me-1">${bName}</span> ${t.remarks || '---'}`;
-            return `<tr><td>${t.date}</td><td class="${tCls} fw-bold">${t.type.replace('Adjustment ','')}</td><td>Rs. ${parseFloat(t.amount).toLocaleString()}</td><td>${displayRemarks}</td><td class="text-center"><button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button></td></tr>`
+            
+            // Amount aur Remarks ke darmiyan naya "Balance" data dal diya
+            return `<tr>
+                <td>${t.date}</td>
+                <td class="${tCls} fw-bold">${t.type.replace('Adjustment ','')}</td>
+                <td>Rs. ${parseFloat(t.amount).toLocaleString()}</td>
+                <td class="text-primary fw-bold">Rs. ${t.runBal.toLocaleString()}</td>
+                <td>${displayRemarks}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>`;
         }).join('');
     };
 
