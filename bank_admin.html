@@ -8,7 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
     <style>
         :root {
             --bg-body: #f0f4f8;
@@ -39,7 +40,6 @@
         .table-custom thead th { background: #f8f9fa; color: #636e72; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; padding: 15px; border-bottom: 2px solid #edf2f7; }
         [data-theme="dark"] .table-custom thead th { background: #34495e; color: #ecf0f1; border-color: #2c3e50; }
         
-        /* Fixed Font Color Issue for Bank Names */
         .bank-name-text { color: #2d3436 !important; font-weight: 700; font-size: 1.05rem; }
         [data-theme="dark"] .bank-name-text { color: #f5f6fa !important; }
         [data-theme="dark"] .table-custom tbody td { border-color: #3c444b; }
@@ -54,10 +54,12 @@
         }
         
         .action-btn { width: 35px; height: 35px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; margin: 0 3px; }
-        
         .badge-excluded { background-color: #ffb142; color: #000; font-size: 0.75rem; padding: 5px 10px; border-radius: 20px; font-weight: bold; }
         .badge-active { background-color: #2ed573; color: #000; font-size: 0.75rem; padding: 5px 10px; border-radius: 20px; font-weight: bold; }
         .badge-hidden { background-color: #636e72; color: #fff; font-size: 0.7rem; padding: 4px 8px; border-radius: 10px; font-weight: normal; margin-left: 8px; }
+        
+        .admin-draggable-row { cursor: grab; }
+        .admin-draggable-row:active { cursor: grabbing; background-color: rgba(9, 132, 227, 0.1) !important; }
     </style>
 </head>
 <body data-theme="dark">
@@ -86,7 +88,7 @@
     </div>
 
     <div class="card-3d">
-        <h5 class="fw-bold mb-4"><i class="bi bi-bank2 me-2"></i>All Registered Banks</h5>
+        <h5 class="fw-bold mb-4"><i class="bi bi-bank2 me-2"></i>All Registered Banks (Drag to Reorder)</h5>
         <div class="table-responsive">
             <table class="table table-custom align-middle">
                 <thead>
@@ -181,6 +183,7 @@
 
     const editModal = new bootstrap.Modal(document.getElementById('editBankModal'));
     const balanceModal = new bootstrap.Modal(document.getElementById('updateBalanceModal'));
+    window.sortableAdmin = null;
 
     onValue(ref(db, 'settings/theme'), (snap) => {
         const savedTheme = snap.val() || 'dark';
@@ -215,18 +218,48 @@
         }, 0);
     }
 
+    window.enableBankDragAndDrop = () => {
+        const el = document.getElementById('adminBankBody');
+        if (window.sortableAdmin) {
+            window.sortableAdmin.destroy();
+        }
+        window.sortableAdmin = Sortable.create(el, {
+            animation: 150,
+            handle: '.admin-draggable-row',
+            onEnd: function (evt) {
+                const rows = el.children;
+                const updates = {};
+                for (let i = 0; i < rows.length; i++) {
+                    const rowId = rows[i].getAttribute('data-id');
+                    if (rowId) {
+                        updates[`bank_accounts/${rowId}/order`] = i;
+                    }
+                }
+                update(ref(db), updates).catch(err => console.error("Error saving bank order: ", err));
+            }
+        });
+    };
+
     function renderAdminTable() {
         const tbody = document.getElementById('adminBankBody');
         tbody.innerHTML = '';
         
+        // Ordered mapping for drag and drop
+        allBanks.sort((a, b) => {
+            let oA = a.order !== undefined ? a.order : 999999;
+            let oB = b.order !== undefined ? b.order : 999999;
+            return oA - oB;
+        });
+
         allBanks.forEach(bank => {
             const balance = calculateBankBalance(bank.id);
             const statusBadge = bank.excludeFromBalance ? '<span class="badge-excluded">Excluded</span>' : '<span class="badge-active">Active</span>';
             const hiddenBadge = bank.isHidden ? '<span class="badge-hidden"><i class="bi bi-eye-slash-fill"></i> Hidden</span>' : '';
 
             tbody.innerHTML += `
-                <tr>
+                <tr class="admin-draggable-row" data-id="${bank.id}">
                     <td>
+                        <i class="bi bi-grip-vertical text-muted me-2" title="Drag to reorder"></i>
                         <span class="bank-name-text">${bank.name}</span>
                         ${hiddenBadge}
                     </td>
@@ -250,6 +283,8 @@
                 </tr>
             `;
         });
+        
+        window.enableBankDragAndDrop();
     }
 
     window.openEditBank = (id) => {
