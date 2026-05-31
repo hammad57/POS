@@ -14,6 +14,7 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     
     <style>
         :root {
@@ -118,6 +119,10 @@
 
         .table-custom thead th { background: #f8f9fa; color: #636e72; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; padding: 15px; border-bottom: 2px solid #edf2f7; }
         [data-theme="dark"] .table-custom thead th { background: #34495e; color: #ecf0f1; border-color: #2c3e50; }
+
+        /* Draggable visual helper */
+        .draggable-row { cursor: grab; }
+        .draggable-row:active { cursor: grabbing; background-color: rgba(9, 132, 227, 0.1) !important; }
 
         .chart-wrapper { background: var(--card-main); border-radius: 25px; padding: 25px; box-shadow: var(--shadow-3d); }
         
@@ -373,6 +378,9 @@
     let myChart = null;
     let selectedBankId = null;
     let chartBankId = null; 
+    
+    // Sortable JS variable
+    window.sortableInstance = null;
 
     const today = new Date();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -407,6 +415,30 @@
             if(selectedBankId || chartBankId === null) window.applyFilters();
         }
     });
+
+    // Drag and Drop Enable function for transactions
+    window.enableDragAndDrop = () => {
+        const el = document.getElementById('transactionBody');
+        if (window.sortableInstance) {
+            window.sortableInstance.destroy();
+        }
+        window.sortableInstance = Sortable.create(el, {
+            animation: 150,
+            handle: '.draggable-row', 
+            onEnd: function (evt) {
+                const rows = el.children;
+                const updates = {};
+                for (let i = 0; i < rows.length; i++) {
+                    const rowId = rows[i].getAttribute('data-id');
+                    const bId = rows[i].getAttribute('data-bank-id');
+                    if (rowId && bId) {
+                        updates[`bank_transactions/${bId}/${rowId}/order`] = i;
+                    }
+                }
+                update(ref(db), updates).catch(err => console.error("Error saving order: ", err));
+            }
+        });
+    };
 
     function renderBanks() {
         const container = document.getElementById('bankCardsContainer');
@@ -545,8 +577,15 @@
                                 return b && !b.excludeFromBalance;
                             });
 
-        // NAYI LOGIC: Running Balance Calculate karne ke liye pehle records ko date ke hisab se sort kiya hai
+        // NAYI LOGIC (Drag & Drop ko support karne wali): Pehle saved "order" ke hisab se sort karein
         filteredTrans.sort((a, b) => {
+            let orderA = a.order !== undefined ? a.order : 999999;
+            let orderB = b.order !== undefined ? b.order : 999999;
+            
+            // Agar order set hai, to order pehla rule hai
+            if (orderA !== orderB) return orderA - orderB;
+
+            // Warna date aur id se sort karo jaisa pehle tha
             if (a.date < b.date) return -1;
             if (a.date > b.date) return 1;
             if (a.id < b.id) return -1;
@@ -554,7 +593,6 @@
             return 0;
         });
 
-        // Running balance calculate karna start karte hain (Filter apply hone se pehle ta ke pichla record qaim rahe)
         let currentRunBal = 0;
         filteredTrans = filteredTrans.map(t => {
             const amt = parseFloat(t.amount);
@@ -580,7 +618,6 @@
         
         if(historyTypeFilter !== 'All') filteredTrans = filteredTrans.filter(t => historyTypeFilter === 'Adjustment' ? t.type.includes('Adjustment') : t.type === historyTypeFilter);
         
-        // Download logic ke liye filtered records ko global window variable mein store kar rahy hain
         window.currentFilteredTransactions = filteredTrans;
 
         document.getElementById('transactionBody').innerHTML = filteredTrans.map(t => {
@@ -588,9 +625,9 @@
             let bName = allBanks.find(b => b.id === t.bankId)?.name || 'Unknown';
             let displayRemarks = chartBankId ? (t.remarks || '---') : `<span class="badge bg-light text-dark border me-1">${bName}</span> ${t.remarks || '---'}`;
             
-            // Amount aur Remarks ke darmiyan naya "Balance" data dal diya
-            return `<tr>
-                <td>${t.date}</td>
+            // data-id aur data-bank-id Firebase saving ke liye zaroori hain
+            return `<tr class="draggable-row" data-id="${t.id}" data-bank-id="${t.bankId}">
+                <td><i class="bi bi-grip-vertical text-muted me-2" title="Drag to reorder"></i>${t.date}</td>
                 <td class="${tCls} fw-bold">${t.type.replace('Adjustment ','')}</td>
                 <td>Rs. ${parseFloat(t.amount).toLocaleString()}</td>
                 <td class="text-primary fw-bold">Rs. ${t.runBal.toLocaleString()}</td>
@@ -601,15 +638,16 @@
                 </td>
             </tr>`;
         }).join('');
+
+        // List update hone ke baad automatically drag & drop activate karein
+        window.enableDragAndDrop();
     };
 
-    // Download Modal prompt toggle function
     window.promptDownload = () => {
         const dlModal = new bootstrap.Modal(document.getElementById('downloadModal'));
         dlModal.show();
     };
 
-    // Beautiful formal bank statement PDF/Image Generator Function
     window.generateDownload = (type) => {
         const modalEl = document.getElementById('downloadModal');
         const modalInstance = bootstrap.Modal.getInstance(modalEl);
@@ -664,7 +702,6 @@
             tableRowsHtml = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#777; font-style:italic;">Is Filter Selection ke mutabik koi records nahi mile.</td></tr>`;
         }
 
-        // Formal Layout Element creation (Offscreen dynamically injection)
         const printDiv = document.createElement('div');
         printDiv.id = 'print-statement-template';
         printDiv.style.cssText = 'width: 1100px; background: #ffffff; color: #000000; padding: 45px; font-family: "Poppins", Arial, sans-serif; box-sizing: border-box; position: absolute; left: -9999px; top: 0;';
