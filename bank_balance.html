@@ -120,9 +120,10 @@
         .table-custom thead th { background: #f8f9fa; color: #636e72; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; padding: 15px; border-bottom: 2px solid #edf2f7; }
         [data-theme="dark"] .table-custom thead th { background: #34495e; color: #ecf0f1; border-color: #2c3e50; }
 
-        /* Draggable visual helper */
-        .draggable-row { cursor: grab; }
-        .draggable-row:active { cursor: grabbing; background-color: rgba(9, 132, 227, 0.1) !important; }
+        /* Draggable visual helper (UPDATED) */
+        .drag-handle { cursor: grab; padding: 5px; margin-left: -5px; }
+        .drag-handle:active { cursor: grabbing; }
+        .draggable-row.sortable-chosen { background-color: rgba(9, 132, 227, 0.1) !important; }
 
         .chart-wrapper { background: var(--card-main); border-radius: 25px; padding: 25px; box-shadow: var(--shadow-3d); }
         
@@ -424,7 +425,7 @@
         }
         window.sortableInstance = Sortable.create(el, {
             animation: 150,
-            handle: '.draggable-row', 
+            handle: '.drag-handle', // <-- Yahan update kiya gaya hai
             onEnd: function (evt) {
                 const rows = el.children;
                 const updates = {};
@@ -626,8 +627,9 @@
             let displayRemarks = chartBankId ? (t.remarks || '---') : `<span class="badge bg-light text-dark border me-1">${bName}</span> ${t.remarks || '---'}`;
             
             // data-id aur data-bank-id Firebase saving ke liye zaroori hain
+            // Yahan icon mein drag-handle class add ki gayi hai
             return `<tr class="draggable-row" data-id="${t.id}" data-bank-id="${t.bankId}">
-                <td><i class="bi bi-grip-vertical text-muted me-2" title="Drag to reorder"></i>${t.date}</td>
+                <td><i class="bi bi-grip-vertical text-muted me-2 drag-handle" title="Drag to reorder"></i>${t.date}</td>
                 <td class="${tCls} fw-bold">${t.type.replace('Adjustment ','')}</td>
                 <td>Rs. ${parseFloat(t.amount).toLocaleString()}</td>
                 <td class="text-primary fw-bold">Rs. ${t.runBal.toLocaleString()}</td>
