@@ -9,6 +9,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    
+    <!-- SweetAlert2 for Warning Messages -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         :root {
@@ -40,12 +43,11 @@
         .table-custom thead th { background: #f8f9fa; color: #636e72; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; padding: 15px; border-bottom: 2px solid #edf2f7; }
         [data-theme="dark"] .table-custom thead th { background: #34495e; color: #ecf0f1; border-color: #2c3e50; }
         
-        /* Yeh class update ki gayi hai taake name hamesha black aur saaf nazar aaye */
         .bank-name-text { 
             color: #000000 !important; 
             font-weight: 800 !important; 
             font-size: 1.15rem !important; 
-            background-color: rgba(255, 255, 255, 0.7); /* Thora sa light background taake dark mode me bhi black text chamke */
+            background-color: rgba(255, 255, 255, 0.7); 
             padding: 2px 8px;
             border-radius: 6px;
         }
@@ -109,12 +111,13 @@
                     </tr>
                 </thead>
                 <tbody id="adminBankBody">
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>
 </div>
 
+<!-- Edit Bank Modal -->
 <div class="modal fade" id="editBankModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 p-4 border-0">
@@ -151,6 +154,7 @@
     </div>
 </div>
 
+<!-- Update Balance Modal -->
 <div class="modal fade" id="updateBalanceModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 p-4 border-0" style="background: linear-gradient(145deg, #1e272e, #2d3436); color: white;">
@@ -252,7 +256,6 @@
         const tbody = document.getElementById('adminBankBody');
         tbody.innerHTML = '';
         
-        // Ordered mapping for drag and drop
         allBanks.sort((a, b) => {
             let oA = a.order !== undefined ? a.order : 999999;
             let oB = b.order !== undefined ? b.order : 999999;
@@ -347,19 +350,55 @@
         balanceModal.hide();
     };
 
+    // UPDATED: Clear History with SweetAlert Confirmation
     window.clearBankHistory = (id) => {
         const bank = allBanks.find(b => b.id === id);
-        if(confirm(`⚠️ Are you sure you want to clear ALL transaction history for "${bank.name}"?`)) {
-            remove(ref(db, `bank_transactions/${id}`));
-        }
+        
+        Swal.fire({
+            title: 'Clear History?',
+            html: `Kya aap waqai <b>"${bank.name}"</b> ki sari transaction history clear karna chahte hain?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e54646',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Haan, Clear kardo!',
+            cancelButtonText: 'Nahi, Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                remove(ref(db, `bank_transactions/${id}`));
+                Swal.fire(
+                    'Cleared!',
+                    'History successfully delete ho gayi hai.',
+                    'success'
+                )
+            }
+        });
     };
 
+    // UPDATED: Delete Account completely with SweetAlert Confirmation
     window.deleteBankCompletely = (id) => {
         const bank = allBanks.find(b => b.id === id);
-        if(confirm(`🚨 CRITICAL ACTION 🚨\nAre you sure you want to completely DELETE "${bank.name}"?`)) {
-            remove(ref(db, `bank_transactions/${id}`));
-            remove(ref(db, `bank_accounts/${id}`));
-        }
+        
+        Swal.fire({
+            title: 'Delete Bank Account?',
+            html: `🚨 <b>WARNING</b> 🚨<br>Kya aap waqai <b>"${bank.name}"</b> ko hamesha ke liye delete karna chahte hain?<br><br>Iska data wapas nahi aayega!`,
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Haan, Delete kardo!',
+            cancelButtonText: 'Nahi, Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                remove(ref(db, `bank_transactions/${id}`));
+                remove(ref(db, `bank_accounts/${id}`));
+                Swal.fire(
+                    'Deleted!',
+                    'Account aur uski history permanently delete ho chuki hai.',
+                    'success'
+                )
+            }
+        });
     };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
