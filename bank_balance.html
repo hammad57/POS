@@ -356,7 +356,15 @@
                 <div class="mb-3"><label class="small fw-bold">Type</label><select id="entryType" class="form-select"><option value="Income">Income</option><option value="Expense">Expense</option></select></div>
                 <div class="mb-3"><label class="small fw-bold">Amount</label><input type="number" id="entryAmt" class="form-control" required></div>
                 <div class="mb-3"><label class="small fw-bold">Date</label><input type="date" id="entryDate" class="form-control" required></div>
-                <div class="mb-4"><label class="small fw-bold">Remarks</label><textarea id="entryRemarks" class="form-control" rows="2"></textarea></div>
+                <div class="mb-3"><label class="small fw-bold">Remarks</label><textarea id="entryRemarks" class="form-control" rows="2"></textarea></div>
+                
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" id="entryExclude">
+                    <label class="form-check-label small fw-bold text-danger" for="entryExclude">
+                        Exclude from Balance (Do not calculate)
+                    </label>
+                </div>
+
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Save Record</button>
             </form>
         </div>
@@ -417,7 +425,6 @@
         }
     });
 
-    // Drag and Drop Enable function for transactions
     window.enableDragAndDrop = () => {
         const el = document.getElementById('transactionBody');
         if (window.sortableInstance) {
@@ -425,7 +432,7 @@
         }
         window.sortableInstance = Sortable.create(el, {
             animation: 150,
-            handle: '.drag-handle', // <-- Yahan update kiya gaya hai
+            handle: '.drag-handle',
             onEnd: function (evt) {
                 const rows = el.children;
                 const updates = {};
@@ -446,6 +453,7 @@
         container.innerHTML = '';
         allBanks.forEach(bank => {
             const balance = allTransactions.filter(t => t.bankId === bank.id).reduce((s, t) => {
+                if (t.excludeFromBalance) return s; // Exclude logic applied
                 const amt = parseFloat(t.amount);
                 if(t.type === 'Income' || t.type === 'Adjustment In') return s + amt;
                 if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
@@ -470,10 +478,10 @@
         const activeBankIds = allBanks.filter(b => !b.excludeFromBalance).map(b => b.id);
         const filteredTrans = allTransactions.filter(t => activeBankIds.includes(t.bankId));
 
-        let tI = filteredTrans.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
-        let tE = filteredTrans.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
-        let tAdjIn = filteredTrans.filter(t => t.type === 'Adjustment In').reduce((s, t) => s + parseFloat(t.amount), 0);
-        let tAdjOut = filteredTrans.filter(t => t.type === 'Adjustment Out').reduce((s, t) => s + parseFloat(t.amount), 0);
+        let tI = filteredTrans.filter(t => t.type === 'Income' && !t.excludeFromBalance).reduce((s, t) => s + parseFloat(t.amount), 0);
+        let tE = filteredTrans.filter(t => t.type === 'Expense' && !t.excludeFromBalance).reduce((s, t) => s + parseFloat(t.amount), 0);
+        let tAdjIn = filteredTrans.filter(t => t.type === 'Adjustment In' && !t.excludeFromBalance).reduce((s, t) => s + parseFloat(t.amount), 0);
+        let tAdjOut = filteredTrans.filter(t => t.type === 'Adjustment Out' && !t.excludeFromBalance).reduce((s, t) => s + parseFloat(t.amount), 0);
         
         document.getElementById('totalIncome').innerText = `Rs. ${tI.toLocaleString()}`;
         document.getElementById('totalExpense').innerText = `Rs. ${tE.toLocaleString()}`;
@@ -486,7 +494,7 @@
         
         let mInc = 0; let mExp = 0;
         allTransactions.forEach(t => {
-            if(t.date.startsWith(selectedMonth) && activeBankIds.includes(t.bankId)) {
+            if(t.date.startsWith(selectedMonth) && activeBankIds.includes(t.bankId) && !t.excludeFromBalance) {
                 if(t.type === 'Income') mInc += parseFloat(t.amount);
                 if(t.type === 'Expense') mExp += parseFloat(t.amount);
             }
@@ -530,8 +538,8 @@
             chartWrapper.style.width = '100%';
         }
 
-        const incData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Income').reduce((s, c) => s + parseFloat(c.amount), 0));
-        const expData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Expense').reduce((s, c) => s + parseFloat(c.amount), 0));
+        const incData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Income' && !t.excludeFromBalance).reduce((s, c) => s + parseFloat(c.amount), 0));
+        const expData = dates.map(d => chartData.filter(t => t.date === d && t.type === 'Expense' && !t.excludeFromBalance).reduce((s, c) => s + parseFloat(c.amount), 0));
         
         myChart = new Chart(ctx, { 
             type: 'bar', 
@@ -578,15 +586,12 @@
                                 return b && !b.excludeFromBalance;
                             });
 
-        // NAYI LOGIC (Drag & Drop ko support karne wali): Pehle saved "order" ke hisab se sort karein
         filteredTrans.sort((a, b) => {
             let orderA = a.order !== undefined ? a.order : 999999;
             let orderB = b.order !== undefined ? b.order : 999999;
             
-            // Agar order set hai, to order pehla rule hai
             if (orderA !== orderB) return orderA - orderB;
 
-            // Warna date aur id se sort karo jaisa pehle tha
             if (a.date < b.date) return -1;
             if (a.date > b.date) return 1;
             if (a.id < b.id) return -1;
@@ -597,10 +602,12 @@
         let currentRunBal = 0;
         filteredTrans = filteredTrans.map(t => {
             const amt = parseFloat(t.amount);
-            if (t.type === 'Income' || t.type === 'Adjustment In') {
-                currentRunBal += amt;
-            } else if (t.type === 'Expense' || t.type === 'Adjustment Out') {
-                currentRunBal -= amt;
+            if (!t.excludeFromBalance) {
+                if (t.type === 'Income' || t.type === 'Adjustment In') {
+                    currentRunBal += amt;
+                } else if (t.type === 'Expense' || t.type === 'Adjustment Out') {
+                    currentRunBal -= amt;
+                }
             }
             return { ...t, runBal: currentRunBal };
         });
@@ -609,9 +616,9 @@
         if(fromDate) filteredTrans = filteredTrans.filter(t => t.date >= fromDate);
         if(toDate) filteredTrans = filteredTrans.filter(t => t.date <= toDate);
         
-        const bInc = filteredTrans.filter(t => t.type === 'Income').reduce((s, t) => s + parseFloat(t.amount), 0);
-        const bExp = filteredTrans.filter(t => t.type === 'Expense').reduce((s, t) => s + parseFloat(t.amount), 0);
-        const bAdj = filteredTrans.filter(t => t.type.includes('Adjustment')).reduce((s, t) => s + parseFloat(t.amount), 0);
+        const bInc = filteredTrans.filter(t => t.type === 'Income' && !t.excludeFromBalance).reduce((s, t) => s + parseFloat(t.amount), 0);
+        const bExp = filteredTrans.filter(t => t.type === 'Expense' && !t.excludeFromBalance).reduce((s, t) => s + parseFloat(t.amount), 0);
+        const bAdj = filteredTrans.filter(t => t.type.includes('Adjustment') && !t.excludeFromBalance).reduce((s, t) => s + parseFloat(t.amount), 0);
         
         document.getElementById('statInc').innerText = `Income: Rs. ${bInc.toLocaleString()}`;
         document.getElementById('statExp').innerText = `Expense: Rs. ${bExp.toLocaleString()}`;
@@ -626,12 +633,15 @@
             let bName = allBanks.find(b => b.id === t.bankId)?.name || 'Unknown';
             let displayRemarks = chartBankId ? (t.remarks || '---') : `<span class="badge bg-light text-dark border me-1">${bName}</span> ${t.remarks || '---'}`;
             
-            // data-id aur data-bank-id Firebase saving ke liye zaroori hain
-            // Yahan icon mein drag-handle class add ki gayi hai
+            // Visual indicator for excluded entries
+            let exclIcon = t.excludeFromBalance ? `<i class="bi bi-eye-slash-fill text-danger ms-1" data-bs-toggle="tooltip" title="Excluded from Balance"></i>` : '';
+            let typeLabel = t.type.replace('Adjustment ','');
+            if(t.excludeFromBalance) typeLabel += ' <small class="text-muted">(Exc)</small>';
+
             return `<tr class="draggable-row" data-id="${t.id}" data-bank-id="${t.bankId}">
                 <td><i class="bi bi-grip-vertical text-muted me-2 drag-handle" title="Drag to reorder"></i>${t.date}</td>
-                <td class="${tCls} fw-bold">${t.type.replace('Adjustment ','')}</td>
-                <td>Rs. ${parseFloat(t.amount).toLocaleString()}</td>
+                <td class="${tCls} fw-bold">${typeLabel}</td>
+                <td>Rs. ${parseFloat(t.amount).toLocaleString()} ${exclIcon}</td>
                 <td class="text-primary fw-bold">Rs. ${t.runBal.toLocaleString()}</td>
                 <td>${displayRemarks}</td>
                 <td class="text-center">
@@ -641,7 +651,6 @@
             </tr>`;
         }).join('');
 
-        // List update hone ke baad automatically drag & drop activate karein
         window.enableDragAndDrop();
     };
 
@@ -675,10 +684,10 @@
             
             if (t.type === 'Expense' || t.type === 'Adjustment Out') {
                 debitStr = `Rs. ${amt.toLocaleString()}`;
-                totalDebit += amt;
+                if (!t.excludeFromBalance) totalDebit += amt;
             } else if (t.type === 'Income' || t.type === 'Adjustment In') {
                 creditStr = `Rs. ${amt.toLocaleString()}`;
-                totalCredit += amt;
+                if (!t.excludeFromBalance) totalCredit += amt;
             }
             
             let bNamePre = '';
@@ -687,11 +696,13 @@
                 if (b) bNamePre = `<span style="background:#f1f2f6; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:5px; border:1px solid #ddd;">${b.name}</span>`;
             }
             const remarksStr = bNamePre + (t.remarks || '---');
+            let typeStr = t.type.replace('Adjustment ','');
+            if (t.excludeFromBalance) typeStr += ' (Exc)';
 
             tableRowsHtml += `
                 <tr style="border-bottom: 1px solid #dbdbdb;">
                     <td style="padding: 12px 10px; border: 1px solid #dbdbdb; color:#333;">${t.date}</td>
-                    <td style="padding: 12px 10px; border: 1px solid #dbdbdb; color:#333; font-weight:600;">${t.type.replace('Adjustment ','')}</td>
+                    <td style="padding: 12px 10px; border: 1px solid #dbdbdb; color:#333; font-weight:600;">${typeStr}</td>
                     <td style="padding: 12px 10px; border: 1px solid #dbdbdb; text-align: right; color: #d63031; font-weight:600;">${debitStr}</td>
                     <td style="padding: 12px 10px; border: 1px solid #dbdbdb; text-align: right; color: #00b894; font-weight:600;">${creditStr}</td>
                     <td style="padding: 12px 10px; border: 1px solid #dbdbdb; text-align: right; font-weight: bold; color: #0984e3;">Rs. ${t.runBal.toLocaleString()}</td>
@@ -783,6 +794,7 @@
         document.getElementById('editKey').value = t.id; document.getElementById('entryBank').value = t.bankId; document.getElementById('entryBank').disabled = true;
         document.getElementById('entryType').value = t.type; document.getElementById('entryAmt').value = t.amount;
         document.getElementById('entryDate').value = t.date; document.getElementById('entryRemarks').value = t.remarks || '';
+        document.getElementById('entryExclude').checked = t.excludeFromBalance || false; // Edited value loaded
         document.getElementById('modalTitle').innerText = 'Edit Transaction'; eModal.show();
     };
 
@@ -807,6 +819,7 @@
         }
 
         const currentFromBalance = allTransactions.filter(t => t.bankId === from).reduce((s, t) => {
+            if (t.excludeFromBalance) return s;
             const tAmt = parseFloat(t.amount);
             if(t.type === 'Income' || t.type === 'Adjustment In') return s + tAmt;
             if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - tAmt;
@@ -827,7 +840,16 @@
     window.openTransferModal = () => { document.getElementById('transferDate').value = new Date().toISOString().split('T')[0]; tModal.show(); };
     window.deleteEntry = (bId, tId) => { if(confirm("Delete record?")) remove(ref(db, `bank_transactions/${bId}/${tId}`)); };
     window.openBankModal = () => { document.getElementById('bankForm').reset(); bModal.show(); };
-    window.openTransactionModal = () => { document.getElementById('entryForm').reset(); document.getElementById('editKey').value = ''; document.getElementById('entryBank').disabled = false; document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; eModal.show(); };
+    
+    // Reset Checkbox on modal open
+    window.openTransactionModal = () => { 
+        document.getElementById('entryForm').reset(); 
+        document.getElementById('editKey').value = ''; 
+        document.getElementById('entryBank').disabled = false; 
+        document.getElementById('entryDate').value = new Date().toISOString().split('T')[0]; 
+        document.getElementById('entryExclude').checked = false; 
+        eModal.show(); 
+    };
     
     document.getElementById('bankForm').onsubmit = (e) => { 
         e.preventDefault(); 
@@ -840,8 +862,16 @@
     };
     
     document.getElementById('entryForm').onsubmit = (e) => { 
-        e.preventDefault(); const bId = document.getElementById('entryBank').value; const tId = document.getElementById('editKey').value;
-        const data = { type: document.getElementById('entryType').value, amount: document.getElementById('entryAmt').value, date: document.getElementById('entryDate').value, remarks: document.getElementById('entryRemarks').value }; 
+        e.preventDefault(); 
+        const bId = document.getElementById('entryBank').value; 
+        const tId = document.getElementById('editKey').value;
+        const data = { 
+            type: document.getElementById('entryType').value, 
+            amount: document.getElementById('entryAmt').value, 
+            date: document.getElementById('entryDate').value, 
+            remarks: document.getElementById('entryRemarks').value,
+            excludeFromBalance: document.getElementById('entryExclude').checked // NEW DATA FIELD SAVED
+        }; 
         if (tId) update(ref(db, `bank_transactions/${bId}/${tId}`), data); else push(ref(db, `bank_transactions/${bId}`), data); eModal.hide(); 
     };
 
