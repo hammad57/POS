@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Media Manager</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* Long press and double tap configurations */
+        .img-card {
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+
+    <nav class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-40">
+        <h1 class="text-xl font-bold tracking-wide">Media Drive</h1>
+        <div id="user-profile" class="hidden flex items-center gap-2">
+            <span id="user-name" class="text-sm font-semibold"></span>
+            <img id="user-img" class="w-8 h-8 rounded-full border-2 border-white" src="" alt="Profile">
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto p-4 space-y-6">
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+            <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
+                📸 نیا میڈیا اپلوڈ کریں
+            </h2>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <label class="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-xl shadow-sm cursor-pointer flex items-center justify-center gap-2 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    کیمرہ اوپن کریں
+                    <input type="file" accept="image/*" capture="environment" id="camera-input" class="hidden">
+                </label>
+
+                <label class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 px-6 rounded-xl shadow-sm cursor-pointer flex items-center justify-center gap-2 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    گیلری سے منتخب کریں
+                    <input type="file" accept="image/*" id="gallery-input" class="hidden">
+                </label>
+            </div>
+
+            <div id="progress-container" class="hidden mt-4">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <p id="progress-text" class="text-xs text-gray-500 text-right mt-1">0% Uploaded</p>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <input type="text" id="search-input" placeholder="تصویر کا نام لکھ کر سرچ کریں..." class="w-full bg-transparent focus:outline-none text-gray-700">
+        </div>
+
+        <div id="images-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            </div>
+
+    </div>
+
+    <div id="fullscreen-modal" class="fixed inset-0 bg-black z-50 hidden flex items-center justify-center p-4">
+        <img id="fullscreen-img" src="" class="max-w-full max-h-full object-contain rounded-sm shadow-2xl">
+        <button id="close-modal-btn" class="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+    </div>
+
+    <div id="context-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-xl">
+            <h3 id="context-title" class="text-md font-bold text-gray-800 border-b pb-2 truncate">تصویر کے اختیارات</h3>
+            <button id="action-download" class="w-full bg-blue-500 text-white py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-blue-600 transition">📥 ڈاؤن لوڈ کریں</button>
+            <button id="action-rename" class="w-full bg-amber-500 text-white py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-amber-600 transition">✏️ نام تبدیل کریں</button>
+            <button id="action-delete" class="w-full bg-red-500 text-white py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-red-600 transition">🗑️ ڈیلیٹ کریں</button>
+            <button id="action-close" class="w-full bg-gray-200 text-gray-700 py-2 rounded-xl font-medium hover:bg-gray-300 transition">کینسل</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getAuth, signInWithRedirect, GoogleAuthProvider, getRedirectResult, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+        import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-storage.js";
+        import { getDatabase, ref as dRef, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+        // ⚠️ یہاں اپنے فائر بیس پروجیکٹ کی کریڈنشلز پیسٹ کریں۔
+        // اگر آپ کا پرانا لنک موجود ہے تو یہ خودکار طور پر لاگ ان اٹھا لے گا۔
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+        const db = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+
+        let currentUser = null;
+        let allImagesData = {};
+        let activeImageKey = null;
+
+        // --- Automatic Google Login Logic ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('user-name').innerText = user.displayName;
+                document.getElementById('user-img').src = user.photoURL;
+                document.getElementById('user-profile').classList.remove('hidden');
+                loadUserImages();
+            } else {
+                // اگر لاگ ان نہیں ہے تو خود بخود گوگل لاگ ان پیج پر ری ڈائریکٹ کر دے گا
+                signInWithRedirect(auth, provider);
+            }
+        });
+
+        // Handle Redirect Result
+        getRedirectResult(auth).catch(err => console.error("Auth Error:", err));
+
+
+        // --- File Upload Logic ---
+        const cameraInput = document.getElementById('camera-input');
+        const galleryInput = document.getElementById('gallery-input');
+
+        cameraInput.addEventListener('change', (e) => handleFileUpload(e.target.files[0]));
+        galleryInput.addEventListener('change', (e) => handleFileUpload(e.target.files[0]));
+
+        function generateRandomName() {
+            return 'img_' + Math.random().toString(36).substring(2, 10);
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function handleFileUpload(file) {
+            if (!file || !currentUser) return;
+
+            // تصویر کا نام پوچھنا
+            let customName = prompt("تصویر کا نام درج کریں (خالی چھوڑنے پر رینڈم نام رکھ دیا جائے گا):");
+            if (customName === null) return; // Cancel out
+            
+            customName = customName.trim();
+            const extension = file.name.split('.').pop();
+            const finalName = customName ? `${customName}.${extension}` : `${generateRandomName()}.${extension}`;
+
+            const storageRef = sRef(storage, `users/${currentUser.uid}/${Date.now()}_${finalName}`);
+            const uploadTask = uploadBytesResumable(storageRef, file);
+
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+
+            progressContainer.classList.remove('hidden');
+
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    progressBar.style.width = progress + '%';
+                    progressText.innerText = Math.round(progress) + '% Uploaded';
+                }, 
+                (error) => {
+                    alert("اپلوڈ فیل ہو گیا: " + error.message);
+                    progressContainer.classList.add('hidden');
+                }, 
+                () => {
+                    getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                        // ڈیٹا بیس میں ریکارڈ سیو کرنا
+                        const newImgRef = push(dRef(db, `users/${currentUser.uid}/images`));
+                        set(newImgRef, {
+                            name: finalName,
+                            url: downloadURL,
+                            size: formatBytes(file.size),
+                            date: new Date().toLocaleDateString('ur-PK'),
+                            storagePath: uploadTask.snapshot.ref.fullPath
+                        });
+                        
+                        progressContainer.classList.add('hidden');
+                        progressBar.style.width = '0%';
+                        alert("تصویر کامیابی سے اپلوڈ ہو گئی!");
+                    });
+                }
+            );
+        }
+
+        // --- Fetch & Realtime Display Images ---
+        function loadUserImages() {
+            const imagesRef = dRef(db, `users/${currentUser.uid}/images`);
+            onValue(imagesRef, (snapshot) => {
+                const data = snapshot.val();
+                allImagesData = data || {};
+                renderImages(allImagesData);
+            });
+        }
+
+        function renderImages(imagesObject) {
+            const grid = document.getElementById('images-grid');
+            grid.innerHTML = '';
+
+            Object.keys(imagesObject).forEach(key => {
+                const item = imagesObject[key];
+                
+                const card = document.createElement('div');
+                card.className = "img-card bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 p-2 cursor-pointer transition transform active:scale-95";
+                card.dataset.key = key;
+
+                card.innerHTML = `
+                    <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden relative mb-2">
+                        <img src="${item.url}" class="w-full h-full object-cover pointer-events-none">
+                    </div>
+                    <div class="text-xs space-y-1 p-1 pointer-events-none">
+                        <p class="font-bold text-gray-800 truncate" title="${item.name}">${item.name}</p>
+                        <p class="text-gray-500 flex justify-between"><span>${item.size}</span> <span>${item.date}</span></p>
+                    </div>
+                `;
+
+                setupTouchEvents(card, item, key);
+                grid.appendChild(card);
+            });
+        }
+
+        // --- Search Functionality ---
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = {};
+            
+            Object.keys(allImagesData).forEach(key => {
+                if (allImagesData[key].name.toLowerCase().includes(query)) {
+                    filtered[key] = allImagesData[key];
+                }
+            });
+            renderImages(filtered);
+        });
+
+        // --- Touch Events (Double Tap & Long Press) ---
+        function setupTouchEvents(element, item, key) {
+            let lastTap = 0;
+            let pressTimer;
+
+            // Long Press Detector
+            const startPress = () => {
+                pressTimer = setTimeout(() => {
+                    openContextMenu(key, item);
+                }, 700); // 700ms holding triggers long press
+            };
+
+            const cancelPress = () => {
+                clearTimeout(pressTimer);
+            };
+
+            element.addEventListener('touchstart', startPress);
+            element.addEventListener('touchend', cancelPress);
+            element.addEventListener('touchmove', cancelPress);
+            element.addEventListener('mousedown', startPress);
+            element.addEventListener('mouseup', cancelPress);
+            element.addEventListener('mouseleave', cancelPress);
+
+            // Double Tap / Double Click Detector
+            element.addEventListener('click', (e) => {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTap;
+                if (tapLength < 300 && tapLength > 0) {
+                    openFullScreen(item.url);
+                    e.preventDefault();
+                }
+                lastTap = currentTime;
+            });
+        }
+
+        // --- Full Screen & Back Button Logic ---
+        const fullscreenModal = document.getElementById('fullscreen-modal');
+        const fullscreenImg = document.getElementById('fullscreen-img');
+
+        function openFullScreen(url) {
+            fullscreenImg.src = url;
+            fullscreenModal.classList.remove('hidden');
+            // History state push تا کہ موبائل کا بیک بٹن کام کرے
+            window.history.pushState({view: "fullscreen"}, "");
+        }
+
+        function closeFullScreen() {
+            fullscreenModal.classList.add('hidden');
+            fullscreenImg.src = "";
+        }
+
+        document.getElementById('close-modal-btn').addEventListener('click', () => {
+            window.history.back(); // خود بخود سٹیٹ پاپ ہوگی اور بند ہو جائے گا
+        });
+
+        // موبائل بیک بٹن ہینڈلر
+        window.addEventListener('popstate', (e) => {
+            closeFullScreen();
+            closeContextMenu();
+        });
+
+        // --- Context Menu Actions (Download, Rename, Delete) ---
+        const contextModal = document.getElementById('context-modal');
+        
+        function openContextMenu(key, item) {
+            activeImageKey = key;
+            document.getElementById('context-title').innerText = item.name;
+            contextModal.classList.remove('hidden');
+            window.history.pushState({view: "context"}, "");
+        }
+
+        function closeContextMenu() {
+            contextModal.classList.add('hidden');
+            activeImageKey = null;
+        }
+
+        document.getElementById('action-close').addEventListener('click', () => window.history.back());
+
+        // 1. Download Action
+        document.getElementById('action-download').addEventListener('click', async () => {
+            if (!activeImageKey) return;
+            const item = allImagesData[activeImageKey];
+            try {
+                const response = await fetch(item.url);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = item.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(blobUrl);
+            } catch (err) {
+                // اگر کراس اوریجن بلاک کرے تو نیو ٹیب اوپن آپشن
+                window.open(item.url, '_blank');
+            }
+            window.history.back();
+        });
+
+        // 2. Rename Action
+        document.getElementById('action-rename').addEventListener('click', () => {
+            if (!activeImageKey) return;
+            const item = allImagesData[activeImageKey];
+            const currentExt = item.name.split('.').pop();
+            const currentRawName = item.name.replace(`.${currentExt}`, '');
+
+            let newName = prompt("نیا نام درج کریں:", currentRawName);
+            if (newName && newName.trim() !== "") {
+                const finalNewName = `${newName.trim()}.${currentExt}`;
+                update(dRef(db, `users/${currentUser.uid}/images/${activeImageKey}`), {
+                    name: finalNewName
+                }).then(() => alert("نام تبدیل کر دیا گیا!"));
+            }
+            window.history.back();
+        });
+
+        // 3. Delete Action
+        document.getElementById('action-delete').addEventListener('click', () => {
+            if (!activeImageKey) return;
+            const item = allImagesData[activeImageKey];
+            
+            if (confirm("کیا آپ واقعی یہ تصویر ڈیلیٹ کرنا چاہتے ہیں؟")) {
+                // پہلے اسٹوریج سے فائل اڑائیں
+                const fileStorageRef = sRef(storage, item.storagePath);
+                deleteObject(fileStorageRef).then(() => {
+                    // پھر ڈیٹا بیس سے ریکارڈ اڑائیں
+                    remove(dRef(db, `users/${currentUser.uid}/images/${activeImageKey}`));
+                    alert("تصویر ڈیلیٹ ہو گئی!");
+                }).catch((error) => {
+                    // اگر فائل ڈائریکٹ نہ ملے تو بھی ڈیٹا بیس کلین کر دیں
+                    remove(dRef(db, `users/${currentUser.uid}/images/${activeImageKey}`));
+                });
+            }
+            window.history.back();
+        });
+    </script>
+</body>
+</html>
