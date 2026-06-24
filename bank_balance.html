@@ -120,7 +120,6 @@
         .table-custom thead th { background: #f8f9fa; color: #636e72; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; padding: 15px; border-bottom: 2px solid #edf2f7; }
         [data-theme="dark"] .table-custom thead th { background: #34495e; color: #ecf0f1; border-color: #2c3e50; }
 
-        /* Draggable visual helper (UPDATED) */
         .drag-handle { cursor: grab; padding: 5px; margin-left: -5px; }
         .drag-handle:active { cursor: grabbing; }
         .draggable-row.sortable-chosen { background-color: rgba(9, 132, 227, 0.1) !important; }
@@ -164,9 +163,43 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .top-home-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6); background: linear-gradient(135deg, #4338ca, #2563eb); }
+
+        /* Security Overlay Styling */
+        #authOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(30, 39, 46, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .auth-card {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        [data-theme="dark"] .auth-card { background: #2d3436; color: #f5f6fa; }
     </style>
 </head>
 <body data-theme="light">
+
+<div id="authOverlay">
+    <div class="auth-card">
+        <i class="bi bi-shield-lock-fill text-primary" style="font-size: 4rem;"></i>
+        <h3 class="fw-bold mt-3 mb-2">App Locked</h3>
+        <p class="text-muted small mb-4">File open karne ke liye password darj karein</p>
+        <input type="password" id="authPassword" class="form-control form-control-lg text-center mb-3" placeholder="Password yahan likhein">
+        <button class="btn btn-primary btn-lg w-100 fw-bold rounded-pill shadow-sm" onclick="checkAuthPassword()">Unlock App</button>
+        <div id="authErrorMsg" class="text-danger mt-3 fw-bold small" style="display:none;"><i class="bi bi-x-circle-fill me-1"></i> Password galat hai!</div>
+    </div>
+</div>
 
 <a href="https://hammad57.github.io/POS/index.html" class="top-home-btn" title="Go to Dashboard">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -387,6 +420,7 @@
     let myChart = null;
     let selectedBankId = null;
     let chartBankId = null; 
+    let globalAppPassword = null;
     
     // Sortable JS variable
     window.sortableInstance = null;
@@ -400,6 +434,26 @@
     const eModal = new bootstrap.Modal(document.getElementById('entryModal'));
     const tModal = new bootstrap.Modal(document.getElementById('transferModal'));
     const errorToast = new bootstrap.Toast(document.getElementById('errorToast'), { delay: 5000 });
+
+    // Security check on load
+    onValue(ref(db, 'settings/app_password'), (snap) => {
+        globalAppPassword = snap.val();
+        if (!globalAppPassword || sessionStorage.getItem('appUnlocked') === 'true') {
+            document.getElementById('authOverlay').style.display = 'none';
+        } else {
+            document.getElementById('authOverlay').style.display = 'flex';
+        }
+    });
+
+    window.checkAuthPassword = () => {
+        const inputPass = document.getElementById('authPassword').value;
+        if (inputPass === globalAppPassword) {
+            sessionStorage.setItem('appUnlocked', 'true');
+            document.getElementById('authOverlay').style.display = 'none';
+        } else {
+            document.getElementById('authErrorMsg').style.display = 'block';
+        }
+    };
 
     onValue(ref(db, 'settings/theme'), (snap) => {
         const savedTheme = snap.val() || 'light';
@@ -453,7 +507,7 @@
         container.innerHTML = '';
         allBanks.forEach(bank => {
             const balance = allTransactions.filter(t => t.bankId === bank.id).reduce((s, t) => {
-                if (t.excludeFromBalance) return s; // Exclude logic applied
+                if (t.excludeFromBalance) return s; 
                 const amt = parseFloat(t.amount);
                 if(t.type === 'Income' || t.type === 'Adjustment In') return s + amt;
                 if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
@@ -463,19 +517,22 @@
             const activeClass = (selectedBankId === bank.id) ? 'active-tab' : '';
             const excludeIcon = bank.excludeFromBalance ? '<i class="bi bi-eye-slash-fill text-muted ms-2" title="Excluded from totals"></i>' : '';
             
-            container.innerHTML += `
-                <div id="bankTab-${bank.id}" class="card-3d bank-card-mini ${activeClass}" onclick="selectBank('${bank.id}')">
-                    <h6>${bank.name} ${excludeIcon}</h6>
-                    <span class="acc-num">${bank.number || '---'}</span>
-                    <div class="bal-amt">Rs. ${balance.toLocaleString()}</div>
-                </div>`;
+            // Hidden accounts won't show on the main dashboard unless handled in admin
+            if(!bank.isHidden) {
+                container.innerHTML += `
+                    <div id="bankTab-${bank.id}" class="card-3d bank-card-mini ${activeClass}" onclick="selectBank('${bank.id}')">
+                        <h6>${bank.name} ${excludeIcon}</h6>
+                        <span class="acc-num">${bank.number || '---'}</span>
+                        <div class="bal-amt">Rs. ${balance.toLocaleString()}</div>
+                    </div>`;
+            }
         });
-        const options = allBanks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+        const options = allBanks.filter(b => !b.isHidden).map(b => `<option value="${b.id}">${b.name}</option>`).join('');
         document.getElementById('entryBank').innerHTML = options; document.getElementById('fromBank').innerHTML = options; document.getElementById('toBank').innerHTML = options;
     }
 
     function updateSummary() {
-        const activeBankIds = allBanks.filter(b => !b.excludeFromBalance).map(b => b.id);
+        const activeBankIds = allBanks.filter(b => !b.excludeFromBalance && !b.isHidden).map(b => b.id);
         const filteredTrans = allTransactions.filter(t => activeBankIds.includes(t.bankId));
 
         let tI = filteredTrans.filter(t => t.type === 'Income' && !t.excludeFromBalance).reduce((s, t) => s + parseFloat(t.amount), 0);
@@ -490,7 +547,7 @@
 
     window.updateMonthlyStats = () => {
         const selectedMonth = document.getElementById('monthSelector').value; 
-        const activeBankIds = allBanks.filter(b => !b.excludeFromBalance).map(b => b.id);
+        const activeBankIds = allBanks.filter(b => !b.excludeFromBalance && !b.isHidden).map(b => b.id);
         
         let mInc = 0; let mExp = 0;
         allTransactions.forEach(t => {
@@ -522,7 +579,7 @@
         let chartData = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : 
                         allTransactions.filter(t => {
                             const b = allBanks.find(bank => bank.id === t.bankId);
-                            return b && !b.excludeFromBalance;
+                            return b && !b.excludeFromBalance && !b.isHidden;
                         });
 
         const bankName = chartBankId ? allBanks.find(b => b.id === chartBankId)?.name : 'All Accounts';
@@ -583,7 +640,7 @@
         let filteredTrans = chartBankId ? allTransactions.filter(t => t.bankId === chartBankId) : 
                             allTransactions.filter(t => {
                                 const b = allBanks.find(bank => bank.id === t.bankId);
-                                return b && !b.excludeFromBalance;
+                                return b && !b.excludeFromBalance && !b.isHidden;
                             });
 
         filteredTrans.sort((a, b) => {
@@ -794,7 +851,7 @@
         document.getElementById('editKey').value = t.id; document.getElementById('entryBank').value = t.bankId; document.getElementById('entryBank').disabled = true;
         document.getElementById('entryType').value = t.type; document.getElementById('entryAmt').value = t.amount;
         document.getElementById('entryDate').value = t.date; document.getElementById('entryRemarks').value = t.remarks || '';
-        document.getElementById('entryExclude').checked = t.excludeFromBalance || false; // Edited value loaded
+        document.getElementById('entryExclude').checked = t.excludeFromBalance || false; 
         document.getElementById('modalTitle').innerText = 'Edit Transaction'; eModal.show();
     };
 
@@ -814,7 +871,7 @@
         const toName = allBanks.find(b => b.id === to).name;
 
         if(from === to) {
-            document.getElementById('errorMessage').innerText = "Select different banks for transfer!";
+            document.getElementById('errorMessage').innerText = "Transfer ke liye mukhtalif banks ka intikhab karein!";
             errorToast.show(); return;
         }
 
@@ -827,7 +884,7 @@
         }, 0);
 
         if(amt > currentFromBalance) {
-            document.getElementById('errorMessage').innerText = `Insufficient Balance! Current balance in ${fromName} is Rs. ${currentFromBalance.toLocaleString()}.`;
+            document.getElementById('errorMessage').innerText = `Balance na kafi hai! ${fromName} mein mojooda balance Rs. ${currentFromBalance.toLocaleString()} hai.`;
             errorToast.show(); return;
         }
 
@@ -838,10 +895,9 @@
     };
 
     window.openTransferModal = () => { document.getElementById('transferDate').value = new Date().toISOString().split('T')[0]; tModal.show(); };
-    window.deleteEntry = (bId, tId) => { if(confirm("Delete record?")) remove(ref(db, `bank_transactions/${bId}/${tId}`)); };
+    window.deleteEntry = (bId, tId) => { if(confirm("Kya aap waqai yeh record delete karna chahte hain?")) remove(ref(db, `bank_transactions/${bId}/${tId}`)); };
     window.openBankModal = () => { document.getElementById('bankForm').reset(); bModal.show(); };
     
-    // Reset Checkbox on modal open
     window.openTransactionModal = () => { 
         document.getElementById('entryForm').reset(); 
         document.getElementById('editKey').value = ''; 
@@ -870,7 +926,7 @@
             amount: document.getElementById('entryAmt').value, 
             date: document.getElementById('entryDate').value, 
             remarks: document.getElementById('entryRemarks').value,
-            excludeFromBalance: document.getElementById('entryExclude').checked // NEW DATA FIELD SAVED
+            excludeFromBalance: document.getElementById('entryExclude').checked
         }; 
         if (tId) update(ref(db, `bank_transactions/${bId}/${tId}`), data); else push(ref(db, `bank_transactions/${bId}`), data); eModal.hide(); 
     };
