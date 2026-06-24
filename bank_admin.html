@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     
-    <!-- SweetAlert2 for Warning Messages -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
@@ -70,9 +69,43 @@
         
         .admin-draggable-row { cursor: grab; }
         .admin-draggable-row:active { cursor: grabbing; background-color: rgba(9, 132, 227, 0.1) !important; }
+
+        /* Security Overlay Styling */
+        #authOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(30, 39, 46, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .auth-card {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        [data-theme="dark"] .auth-card { background: #2d3436; color: #f5f6fa; }
     </style>
 </head>
 <body data-theme="dark">
+
+<div id="authOverlay">
+    <div class="auth-card">
+        <i class="bi bi-shield-lock-fill text-danger" style="font-size: 4rem;"></i>
+        <h3 class="fw-bold mt-3 mb-2">Admin Locked</h3>
+        <p class="text-muted small mb-4">File open karne ke liye password darj karein</p>
+        <input type="password" id="authPassword" class="form-control form-control-lg text-center mb-3" placeholder="Password yahan likhein">
+        <button class="btn btn-danger btn-lg w-100 fw-bold rounded-pill shadow-sm" onclick="checkAuthPassword()">Unlock Admin</button>
+        <div id="authErrorMsg" class="text-danger mt-3 fw-bold small" style="display:none;"><i class="bi bi-x-circle-fill me-1"></i> Password galat hai!</div>
+    </div>
+</div>
 
 <a href="bank_balance.html" class="top-home-btn" title="Back to Vault">
     <i class="bi bi-arrow-left"></i> Back to Vault
@@ -97,6 +130,21 @@
         </div>
     </div>
 
+    <div class="card-3d mb-4 border border-warning">
+        <h5 class="fw-bold mb-3"><i class="bi bi-key-fill text-warning me-2"></i>App Security (Set / Update Password)</h5>
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <input type="text" id="newAppPassword" class="form-control" placeholder="Yahan dono files ke liye naya password likhein">
+            </div>
+            <div class="col-md-4 mt-3 mt-md-0">
+                <button class="btn btn-warning w-100 fw-bold" onclick="updateAppPassword()">
+                    <i class="bi bi-check2-circle me-1"></i> Password Save Karein
+                </button>
+            </div>
+        </div>
+        <small class="text-muted mt-2 d-block">Yeh password dono (bank_balance aur bank_admin) files ko open karte waqt manga jayega.</small>
+    </div>
+
     <div class="card-3d">
         <h5 class="fw-bold mb-4"><i class="bi bi-bank2 me-2"></i>All Registered Banks (Drag to Reorder)</h5>
         <div class="table-responsive">
@@ -117,7 +165,6 @@
     </div>
 </div>
 
-<!-- Edit Bank Modal -->
 <div class="modal fade" id="editBankModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 p-4 border-0">
@@ -133,7 +180,7 @@
                     <input type="text" id="editBankNumber" class="form-control">
                 </div>
                 
-                <div class="card p-3 bg-light border-0 mb-4 rounded-3">
+                <div class="card p-3 bg-light border-0 mb-4 rounded-3 text-dark">
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="checkbox" id="editExcludeStatus">
                         <label class="form-check-label small fw-bold text-danger" for="editExcludeStatus">
@@ -154,7 +201,6 @@
     </div>
 </div>
 
-<!-- Update Balance Modal -->
 <div class="modal fade" id="updateBalanceModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 p-4 border-0" style="background: linear-gradient(145deg, #1e272e, #2d3436); color: white;">
@@ -192,10 +238,49 @@
 
     let allBanks = [];
     let allTransactions = [];
+    let globalAppPassword = null;
 
     const editModal = new bootstrap.Modal(document.getElementById('editBankModal'));
     const balanceModal = new bootstrap.Modal(document.getElementById('updateBalanceModal'));
     window.sortableAdmin = null;
+
+    // Security check on load
+    onValue(ref(db, 'settings/app_password'), (snap) => {
+        globalAppPassword = snap.val();
+        if (!globalAppPassword || sessionStorage.getItem('appUnlocked') === 'true') {
+            document.getElementById('authOverlay').style.display = 'none';
+        } else {
+            document.getElementById('authOverlay').style.display = 'flex';
+        }
+    });
+
+    window.checkAuthPassword = () => {
+        const inputPass = document.getElementById('authPassword').value;
+        if (inputPass === globalAppPassword) {
+            sessionStorage.setItem('appUnlocked', 'true');
+            document.getElementById('authOverlay').style.display = 'none';
+        } else {
+            document.getElementById('authErrorMsg').style.display = 'block';
+        }
+    };
+
+    // Naya Password Set Karne ka Function
+    window.updateAppPassword = () => {
+        const newPass = document.getElementById('newAppPassword').value;
+        if(newPass.trim() === '') {
+            Swal.fire('Galti!', 'Password khali nahi chhor sakte, meherbani karke password likhein.', 'error');
+            return;
+        }
+        
+        set(ref(db, 'settings/app_password'), newPass).then(() => {
+            Swal.fire('Mahfooz Ho Gaya!', 'App ka naya password set ho gaya hai.', 'success');
+            document.getElementById('newAppPassword').value = '';
+            // Naya password set karne ke baad isi session mein bhi update kar dein
+            sessionStorage.setItem('appUnlocked', 'true');
+        }).catch(err => {
+            Swal.fire('Error', 'Password save karte waqt masla aaya: ' + err.message, 'error');
+        });
+    };
 
     onValue(ref(db, 'settings/theme'), (snap) => {
         const savedTheme = snap.val() || 'dark';
@@ -350,7 +435,6 @@
         balanceModal.hide();
     };
 
-    // UPDATED: Clear History with SweetAlert Confirmation
     window.clearBankHistory = (id) => {
         const bank = allBanks.find(b => b.id === id);
         
@@ -375,7 +459,6 @@
         });
     };
 
-    // UPDATED: Delete Account completely with SweetAlert Confirmation
     window.deleteBankCompletely = (id) => {
         const bank = allBanks.find(b => b.id === id);
         
