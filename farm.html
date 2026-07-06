@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Land Poultry Farm - User Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <style>
+        body { background-color: #0b130a; color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .neon-border { box-shadow: 0 0 15px rgba(234, 179, 8, 0.3); }
+        .neon-text { text-shadow: 0 0 8px rgba(234, 179, 8, 0.5); }
+        *, *::before, *::after { box-sizing: border-box; }
+        
+        /* Custom scrollbar for batches */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #18181b; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+    </style>
+</head>
+<body class="p-4 max-w-md mx-auto min-h-screen pb-24">
+
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold transition-opacity duration-300 opacity-0 pointer-events-none z-50">
+        Copied to clipboard!
+    </div>
+
+    <div id="authContainer" class="block mt-10 bg-zinc-900 p-6 rounded-2xl border border-emerald-800/50 shadow-xl">
+        <h2 id="authTitle" class="text-2xl font-bold text-yellow-400 text-center mb-6 neon-text">Registration System</h2>
+        
+        <div id="refInfoBanner" class="hidden mb-4 p-3 bg-emerald-900/30 border border-emerald-700/50 rounded-lg text-xs text-center text-emerald-400">
+            Invited by: <span id="refNameDisplay" class="font-bold text-yellow-400">...</span>
+        </div>
+
+        <form id="registerForm" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-emerald-400 mb-1">Full Name</label>
+                <input type="text" id="regName" required class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-emerald-400 mb-1">Mobile Number</label>
+                <input type="tel" id="regMobile" required class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-emerald-400 mb-1">Email Address</label>
+                <input type="email" id="regEmail" required class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-emerald-400 mb-1">Password</label>
+                <input type="password" id="regPassword" required class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+            </div>
+            <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-zinc-950 font-bold py-3 rounded-xl shadow-lg transition-all">Sign Up</button>
+            <p class="text-xs text-center text-zinc-400 mt-4">Already have an account? <span onclick="toggleAuthMode(false)" class="text-yellow-400 cursor-pointer underline">Sign In</span></p>
+        </form>
+
+        <form id="loginForm" class="space-y-4 hidden">
+            <div>
+                <label class="block text-xs font-semibold text-emerald-400 mb-1">Email Address</label>
+                <input type="email" id="loginEmail" required class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-emerald-400 mb-1">Password</label>
+                <input type="password" id="loginPassword" required class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+            </div>
+            <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-zinc-950 font-bold py-3 rounded-xl shadow-lg transition-all">Sign In</button>
+            <p class="text-xs text-center text-zinc-400 mt-4">Don't have an account? <span onclick="toggleAuthMode(true)" class="text-yellow-400 cursor-pointer underline">Register Here</span></p>
+        </form>
+    </div>
+
+    <div id="dashboardContainer" class="hidden">
+        <div class="flex justify-between items-center mb-6 bg-zinc-900/80 p-4 rounded-xl border border-zinc-800 shadow-md">
+            <div>
+                <p class="text-xs text-zinc-400">KhushAamdeed 👋</p>
+                <h1 id="lblUserName" class="text-lg font-bold text-yellow-400 neon-text">Loading...</h1>
+            </div>
+            <button onclick="logout()" class="text-xs bg-red-900/40 border border-red-700 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded-lg transition-colors">Sign Out</button>
+        </div>
+
+        <div class="bg-gradient-to-br from-emerald-950 to-zinc-900 border border-emerald-800 rounded-2xl p-5 mb-6 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl font-bold">🥚</div>
+            <p class="text-xs text-emerald-400 font-bold tracking-wider uppercase">Available Eggs Balance</p>
+            <div class="flex items-baseline space-x-2 mt-2">
+                <h2 id="lblEggBalance" class="text-5xl font-black text-yellow-400">0</h2>
+                <span class="text-sm text-zinc-400">Eggs</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-emerald-800/50 text-xs">
+                <div>
+                    <span class="text-zinc-400">Hens In Coop:</span>
+                    <p id="lblHenBalance" class="text-yellow-400 font-bold text-sm">0 Hens</p>
+                </div>
+                <div>
+                    <span class="text-zinc-400">Gift Eggs:</span>
+                    <p id="lblGiftBalance" class="text-yellow-400 font-bold text-sm">0 Eggs</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h3 class="text-xs font-bold text-yellow-400 uppercase tracking-widest mb-3 flex items-center space-x-2">
+                <span>⏱️</span> <span>Live Egg Production</span>
+            </h3>
+            <div id="batchesContainer" class="space-y-2 max-h-48 overflow-y-auto custom-scroll pr-1">
+                <div class="bg-zinc-900/80 p-4 rounded-xl border border-zinc-800 text-center text-xs text-zinc-500">
+                    Buy hens to start production timers.
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <button onclick="openPurchaseModal()" class="bg-zinc-900 hover:bg-zinc-800 border border-emerald-700/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md transition-transform active:scale-95">
+                <span class="text-3xl mb-2">🐔</span>
+                <span class="font-bold text-sm text-yellow-400">Purchase Hen</span>
+                <span class="text-[10px] text-zinc-400 mt-1">Rs. 499 per Hen</span>
+            </button>
+
+            <button onclick="openSaleModal()" class="bg-zinc-900 hover:bg-zinc-800 border border-amber-700/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md transition-transform active:scale-95">
+                <span class="text-3xl mb-2">💰</span>
+                <span class="font-bold text-sm text-yellow-400">Sale Out Eggs</span>
+                <span class="text-[10px] text-zinc-400 mt-1">Instant Cashout</span>
+            </button>
+        </div>
+
+        <div class="bg-zinc-900 rounded-xl border border-emerald-800/40 mb-6 overflow-hidden">
+            <div class="bg-gradient-to-r from-emerald-950/60 to-zinc-900 p-4 text-center border-b border-zinc-800">
+                <h3 class="font-bold text-yellow-400 text-sm">Referral & Team Network</h3>
+                <p class="text-zinc-400 mt-1 text-[11px]">Invite friends via your link to build your team!</p>
+                <button onclick="copyReferralLink()" class="mt-3 w-full bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold py-3 rounded-lg shadow transition-colors flex items-center justify-center space-x-2">
+                    <span>🔗</span> <span>Copy My Shareable Link</span>
+                </button>
+            </div>
+            <div class="grid grid-cols-3 divide-x divide-zinc-800 text-center p-3 text-xs bg-zinc-900/50">
+                <div class="px-1 cursor-pointer hover:bg-zinc-800/50 transition-colors py-1 rounded" onclick="openTeamListModal()">
+                    <span class="block text-zinc-500 mb-1 underline decoration-dotted text-[10px]">Joined (Click)</span>
+                    <span id="statTeamJoined" class="font-bold text-emerald-400 text-sm">0</span>
+                </div>
+                <div class="px-1 py-1">
+                    <span class="block text-zinc-500 mb-1 text-[10px]">Team Hens</span>
+                    <span id="statTeamHens" class="font-bold text-yellow-400 text-sm">0</span>
+                </div>
+                <div class="px-1 py-1">
+                    <span class="block text-zinc-500 mb-1 text-[10px]">Team Eggs</span>
+                    <span id="statTeamEggs" class="font-bold text-yellow-400 text-sm">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-6 text-xs">
+            <div class="bg-zinc-900 p-3 rounded-xl border border-zinc-800">
+                <span class="text-zinc-500 block mb-1">Pending Hens Request</span>
+                <span id="lblPendingPurchase" class="font-bold text-amber-400">0 requests</span>
+            </div>
+            <div class="bg-zinc-900 p-3 rounded-xl border border-zinc-800">
+                <span class="text-zinc-500 block mb-1">Pending Withdrawals</span>
+                <span id="lblPendingWithdraw" class="font-bold text-amber-400">0 requests</span>
+            </div>
+        </div>
+
+        <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800 mb-6 space-y-3 text-xs shadow-md">
+            <h3 class="font-bold text-yellow-400 border-b border-zinc-800 pb-2">Financial Records Ledger</h3>
+            <div class="flex justify-between">
+                <span class="text-zinc-400">Total Expense Record:</span>
+                <span id="lblTotalExpense" class="font-bold text-red-400">0 PKR</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-zinc-400">Total Approved Withdrawal:</span>
+                <span id="lblTotalWithdrawal" class="font-bold text-green-400">0 PKR</span>
+            </div>
+        </div>
+
+        <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 mb-6 text-xs shadow-md">
+            <h3 class="font-bold text-yellow-400 mb-3">Help & Support Desk</h3>
+            <div class="space-y-2">
+                <a href="https://wa.me/923423944508" target="_blank" class="flex items-center justify-between bg-zinc-800 p-2.5 rounded-lg hover:bg-zinc-700 border border-emerald-900/40 transition-colors">
+                    <span class="font-medium text-emerald-400">🟢 Official Admin Portal</span>
+                    <span class="text-zinc-500">03423944508</span>
+                </a>
+                <a href="https://wa.me/923285719803" target="_blank" class="flex items-center justify-between bg-zinc-800 p-2.5 rounded-lg hover:bg-zinc-700 border border-emerald-900/40 transition-colors">
+                    <span class="font-medium text-emerald-400">🟢 Support WhatsApp Desk</span>
+                    <span class="text-zinc-500">03285719803</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Modal Wrapper -->
+    <div id="purchaseModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative">
+            <button onclick="closeModal('purchaseModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
+            
+            <div id="purchaseStep1" class="block">
+                <h3 class="text-lg font-bold text-yellow-400 mb-4">Purchase New Hen Asset</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-400 mb-1">Enter Hen Quantity</label>
+                        <input type="number" id="purchaseQty" min="1" value="1" oninput="updateHenPriceValue(this.value)" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-yellow-400 font-bold focus:outline-none">
+                    </div>
+                    <div class="bg-zinc-800/50 p-3 rounded-xl border border-zinc-700/50 flex justify-between items-center text-xs">
+                        <span class="text-zinc-400">Total Calculated Cost:</span>
+                        <span id="purchaseTotalCost" class="text-base font-black text-emerald-400">499 PKR</span>
+                    </div>
+                    <button onclick="proceedToPaymentProof()" class="w-full bg-yellow-500 text-zinc-950 font-bold py-3 rounded-xl shadow-md">Next: Submit Payment</button>
+                </div>
+            </div>
+
+            <div id="purchaseStep2" class="hidden">
+                <h3 class="text-lg font-bold text-yellow-400 mb-2">Send Payment Proof</h3>
+                
+                <!-- Explicit Urdu Guidance Text Notice Box -->
+                <div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-xl my-3 text-center" dir="rtl">
+                    <p class="text-xs font-bold text-yellow-400 leading-relaxed">
+                        براہ کرم پیسے ایڈمن <span class="underline font-black text-sm text-white">"Muluk Hussain"</span> کے <span class="underline font-black text-sm text-white">"Easypaisa account number 03423944508"</span> پر ہی send کریں۔
+                    </p>
+                </div>
+
+                <p class="text-[11px] text-zinc-400 mb-4 leading-relaxed">Kindly send the calculated amount to the admin account and drop transaction details below.</p>
+                <form id="paymentProofForm" class="space-y-3 text-xs">
+                    <div>
+                        <label class="block font-semibold text-zinc-400 mb-1">Transaction ID (Trx ID)</label>
+                        <input type="text" id="proofTrxId" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-zinc-400 mb-1">Account Holder Name</label>
+                        <input type="text" id="proofHolderName" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-zinc-400 mb-1">Payment Proof Image Link</label>
+                        <input type="text" id="proofScreenshot" placeholder="Enter screenshot link" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 focus:outline-none text-[11px]">
+                    </div>
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-all shadow-md mt-2">Submit Request Data</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sale Modal Wrapper -->
+    <div id="saleModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative">
+            <button onclick="closeModal('saleModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
+            <h3 class="text-lg font-bold text-yellow-400 mb-2">Sale Out / Cashout Eggs</h3>
+            <p class="text-[11px] text-zinc-400 mb-4">Convert your accumulated farm eggs directly into cash.</p>
+            
+            <form id="withdrawalForm" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-zinc-400 mb-1">Select Account Type</label>
+                    <select id="wdType" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 focus:outline-none">
+                        <option value="Easypaisa">Easypaisa</option>
+                        <option value="Jazz Cash">Jazz Cash</option>
+                        <option value="Bank Account">Bank Account Routing</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold text-zinc-400 mb-1">Account Number</label>
+                    <input type="text" id="wdNumber" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-semibold text-zinc-400 mb-1">Account Holder Name</label>
+                    <input type="text" id="wdHolderName" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-semibold text-zinc-400 mb-1">Eggs Quantity to Liquidate</label>
+                    <input type="number" id="wdEggQty" min="1" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 focus:outline-none text-yellow-400 font-bold">
+                </div>
+                <button type="submit" class="w-full bg-yellow-500 text-zinc-950 font-bold py-3 rounded-xl shadow-md mt-2">Request Withdrawal Payment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Referral Team List View Modal -->
+    <div id="teamModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[80vh] overflow-y-auto custom-scroll">
+            <button onclick="closeModal('teamModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
+            <h3 class="text-base font-bold text-yellow-400 mb-3 border-b border-zinc-800 pb-2">Your Referred Team Network</h3>
+            <div id="teamListContainer" class="space-y-2 text-xs divide-y divide-zinc-800/50">
+                <!-- User names injected automatically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
+            authDomain: "own-live-steam-web-default.firebaseapp.com",
+            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
+            projectId: "own-live-steam-web-default",
+            storageBucket: "own-live-steam-web-default.appspot.com",
+            messagingSenderId: "xxxxxxxxxxx",
+            appId: "xxxxxxxxxxx"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let currentUid = null;
+        let currentUserData = null;
+        let timerInterval = null;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const refIdParam = urlParams.get('ref');
+        const refNameParam = urlParams.get('n');
+
+        if(refNameParam) {
+            document.getElementById('refInfoBanner').classList.remove('hidden');
+            document.getElementById('refNameDisplay').innerText = decodeURIComponent(refNameParam);
+        }
+
+        function toggleAuthMode(isRegister) {
+            document.getElementById('authTitle').innerText = isRegister ? "Registration System" : "Sign In Panel";
+            document.getElementById('registerForm').classList.toggle('hidden', !isRegister);
+            document.getElementById('loginForm').classList.toggle('hidden', isRegister);
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUid = user.uid;
+                
+                // Live Lock Check for Blocked Users
+                db.ref('users/' + currentUid).once('value').then(snapshot => {
+                    const val = snapshot.val();
+                    if(val && val.status === 'blocked') {
+                        alert("Aapka account block کر دیا گیا ہے۔ ایڈمن سے رابطہ کریں۔");
+                        auth.signOut();
+                        return;
+                    }
+                    
+                    document.getElementById('authContainer').classList.add('hidden');
+                    document.getElementById('dashboardContainer').classList.remove('hidden');
+                    syncFarmDashboardData();
+                    fetchTeamStats();
+                    if(timerInterval) clearInterval(timerInterval);
+                    timerInterval = setInterval(updateBatchesTimers, 1000);
+                });
+            } else {
+                currentUid = null;
+                document.getElementById('authContainer').classList.remove('hidden');
+                document.getElementById('dashboardContainer').classList.add('hidden');
+                if(timerInterval) clearInterval(timerInterval);
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const mobile = document.getElementById('regMobile').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(cred => {
+                    const profileData = {
+                        name: name,
+                        mobile: mobile,
+                        email: email,
+                        password: password, // Save to RTDB directly so admin can manage
+                        totalHens: 0,
+                        availableEggs: 0,
+                        giftEggs: 0,
+                        totalExpense: 0,
+                        totalWithdrawal: 0,
+                        status: "active",
+                        referredBy: refIdParam ? refIdParam : "none"
+                    };
+                    db.ref('users/' + cred.user.uid).set(profileData);
+                })
+                .catch(err => alert("Error: " + err.message));
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(cred => {
+                    // Update password in DB for backward sync of legacy users on logon
+                    db.ref('users/' + cred.user.uid + '/password').set(password);
+                })
+                .catch(err => alert("Login Error: " + err.message));
+        });
+
+        function logout() { auth.signOut(); }
+
+        function syncFarmDashboardData() {
+            if (!currentUid) return;
+
+            db.ref('users/' + currentUid).on('value', snapshot => {
+                const data = snapshot.val();
+                if (!data) return;
+                currentUserData = data;
+
+                document.getElementById('lblUserName').innerText = data.name || "User";
+                document.getElementById('lblEggBalance').innerText = (data.availableEggs || 0) + (data.giftEggs || 0);
+                document.getElementById('lblHenBalance').innerText = data.totalHens || 0;
+                document.getElementById('lblGiftBalance').innerText = data.giftEggs || 0;
+                document.getElementById('lblTotalExpense').innerText = (data.totalExpense || 0) + " PKR";
+                document.getElementById('lblTotalWithdrawal').innerText = (data.totalWithdrawal || 0) + " PKR";
+                
+                updateBatchesTimers(); 
+            });
+
+            db.ref('purchase_requests').orderByChild('uid').equalTo(currentUid).on('value', snap => {
+                let pendingCount = 0;
+                snap.forEach(child => { if (child.val().status === 'pending') pendingCount++; });
+                document.getElementById('lblPendingPurchase').innerText = pendingCount + " requests";
+            });
+
+            db.ref('withdrawal_requests').orderByChild('uid').equalTo(currentUid).on('value', snap => {
+                let pendingWdCount = 0;
+                snap.forEach(child => { if (child.val().status === 'pending') pendingWdCount++; });
+                document.getElementById('lblPendingWithdraw').innerText = pendingWdCount + " requests";
+            });
+        }
+
+        function fetchTeamStats() {
+            if(!currentUid) return;
+            db.ref('users').orderByChild('referredBy').equalTo(currentUid).on('value', snap => {
+                let count = 0;
+                let hCount = 0;
+                let eCount = 0;
+                snap.forEach(child => {
+                    count++;
+                    let uData = child.val();
+                    hCount += (uData.totalHens || 0);
+                    eCount += (uData.availableEggs || 0) + (uData.giftEggs || 0);
+                });
+                document.getElementById('statTeamJoined').innerText = count;
+                document.getElementById('statTeamHens').innerText = hCount;
+                document.getElementById('statTeamEggs').innerText = eCount;
+            });
+        }
+
+        // Display team members popup
+        function openTeamListModal() {
+            if(!currentUid) return;
+            const container = document.getElementById('teamListContainer');
+            container.innerHTML = '<p class="text-zinc-500 italic p-2">Fetching team data...</p>';
+            
+            db.ref('users').orderByChild('referredBy').equalTo(currentUid).once('value', snap => {
+                container.innerHTML = '';
+                let valid = false;
+                snap.forEach(child => {
+                    valid = true;
+                    const val = child.val();
+                    let div = document.createElement('div');
+                    div.className = "py-2 flex justify-between items-center bg-zinc-900 px-2 mt-1 rounded border border-zinc-800/40";
+                    div.innerHTML = `
+                        <span class="font-bold text-yellow-400">${val.name || 'Anonymous Partner'}</span>
+                        <span class="text-zinc-400 font-mono text-[11px]">${val.mobile || 'N/A'}</span>
+                    `;
+                    container.appendChild(div);
+                });
+                if(!valid) {
+                    container.innerHTML = '<p class="text-zinc-500 text-center italic py-4">No network downlines linked yet.</p>';
+                }
+            });
+            document.getElementById('teamModal').classList.remove('hidden');
+            document.getElementById('teamModal').classList.add('flex');
+        }
+
+        function updateBatchesTimers() {
+            if(!currentUserData || !currentUserData.hen_batches) {
+                document.getElementById('batchesContainer').innerHTML = '<div class="bg-zinc-900/80 p-4 rounded-xl border border-zinc-800 text-center text-xs text-zinc-500">No active egg production. Buy hens to start!</div>';
+                return;
+            }
+            
+            let html = '';
+            let now = Date.now();
+            const dayMs = 24 * 60 * 60 * 1000;
+            
+            for(let key in currentUserData.hen_batches) {
+                let batch = currentUserData.hen_batches[key];
+                let elapsed = now - batch.lastCollectedAt;
+                
+                if(elapsed >= dayMs) {
+                    let cycles = Math.floor(elapsed / dayMs);
+                    let eggsEarned = cycles * batch.qty;
+                    let newLastCollected = batch.lastCollectedAt + (cycles * dayMs);
+                    
+                    db.ref(`users/${currentUid}/availableEggs`).transaction(current => (current || 0) + eggsEarned);
+                    db.ref(`users/${currentUid}/hen_batches/${key}/lastCollectedAt`).set(newLastCollected);
+                    continue; 
+                }
+                
+                let timeLeft = dayMs - elapsed;
+                
+                let d = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                let h = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                let s = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                
+                let pad = (num) => num.toString().padStart(2, '0');
+                
+                let progress = (elapsed / dayMs) * 100;
+                let circumference = 113; 
+                let dashOffset = circumference - (circumference * progress / 100);
+                
+                html += `
+                <div class="bg-zinc-800/80 p-3 rounded-xl flex justify-between items-center border border-emerald-900/40">
+                    <div>
+                        <span class="text-emerald-400 font-bold text-sm block mb-0.5">${batch.qty} Hens Batch</span>
+                        <div class="text-zinc-400 text-xs font-mono tracking-widest">${d}d : ${pad(h)}h : ${pad(m)}m : ${pad(s)}s</div>
+                    </div>
+                    <div class="relative w-12 h-12 flex items-center justify-center">
+                        <svg class="absolute inset-0 w-full h-full transform -rotate-90">
+                            <circle cx="24" cy="24" r="18" stroke="#27272a" stroke-width="3" fill="none" />
+                            <circle cx="24" cy="24" r="18" stroke="#eab308" stroke-width="3" fill="none" stroke-dasharray="113" stroke-dashoffset="${dashOffset}" class="transition-all duration-1000 ease-linear" />
+                        </svg>
+                        <span class="text-lg ${progress > 95 ? 'animate-pulse' : 'animate-bounce'} drop-shadow-md">🥚</span>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('batchesContainer').innerHTML = html;
+        }
+
+        function copyReferralLink() {
+            if (!currentUserData) return;
+            const cleanBaseUrl = window.location.origin + window.location.pathname;
+            const fullRefLinkGenerated = `${cleanBaseUrl}?ref=${currentUid}&n=${encodeURIComponent(currentUserData.name)}`;
+            
+            navigator.clipboard.writeText(fullRefLinkGenerated).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.remove('opacity-0');
+                setTimeout(() => toast.classList.add('opacity-0'), 2500);
+            }).catch(() => {
+                prompt("Please copy your link manually:", fullRefLinkGenerated);
+            });
+        }
+
+        function openPurchaseModal() {
+            document.getElementById('purchaseStep1').classList.remove('hidden');
+            document.getElementById('purchaseStep2').classList.add('hidden');
+            document.getElementById('purchaseModal').classList.remove('hidden');
+            document.getElementById('purchaseModal').classList.add('flex');
+        }
+
+        function openSaleModal() {
+            document.getElementById('saleModal').classList.remove('hidden');
+            document.getElementById('saleModal').classList.add('flex');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('flex');
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function updateHenPriceValue(qty) {
+            document.getElementById('purchaseTotalCost').innerText = (qty * 499) + " PKR";
+        }
+
+        function proceedToPaymentProof() {
+            document.getElementById('purchaseStep1').classList.add('hidden');
+            document.getElementById('purchaseStep2').classList.remove('hidden');
+        }
+
+        document.getElementById('paymentProofForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const qty = parseInt(document.getElementById('purchaseQty').value);
+            const requestNodeData = {
+                uid: currentUid,
+                quantity: qty,
+                amount: qty * 499,
+                transactionId: document.getElementById('proofTrxId').value,
+                accountHolderName: document.getElementById('proofHolderName').value,
+                screenshotData: document.getElementById('proofScreenshot').value,
+                status: "pending",
+                timestamp: Date.now()
+            };
+
+            db.ref('purchase_requests').push(requestNodeData).then(() => {
+                closeModal('purchaseModal');
+                alert("Your payment proof has been sent successfully. Wait for admin verification.");
+                document.getElementById('paymentProofForm').reset();
+            });
+        });
+
+        // Instant Balance Deducting Submission Handler
+        document.getElementById('withdrawalForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const eggQty = parseInt(document.getElementById('wdEggQty').value);
+            
+            const userAvailableEggs = currentUserData.availableEggs || 0;
+            const userGiftEggs = currentUserData.giftEggs || 0;
+            const combinedTotalEggs = userAvailableEggs + userGiftEggs;
+            
+            if (eggQty > combinedTotalEggs) {
+                alert("Insufficient eggs in balance!");
+                return;
+            }
+
+            // Calculate immediate deduction (Gift eggs first, then remaining from standard pool)
+            let remainingToDeduct = eggQty;
+            let updatedGiftEggs = userGiftEggs;
+            let updatedAvailableEggs = userAvailableEggs;
+
+            if (updatedGiftEggs >= remainingToDeduct) {
+                updatedGiftEggs -= remainingToDeduct;
+                remainingToDeduct = 0;
+            } else {
+                remainingToDeduct -= updatedGiftEggs;
+                updatedGiftEggs = 0;
+                updatedAvailableEggs = Math.max(0, updatedAvailableEggs - remainingToDeduct);
+            }
+
+            const withdrawalNodeData = {
+                uid: currentUid,
+                methodType: document.getElementById('wdType').value,
+                accountNumber: document.getElementById('wdNumber').value,
+                accountHolderName: document.getElementById('wdHolderName').value,
+                eggsDeductedCount: eggQty,
+                status: "pending",
+                timestamp: Date.now()
+            };
+
+            // Atomically post checkout queue and subtract client wallet assets simultaneously
+            let updates = {};
+            const newWdKey = db.ref().child('withdrawal_requests').push().key;
+            updates[`withdrawal_requests/${newWdKey}`] = withdrawalNodeData;
+            updates[`users/${currentUid}/availableEggs`] = updatedAvailableEggs;
+            updates[`users/${currentUid}/giftEggs`] = updatedGiftEggs;
+
+            db.ref().update(updates).then(() => {
+                closeModal('saleModal');
+                alert("Your sale request was successfully forwarded. Eggs required for settlement are now deducted from your layout balance.");
+                document.getElementById('withdrawalForm').reset();
+            });
+        });
+    </script>
+</body>
+</html>

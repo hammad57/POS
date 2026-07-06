@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Land Poultry Farm - Admin Verification Command Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <style>
+        body { background-color: #090d08; color: #e4e4e7; font-family: system-ui, -apple-system, sans-serif; }
+        *, *::before, *::after { box-sizing: border-box; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px;}
+        .custom-scroll::-webkit-scrollbar-track { background: #18181b; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+    </style>
+</head>
+<body class="p-6 max-w-7xl mx-auto min-h-screen">
+
+    <header class="mb-8 border-b border-zinc-800 pb-5 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-black text-yellow-400 uppercase tracking-wider">Admin Control Suite</h1>
+            <p class="text-zinc-400 text-sm mt-1">Manage Users, Pending Hen Requests & Payouts comprehensively.</p>
+        </div>
+        <div class="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-xs">
+            <span class="text-zinc-500">Node Status:</span> <span class="text-green-400 font-bold">Live Connected</span>
+        </div>
+    </header>
+
+    <div class="space-y-10">
+        
+        <section class="bg-zinc-900/60 rounded-xl border border-emerald-900/50 p-5 shadow-lg">
+            <h2 class="text-lg font-bold text-emerald-400 mb-4 flex items-center space-x-2">
+                <span>👥</span> <span>All Registered Users Directory (Live Monitor)</span>
+            </h2>
+            <div class="overflow-x-auto custom-scroll">
+                <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
+                    <thead>
+                        <tr class="border-b border-zinc-800 text-zinc-400 bg-zinc-950">
+                            <th class="p-3">User Details</th>
+                            <th class="p-3">Referral Info</th>
+                            <th class="p-3">Assets (Hens & Eggs)</th>
+                            <th class="p-3">Financial Ledger</th>
+                            <th class="p-3">Active Timers (Next Egg Drop)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblAllUsersBody" class="divide-y divide-zinc-800/60 bg-zinc-900">
+                        <tr>
+                            <td colspan="5" class="p-4 text-center text-zinc-500">Loading user directory...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="bg-zinc-900/60 rounded-xl border border-zinc-800 p-5 shadow-lg">
+            <h2 class="text-lg font-bold text-yellow-400 mb-4 flex items-center space-x-2">
+                <span>🐔</span> <span>Pending Hen Purchase Requests</span>
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-zinc-800 text-zinc-400 bg-zinc-950">
+                            <th class="p-3">User UID</th>
+                            <th class="p-3">Qty Requested</th>
+                            <th class="p-3">Calculated Cost</th>
+                            <th class="p-3">Trx ID Reference</th>
+                            <th class="p-3">Account Holder</th>
+                            <th class="p-3">Proof Identifier</th>
+                            <th class="p-3 text-center">Action Handlers</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblPurchaseRequestsBody" class="divide-y divide-zinc-800/60">
+                        <tr><td colspan="7" class="p-4 text-center text-zinc-500">Fetching...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="bg-zinc-900/60 rounded-xl border border-zinc-800 p-5 shadow-lg">
+            <h2 class="text-lg font-bold text-amber-500 mb-4 flex items-center space-x-2">
+                <span>💰</span> <span>Pending Withdrawal Settlements</span>
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-zinc-800 text-zinc-400 bg-zinc-950">
+                            <th class="p-3">User UID</th>
+                            <th class="p-3">Vendor Type</th>
+                            <th class="p-3">Account No</th>
+                            <th class="p-3">Holder Identity</th>
+                            <th class="p-3">Eggs Count</th>
+                            <th class="p-3 text-center">Action Handlers</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblWithdrawRequestsBody" class="divide-y divide-zinc-800/60">
+                        <tr><td colspan="6" class="p-4 text-center text-zinc-500">Fetching...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- User Management Modal Suite -->
+    <div id="editUserModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-5 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
+            <button onclick="closeEditUserModal()" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
+            <h3 class="text-lg font-bold text-yellow-400 mb-4">Manage User Account Suite</h3>
+            <input type="hidden" id="editUid">
+            
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold text-zinc-400 mb-1">User Password (View / Edit)</label>
+                    <input type="text" id="editPassword" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-yellow-400 font-bold text-sm focus:outline-none focus:border-yellow-400">
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block font-semibold text-zinc-400 mb-1">Total Hens</label>
+                        <input type="number" id="editHens" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 font-bold text-emerald-400 text-sm focus:outline-none focus:border-emerald-400">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-zinc-400 mb-1">Reg. Eggs</label>
+                        <input type="number" id="editRegEggs" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 font-bold text-yellow-400 text-sm focus:outline-none focus:border-yellow-400">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-zinc-400 mb-1">Gift Eggs</label>
+                        <input type="number" id="editGiftEggs" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 font-bold text-amber-400 text-sm focus:outline-none focus:border-amber-400">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-zinc-400 mb-1">Adjust Active Batches (Reset Countdowns)</label>
+                    <div id="editUserTimersContainer" class="space-y-1.5 bg-zinc-950 p-3 rounded-xl border border-zinc-800 max-h-36 overflow-y-auto custom-scroll">
+                        <!-- Batches injected dynamically -->
+                    </div>
+                </div>
+
+                <div class="flex space-x-2 pt-2">
+                    <button onclick="saveUserData()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-md transition-colors">Save Asset Updates</button>
+                    <button id="btnBlockUnblock" onclick="toggleBlockStatus()" class="bg-amber-600 hover:bg-amber-500 text-zinc-950 font-bold px-5 py-3 rounded-xl shadow-md transition-colors">Block User</button>
+                </div>
+
+                <div class="border-t border-zinc-800 pt-3 mt-2">
+                    <button onclick="deleteUserAccount()" class="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-2.5 rounded-xl shadow-md transition-colors uppercase tracking-wider">⚠️ Delete Account Permanently</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
+            authDomain: "own-live-steam-web-default.firebaseapp.com",
+            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
+            projectId: "own-live-steam-web-default",
+            storageBucket: "own-live-steam-web-default.appspot.com"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let allUsersGlobal = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchLiveUsersDirectory();
+            fetchLivePurchaseRequests();
+            fetchLiveWithdrawalRequests();
+            setInterval(updateAdminTimersUI, 1000); 
+        });
+
+        function fetchLiveUsersDirectory() {
+            db.ref('users').on('value', snapshot => {
+                allUsersGlobal = snapshot.val() || {};
+                renderUsersTable();
+            });
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('tblAllUsersBody');
+            tbody.innerHTML = '';
+            
+            for(let uid in allUsersGlobal) {
+                let data = allUsersGlobal[uid];
+                
+                let teamCount = 0;
+                for(let u in allUsersGlobal) { if(allUsersGlobal[u].referredBy === uid) teamCount++; }
+
+                let tr = document.createElement('tr');
+                tr.className = `hover:bg-zinc-800/40 transition-colors ${data.status === 'blocked' ? 'bg-red-950/20 opacity-80' : ''}`;
+                
+                let timerDivId = `admin_timer_${uid}`;
+                
+                // Get Referrer Name instead of Fragment ID Link
+                let referrerDisplay = "None";
+                if(data.referredBy && data.referredBy !== 'none') {
+                    if(allUsersGlobal[data.referredBy]) {
+                        referrerDisplay = allUsersGlobal[data.referredBy].name || "Unknown User";
+                    } else {
+                        referrerDisplay = "Unknown Reference";
+                    }
+                }
+
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <div class="font-bold text-yellow-400 text-sm flex items-center space-x-2">
+                            <span>${data.name || 'Unknown'}</span>
+                            ${data.status === 'blocked' ? '<span class="bg-red-600 text-white font-bold px-1.5 py-0.5 rounded text-[9px]">BLOCKED</span>' : ''}
+                        </div>
+                        <div class="text-zinc-400">${data.email} | ${data.mobile}</div>
+                        <div class="text-zinc-500 font-mono text-[10px] mt-1">ID: ${uid}</div>
+                        <button onclick="openEditUserModal('${uid}')" class="mt-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 px-2.5 py-1 rounded text-[10px] font-bold text-yellow-400 flex items-center space-x-1">
+                            <span>⚙️</span> <span>Manage Account</span>
+                        </button>
+                    </td>
+                    <td class="p-3">
+                        <div class="text-zinc-300">Invited by: <span class="text-emerald-400 font-bold">${referrerDisplay}</span></div>
+                        <div class="text-zinc-400 mt-1">Team Built: <span class="text-yellow-400 font-bold">${teamCount} Users</span></div>
+                    </td>
+                    <td class="p-3">
+                        <div class="font-bold text-emerald-400">${data.totalHens || 0} Hens</div>
+                        <div class="text-zinc-300">${data.availableEggs || 0} Reg. Eggs</div>
+                        <div class="text-zinc-400">${data.giftEggs || 0} Gift Eggs</div>
+                    </td>
+                    <td class="p-3 font-mono">
+                        <div class="text-red-400">Exp: ${data.totalExpense || 0} PKR</div>
+                        <div class="text-green-400">Wd: ${data.totalWithdrawal || 0} PKR</div>
+                    </td>
+                    <td class="p-3" id="${timerDivId}">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function updateAdminTimersUI() {
+            let now = Date.now();
+            const dayMs = 24 * 60 * 60 * 1000;
+
+            for(let uid in allUsersGlobal) {
+                let timerDiv = document.getElementById(`admin_timer_${uid}`);
+                if(!timerDiv) continue;
+                
+                let data = allUsersGlobal[uid];
+                if(!data.hen_batches) {
+                    timerDiv.innerHTML = '<span class="text-zinc-600 italic text-[10px]">No active batches</span>';
+                    continue;
+                }
+
+                let timersHtml = '';
+                for(let bKey in data.hen_batches) {
+                    let b = data.hen_batches[bKey];
+                    let elapsed = now - b.lastCollectedAt;
+                    let timeLeft = dayMs - elapsed;
+                    if(timeLeft < 0) timeLeft = 0; 
+
+                    let h = Math.floor(timeLeft / (1000 * 60 * 60));
+                    let m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    let s = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                    let pad = (n) => n.toString().padStart(2, '0');
+
+                    timersHtml += `<div class="bg-zinc-800 border border-zinc-700 px-2 py-1 rounded text-[10px] mb-1 text-zinc-300 flex justify-between w-40"><span>${b.qty} Hens:</span> <span class="font-mono text-yellow-400">${pad(h)}h ${pad(m)}m ${pad(s)}s</span></div>`;
+                }
+                timerDiv.innerHTML = timersHtml;
+            }
+        }
+
+        // Management Actions Functions
+        function openEditUserModal(uid) {
+            const user = allUsersGlobal[uid];
+            if(!user) return;
+
+            document.getElementById('editUid').value = uid;
+            document.getElementById('editPassword').value = user.password || '';
+            document.getElementById('editHens').value = user.totalHens || 0;
+            document.getElementById('editRegEggs').value = user.availableEggs || 0;
+            document.getElementById('editGiftEggs').value = user.giftEggs || 0;
+
+            const blockBtn = document.getElementById('btnBlockUnblock');
+            if(user.status === 'blocked') {
+                blockBtn.innerText = "Unblock User";
+                blockBtn.className = "bg-green-600 hover:bg-green-500 text-white font-bold px-5 py-3 rounded-xl shadow-md transition-colors";
+            } else {
+                blockBtn.innerText = "Block User";
+                blockBtn.className = "bg-amber-600 hover:bg-amber-500 text-zinc-950 font-bold px-5 py-3 rounded-xl shadow-md transition-colors";
+            }
+
+            const timersContainer = document.getElementById('editUserTimersContainer');
+            timersContainer.innerHTML = '';
+            if(user.hen_batches) {
+                for(let bKey in user.hen_batches) {
+                    let b = user.hen_batches[bKey];
+                    let row = document.createElement('div');
+                    row.className = "flex justify-between items-center bg-zinc-900 border border-zinc-800 p-2 rounded-lg text-[11px]";
+                    row.innerHTML = `
+                        <span class="font-bold text-zinc-300">${b.qty} Hens Batch</span>
+                        <button onclick="resetBatchTimer('${uid}', '${bKey}')" class="bg-yellow-500 hover:bg-yellow-600 text-zinc-950 px-2 py-0.5 rounded font-black text-[10px] uppercase">Reset (Ready)</button>
+                    `;
+                    timersContainer.appendChild(row);
+                }
+            } else {
+                timersContainer.innerHTML = '<span class="text-zinc-600 italic">No production batches found.</span>';
+            }
+
+            document.getElementById('editUserModal').classList.remove('hidden');
+            document.getElementById('editUserModal').classList.add('flex');
+        }
+
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').classList.remove('flex');
+            document.getElementById('editUserModal').classList.add('hidden');
+        }
+
+        function resetBatchTimer(uid, bKey) {
+            const dayMs = 24 * 60 * 60 * 1000;
+            db.ref(`users/${uid}/hen_batches/${bKey}/lastCollectedAt`).set(Date.now() - dayMs).then(() => {
+                alert("Timer shifted successfully! Production cycle is immediately collection-ready.");
+                openEditUserModal(uid);
+            });
+        }
+
+        function saveUserData() {
+            const uid = document.getElementById('editUid').value;
+            const password = document.getElementById('editPassword').value;
+            const hens = parseInt(document.getElementById('editHens').value) || 0;
+            const regEggs = parseInt(document.getElementById('editRegEggs').value) || 0;
+            const giftEggs = parseInt(document.getElementById('editGiftEggs').value) || 0;
+
+            let updates = {};
+            updates[`users/${uid}/password`] = password;
+            updates[`users/${uid}/totalHens`] = hens;
+            updates[`users/${uid}/availableEggs`] = regEggs;
+            updates[`users/${uid}/giftEggs`] = giftEggs;
+
+            db.ref().update(updates).then(() => {
+                alert("Account credentials and farm inventory updated safely.");
+                closeEditUserModal();
+            });
+        }
+
+        function toggleBlockStatus() {
+            const uid = document.getElementById('editUid').value;
+            const user = allUsersGlobal[uid];
+            if(!user) return;
+
+            const currentStatus = user.status || "active";
+            const targetStatus = currentStatus === "blocked" ? "active" : "blocked";
+
+            db.ref(`users/${uid}/status`).set(targetStatus).then(() => {
+                alert(`Account status updated to ${targetStatus.toUpperCase()}`);
+                closeEditUserModal();
+            });
+        }
+
+        function deleteUserAccount() {
+            const uid = document.getElementById('editUid').value;
+            if(!confirm("Are you absolutely certain you want to purge this user permanently from database? This process cannot be reversed.")) return;
+            
+            db.ref(`users/${uid}`).remove().then(() => {
+                alert("User successfully eliminated from registry.");
+                closeEditUserModal();
+            });
+        }
+
+        function fetchLivePurchaseRequests() {
+            db.ref('purchase_requests').on('value', snapshot => {
+                const tbody = document.getElementById('tblPurchaseRequestsBody');
+                tbody.innerHTML = '';
+                let hasRecords = false;
+                snapshot.forEach(child => {
+                    const reqId = child.key;
+                    const data = child.val();
+                    if (data.status === 'pending') {
+                        hasRecords = true;
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-zinc-800/30 transition-colors";
+                        tr.innerHTML = `
+                            <td class="p-3 font-mono text-[11px] text-zinc-400">${data.uid.substring(0, 8)}...</td>
+                            <td class="p-3 font-bold text-yellow-400">${data.quantity} Hens</td>
+                            <td class="p-3 font-semibold text-emerald-400">${data.amount} PKR</td>
+                            <td class="p-3 font-mono text-zinc-300">${data.transactionId}</td>
+                            <td class="p-3 text-zinc-300">${data.accountHolderName}</td>
+                            <td class="p-3 text-zinc-400 max-w-[120px] truncate" title="${data.screenshotData}">${data.screenshotData}</td>
+                            <td class="p-3 text-center">
+                                <button onclick="approvePurchaseOrder('${reqId}', '${data.uid}', ${data.quantity}, ${data.amount})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded shadow">Verify & Issue Assets</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+                });
+                if (!hasRecords) tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-zinc-500 italic">Queue cleared.</td></tr>`;
+            });
+        }
+
+        function fetchLiveWithdrawalRequests() {
+            db.ref('withdrawal_requests').on('value', snapshot => {
+                const tbody = document.getElementById('tblWithdrawRequestsBody');
+                tbody.innerHTML = '';
+                let hasRecords = false;
+                snapshot.forEach(child => {
+                    const reqId = child.key;
+                    const data = child.val();
+                    if (data.status === 'pending') {
+                        hasRecords = true;
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-zinc-800/30 transition-colors";
+                        tr.innerHTML = `
+                            <td class="p-3 font-mono text-[11px] text-zinc-400">${data.uid.substring(0, 8)}...</td>
+                            <td class="p-3 font-bold text-amber-400">${data.methodType}</td>
+                            <td class="p-3 font-mono text-zinc-300">${data.accountNumber}</td>
+                            <td class="p-3 text-zinc-300">${data.accountHolderName}</td>
+                            <td class="p-3 text-yellow-500 font-bold">${data.eggsDeductedCount} Eggs</td>
+                            <td class="p-3 text-center space-x-1.5">
+                                <button onclick="approveWithdrawalSettlement('${reqId}', '${data.uid}', ${data.eggsDeductedCount})" class="bg-amber-600 hover:bg-amber-500 text-zinc-950 font-bold px-3 py-1.5 rounded shadow">Confirm Payout Done</button>
+                                <button onclick="rejectWithdrawalSettlement('${reqId}', '${data.uid}', ${data.eggsDeductedCount})" class="bg-red-700 hover:bg-red-600 text-white font-bold px-3 py-1.5 rounded shadow">Reject & Refund</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+                });
+                if (!hasRecords) tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-zinc-500 italic">Queue cleared.</td></tr>`;
+            });
+        }
+
+        function approvePurchaseOrder(reqId, uid, qty, amount) {
+            if (!confirm(`Verify Payment and Issue ${qty} Hens + IMMEDIATE ${qty} Eggs to User?`)) return;
+
+            db.ref('users/' + uid).once('value').then(snapshot => {
+                const userData = snapshot.val();
+                if (!userData) return;
+
+                const batchId = db.ref().child(`users/${uid}/hen_batches`).push().key;
+                
+                const updatedAvailableEggs = (userData.availableEggs || 0) + qty;
+                const updatedHensCount = (userData.totalHens || 0) + qty;
+                const updatedExpenseRecord = (userData.totalExpense || 0) + amount;
+
+                let payload = {};
+                payload[`users/${uid}/availableEggs`] = updatedAvailableEggs; 
+                payload[`users/${uid}/totalHens`] = updatedHensCount;
+                payload[`users/${uid}/totalExpense`] = updatedExpenseRecord;
+                
+                payload[`users/${uid}/hen_batches/${batchId}`] = {
+                    qty: qty,
+                    approvedAt: Date.now(),
+                    lastCollectedAt: Date.now() 
+                };
+                
+                payload[`purchase_requests/${reqId}/status`] = "approved";
+
+                if (userData.referredBy && userData.referredBy !== "none") {
+                    const referrerUid = userData.referredBy;
+                    db.ref('users/' + referrerUid).once('value').then(refSnapshot => {
+                        const referrerData = refSnapshot.val();
+                        if (referrerData) {
+                            payload[`users/${referrerUid}/giftEggs`] = (referrerData.giftEggs || 0) + qty;
+                        }
+                        db.ref().update(payload).then(() => alert("Hens, immediate Eggs, and Team Bonus applied!"));
+                    });
+                } else {
+                    db.ref().update(payload).then(() => alert("Hens and immediate Eggs issued successfully!"));
+                }
+            });
+        }
+
+        function approveWithdrawalSettlement(reqId, uid, eggsCount) {
+            if (!confirm(`Confirm payout transaction execution?`)) return;
+
+            db.ref('users/' + uid).once('value').then(snapshot => {
+                const userData = snapshot.val();
+                if (!userData) return;
+
+                // Balance deduction has already happened on user submission dashboard instantly.
+                const amountPayoutStr = (eggsCount * 37); 
+                const updatedWd = (userData.totalWithdrawal || 0) + amountPayoutStr;
+
+                let payload = {};
+                payload[`users/${uid}/totalWithdrawal`] = updatedWd;
+                payload[`withdrawal_requests/${reqId}/status`] = "completed";
+
+                db.ref().update(payload).then(() => alert("Withdrawal completed. Ledger status updated."));
+            });
+        }
+
+        function rejectWithdrawalSettlement(reqId, uid, eggsCount) {
+            if (!confirm(`Reject request and return ${eggsCount} Eggs back to user balance?`)) return;
+
+            db.ref('users/' + uid).once('value').then(snapshot => {
+                const userData = snapshot.val();
+                if (!userData) return;
+
+                const restoredRegEggs = (userData.availableEggs || 0) + parseInt(eggsCount);
+                
+                let payload = {};
+                payload[`users/${uid}/availableEggs`] = restoredRegEggs;
+                payload[`withdrawal_requests/${reqId}/status`] = "rejected";
+
+                db.ref().update(payload).then(() => alert("Withdrawal request rejected. Eggs returned safely to user."));
+            });
+        }
+    </script>
+</body>
+</html>
