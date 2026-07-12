@@ -572,41 +572,22 @@
         document.getElementById('paymentProofForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const qty = parseInt(document.getElementById('purchaseQty').value);
-            const fileInput = document.getElementById('proofScreenshot');
-            const file = fileInput.files[0];
 
-            if (!file) {
-                alert("Please select a screenshot image file.");
-                return;
-            }
-
-            if (file.size > 5 * 1024 * 1024) {
-                alert("Image size is too large. Please select an image under 5MB.");
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const base64Image = event.target.result;
-
-                const requestNodeData = {
-                    uid: currentUid,
-                    quantity: qty,
-                    amount: qty * 499,
-                    transactionId: document.getElementById('proofTrxId').value,
-                    accountHolderName: document.getElementById('proofHolderName').value,
-                    screenshotData: base64Image, 
-                    status: "pending",
-                    timestamp: Date.now()
-                };
-
-                db.ref('purchase_requests').push(requestNodeData).then(() => {
-                    closeModal('purchaseModal');
-                    alert("Your payment proof has been sent successfully. Wait for admin verification.");
-                    document.getElementById('paymentProofForm').reset();
-                });
+            const requestNodeData = {
+                uid: currentUid,
+                quantity: qty,
+                amount: qty * 499,
+                transactionId: document.getElementById('proofTrxId').value,
+                accountHolderName: document.getElementById('proofHolderName').value,
+                status: "pending",
+                timestamp: Date.now()
             };
-            reader.readAsDataURL(file);
+
+            db.ref('purchase_requests').push(requestNodeData).then(() => {
+                closeModal('purchaseModal');
+                alert("Your payment proof has been sent successfully. Wait for admin verification.");
+                document.getElementById('paymentProofForm').reset();
+            });
         });
 
         // ==========================================
