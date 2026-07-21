@@ -1,24 +1,24 @@
 {
-  "name": "Muluk Hussain Hub",
-  "short_name": "Hub App",
-  "description": "Personal dashboard and management hub.",
-  "start_url": "./Cpanel.html",
-  "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
-  "orientation": "portrait",
-  "icons": [
-    {
-      "src": "icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ]
+    "name": "Green Land Poultry Farm",
+    "short_name": "GL Farm",
+    "description": "User Dashboard and Registration System for Green Land Poultry Farm",
+    "start_url": "./gold.html",
+    "display": "standalone",
+    "background_color": "#0b130a",
+    "theme_color": "#eab308",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable any"
+        }
+    ]
 }
