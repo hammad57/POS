@@ -123,6 +123,8 @@
         .drag-handle { cursor: grab; padding: 5px; margin-left: -5px; }
         .drag-handle:active { cursor: grabbing; }
         .draggable-row.sortable-chosen { background-color: rgba(9, 132, 227, 0.1) !important; }
+        
+        .draggable-row:hover { background-color: rgba(9, 132, 227, 0.05); }
 
         .chart-wrapper { background: var(--card-main); border-radius: 25px; padding: 25px; box-shadow: var(--shadow-3d); }
         
@@ -186,6 +188,35 @@
             width: 90%;
         }
         [data-theme="dark"] .auth-card { background: #2d3436; color: #f5f6fa; }
+        
+        /* Receipt Modal Styles */
+        .receipt-container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            position: relative;
+            border-top: 10px solid var(--accent-blue);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        [data-theme="dark"] .receipt-container { background: #2d3436; color: #f5f6fa; }
+        .receipt-header-title { font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--accent-blue); margin-bottom: 20px; text-align: center; }
+        .receipt-divider { border-bottom: 2px dashed #dfe6e9; margin: 15px 0; }
+        [data-theme="dark"] .receipt-divider { border-bottom: 2px dashed #636e72; }
+        .receipt-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 0.95rem; }
+        .receipt-row .label { color: #636e72; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;}
+        [data-theme="dark"] .receipt-row .label { color: #b2bec3; }
+        .receipt-row .value { font-weight: 700; color: #2d3436; text-align: right; }
+        [data-theme="dark"] .receipt-row .value { color: #f5f6fa; }
+        .receipt-stamp {
+            position: absolute; top: 40px; right: 20px;
+            width: 80px; height: 80px; border-radius: 50%;
+            border: 3px solid #00b894; color: #00b894;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 0.9rem; transform: rotate(15deg);
+            opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;
+            pointer-events: none;
+        }
+        
     </style>
 </head>
 <body data-theme="light">
@@ -309,15 +340,8 @@
                 <button onclick="filterByType('Expense')" id="statExp" class="stat-btn-box exp-text">Expense: Rs. 0</button>
                 <button onclick="filterByType('Adjustment')" id="statAdj" class="stat-btn-box adj-text">Adjustment: Rs. 0</button>
             </div>
-            <div class="p-4">
-                <div class="table-responsive">
-                    <table class="table table-custom align-middle">
-                        <thead>
-                            <tr><th>Date</th><th>Type</th><th>Amount</th><th>Balance</th><th>Remarks</th><th class="text-center">Actions</th></tr>
-                        </thead>
-                        <tbody id="transactionBody"></tbody>
-                    </table>
-                </div>
+            <div class="p-4" id="transactionContainer">
+                <!-- Grouped Monthly tables will be rendered here dynamically -->
             </div>
         </div>
     </div>
@@ -404,6 +428,44 @@
     </div>
 </div>
 
+<!-- Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+            <div class="receipt-container">
+                <div class="receipt-stamp">Verified</div>
+                <h4 class="receipt-header-title"><i class="bi bi-bank2 me-2"></i>Transaction Receipt</h4>
+                
+                <div class="receipt-row"><span class="label">Bank Name</span><span class="value fs-5" id="recBankName">---</span></div>
+                <div class="receipt-row"><span class="label">Account Number</span><span class="value" id="recAccNumber">---</span></div>
+                
+                <div class="receipt-divider"></div>
+                
+                <div class="receipt-row"><span class="label">Transaction Date</span><span class="value" id="recDate">---</span></div>
+                <div class="receipt-row"><span class="label">Transaction ID</span><span class="value font-monospace" id="recTransId">---</span></div>
+                <div class="receipt-row"><span class="label">Transaction Type</span><span class="value" id="recType">---</span></div>
+                
+                <div class="receipt-divider"></div>
+                
+                <div class="receipt-row align-items-center"><span class="label fs-6">Amount</span><span class="value" id="recAmount">---</span></div>
+                <div class="receipt-row"><span class="label">Running Balance</span><span class="value text-primary fs-6" id="recBalance">---</span></div>
+                
+                <div class="receipt-divider"></div>
+                
+                <div class="receipt-row flex-column align-items-start">
+                    <span class="label mb-2">Remarks / Details</span>
+                    <span class="value w-100 text-start" style="color: #636e72; font-weight: 500;" id="recRemarks">---</span>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <button class="btn btn-primary rounded-pill px-4 shadow-sm" data-bs-dismiss="modal"><i class="bi bi-check2-circle me-1"></i> Done</button>
+                    <button class="btn btn-outline-secondary rounded-pill px-4 shadow-sm ms-2" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
@@ -423,7 +485,7 @@
     let globalAppPassword = null;
     
     // Sortable JS variable
-    window.sortableInstance = null;
+    window.sortableInstances = [];
 
     const today = new Date();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -480,25 +542,30 @@
     });
 
     window.enableDragAndDrop = () => {
-        const el = document.getElementById('transactionBody');
-        if (window.sortableInstance) {
-            window.sortableInstance.destroy();
+        if (window.sortableInstances) {
+            window.sortableInstances.forEach(instance => instance.destroy());
         }
-        window.sortableInstance = Sortable.create(el, {
-            animation: 150,
-            handle: '.drag-handle',
-            onEnd: function (evt) {
-                const rows = el.children;
-                const updates = {};
-                for (let i = 0; i < rows.length; i++) {
-                    const rowId = rows[i].getAttribute('data-id');
-                    const bId = rows[i].getAttribute('data-bank-id');
-                    if (rowId && bId) {
-                        updates[`bank_transactions/${bId}/${rowId}/order`] = i;
+        window.sortableInstances = [];
+        
+        const tbodies = document.querySelectorAll('#transactionContainer tbody');
+        tbodies.forEach(el => {
+            const instance = Sortable.create(el, {
+                animation: 150,
+                handle: '.drag-handle',
+                onEnd: function (evt) {
+                    const rows = el.children;
+                    const updates = {};
+                    for (let i = 0; i < rows.length; i++) {
+                        const rowId = rows[i].getAttribute('data-id');
+                        const bId = rows[i].getAttribute('data-bank-id');
+                        if (rowId && bId) {
+                            updates[`bank_transactions/${bId}/${rowId}/order`] = i;
+                        }
                     }
+                    update(ref(db), updates).catch(err => console.error("Error saving order: ", err));
                 }
-                update(ref(db), updates).catch(err => console.error("Error saving order: ", err));
-            }
+            });
+            window.sortableInstances.push(instance);
         });
     };
 
@@ -517,7 +584,6 @@
             const activeClass = (selectedBankId === bank.id) ? 'active-tab' : '';
             const excludeIcon = bank.excludeFromBalance ? '<i class="bi bi-eye-slash-fill text-muted ms-2" title="Excluded from totals"></i>' : '';
             
-            // Hidden accounts won't show on the main dashboard unless handled in admin
             if(!bank.isHidden) {
                 container.innerHTML += `
                     <div id="bankTab-${bank.id}" class="card-3d bank-card-mini ${activeClass}" onclick="selectBank('${bank.id}')">
@@ -685,30 +751,108 @@
         
         window.currentFilteredTransactions = filteredTrans;
 
-        document.getElementById('transactionBody').innerHTML = filteredTrans.map(t => {
-            let tCls = (t.type === 'Income' || t.type === 'Adjustment In') ? 'text-success' : 'text-danger';
-            let bName = allBanks.find(b => b.id === t.bankId)?.name || 'Unknown';
-            let displayRemarks = chartBankId ? (t.remarks || '---') : `<span class="badge bg-light text-dark border me-1">${bName}</span> ${t.remarks || '---'}`;
-            
-            // Visual indicator for excluded entries
-            let exclIcon = t.excludeFromBalance ? `<i class="bi bi-eye-slash-fill text-danger ms-1" data-bs-toggle="tooltip" title="Excluded from Balance"></i>` : '';
-            let typeLabel = t.type.replace('Adjustment ','');
-            if(t.excludeFromBalance) typeLabel += ' <small class="text-muted">(Exc)</small>';
+        // Grouping Data By Month
+        const groupedByMonth = {};
+        filteredTrans.forEach(t => {
+            const monthYear = t.date.substring(0, 7);
+            if(!groupedByMonth[monthYear]) groupedByMonth[monthYear] = [];
+            groupedByMonth[monthYear].push(t);
+        });
 
-            return `<tr class="draggable-row" data-id="${t.id}" data-bank-id="${t.bankId}">
-                <td><i class="bi bi-grip-vertical text-muted me-2 drag-handle" title="Drag to reorder"></i>${t.date}</td>
-                <td class="${tCls} fw-bold">${typeLabel}</td>
-                <td>Rs. ${parseFloat(t.amount).toLocaleString()} ${exclIcon}</td>
-                <td class="text-primary fw-bold">Rs. ${t.runBal.toLocaleString()}</td>
-                <td>${displayRemarks}</td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button>
-                </td>
-            </tr>`;
-        }).join('');
+        const currentDateStr = new Date().toISOString().substring(0, 7);
+        let sortedMonths = Object.keys(groupedByMonth).sort((a,b) => b.localeCompare(a));
+        
+        // Ensure current month is always at the top if it exists
+        if(sortedMonths.includes(currentDateStr)) {
+            sortedMonths = [currentDateStr, ...sortedMonths.filter(m => m !== currentDateStr)];
+        }
+
+        const container = document.getElementById('transactionContainer');
+        if (sortedMonths.length === 0) {
+            container.innerHTML = '<div class="alert alert-light text-center py-4 text-muted"><i class="bi bi-info-circle me-2"></i> No records found for selected criteria.</div>';
+            return;
+        }
+
+        let accordionHtml = '<div class="accordion" id="monthAccordion">';
+        
+        sortedMonths.forEach((month, index) => {
+            const isCurrent = (month === currentDateStr);
+            const showClass = isCurrent ? 'show' : '';
+            const collapsedClass = isCurrent ? '' : 'collapsed';
+            const expandedAttr = isCurrent ? 'true' : 'false';
+            
+            const dateObj = new Date(month + '-01');
+            const monthName = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            accordionHtml += `
+            <div class="accordion-item mb-3 border-0 shadow-sm rounded overflow-hidden">
+                <h2 class="accordion-header" id="heading-${month}">
+                    <button class="accordion-button ${collapsedClass} fw-bold bg-light text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${month}" aria-expanded="${expandedAttr}">
+                        <i class="bi bi-calendar-month me-2"></i> ${monthName}
+                        <span class="badge bg-primary ms-3">${groupedByMonth[month].length} Transactions</span>
+                    </button>
+                </h2>
+                <div id="collapse-${month}" class="accordion-collapse collapse ${showClass}" data-bs-parent="#monthAccordion">
+                    <div class="accordion-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-custom align-middle mb-0">
+                                <thead>
+                                    <tr><th>Date</th><th>Type</th><th>Amount</th><th>Balance</th><th>Remarks</th><th class="text-center">Actions</th></tr>
+                                </thead>
+                                <tbody>
+            `;
+
+            groupedByMonth[month].forEach(t => {
+                let tCls = (t.type === 'Income' || t.type === 'Adjustment In') ? 'text-success' : 'text-danger';
+                let bName = allBanks.find(b => b.id === t.bankId)?.name || 'Unknown';
+                let displayRemarks = chartBankId ? (t.remarks || '---') : `<span class="badge bg-light text-dark border me-1">${bName}</span> ${t.remarks || '---'}`;
+                let exclIcon = t.excludeFromBalance ? `<i class="bi bi-eye-slash-fill text-danger ms-1" data-bs-toggle="tooltip" title="Excluded from Balance"></i>` : '';
+                let typeLabel = t.type.replace('Adjustment ','');
+                if(t.excludeFromBalance) typeLabel += ' <small class="text-muted">(Exc)</small>';
+
+                accordionHtml += `<tr class="draggable-row" data-id="${t.id}" data-bank-id="${t.bankId}" ondblclick="showReceipt('${t.id}')" style="cursor: pointer;" title="Double click to view receipt">
+                    <td><i class="bi bi-grip-vertical text-muted me-2 drag-handle" title="Drag to reorder"></i>${t.date}</td>
+                    <td class="${tCls} fw-bold">${typeLabel}</td>
+                    <td>Rs. ${parseFloat(t.amount).toLocaleString()} ${exclIcon}</td>
+                    <td class="text-primary fw-bold">Rs. ${t.runBal.toLocaleString()}</td>
+                    <td>${displayRemarks}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editEntry('${t.id}')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.bankId}','${t.id}')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+
+            accordionHtml += `</tbody></table></div></div></div></div>`;
+        });
+        
+        accordionHtml += '</div>';
+        container.innerHTML = accordionHtml;
 
         window.enableDragAndDrop();
+    };
+    
+    // Receipt Functionality
+    window.showReceipt = (tId) => {
+        const t = window.currentFilteredTransactions.find(x => x.id === tId) || allTransactions.find(x => x.id === tId);
+        if(!t) return;
+        const b = allBanks.find(x => x.id === t.bankId);
+        
+        document.getElementById('recBankName').innerText = b ? b.name : 'Unknown Bank';
+        document.getElementById('recAccNumber').innerText = b && b.number ? b.number : 'N/A';
+        document.getElementById('recDate').innerText = t.date;
+        document.getElementById('recTransId').innerText = t.id.substring(1, 12).toUpperCase();
+        
+        let tCls = (t.type === 'Income' || t.type === 'Adjustment In') ? 'text-success' : 'text-danger';
+        document.getElementById('recType').innerHTML = `<span class="${tCls} fw-bold">${t.type}</span>`;
+        document.getElementById('recAmount').innerHTML = `<span class="${tCls} fs-4 fw-bold">Rs. ${parseFloat(t.amount).toLocaleString()}</span>`;
+        
+        const rBal = t.runBal !== undefined ? t.runBal : 0;
+        document.getElementById('recBalance').innerText = `Rs. ${rBal.toLocaleString()}`;
+        document.getElementById('recRemarks').innerText = t.remarks || 'No remarks provided';
+        
+        const rModal = new bootstrap.Modal(document.getElementById('receiptModal'));
+        rModal.show();
     };
 
     window.promptDownload = () => {
