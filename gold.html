@@ -97,9 +97,13 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card-3d h-100 mb-0" style="border-left: 5px solid #0984e3;">
-                <h6 class="text-muted fw-bold">Easypaisa Balance</h6>
-                <h2 id="easypaisaBalanceDisplay" class="bal-amt" style="color: #0984e3;">Loading...</h2>
+            <!-- Easypaisa Card with Double Click Privacy Feature -->
+            <div class="card-3d h-100 mb-0" style="border-left: 5px solid #0984e3; cursor: pointer;" ondblclick="toggleEasypaisaPrivacy()" title="Double click to show/hide balance">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="text-muted fw-bold m-0">Easypaisa Balance</h6>
+                    <span class="small text-muted" style="font-size: 11px;"><i class="bi bi-eye-slash"></i> Dbl-click</span>
+                </div>
+                <h2 id="easypaisaBalanceDisplay" class="bal-amt" style="color: #0984e3;">Rs. *****</h2>
             </div>
         </div>
     </div>
@@ -131,16 +135,32 @@
 
     <!-- Recent Transactions with Filters & Download -->
     <div class="card-3d">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h5 class="fw-bold m-0"><i class="bi bi-clock-history me-2"></i>Recent Transactions</h5>
-            <div class="d-flex gap-2 align-items-center">
-                <input type="date" id="filterFrom" class="form-control form-control-sm filter-input" onchange="renderTable()">
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <!-- Person Filter Dropdown -->
+                <select id="filterPerson" class="form-select form-select-sm filter-input" style="width: 120px;" onchange="renderTable()">
+                    <option value="">All Persons</option>
+                    <option value="Muluk">Muluk</option>
+                    <option value="Hammad">Hammad</option>
+                </select>
+                <input type="date" id="filterFrom" class="form-control form-control-sm filter-input" onchange="renderTable()" style="width: 130px;">
                 <span class="small fw-bold">To</span>
-                <input type="date" id="filterTo" class="form-control form-control-sm filter-input" onchange="renderTable()">
+                <input type="date" id="filterTo" class="form-control form-control-sm filter-input" onchange="renderTable()" style="width: 130px;">
                 <button class="btn btn-sm btn-primary fw-bold" onclick="downloadData()"><i class="bi bi-download me-1"></i> Download</button>
             </div>
         </div>
         
+        <!-- Filtered Totals Summary Bar -->
+        <div class="alert py-2 px-3 mb-3 d-flex justify-content-between align-items-center small fw-bold" style="background: var(--bg-body); color: var(--text-color); border: 1px solid rgba(150,150,150,0.2); border-radius: 10px;">
+            <div><i class="bi bi-filter-circle me-1 text-primary"></i> Filtered Summary:</div>
+            <div class="d-flex gap-3 flex-wrap">
+                <span class="text-success">Income: <span id="filteredIncomeText">Rs. 0</span></span>
+                <span class="text-danger">Expense: <span id="filteredExpenseText">Rs. 0</span></span>
+                <span style="color: var(--accent-green);">Net: <span id="filteredNetText">Rs. 0</span></span>
+            </div>
+        </div>
+
         <table class="table table-hover align-middle">
             <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Remarks</th><th>Action</th></tr></thead>
             <tbody id="transactionBody"></tbody>
@@ -166,6 +186,14 @@
                         <input type="radio" name="type" value="Expense" id="exp" class="radio-btn" required>
                         <label for="exp" class="radio-label">Expense</label>
                     </div>
+                </div>
+                <!-- Person Dropdown Selection -->
+                <div class="mb-3">
+                    <label class="small fw-bold">Person Name</label>
+                    <select id="entryPerson" class="form-select" style="background: var(--bg-body); color: var(--text-color);" required>
+                        <option value="Muluk">Muluk</option>
+                        <option value="Hammad">Hammad</option>
+                    </select>
                 </div>
                 <div class="mb-3"><label class="small fw-bold">Amount (Rs.)</label><input type="number" id="entryAmt" class="form-control" style="background: var(--bg-body); color: var(--text-color);" required></div>
                 <div class="mb-3"><label class="small fw-bold">Date</label><input type="date" id="entryDate" class="form-control" style="background: var(--bg-body); color: var(--text-color);" required></div>
@@ -214,9 +242,19 @@
     
     let allTransactions = [];
     let easypaisaTransactions = [];
-    let filteredTransactions = []; // For rendering table
+    let filteredTransactions = [];
 
-    // Validation & Auto-fill Logic
+    // Privacy States for Easypaisa Balance
+    let currentEasypaisaBalance = 0;
+    let isEasypaisaVisible = false;
+
+    window.toggleEasypaisaPrivacy = () => {
+        isEasypaisaVisible = !isEasypaisaVisible;
+        if (easypaisaBankId) {
+            document.getElementById('easypaisaBalanceDisplay').innerText = isEasypaisaVisible ? "Rs. " + currentEasypaisaBalance.toLocaleString() : "Rs. *****";
+        }
+    };
+
     const incRadio = document.getElementById('inc');
     const expRadio = document.getElementById('exp');
     const remarksInput = document.getElementById('entryRemarks');
@@ -224,7 +262,6 @@
     const saveBtn = document.getElementById('saveBtn');
     const themeSelect = document.getElementById('themeSelect');
 
-    // Theme Management Logic
     window.changeTheme = (themeName) => {
         set(ref(db, 'settings/gold_theme'), themeName);
     };
@@ -247,36 +284,31 @@
             root.style.setProperty('--text-color', '#f5f5f5');
         } else if (theme === 'green') {
             root.style.setProperty('--bg-body', '#e8f9f5');
-            root.style.setProperty('--card-bg', '#004d38');
-            root.style.setProperty('--text-color', '#ffffff');
-            // specifically fix card backgrounds for green theme to have contrast
             root.style.setProperty('--card-bg', '#0b664e'); 
-        } else { // default white
+            root.style.setProperty('--text-color', '#ffffff');
+        } else {
             root.style.setProperty('--bg-body', '#f4f7f6');
             root.style.setProperty('--card-bg', '#ffffff');
             root.style.setProperty('--text-color', '#2d3436');
         }
     }
 
-    // Income Click Event
     incRadio.addEventListener('change', () => {
         if(incRadio.checked) {
-            remarksInput.value = 'Eggs Profit';
+            remarksInput.value = 'Profit';
             dateInput.value = new Date().toISOString().split('T')[0];
             saveBtn.disabled = false;
         }
     });
 
-    // Expense Click Event
     expRadio.addEventListener('change', () => {
         if(expRadio.checked) {
-            remarksInput.value = 'Hen Purchasing';
+            remarksInput.value = 'Purchasing';
             dateInput.value = new Date().toISOString().split('T')[0];
             saveBtn.disabled = false;
         }
     });
 
-    // Fetch Bank IDs
     onValue(ref(db, 'bank_accounts'), (snap) => {
         snap.forEach(c => {
             const val = c.val();
@@ -286,20 +318,41 @@
         updateDashboard();
     });
 
-    // Fetch Transactions
+    // Helper function to Auto-Update old remarks data for Hammad / Muluk
+    const processMigration = (bankId, node) => {
+        let tData = node.val();
+        let remarks = tData.remarks || '';
+        let lower = remarks.toLowerCase();
+        
+        if (!lower.includes('with hammad') && !lower.includes('with muluk')) {
+            let updatedRemarks = remarks;
+            
+            if (lower.includes('hammad')) {
+                updatedRemarks = updatedRemarks.replace(/hammad/ig, '').replace(/\s+/g, ' ').trim();
+                updatedRemarks += ' with Hammad';
+            } else {
+                updatedRemarks = updatedRemarks.trim() + ' with Muluk';
+            }
+            
+            update(ref(db, `bank_transactions/${bankId}/${node.key}`), { remarks: updatedRemarks });
+            tData.remarks = updatedRemarks;
+        }
+        return { id: node.key, ...tData };
+    };
+
     onValue(ref(db, 'bank_transactions'), (snap) => {
         allTransactions = [];
         easypaisaTransactions = [];
 
         if (targetBankId && snap.hasChild(targetBankId)) {
             snap.child(targetBankId).forEach(tNode => {
-                allTransactions.push({ id: tNode.key, ...tNode.val() });
+                allTransactions.push(processMigration(targetBankId, tNode));
             });
         }
         
         if (easypaisaBankId && snap.hasChild(easypaisaBankId)) {
             snap.child(easypaisaBankId).forEach(tNode => {
-                easypaisaTransactions.push({ id: tNode.key, ...tNode.val() });
+                easypaisaTransactions.push(processMigration(easypaisaBankId, tNode));
             });
         }
         
@@ -310,7 +363,6 @@
         let totalInc = 0;
         let totalExp = 0;
 
-        // Calculate Balance
         if (targetBankId) {
             const bal = allTransactions.reduce((s, t) => {
                 const amt = parseFloat(t.amount) || 0;
@@ -321,7 +373,6 @@
             
             document.getElementById('balanceDisplay').innerText = "Rs. " + bal.toLocaleString();
 
-            // Heartbeat Pulse Updates
             document.getElementById('incomePulseText').innerText = "Rs. " + totalInc.toLocaleString();
             document.getElementById('expensePulseText').innerText = "Rs. " + totalExp.toLocaleString();
             
@@ -331,30 +382,51 @@
         }
 
         if (easypaisaBankId) {
-            const epBal = easypaisaTransactions.reduce((s, t) => {
+            currentEasypaisaBalance = easypaisaTransactions.reduce((s, t) => {
                 if (t.excludeFromBalance) return s; 
                 const amt = parseFloat(t.amount);
                 if(t.type === 'Income' || t.type === 'Adjustment In') return s + amt;
                 if(t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
                 return s;
             }, 0);
-            document.getElementById('easypaisaBalanceDisplay').innerText = "Rs. " + epBal.toLocaleString();
+            
+            document.getElementById('easypaisaBalanceDisplay').innerText = isEasypaisaVisible ? "Rs. " + currentEasypaisaBalance.toLocaleString() : "Rs. *****";
         }
 
-        window.renderTable(); // Update the table after calculating everything
+        window.renderTable(); 
     }
 
-    // Render Table with Filters
     window.renderTable = () => {
         let list = [...allTransactions].sort((a,b) => new Date(b.date) - new Date(a.date));
         
+        const filterPerson = document.getElementById('filterPerson').value;
         const fromDate = document.getElementById('filterFrom').value;
         const toDate = document.getElementById('filterTo').value;
 
+        if (filterPerson) {
+            list = list.filter(t => (t.remarks || '').toLowerCase().includes(filterPerson.toLowerCase()));
+        }
         if (fromDate) list = list.filter(t => new Date(t.date) >= new Date(fromDate));
         if (toDate) list = list.filter(t => new Date(t.date) <= new Date(toDate));
 
         filteredTransactions = list;
+
+        // Calculate Filtered Totals (Income & Expense)
+        let filteredInc = 0;
+        let filteredExp = 0;
+        list.forEach(t => {
+            const amt = parseFloat(t.amount) || 0;
+            if (t.type === 'Income' || t.type === 'Adjustment In') {
+                filteredInc += amt;
+            } else if (t.type === 'Expense' || t.type === 'Adjustment Out') {
+                filteredExp += amt;
+            }
+        });
+
+        document.getElementById('filteredIncomeText').innerText = "Rs. " + filteredInc.toLocaleString();
+        document.getElementById('filteredExpenseText').innerText = "Rs. " + filteredExp.toLocaleString();
+        const filteredNet = filteredInc - filteredExp;
+        document.getElementById('filteredNetText').innerText = "Rs. " + filteredNet.toLocaleString();
 
         const tbody = document.getElementById('transactionBody');
         tbody.innerHTML = list.map(t => `
@@ -377,14 +449,19 @@
         new bootstrap.Modal(document.getElementById('entryModal')).show();
     };
 
-    // Save New Entry
+    // Save New Entry with Selected Person Name Tagged in Remarks
     document.getElementById('entryForm').onsubmit = (e) => {
         e.preventDefault();
+        
+        const selectedPerson = document.getElementById('entryPerson').value;
+        const baseRemarks = document.getElementById('entryRemarks').value || 'Green Paultry Farm Entry';
+        const finalRemarks = baseRemarks.trim() + " with " + selectedPerson;
+        
         const data = {
             type: document.querySelector('input[name="type"]:checked').value,
             amount: document.getElementById('entryAmt').value,
             date: document.getElementById('entryDate').value,
-            remarks: document.getElementById('entryRemarks').value || 'Green Paultry Farm Entry',
+            remarks: finalRemarks,
             excludeFromBalance: false
         };
         
@@ -394,7 +471,6 @@
         bootstrap.Modal.getInstance(document.getElementById('entryModal')).hide();
     };
 
-    // Open Edit Modal
     window.openEditModal = (tId) => {
         const t = allTransactions.find(x => x.id === tId);
         if(!t) return;
@@ -408,7 +484,6 @@
         new bootstrap.Modal(document.getElementById('editModal')).show();
     };
 
-    // Save Edited Entry
     document.getElementById('editForm').onsubmit = (e) => {
         e.preventDefault();
         const tId = document.getElementById('editEntryId').value;
@@ -430,7 +505,6 @@
         if(confirm("Delete record from Green Paultry Farm?")) remove(ref(db, `bank_transactions/${targetBankId}/${tId}`)); 
     };
 
-    // Download Data to CSV
     window.downloadData = () => {
         if(filteredTransactions.length === 0) {
             alert("No records to download!");
@@ -455,3 +529,4 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+```[cite: 1]
