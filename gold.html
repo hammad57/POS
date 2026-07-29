@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.3, shrink-to-fit=no">
-    <title>Finance Manager | Plans</title>
+    <title>Green Paultry Farm | Finance Manager</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -69,10 +69,9 @@
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold m-0">Financial Dashboard</h3>
+        <h3 class="fw-bold m-0">Green Paultry Farm Dashboard</h3>
         
         <div class="d-flex align-items-center gap-3">
-            <button class="btn btn-primary fw-bold" onclick="openPlanModal()"><i class="bi bi-plus-circle me-2"></i>Add Plan</button>
             <div class="d-flex align-items-center gap-2">
                 <label class="small fw-bold m-0"><i class="bi bi-palette2 me-1"></i> Theme:</label>
                 <select id="themeSelect" class="theme-select-box form-select form-select-sm" style="width: 120px;">
@@ -85,29 +84,13 @@
     </div>
     
     <div id="plansContainer">
-        <div class="text-center text-muted my-5">Loading Plans...</div>
+        <div class="text-center text-muted my-5">Loading Green Paultry Farm Data...</div>
     </div>
 
 </div>
 
 <!-- Floating Action Button for New Entry -->
 <button class="fab-btn" onclick="openEntryModal()"><i class="bi bi-plus-lg"></i></button>
-
-<!-- Add Plan Modal -->
-<div class="modal fade" id="planModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content p-4 border-0 rounded-4 shadow-lg" style="background: var(--card-bg); color: var(--text-color);">
-            <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-briefcase me-2"></i>Add New Investment Plan</h5>
-            <form id="planForm">
-                <div class="mb-3"><label class="small fw-bold">Plan Title</label><input type="text" id="planTitle" class="form-control" style="background: var(--bg-body); color: var(--text-color);" required></div>
-                <div class="mb-3"><label class="small fw-bold">User Name</label><input type="text" id="planUser" class="form-control" style="background: var(--bg-body); color: var(--text-color);" required></div>
-                <div class="mb-3"><label class="small fw-bold">Account Number</label><input type="text" id="planAccNo" class="form-control" style="background: var(--bg-body); color: var(--text-color);" required></div>
-                <div class="mb-3"><label class="small fw-bold">Opening Balance (Rs.)</label><input type="number" id="planOpenBal" class="form-control" style="background: var(--bg-body); color: var(--text-color);" required></div>
-                <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill">Create Plan</button>
-            </form>
-        </div>
-    </div>
-</div>
 
 <!-- Add Entry Modal -->
 <div class="modal fade" id="entryModal" tabindex="-1">
@@ -116,8 +99,9 @@
             <h5 class="fw-bold mb-3 text-success">Add Income / Expense</h5>
             <form id="entryForm">
                 <div class="mb-3">
-                    <label class="small fw-bold">Select Active Plan</label>
-                    <select id="entryPlan" class="form-select" style="background: var(--bg-body); color: var(--text-color);" required></select>
+                    <label class="small fw-bold">Active Plan</label>
+                    <!-- Disabled dropdown to ensure only Green Paultry Farm is used -->
+                    <select id="entryPlan" class="form-select" style="background: var(--bg-body); color: var(--text-color);" required disabled></select>
                 </div>
                 <div class="mb-3">
                     <label class="small fw-bold">Transaction Type</label>
@@ -129,7 +113,7 @@
                         <label for="exp" class="radio-label">Expense</label>
                     </div>
                 </div>
-                <!-- Person Dropdown Selection Maintained for legacy compatibility if needed -->
+                <!-- Person Dropdown Selection -->
                 <div class="mb-3">
                     <label class="small fw-bold">Person Name (Optional Tag)</label>
                     <select id="entryPerson" class="form-select" style="background: var(--bg-body); color: var(--text-color);">
@@ -184,20 +168,19 @@
         }
     }
 
-    // Modal Triggers
-    window.openPlanModal = () => {
-        document.getElementById('planForm').reset();
-        new bootstrap.Modal(document.getElementById('planModal')).show();
-    };
-
     window.openEntryModal = () => {
         document.getElementById('entryForm').reset();
         document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('saveBtn').disabled = true;
         
-        // Populate Plan Dropdown
+        // Populate Plan Dropdown (Only Green Paultry Farm will be here due to filtering)
         const entryPlan = document.getElementById('entryPlan');
         entryPlan.innerHTML = Object.entries(accounts).map(([id, acc]) => `<option value="${id}">${acc.name}</option>`).join('');
+        
+        // Ensure plan is selected for submission even if disabled
+        if(Object.keys(accounts).length > 0) {
+            entryPlan.value = Object.keys(accounts)[0];
+        }
         
         new bootstrap.Modal(document.getElementById('entryModal')).show();
     };
@@ -211,19 +194,6 @@
         document.getElementById('saveBtn').disabled = false; 
         if(!document.getElementById('entryRemarks').value) document.getElementById('entryRemarks').value = 'Purchasing';
     });
-
-    // Save New Plan
-    document.getElementById('planForm').onsubmit = (e) => {
-        e.preventDefault();
-        const newPlan = {
-            name: document.getElementById('planTitle').value,
-            userName: document.getElementById('planUser').value,
-            accountNo: document.getElementById('planAccNo').value,
-            openingBalance: parseFloat(document.getElementById('planOpenBal').value || 0)
-        };
-        push(ref(db, 'bank_accounts'), newPlan);
-        bootstrap.Modal.getInstance(document.getElementById('planModal')).hide();
-    };
 
     // Save New Entry
     document.getElementById('entryForm').onsubmit = (e) => {
@@ -245,9 +215,16 @@
         bootstrap.Modal.getInstance(document.getElementById('entryModal')).hide();
     };
 
-    // Fetch Data
+    // Fetch Data & Filter ONLY Green Paultry Farm
     onValue(ref(db, 'bank_accounts'), (snap) => {
-        accounts = snap.val() || {};
+        const allAccounts = snap.val() || {};
+        accounts = {};
+        for (const [id, acc] of Object.entries(allAccounts)) {
+            // Sirf Green Paultry Farm ko filter karna hai
+            if (acc.name === "Green Paultry Farm") {
+                accounts[id] = acc;
+            }
+        }
         renderDashboard();
     });
 
@@ -264,13 +241,12 @@
     function renderDashboard() {
         const container = document.getElementById('plansContainer');
         if (Object.keys(accounts).length === 0) {
-            container.innerHTML = `<div class="text-center text-muted my-5">No plans active. Click "Add Plan" to create one.</div>`;
+            container.innerHTML = `<div class="text-center text-muted my-5">Green Paultry Farm account not found in database.</div>`;
             return;
         }
 
         let html = '';
         const currentDate = new Date();
-        // Pad month to ensure YYYY-MM format
         const currentMonthKey = currentDate.getFullYear() + "-" + String(currentDate.getMonth() + 1).padStart(2, '0'); 
 
         for (const [accId, acc] of Object.entries(accounts)) {
@@ -282,14 +258,14 @@
             const openingBal = parseFloat(acc.openingBalance || 0);
             
             // Group transactions by month
-            const monthsData = {}; // { 'YYYY-MM': { inc: 0, exp: 0, txs: [] } }
+            const monthsData = {}; 
 
             accTxs.forEach(t => {
                 const amt = parseFloat(t.amount) || 0;
                 const isInc = (t.type === 'Income' || t.type === 'Adjustment In');
                 if (isInc) totalInc += amt; else totalExp += amt;
                 
-                const monthKey = t.date.slice(0, 7); // Extracts YYYY-MM
+                const monthKey = t.date.slice(0, 7); 
                 if (!monthsData[monthKey]) monthsData[monthKey] = { inc: 0, exp: 0, txs: [] };
                 
                 monthsData[monthKey].txs.push(t);
@@ -311,12 +287,10 @@
                 sortedMonthKeys.forEach((mKey, index) => {
                     const mData = monthsData[mKey];
                     const isCurrentMonth = (mKey === currentMonthKey);
-                    // Open if it's the current month, otherwise collapse
                     const isExpanded = isCurrentMonth;
                     const collapseClass = isExpanded ? "show" : "";
                     const btnClass = isExpanded ? "" : "collapsed";
                     
-                    // Sort transactions in this month by date descending
                     const sortedTxs = mData.txs.sort((a,b) => new Date(b.date) - new Date(a.date));
                     
                     let tableRows = sortedTxs.map(t => `
@@ -365,7 +339,7 @@
                 <div class="row align-items-center mb-4">
                     <div class="col-md-6">
                         <h4 class="fw-bold mb-1">${acc.name}</h4>
-                        <div class="text-muted small mb-2"><i class="bi bi-person me-1"></i>${acc.userName} | <i class="bi bi-bank me-1"></i>A/c: ${acc.accountNo}</div>
+                        <div class="text-muted small mb-2"><i class="bi bi-person me-1"></i>${acc.userName || 'Admin'} | <i class="bi bi-bank me-1"></i>A/c: ${acc.accountNo || 'N/A'}</div>
                         <h2 class="bal-amt mb-0">Rs. ${currentBal.toLocaleString()}</h2>
                         <div class="small text-muted mt-1">Opening Balance: Rs. ${openingBal.toLocaleString()}</div>
                     </div>
@@ -393,5 +367,3 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-finance_manager_updated.html
-Displaying finance_manager_updated.html.
