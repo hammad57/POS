@@ -68,13 +68,25 @@
 <body>
 
 <div class="main-container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold m-0">Green Paultry Farm Dashboard</h3>
+    <!-- Top Header with Title, Top Balance Summary, and Controls -->
+    <div class="d-flex justify-content-between align-items-center mb-4 card-3d py-3">
+        <div>
+            <h3 class="fw-bold m-0"><i class="bi bi-shield-check text-success me-2"></i>Green Paultry Farm</h3>
+            <div class="small text-muted mt-1">Live Balance Dashboard</div>
+        </div>
         
+        <div id="topSummary" class="text-center px-3">
+            <span class="small text-muted d-block">Current Amount</span>
+            <h4 class="fw-bold text-success m-0" id="topBalanceAmt">Rs. 0</h4>
+        </div>
+
         <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-success btn-sm px-3 py-2 fw-bold rounded-pill shadow-sm" onclick="openEntryModal()">
+                <i class="bi bi-plus-lg me-1"></i> Add Entry
+            </button>
             <div class="d-flex align-items-center gap-2">
                 <label class="small fw-bold m-0"><i class="bi bi-palette2 me-1"></i> Theme:</label>
-                <select id="themeSelect" class="theme-select-box form-select form-select-sm" style="width: 120px;">
+                <select id="themeSelect" class="theme-select-box form-select form-select-sm" style="width: 110px;">
                     <option value="white">White</option>
                     <option value="black">Black</option>
                     <option value="green">Green</option>
@@ -220,7 +232,6 @@
         const allAccounts = snap.val() || {};
         accounts = {};
         for (const [id, acc] of Object.entries(allAccounts)) {
-            // Sirf Green Paultry Farm ko filter karna hai
             if (acc.name === "Green Paultry Farm") {
                 accounts[id] = acc;
             }
@@ -240,12 +251,16 @@
 
     function renderDashboard() {
         const container = document.getElementById('plansContainer');
+        const topBalanceAmt = document.getElementById('topBalanceAmt');
+        
         if (Object.keys(accounts).length === 0) {
             container.innerHTML = `<div class="text-center text-muted my-5">Green Paultry Farm account not found in database.</div>`;
+            topBalanceAmt.innerText = "Rs. 0";
             return;
         }
 
         let html = '';
+        let totalCurrentBalance = 0;
         const currentDate = new Date();
         const currentMonthKey = currentDate.getFullYear() + "-" + String(currentDate.getMonth() + 1).padStart(2, '0'); 
 
@@ -274,6 +289,7 @@
             });
 
             const currentBal = openingBal + totalInc - totalExp;
+            totalCurrentBalance = currentBal;
             
             // Sort months descending
             const sortedMonthKeys = Object.keys(monthsData).sort((a, b) => b.localeCompare(a));
@@ -362,6 +378,7 @@
         }
         
         container.innerHTML = html;
+        topBalanceAmt.innerText = "Rs. " + totalCurrentBalance.toLocaleString();
     }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
