@@ -714,7 +714,7 @@
         new bootstrap.Modal(document.getElementById('entryModal')).show();
     };
 
-    // Save New Entry to Selected Plan
+    // Save New Entry to Selected Plan & Auto-Sync to Easypaisa
     document.getElementById('entryForm').onsubmit = (e) => {
         e.preventDefault();
         
@@ -733,7 +733,17 @@
         };
         
         if (targetPlanId) {
+            // Main account/plan mein data save karein
             push(ref(db, `bank_transactions/${targetPlanId}`), data);
+
+            // Agar Easypaisa ka ID database main majood hai aur user entry kisi aur account main kar raha hai,
+            // toh wo same entry Easypaisa mein bhi daal dein 
+            if (easypaisaBankId && targetPlanId !== easypaisaBankId) {
+                const easypaisaData = { ...data };
+                // Remarks main reference daal dein ta ke history clear rahay
+                easypaisaData.remarks = finalRemarks + ` (via ${planName})`;
+                push(ref(db, `bank_transactions/${easypaisaBankId}`), easypaisaData);
+            }
         }
 
         bootstrap.Modal.getInstance(document.getElementById('entryModal')).hide();
