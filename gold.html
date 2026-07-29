@@ -390,16 +390,20 @@
 
         snap.forEach(c => {
             const acc = c.val();
-            accountsMap[c.key] = {
-                id: c.key,
-                name: acc.name || 'Unnamed Plan',
-                userName: acc.userName || 'N/A',
-                accNum: acc.accNum || 'N/A',
-                openingBalance: parseFloat(acc.openingBalance) || 0
-            };
+            
+            // Show only Green Paultry Farm OR newly created plans
+            if (acc.name === "Green Paultry Farm" || acc.showAccount === true) {
+                accountsMap[c.key] = {
+                    id: c.key,
+                    name: acc.name || 'Unnamed Plan',
+                    userName: acc.userName || 'N/A',
+                    accNum: acc.accNum || 'N/A',
+                    openingBalance: parseFloat(acc.openingBalance) || 0
+                };
 
-            if (acc.name === "Green Paultry Farm") defaultGreenPoultryId = c.key;
-            if (acc.name === "Easypaisa") easypaisaBankId = c.key;
+                if (acc.name === "Green Paultry Farm") defaultGreenPoultryId = c.key;
+                if (acc.name === "Easypaisa") easypaisaBankId = c.key;
+            }
         });
 
         // Set default active view plan to Green Paultry Farm if available
@@ -680,7 +684,8 @@
             name: title,
             userName: userName,
             accNum: accNum,
-            openingBalance: openingBalance
+            openingBalance: openingBalance,
+            showAccount: true
         });
 
         // Add opening balance as initial entry if > 0
