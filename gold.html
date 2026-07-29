@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.3, shrink-to-fit=no">
-    <title>Green Paultry Farm | Finance Manager</title>
+    <title>Green Paultry Farm & Investment Finance Manager</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -29,11 +29,11 @@
             color: var(--text-color);
             border-radius: 20px; 
             box-shadow: 0 10px 20px rgba(0,0,0,0.05); 
-            padding: 25px; 
+            padding: 22px; 
             margin-bottom: 20px; 
             transition: background-color 0.3s, color 0.3s;
         }
-        .bal-amt { font-size: 2rem; font-weight: 800; color: var(--accent-green); }
+        .bal-amt { font-size: 1.8rem; font-weight: 800; color: var(--accent-green); }
         .fab-btn { position: fixed; bottom: 40px; right: 40px; width: 70px; height: 70px; border-radius: 50%; background: var(--accent-green); color: white; border: none; font-size: 30px; box-shadow: 0 10px 20px rgba(0,184,148,0.3); z-index: 1000; transition: transform 0.2s; }
         .fab-btn:hover { transform: scale(1.1); }
         
@@ -53,40 +53,55 @@
             font-weight: 500;
         }
 
-        /* Table Theme Support Fixed */
+        /* Heartbeat Progress Bar Animation */
+        .heartbeat-pulse {
+            animation: heartbeat-anim 1.8s infinite ease-in-out;
+        }
+        @keyframes heartbeat-anim {
+            0% { opacity: 0.85; transform: scaleY(1); }
+            50% { opacity: 1; filter: brightness(1.2); transform: scaleY(1.1); }
+            100% { opacity: 0.85; transform: scaleY(1); }
+        }
+
+        /* Table Theme Support */
         table { background-color: transparent !important; color: var(--text-color) !important; }
         th, td { background-color: transparent !important; color: var(--text-color) !important; border-bottom-color: rgba(150,150,150,0.2) !important; }
         .table-hover tbody tr:hover td { background-color: rgba(150,150,150,0.05) !important; }
         th { opacity: 0.8; }
         
-        .accordion-button { background-color: var(--bg-body); color: var(--text-color); font-weight: bold; }
-        .accordion-button:not(.collapsed) { background-color: #e8f9f5; color: var(--accent-green); box-shadow: none; }
-        .accordion-item { background-color: var(--card-bg); border-color: rgba(150,150,150,0.2); }
-        .accordion-body { color: var(--text-color); }
+        .filter-input { background: var(--bg-body); color: var(--text-color); border: 1px solid #ddd; }
+
+        /* Accordion Styling for Monthly History */
+        .accordion-button:not(.collapsed) {
+            background-color: rgba(0, 184, 148, 0.1) !important;
+            color: var(--accent-green) !important;
+            box-shadow: none !important;
+        }
+        .accordion-button:focus {
+            box-shadow: none !important;
+        }
     </style>
 </head>
 <body>
 
 <div class="main-container">
-    <!-- Top Header with Title, Top Balance Summary, and Controls -->
-    <div class="d-flex justify-content-between align-items-center mb-4 card-3d py-3">
+    <!-- Top Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h3 class="fw-bold m-0"><i class="bi bi-shield-check text-success me-2"></i>Green Paultry Farm</h3>
-            <div class="small text-muted mt-1">Live Balance Dashboard</div>
+            <h3 class="fw-bold m-0">Finance & Investment Dashboard</h3>
+            <span class="text-muted fs-6">Manage Accounts & Plans</span>
         </div>
         
-        <div id="topSummary" class="text-center px-3">
-            <span class="small text-muted d-block">Current Amount</span>
-            <h4 class="fw-bold text-success m-0" id="topBalanceAmt">Rs. 0</h4>
-        </div>
-
         <div class="d-flex align-items-center gap-3">
-            <button class="btn btn-success btn-sm px-3 py-2 fw-bold rounded-pill shadow-sm" onclick="openEntryModal()">
-                <i class="bi bi-plus-lg me-1"></i> Add Entry
+            <!-- Add Investment Plan Button -->
+            <button class="btn btn-success fw-bold rounded-pill px-3 py-2 shadow-sm" onclick="openAddPlanModal()">
+                <i class="bi bi-plus-circle-fill me-1"></i> Add Plan
             </button>
+
+            <!-- Live Theme Selector -->
             <div class="d-flex align-items-center gap-2">
                 <label class="small fw-bold m-0"><i class="bi bi-palette2 me-1"></i> Theme:</label>
-                <select id="themeSelect" class="theme-select-box form-select form-select-sm" style="width: 110px;">
+                <select id="themeSelect" class="theme-select-box form-select form-select-sm" style="width: 120px;">
                     <option value="white">White</option>
                     <option value="black">Black</option>
                     <option value="green">Green</option>
@@ -95,26 +110,130 @@
         </div>
     </div>
     
-    <div id="plansContainer">
-        <div class="text-center text-muted my-5">Loading Green Paultry Farm Data...</div>
+    <!-- Top Dashboard: Active Plans & Accounts Cards -->
+    <div class="row mb-3" id="plansDashboardGrid">
+        <!-- Dynamic Cards rendered here -->
     </div>
 
+    <!-- Plan Selection Bar for Transaction History Focus -->
+    <div class="card-3d py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-diagram-3-fill text-success fs-5"></i>
+            <label class="fw-bold m-0">Active View Plan:</label>
+            <select id="activeViewPlanSelect" class="form-select form-select-sm filter-input fw-bold" style="width: 250px;" onchange="switchViewPlan(this.value)">
+                <!-- Dynamic Plan Options -->
+            </select>
+        </div>
+        <div class="text-muted small" id="activePlanDetailSub">
+            Showing records for Green Paultry Farm
+        </div>
+    </div>
+
+    <!-- Heartbeat Interactive Progress Bar Meter -->
+    <div class="card-3d">
+        <h6 class="text-muted fw-bold mb-3"><i class="bi bi-activity me-2"></i>Live Income & Expense Heartbeat Meter</h6>
+        <div class="row align-items-center">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="d-flex justify-content-between mb-1 small fw-bold text-success">
+                    <span>Total Income Pulse</span>
+                    <span id="incomePulseText">Rs. 0</span>
+                </div>
+                <div class="progress" style="height: 12px; background: rgba(0,184,148,0.1); border-radius: 6px; overflow: hidden;">
+                    <div id="incomeProgressBar" class="progress-bar bg-success heartbeat-pulse" role="progressbar" style="width: 0%; transition: width 0.6s;"></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex justify-content-between mb-1 small fw-bold text-danger">
+                    <span>Total Expense Pulse</span>
+                    <span id="expensePulseText">Rs. 0</span>
+                </div>
+                <div class="progress" style="height: 12px; background: rgba(214,48,49,0.1); border-radius: 6px; overflow: hidden;">
+                    <div id="expenseProgressBar" class="progress-bar bg-danger heartbeat-pulse" role="progressbar" style="width: 0%; transition: width 0.6s;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions Section with Filters & Monthly Collapsible Accordion -->
+    <div class="card-3d">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h5 class="fw-bold m-0"><i class="bi bi-clock-history me-2"></i>Monthly History & Transactions</h5>
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <!-- Person Filter Dropdown -->
+                <select id="filterPerson" class="form-select form-select-sm filter-input" style="width: 120px;" onchange="renderActivePlanTransactions()">
+                    <option value="">All Persons</option>
+                    <option value="Muluk">Muluk</option>
+                    <option value="Hammad">Hammad</option>
+                </select>
+                <input type="date" id="filterFrom" class="form-control form-control-sm filter-input" onchange="renderActivePlanTransactions()" style="width: 130px;">
+                <span class="small fw-bold">To</span>
+                <input type="date" id="filterTo" class="form-control form-control-sm filter-input" onchange="renderActivePlanTransactions()" style="width: 130px;">
+                <button class="btn btn-sm btn-primary fw-bold" onclick="downloadData()"><i class="bi bi-download me-1"></i> Download CSV</button>
+            </div>
+        </div>
+        
+        <!-- Filtered Totals Summary Bar -->
+        <div class="alert py-2 px-3 mb-3 d-flex justify-content-between align-items-center small fw-bold" style="background: var(--bg-body); color: var(--text-color); border: 1px solid rgba(150,150,150,0.2); border-radius: 10px;">
+            <div><i class="bi bi-filter-circle me-1 text-primary"></i> Filtered Summary:</div>
+            <div class="d-flex gap-3 flex-wrap">
+                <span class="text-success">Income: <span id="filteredIncomeText">Rs. 0</span></span>
+                <span class="text-danger">Expense: <span id="filteredExpenseText">Rs. 0</span></span>
+                <span style="color: var(--accent-green);">Net: <span id="filteredNetText">Rs. 0</span></span>
+            </div>
+        </div>
+
+        <!-- Monthly Collapsible Accordion Container -->
+        <div id="monthlyAccordionContainer">
+            <p class="text-muted text-center py-4">Loading monthly history...</p>
+        </div>
+    </div>
 </div>
 
-<!-- Floating Action Button for New Entry -->
-<button class="fab-btn" onclick="openEntryModal()"><i class="bi bi-plus-lg"></i></button>
+<!-- Floating Plus Button -->
+<button class="fab-btn" onclick="openModal()"><i class="bi bi-plus-lg"></i></button>
+
+<!-- Add New Plan Modal -->
+<div class="modal fade" id="addPlanModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-4 border-0 rounded-4 shadow-lg" style="background: var(--card-bg); color: var(--text-color);">
+            <h5 class="fw-bold mb-3 text-success"><i class="bi bi-piggy-bank me-2"></i>Add New Investment Plan</h5>
+            <form id="addPlanForm">
+                <div class="mb-3">
+                    <label class="small fw-bold">Plan Title</label>
+                    <input type="text" id="planTitleInput" class="form-control" style="background: var(--bg-body); color: var(--text-color);" placeholder="e.g. Broiler Batch #1" required>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold">User Name</label>
+                    <input type="text" id="planUserNameInput" class="form-control" style="background: var(--bg-body); color: var(--text-color);" placeholder="Manager / Owner Name" required>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold">Account Number</label>
+                    <input type="text" id="planAccNumInput" class="form-control" style="background: var(--bg-body); color: var(--text-color);" placeholder="e.g. PK00123456" required>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold">Opening Balance (Rs.)</label>
+                    <input type="number" id="planOpeningBalanceInput" class="form-control" style="background: var(--bg-body); color: var(--text-color);" value="0" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100 py-3 fw-bold rounded-pill">Create Investment Plan</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 <!-- Add Entry Modal -->
 <div class="modal fade" id="entryModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4 border-0 rounded-4 shadow-lg" style="background: var(--card-bg); color: var(--text-color);">
-            <h5 class="fw-bold mb-3 text-success">Add Income / Expense</h5>
+            <h5 class="fw-bold mb-3 text-success">Add New Entry</h5>
             <form id="entryForm">
+                <!-- Active Account / Plan Selector at the Top -->
                 <div class="mb-3">
-                    <label class="small fw-bold">Active Plan</label>
-                    <!-- Disabled dropdown to ensure only Green Paultry Farm is used -->
-                    <select id="entryPlan" class="form-select" style="background: var(--bg-body); color: var(--text-color);" required disabled></select>
+                    <label class="small fw-bold text-primary"><i class="bi bi-bank me-1"></i> Select Investment Plan / Account</label>
+                    <select id="entryAccountSelect" class="form-select fw-bold" style="background: var(--bg-body); color: var(--text-color);" required>
+                        <!-- Dynamic Plan List -->
+                    </select>
                 </div>
+
                 <div class="mb-3">
                     <label class="small fw-bold">Transaction Type</label>
                     <div class="radio-group">
@@ -125,11 +244,10 @@
                         <label for="exp" class="radio-label">Expense</label>
                     </div>
                 </div>
-                <!-- Person Dropdown Selection -->
+
                 <div class="mb-3">
-                    <label class="small fw-bold">Person Name (Optional Tag)</label>
-                    <select id="entryPerson" class="form-select" style="background: var(--bg-body); color: var(--text-color);">
-                        <option value="">None</option>
+                    <label class="small fw-bold">Person Name</label>
+                    <select id="entryPerson" class="form-select" style="background: var(--bg-body); color: var(--text-color);" required>
                         <option value="Muluk">Muluk</option>
                         <option value="Hammad">Hammad</option>
                     </select>
@@ -143,6 +261,32 @@
     </div>
 </div>
 
+<!-- Edit Entry Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-4 border-0 rounded-4 shadow-lg" style="background: var(--card-bg); color: var(--text-color);">
+            <h5 class="fw-bold mb-3 text-primary">Edit Transaction</h5>
+            <form id="editForm">
+                <input type="hidden" id="editEntryId">
+                <input type="hidden" id="editPlanId">
+                <div class="mb-3">
+                    <label class="small fw-bold">Transaction Type</label>
+                    <select id="editType" class="form-select" style="background: var(--bg-body); color: var(--text-color);" required>
+                        <option value="Income">Income</option>
+                        <option value="Expense">Expense</option>
+                        <option value="Adjustment In">Adjustment In</option>
+                        <option value="Adjustment Out">Adjustment Out</option>
+                    </select>
+                </div>
+                <div class="mb-3"><label class="small fw-bold">Amount (Rs.)</label><input type="number" id="editAmt" class="form-control" style="background: var(--bg-body); color: var(--text-color);" required></div>
+                <div class="mb-3"><label class="small fw-bold">Date</label><input type="date" id="editDate" class="form-control" style="background: var(--bg-body); color: var(--text-color);" required></div>
+                <div class="mb-3"><label class="small fw-bold">Remarks</label><input type="text" id="editRemarks" class="form-control" style="background: var(--bg-body); color: var(--text-color);" required></div>
+                <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill">Update Transaction</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, set, update } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
@@ -151,12 +295,34 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let accounts = {};
-    let allTransactions = {};
+    let accountsMap = {}; 
+    let allTransactionsMap = {}; 
+    let activeViewPlanId = null;
+    let easypaisaBankId = null;
 
+    // Privacy state for Easypaisa balance
+    let isEasypaisaVisible = false;
+
+    window.toggleEasypaisaPrivacy = () => {
+        isEasypaisaVisible = !isEasypaisaVisible;
+        renderDashboard();
+    };
+
+    const incRadio = document.getElementById('inc');
+    const expRadio = document.getElementById('exp');
+    const remarksInput = document.getElementById('entryRemarks');
+    const dateInput = document.getElementById('entryDate');
+    const saveBtn = document.getElementById('saveBtn');
     const themeSelect = document.getElementById('themeSelect');
-    window.changeTheme = (themeName) => { set(ref(db, 'settings/gold_theme'), themeName); };
-    themeSelect.addEventListener('change', (e) => { window.changeTheme(e.target.value); });
+
+    window.changeTheme = (themeName) => {
+        set(ref(db, 'settings/gold_theme'), themeName);
+    };
+
+    themeSelect.addEventListener('change', (e) => {
+        window.changeTheme(e.target.value);
+    });
+
     onValue(ref(db, 'settings/gold_theme'), (snap) => {
         const theme = snap.val() || 'white';
         themeSelect.value = theme;
@@ -180,206 +346,456 @@
         }
     }
 
-    window.openEntryModal = () => {
-        document.getElementById('entryForm').reset();
-        document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
-        document.getElementById('saveBtn').disabled = true;
-        
-        // Populate Plan Dropdown (Only Green Paultry Farm will be here due to filtering)
-        const entryPlan = document.getElementById('entryPlan');
-        entryPlan.innerHTML = Object.entries(accounts).map(([id, acc]) => `<option value="${id}">${acc.name}</option>`).join('');
-        
-        // Ensure plan is selected for submission even if disabled
-        if(Object.keys(accounts).length > 0) {
-            entryPlan.value = Object.keys(accounts)[0];
+    incRadio.addEventListener('change', () => {
+        if(incRadio.checked) {
+            remarksInput.value = 'Profit';
+            dateInput.value = new Date().toISOString().split('T')[0];
+            saveBtn.disabled = false;
         }
+    });
+
+    expRadio.addEventListener('change', () => {
+        if(expRadio.checked) {
+            remarksInput.value = 'Purchasing';
+            dateInput.value = new Date().toISOString().split('T')[0];
+            saveBtn.disabled = false;
+        }
+    });
+
+    // Helper to Auto-Update old remarks data for Hammad / Muluk
+    const processMigration = (bankId, nodeKey, tData) => {
+        let remarks = tData.remarks || '';
+        let lower = remarks.toLowerCase();
         
+        if (!lower.includes('with hammad') && !lower.includes('with muluk')) {
+            let updatedRemarks = remarks;
+            
+            if (lower.includes('hammad')) {
+                updatedRemarks = updatedRemarks.replace(/hammad/ig, '').replace(/\s+/g, ' ').trim();
+                updatedRemarks += ' with Hammad';
+            } else {
+                updatedRemarks = updatedRemarks.trim() + ' with Muluk';
+            }
+            
+            update(ref(db, `bank_transactions/${bankId}/${nodeKey}`), { remarks: updatedRemarks });
+            tData.remarks = updatedRemarks;
+        }
+        return { id: nodeKey, planId: bankId, ...tData };
+    };
+
+    // Listen to Bank Accounts
+    onValue(ref(db, 'bank_accounts'), (snap) => {
+        accountsMap = {};
+        let defaultGreenPoultryId = null;
+
+        snap.forEach(c => {
+            const acc = c.val();
+            accountsMap[c.key] = {
+                id: c.key,
+                name: acc.name || 'Unnamed Plan',
+                userName: acc.userName || 'N/A',
+                accNum: acc.accNum || 'N/A',
+                openingBalance: parseFloat(acc.openingBalance) || 0
+            };
+
+            if (acc.name === "Green Paultry Farm") defaultGreenPoultryId = c.key;
+            if (acc.name === "Easypaisa") easypaisaBankId = c.key;
+        });
+
+        // Set default active view plan to Green Paultry Farm if available
+        if (!activeViewPlanId && defaultGreenPoultryId) {
+            activeViewPlanId = defaultGreenPoultryId;
+        } else if (!activeViewPlanId && Object.keys(accountsMap).length > 0) {
+            activeViewPlanId = Object.keys(accountsMap)[0];
+        }
+
+        renderDashboard();
+    });
+
+    // Listen to Bank Transactions
+    onValue(ref(db, 'bank_transactions'), (snap) => {
+        allTransactionsMap = {};
+
+        snap.forEach(planSnap => {
+            const pId = planSnap.key;
+            allTransactionsMap[pId] = [];
+            planSnap.forEach(tNode => {
+                const tObj = processMigration(pId, tNode.key, tNode.val());
+                allTransactionsMap[pId].push(tObj);
+            });
+        });
+
+        renderDashboard();
+    });
+
+    function getPlanSummary(planId) {
+        const acc = accountsMap[planId] || {};
+        const transactions = allTransactionsMap[planId] || [];
+
+        let totalInc = 0;
+        let totalExp = 0;
+
+        transactions.forEach(t => {
+            if (t.excludeFromBalance) return;
+            const amt = parseFloat(t.amount) || 0;
+            if (t.type === 'Income' || t.type === 'Adjustment In') totalInc += amt;
+            else if (t.type === 'Expense' || t.type === 'Adjustment Out') totalExp += amt;
+        });
+
+        const currentBalance = (acc.openingBalance || 0) + totalInc - totalExp;
+
+        return {
+            totalInc,
+            totalExp,
+            currentBalance
+        };
+    }
+
+    function renderDashboard() {
+        const grid = document.getElementById('plansDashboardGrid');
+        const viewSelect = document.getElementById('activeViewPlanSelect');
+        const entryAccountSelect = document.getElementById('entryAccountSelect');
+
+        grid.innerHTML = '';
+        viewSelect.innerHTML = '';
+        entryAccountSelect.innerHTML = '';
+
+        const planKeys = Object.keys(accountsMap);
+
+        if (planKeys.length === 0) {
+            grid.innerHTML = '<div class="col-12 text-center text-muted">No Plans found. Click "Add Plan" to create one.</div>';
+            return;
+        }
+
+        planKeys.forEach(pId => {
+            const acc = accountsMap[pId];
+            const summary = getPlanSummary(pId);
+
+            // Active View Plan Options
+            const opt1 = document.createElement('option');
+            opt1.value = pId;
+            opt1.innerText = acc.name;
+            if (pId === activeViewPlanId) opt1.selected = true;
+            viewSelect.appendChild(opt1);
+
+            // Entry Form Plan Options
+            const opt2 = document.createElement('option');
+            opt2.value = pId;
+            opt2.innerText = `${acc.name} (${acc.userName})`;
+            if (pId === activeViewPlanId) opt2.selected = true;
+            entryAccountSelect.appendChild(opt2);
+
+            // Render Card in Top Dashboard
+            const isEasypaisa = (acc.name === "Easypaisa");
+            let displayBalStr = "Rs. " + summary.currentBalance.toLocaleString();
+            if (isEasypaisa) {
+                displayBalStr = isEasypaisaVisible ? "Rs. " + summary.currentBalance.toLocaleString() : "Rs. *****";
+            }
+
+            const cardCol = document.createElement('div');
+            cardCol.className = 'col-md-4 mb-3';
+            cardCol.innerHTML = `
+                <div class="card-3d h-100 mb-0" style="border-left: 5px solid ${isEasypaisa ? '#0984e3' : 'var(--accent-green)'}; ${isEasypaisa ? 'cursor:pointer;' : ''}" ${isEasypaisa ? 'ondblclick="toggleEasypaisaPrivacy()"' : ''}>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="fw-bold m-0 text-truncate" style="max-width: 200px;">${acc.name}</h6>
+                            <span class="small text-muted" style="font-size: 11px;"><i class="bi bi-person me-1"></i>${acc.userName} | Acc: ${acc.accNum}</span>
+                        </div>
+                        ${isEasypaisa ? '<span class="small text-muted" style="font-size: 11px;"><i class="bi bi-eye-slash"></i> Dbl-click</span>' : '<span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size:10px;">Active</span>'}
+                    </div>
+                    <h3 class="bal-amt mb-2" style="color: ${isEasypaisa ? '#0984e3' : 'var(--accent-green)'};">${displayBalStr}</h3>
+                    
+                    <div class="pt-2 border-top d-flex justify-content-between align-items-center small fw-bold">
+                        <span class="text-success"><i class="bi bi-arrow-down-left me-1"></i>Inc: Rs. ${summary.totalInc.toLocaleString()}</span>
+                        <span class="text-danger"><i class="bi bi-arrow-up-right me-1"></i>Exp: Rs. ${summary.totalExp.toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(cardCol);
+        });
+
+        // Update Subtitle & Live Heartbeat Meter for Active Selected Plan
+        if (activeViewPlanId && accountsMap[activeViewPlanId]) {
+            const activeAcc = accountsMap[activeViewPlanId];
+            const activeSummary = getPlanSummary(activeViewPlanId);
+
+            document.getElementById('activePlanDetailSub').innerText = `Showing records for ${activeAcc.name} (${activeAcc.userName})`;
+
+            document.getElementById('incomePulseText').innerText = "Rs. " + activeSummary.totalInc.toLocaleString();
+            document.getElementById('expensePulseText').innerText = "Rs. " + activeSummary.totalExp.toLocaleString();
+            
+            const totalCombined = activeSummary.totalInc + activeSummary.totalExp || 1;
+            document.getElementById('incomeProgressBar').style.width = (activeSummary.totalInc / totalCombined) * 100 + "%";
+            document.getElementById('expenseProgressBar').style.width = (activeSummary.totalExp / totalCombined) * 100 + "%";
+        }
+
+        renderActivePlanTransactions();
+    }
+
+    window.switchViewPlan = (pId) => {
+        activeViewPlanId = pId;
+        renderDashboard();
+    };
+
+    window.renderActivePlanTransactions = () => {
+        if (!activeViewPlanId) return;
+
+        let list = [...(allTransactionsMap[activeViewPlanId] || [])].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        const filterPerson = document.getElementById('filterPerson').value;
+        const fromDate = document.getElementById('filterFrom').value;
+        const toDate = document.getElementById('filterTo').value;
+
+        if (filterPerson) {
+            list = list.filter(t => (t.remarks || '').toLowerCase().includes(filterPerson.toLowerCase()));
+        }
+        if (fromDate) list = list.filter(t => new Date(t.date) >= new Date(fromDate));
+        if (toDate) list = list.filter(t => new Date(t.date) <= new Date(toDate));
+
+        // Filtered Totals
+        let filteredInc = 0;
+        let filteredExp = 0;
+        list.forEach(t => {
+            const amt = parseFloat(t.amount) || 0;
+            if (t.type === 'Income' || t.type === 'Adjustment In') filteredInc += amt;
+            else if (t.type === 'Expense' || t.type === 'Adjustment Out') filteredExp += amt;
+        });
+
+        document.getElementById('filteredIncomeText').innerText = "Rs. " + filteredInc.toLocaleString();
+        document.getElementById('filteredExpenseText').innerText = "Rs. " + filteredExp.toLocaleString();
+        const filteredNet = filteredInc - filteredExp;
+        document.getElementById('filteredNetText').innerText = "Rs. " + filteredNet.toLocaleString();
+
+        // Render Monthly Collapsible Accordion
+        renderMonthlyAccordion(list);
+    };
+
+    function renderMonthlyAccordion(transactionsList) {
+        const container = document.getElementById('monthlyAccordionContainer');
+        
+        if (transactionsList.length === 0) {
+            container.innerHTML = `<p class="text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>No transaction records found for this plan.</p>`;
+            return;
+        }
+
+        // Group transactions by YYYY-MM
+        const grouped = {};
+        const currentMonthKey = new Date().toISOString().slice(0, 7); // e.g. "2026-07"
+
+        transactionsList.forEach(t => {
+            const monthKey = t.date ? t.date.slice(0, 7) : 'Unknown';
+            if (!grouped[monthKey]) grouped[monthKey] = [];
+            grouped[monthKey].push(t);
+        });
+
+        const sortedMonths = Object.keys(grouped).sort().reverse();
+
+        let html = `<div class="accordion" id="planMonthlyAccordion">`;
+
+        sortedMonths.forEach((mKey, idx) => {
+            const monthTrans = grouped[mKey];
+            let mInc = 0;
+            let mExp = 0;
+
+            monthTrans.forEach(t => {
+                const amt = parseFloat(t.amount) || 0;
+                if (t.type === 'Income' || t.type === 'Adjustment In') mInc += amt;
+                else if (t.type === 'Expense' || t.type === 'Adjustment Out') mExp += amt;
+            });
+
+            const isCurrentMonth = (mKey === currentMonthKey) || (idx === 0 && sortedMonths.length === 1);
+            const collapseId = `collapse_${mKey.replace('-', '_')}`;
+
+            let monthLabel = mKey;
+            if (mKey !== 'Unknown') {
+                const [y, m] = mKey.split('-');
+                const d = new Date(parseInt(y), parseInt(m) - 1, 1);
+                monthLabel = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+            }
+
+            html += `
+            <div class="accordion-item mb-2 border rounded-3 overflow-hidden" style="background: var(--card-bg); color: var(--text-color);">
+                <h2 class="accordion-header" id="heading_${collapseId}">
+                    <button class="accordion-button ${isCurrentMonth ? '' : 'collapsed'} d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
+                        <span class="fw-bold me-auto"><i class="bi bi-calendar3 me-2"></i>${monthLabel}</span>
+                        <div class="d-flex gap-3 me-3 small fw-bold">
+                            <span class="text-success"><i class="bi bi-arrow-down-left me-1"></i>Income: Rs. ${mInc.toLocaleString()}</span>
+                            <span class="text-danger"><i class="bi bi-arrow-up-right me-1"></i>Expense: Rs. ${mExp.toLocaleString()}</span>
+                        </div>
+                    </button>
+                </h2>
+                <div id="${collapseId}" class="accordion-collapse collapse ${isCurrentMonth ? 'show' : ''}" data-bs-parent="#planMonthlyAccordion">
+                    <div class="accordion-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle m-0">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Remarks</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${monthTrans.map(t => `
+                                        <tr>
+                                            <td>${t.date}</td>
+                                            <td class="fw-bold ${t.type.includes('In') ? 'text-success' : 'text-danger'}">${t.type}</td>
+                                            <td>Rs. ${parseFloat(t.amount).toLocaleString()}</td>
+                                            <td>${t.remarks || '-'}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal('${t.id}', '${t.planId}')"><i class="bi bi-pencil"></i></button>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('${t.id}', '${t.planId}')"><i class="bi bi-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        html += `</div>`;
+        container.innerHTML = html;
+    }
+
+    // Modal Triggers
+    window.openAddPlanModal = () => {
+        document.getElementById('addPlanForm').reset();
+        new bootstrap.Modal(document.getElementById('addPlanModal')).show();
+    };
+
+    document.getElementById('addPlanForm').onsubmit = (e) => {
+        e.preventDefault();
+        
+        const title = document.getElementById('planTitleInput').value.trim();
+        const userName = document.getElementById('planUserNameInput').value.trim();
+        const accNum = document.getElementById('planAccNumInput').value.trim();
+        const openingBalance = parseFloat(document.getElementById('planOpeningBalanceInput').value) || 0;
+
+        const newPlanRef = push(ref(db, 'bank_accounts'), {
+            name: title,
+            userName: userName,
+            accNum: accNum,
+            openingBalance: openingBalance
+        });
+
+        // Add opening balance as initial entry if > 0
+        if (openingBalance > 0 && newPlanRef.key) {
+            push(ref(db, `bank_transactions/${newPlanRef.key}`), {
+                type: 'Income',
+                amount: openingBalance,
+                date: new Date().toISOString().split('T')[0],
+                remarks: 'Opening Balance',
+                excludeFromBalance: false
+            });
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('addPlanModal')).hide();
+    };
+
+    window.openModal = () => {
+        document.getElementById('entryForm').reset();
+        dateInput.value = new Date().toISOString().split('T')[0];
+        saveBtn.disabled = true;
+
+        if (activeViewPlanId) {
+            document.getElementById('entryAccountSelect').value = activeViewPlanId;
+        }
+
         new bootstrap.Modal(document.getElementById('entryModal')).show();
     };
 
-    // Form Event Listeners for enabling save btn
-    document.getElementById('inc').addEventListener('change', () => { 
-        document.getElementById('saveBtn').disabled = false; 
-        if(!document.getElementById('entryRemarks').value) document.getElementById('entryRemarks').value = 'Profit';
-    });
-    document.getElementById('exp').addEventListener('change', () => { 
-        document.getElementById('saveBtn').disabled = false; 
-        if(!document.getElementById('entryRemarks').value) document.getElementById('entryRemarks').value = 'Purchasing';
-    });
-
-    // Save New Entry
+    // Save New Entry to Selected Plan
     document.getElementById('entryForm').onsubmit = (e) => {
         e.preventDefault();
-        const planId = document.getElementById('entryPlan').value;
+        
+        const targetPlanId = document.getElementById('entryAccountSelect').value;
         const selectedPerson = document.getElementById('entryPerson').value;
-        let baseRemarks = document.getElementById('entryRemarks').value || 'Entry';
-        if (selectedPerson) { baseRemarks = baseRemarks.trim() + " with " + selectedPerson; }
+        const planName = accountsMap[targetPlanId] ? accountsMap[targetPlanId].name : 'Plan';
+        const baseRemarks = document.getElementById('entryRemarks').value || `${planName} Entry`;
+        const finalRemarks = baseRemarks.trim() + " with " + selectedPerson;
         
         const data = {
             type: document.querySelector('input[name="type"]:checked').value,
             amount: document.getElementById('entryAmt').value,
             date: document.getElementById('entryDate').value,
-            remarks: baseRemarks,
+            remarks: finalRemarks,
             excludeFromBalance: false
         };
         
-        if (planId) { push(ref(db, `bank_transactions/${planId}`), data); }
+        if (targetPlanId) {
+            push(ref(db, `bank_transactions/${targetPlanId}`), data);
+        }
+
         bootstrap.Modal.getInstance(document.getElementById('entryModal')).hide();
     };
 
-    // Fetch Data & Filter ONLY Green Paultry Farm
-    onValue(ref(db, 'bank_accounts'), (snap) => {
-        const allAccounts = snap.val() || {};
-        accounts = {};
-        for (const [id, acc] of Object.entries(allAccounts)) {
-            if (acc.name === "Green Paultry Farm") {
-                accounts[id] = acc;
-            }
-        }
-        renderDashboard();
-    });
-
-    onValue(ref(db, 'bank_transactions'), (snap) => {
-        allTransactions = snap.val() || {};
-        renderDashboard();
-    });
-
-    function getMonthName(ym) {
-        const d = new Date(ym + "-01");
-        return d.toLocaleString('default', { month: 'long', year: 'numeric' });
-    }
-
-    function renderDashboard() {
-        const container = document.getElementById('plansContainer');
-        const topBalanceAmt = document.getElementById('topBalanceAmt');
+    window.openEditModal = (tId, pId) => {
+        const transactions = allTransactionsMap[pId] || [];
+        const t = transactions.find(x => x.id === tId);
+        if(!t) return;
         
-        if (Object.keys(accounts).length === 0) {
-            container.innerHTML = `<div class="text-center text-muted my-5">Green Paultry Farm account not found in database.</div>`;
-            topBalanceAmt.innerText = "Rs. 0";
+        document.getElementById('editEntryId').value = t.id;
+        document.getElementById('editPlanId').value = pId;
+        document.getElementById('editType').value = t.type;
+        document.getElementById('editAmt').value = t.amount;
+        document.getElementById('editDate').value = t.date;
+        document.getElementById('editRemarks').value = t.remarks || '';
+        
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    };
+
+    document.getElementById('editForm').onsubmit = (e) => {
+        e.preventDefault();
+        const tId = document.getElementById('editEntryId').value;
+        const pId = document.getElementById('editPlanId').value;
+
+        const updatedData = {
+            type: document.getElementById('editType').value,
+            amount: document.getElementById('editAmt').value,
+            date: document.getElementById('editDate').value,
+            remarks: document.getElementById('editRemarks').value
+        };
+
+        if(pId && tId) {
+            update(ref(db, `bank_transactions/${pId}/${tId}`), updatedData);
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+    };
+
+    window.deleteEntry = (tId, pId) => { 
+        if(confirm("Are you sure you want to delete this record?")) {
+            remove(ref(db, `bank_transactions/${pId}/${tId}`)); 
+        }
+    };
+
+    window.downloadData = () => {
+        const list = [...(allTransactionsMap[activeViewPlanId] || [])];
+        if(list.length === 0) {
+            alert("No records to download for this plan!");
             return;
         }
-
-        let html = '';
-        let totalCurrentBalance = 0;
-        const currentDate = new Date();
-        const currentMonthKey = currentDate.getFullYear() + "-" + String(currentDate.getMonth() + 1).padStart(2, '0'); 
-
-        for (const [accId, acc] of Object.entries(accounts)) {
-            const txsObj = allTransactions[accId] || {};
-            const accTxs = Object.entries(txsObj).map(([tId, t]) => ({id: tId, ...t}));
-            
-            let totalInc = 0;
-            let totalExp = 0;
-            const openingBal = parseFloat(acc.openingBalance || 0);
-            
-            // Group transactions by month
-            const monthsData = {}; 
-
-            accTxs.forEach(t => {
-                const amt = parseFloat(t.amount) || 0;
-                const isInc = (t.type === 'Income' || t.type === 'Adjustment In');
-                if (isInc) totalInc += amt; else totalExp += amt;
-                
-                const monthKey = t.date.slice(0, 7); 
-                if (!monthsData[monthKey]) monthsData[monthKey] = { inc: 0, exp: 0, txs: [] };
-                
-                monthsData[monthKey].txs.push(t);
-                if (isInc) monthsData[monthKey].inc += amt;
-                else monthsData[monthKey].exp += amt;
-            });
-
-            const currentBal = openingBal + totalInc - totalExp;
-            totalCurrentBalance = currentBal;
-            
-            // Sort months descending
-            const sortedMonthKeys = Object.keys(monthsData).sort((a, b) => b.localeCompare(a));
-            
-            // Generate Accordion HTML for Monthly History
-            let accordionHtml = `<div class="accordion" id="accordion-${accId}">`;
-            
-            if(sortedMonthKeys.length === 0) {
-                accordionHtml += `<div class="text-muted small p-2">No transactions yet.</div>`;
-            } else {
-                sortedMonthKeys.forEach((mKey, index) => {
-                    const mData = monthsData[mKey];
-                    const isCurrentMonth = (mKey === currentMonthKey);
-                    const isExpanded = isCurrentMonth;
-                    const collapseClass = isExpanded ? "show" : "";
-                    const btnClass = isExpanded ? "" : "collapsed";
-                    
-                    const sortedTxs = mData.txs.sort((a,b) => new Date(b.date) - new Date(a.date));
-                    
-                    let tableRows = sortedTxs.map(t => `
-                        <tr>
-                            <td style="font-size: 0.9rem;">${t.date}</td>
-                            <td class="fw-bold ${t.type.includes('In') || t.type === 'Income' ? 'text-success' : 'text-danger'}" style="font-size: 0.9rem;">${t.type}</td>
-                            <td style="font-size: 0.9rem;">Rs. ${parseFloat(t.amount).toLocaleString()}</td>
-                            <td style="font-size: 0.9rem;">${t.remarks || '-'}</td>
-                        </tr>
-                    `).join('');
-
-                    accordionHtml += `
-                        <div class="accordion-item mb-2 border rounded">
-                            <h2 class="accordion-header" id="heading-${accId}-${mKey}">
-                                <button class="accordion-button ${btnClass} rounded" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${accId}-${mKey}">
-                                    <div class="d-flex justify-content-between w-100 pe-3">
-                                        <span><i class="bi bi-calendar-event me-2"></i>${getMonthName(mKey)} ${isCurrentMonth ? '<span class="badge bg-success ms-2">Active</span>' : ''}</span>
-                                        <span class="small">
-                                            <span class="text-success me-3"><i class="bi bi-arrow-down-circle"></i> In: Rs. ${mData.inc.toLocaleString()}</span>
-                                            <span class="text-danger"><i class="bi bi-arrow-up-circle"></i> Exp: Rs. ${mData.exp.toLocaleString()}</span>
-                                        </span>
-                                    </div>
-                                </button>
-                            </h2>
-                            <div id="collapse-${accId}-${mKey}" class="accordion-collapse collapse ${collapseClass}" data-bs-parent="#accordion-${accId}">
-                                <div class="accordion-body p-0">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover m-0">
-                                            <thead class="table-light">
-                                                <tr><th>Date</th><th>Type</th><th>Amount</th><th>Remarks</th></tr>
-                                            </thead>
-                                            <tbody>${tableRows}</tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            accordionHtml += `</div>`;
-
-            // Build Full Card
-            html += `
-            <div class="card-3d mb-4" style="border-left: 5px solid var(--accent-green);">
-                <div class="row align-items-center mb-4">
-                    <div class="col-md-6">
-                        <h4 class="fw-bold mb-1">${acc.name}</h4>
-                        <div class="text-muted small mb-2"><i class="bi bi-person me-1"></i>${acc.userName || 'Admin'} | <i class="bi bi-bank me-1"></i>A/c: ${acc.accountNo || 'N/A'}</div>
-                        <h2 class="bal-amt mb-0">Rs. ${currentBal.toLocaleString()}</h2>
-                        <div class="small text-muted mt-1">Opening Balance: Rs. ${openingBal.toLocaleString()}</div>
-                    </div>
-                    <div class="col-md-6 mt-3 mt-md-0">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="fw-bold text-success"><i class="bi bi-graph-up-arrow me-1"></i>Total Income</span>
-                            <span class="fw-bold text-success">Rs. ${totalInc.toLocaleString()}</span>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <span class="fw-bold text-danger"><i class="bi bi-graph-down-arrow me-1"></i>Total Expense</span>
-                            <span class="fw-bold text-danger">Rs. ${totalExp.toLocaleString()}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Monthly History</h6>
-                ${accordionHtml}
-            </div>
-            `;
-        }
+        let csvContent = "Date,Type,Amount,Remarks\n";
+        list.forEach(t => {
+            csvContent += `"${t.date}","${t.type}","${t.amount}","${t.remarks || '-'}"\n`;
+        });
         
-        container.innerHTML = html;
-        topBalanceAmt.innerText = "Rs. " + totalCurrentBalance.toLocaleString();
-    }
+        const planName = accountsMap[activeViewPlanId] ? accountsMap[activeViewPlanId].name.replace(/\s+/g, '_') : 'Plan';
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `${planName}_Records_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
