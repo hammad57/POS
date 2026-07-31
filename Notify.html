@@ -2,96 +2,361 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Access Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+    
+    <title>Hammad Mart - Hybrid POS</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
-        body { font-family: Arial, sans-serif; background-color: #0f172a; color: white; text-align: center; padding: 50px; }
-        .lock-container { max-width: 400px; margin: 0 auto; background: #1e293b; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        video { width: 100%; height: auto; border-radius: 10px; background: black; transform: scaleX(-1); }
-        .input-field { width: 80%; padding: 10px; margin: 15px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; text-align: center; font-size: 16px; }
-        .btn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn:hover { background: #2563eb; }
-        .hidden { display: none; }
-        .or-text { margin: 20px 0; color: #94a3b8; font-weight: bold; }
-        #main-content { padding: 50px; background: #10b981; border-radius: 10px; display: inline-block; margin-top: 20px; }
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; --blue: #3b82f6; --red: #ef4444; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* Header Styling */
+        .header { padding: 15px; background: var(--card); display: flex; align-items: center; border-bottom: 2px solid var(--accent); z-index: 10; gap: 15px; }
+        .menu-toggle { font-size: 24px; cursor: pointer; color: var(--accent); background: none; border: none; }
+        .mart-name { font-size: 18px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; flex-grow: 1; text-align: center; margin-right: 30px; }
+        
+        /* Side Slide Menu Styling */
+        .side-menu { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card); z-index: 3000; transition: 0.3s ease; box-shadow: 5px 0 15px rgba(0,0,0,0.5); padding-top: 20px; overflow-y: auto; }
+        .side-menu.open { left: 0; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; z-index: 2999; }
+        .menu-overlay.show { display: block; }
+        
+        .menu-header { padding: 20px; border-bottom: 1px solid #334155; margin-bottom: 10px; }
+        .menu-header h3 { margin: 0; color: var(--accent); font-size: 20px; }
+
+        .side-menu a, .side-menu button { display: flex; align-items: center; gap: 15px; width: 100%; padding: 15px 20px; color: white; text-decoration: none; border: none; background: none; font-size: 16px; text-align: left; cursor: pointer; border-bottom: 1px solid #1e293b; transition: 0.2s; box-sizing: border-box; }
+        .side-menu a:hover, .side-menu button:hover { background: #334155; }
+        .side-menu .icon { font-size: 20px; width: 25px; text-align: center; }
+
+        /* View & Other Styles */
+        .view { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .hidden { display: none !important; }
+
+        .search-container { padding: 10px; background: var(--card); position: relative; z-index: 100; }
+        #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
+        #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; z-index: 200; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; cursor: pointer; }
+        .status-msg { padding: 15px; font-size: 14px; text-align: center; color: #94a3b8; font-style: italic; }
+
+        #reader { width: 100% !important; background: black; border-radius: 0 0 20px 20px; overflow: hidden; }
+
+        .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 40px rgba(0,0,0,0.7); box-sizing: border-box; border-top: 3px solid var(--accent); }
+        .p-img { width: 130px; height: 130px; object-fit: contain; background: white; border-radius: 15px; margin-bottom: 10px; }
+
+        .order-container { padding: 15px; }
+        table { width: 100%; border-collapse: collapse; background: white; color: black; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #eee; }
+
+        #install-prompt { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 10px 20px; border-radius: 50px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,255,0,0.4); z-index: 3000; cursor: pointer; border:none; }
+
+        /* Custom Styles for New Additions */
+        #scanner-error-toast { display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--red); color: white; padding: 10px 20px; border-radius: 50px; z-index: 9999; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); font-size: 14px; }
+        
+        #addLinkModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card); padding: 25px; border-radius: 15px; z-index: 4000; width: 85%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid #334155; }
+        #addLinkModal h3 { margin-top: 0; color: var(--accent); margin-bottom: 15px; }
+        .modal-input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        .modal-btn { padding: 12px; width: 100%; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 10px; }
+        .btn-save { background: var(--accent); color: white; }
+        .btn-cancel { background: transparent; color: #94a3b8; border: 1px solid #334155; }
     </style>
 </head>
 <body>
 
-    <div id="lock-screen" class="lock-container">
-        <h2>🔒 Security Verification</h2>
-        <p>Apna Face Scan karein ya Neeche Code lagayein</p>
+    <div id="scanner-error-toast">Item not found!</div>
 
-        <video id="webcam" autoplay playsinline></video>
-        <p id="status" style="color: #22c55e;">Camera Loading...</p>
+    <div id="addLinkModal">
+        <h3>Add Custom Link</h3>
+        <input type="text" id="newLinkName" class="modal-input" placeholder="Link Name (e.g. Reports)">
+        <input type="url" id="newLinkUrl" class="modal-input" placeholder="URL (e.g. https://...)">
+        <button class="modal-btn btn-save" onclick="saveCustomLink()">Save Link</button>
+        <button class="modal-btn btn-cancel" onclick="closeAddLinkModal()">Cancel</button>
+    </div>
+    <div class="menu-overlay" id="modalOverlay" onclick="closeAddLinkModal()" style="z-index: 3999;"></div>
 
-        <div class="or-text">— YA —</div>
+    <button id="install-prompt" onclick="installApp()">📲 Install App</button>
 
-        <div>
-            <input type="password" id="backupCode" class="input-field" placeholder="Enter Backup Code Here">
-            <br>
-            <button class="btn" onclick="verifyCode()">Code Se Open Karein</button>
+    <div class="menu-overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <div class="header">
+        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+        <div class="mart-name">HAMMAD MART</div>
+    </div>
+
+    <div class="side-menu" id="sideMenu">
+        <div class="menu-header">
+            <h3>Navigation</h3>
+        </div>
+        <button onclick="switchView('scanner'); toggleMenu();">
+            <span class="icon">📷</span> SCANNER
+        </button>
+        <a href="https://hammad57.github.io/POS/dashboard.html">
+            <span class="icon">🖥️</span> C PANEL
+        </a>
+        <a href="https://hammad57.github.io/POS/data.html">
+            <span class="icon">🔄</span> DATA SYNC
+        </a>
+        <a href="order.html">
+            <span class="icon">📦</span> ORDERS
+        </a>
+        <a href="items.html">
+            <span class="icon">⚙️</span> My Items
+        </a>
+        
+        <div id="dynamic-nav-links"></div>
+        
+        <button onclick="openAddLinkModal(); toggleMenu();" style="color: var(--accent); border-top: 1px solid #334155; margin-top: 10px; font-weight: bold;">
+            <span class="icon">➕</span> Add New Link
+        </button>
+    </div>
+
+    <div id="scanner-view" class="view">
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search Name or Code..." oninput="handleSearch()" onclick="closeResult()">
+            <div id="searchDropdown"></div>
+        </div>
+        <div id="reader"></div>
+    </div>
+
+    <div id="order-view" class="view hidden">
+        <div class="order-container" id="export-area">
+            <h2 style="color: black; margin-bottom:10px;">Live Demand List</h2>
+            <table>
+                <thead><tr><th>Item</th><th>Qty</th><th class="no-export">Action</th></tr></thead>
+                <tbody id="order-list"></tbody>
+            </table>
         </div>
     </div>
 
-    <div id="main-content" class="hidden">
-        <h1>🎉 Access Granted!</h1>
-        <p>Khushamdeed! Aap ki file kamyabi se unlock ho chuki hai.</p>
-        <p>Yahan aap apna baki ka saara main code ya data rakh sakte hain.</p>
+    <div id="result" class="result-card">
+        <img id="p-img" class="p-img" src="">
+        <div id="p-en" style="font-size:22px; font-weight:bold; color:white;"></div>
+        <div id="p-ur" style="font-size:26px; color:#94a3b8; margin: 5px 0;"></div>
+        <div id="p-price" style="font-size:40px; color:var(--accent); font-weight:900;"></div>
+        <button class="btn" style="background:var(--accent); width:100%; padding:15px; border-radius:12px; font-size:18px; color:white; border:none; margin-top:15px; cursor:pointer;" onclick="closeResult()">CONTINUE SCANNING 🔄</button>
     </div>
 
     <script>
-        const video = document.getElementById('webcam');
-        const statusText = document.getElementById('status');
-        const secretCode = "12345"; // Aap apna backup code yahan set kar sakte hain
+        const SHEET_API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
+            authDomain: "own-live-steam-web.firebaseapp.com",
+            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com", 
+            projectId: "own-live-steam-web",
+            storageBucket: "own-live-steam-web.appspot.com",
+            messagingSenderId: "931557929949",
+            appId: "1:931557929949:web:e2b28c8644369e8f49646b"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        // 1. Camera Open Karne Ka Logic
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
-                statusText.innerText = "Scanning Face... (Looking for match)";
-                
-                // MOCK FACE MATCH: 3 seconds baad automatic face match simulation (Sirf Demo ke liye)
-                setTimeout(() => {
-                    // Haqeeqat mein yahan face-api.js ka code lagta hai jo aapke pehle se save face se match karta hai
-                    let faceMatched = true; // Agar face match ho jaye
-                    if(faceMatched) {
-                        unlockFile();
-                    }
-                }, 4000);
-
-            } catch (err) {
-                console.error("Camera access denied", err);
-                statusText.innerText = "Camera nahi chal raha! Neeche diye gaye code ka istemal karein.";
-                statusText.style.color = "#ef4444";
-            }
+        // --- Menu & Modal Logic ---
+        function toggleMenu() {
+            const menu = document.getElementById('sideMenu');
+            const overlay = document.getElementById('overlay');
+            menu.classList.toggle('open');
+            overlay.classList.toggle('show');
         }
 
-        // 2. Code/Password Verify Karne Ka Logic
-        function verifyCode() {
-            const userCode = document.getElementById('backupCode').value;
-            if(userCode === secretCode) {
-                unlockFile();
+        function openAddLinkModal() {
+            document.getElementById('addLinkModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+        }
+
+        function closeAddLinkModal() {
+            document.getElementById('addLinkModal').style.display = 'none';
+            document.getElementById('modalOverlay').style.display = 'none';
+            document.getElementById('newLinkName').value = '';
+            document.getElementById('newLinkUrl').value = '';
+        }
+
+        function saveCustomLink() {
+            const name = document.getElementById('newLinkName').value.trim();
+            const url = document.getElementById('newLinkUrl').value.trim();
+            if (name && url) {
+                db.ref('custom_nav_links').push({ name: name, url: url });
+                closeAddLinkModal();
             } else {
-                alert("Ghalat Code! Dobara koshish karein.");
+                alert("Please enter both Name and URL.");
             }
         }
 
-        // 3. File Unlock Karne Ka Function
-        function unlockFile() {
-            // Camera band karna ta ke battery bache
-            if (video.srcObject) {
-                video.srcObject.getTracks().forEach(track => track.stop());
+        // Fetch Dynamic Links from Firebase
+        db.ref('custom_nav_links').on('value', (snap) => {
+            const container = document.getElementById('dynamic-nav-links');
+            container.innerHTML = '';
+            if(snap.exists()){
+                snap.forEach((child) => {
+                    const val = child.val();
+                    container.innerHTML += `
+                        <a href="${val.url}" target="_blank">
+                            <span class="icon">🔗</span> ${val.name}
+                        </a>
+                    `;
+                });
+            }
+        });
+
+        window.onload = () => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').then(() => console.log("SW Registered"));
+            }
+        };
+
+        // --- Hybrid Data Fetcher ---
+        async function fetchOnlineData() {
+            try {
+                const response = await fetch(SHEET_API + "?action=read");
+                const onlineData = await response.json();
+                if (onlineData) {
+                    localStorage.setItem('mart_data', JSON.stringify(onlineData));
+                    return onlineData;
+                }
+            } catch (error) { console.error("Offline: Cannot reach API"); }
+            return null;
+        }
+
+        // --- Scanner Logic ---
+        const scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
+        let lastScannedCode = null;
+        let lastScanTime = 0;
+
+        function showScannerError(message) {
+            const toast = document.getElementById('scanner-error-toast');
+            toast.innerText = message;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        }
+        
+        scanner.render(async (decodedText) => {
+            const cleanId = String(decodedText).trim();
+            const currentTime = new Date().getTime();
+
+            // Prevent repeated error scanning loop within 3 seconds for the same barcode
+            if (cleanId === lastScannedCode && (currentTime - lastScanTime) < 3000) {
+                return;
             }
             
-            // Lock screen chupana aur Main content dikhana
-            document.getElementById('lock-screen').classList.add('hidden');
-            document.getElementById('main-content').classList.remove('hidden');
+            lastScannedCode = cleanId;
+            lastScanTime = currentTime;
+
+            const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
+            let product = localData.find(p => String(p.id).trim() == cleanId);
+            
+            if (product) {
+                showProduct(product);
+            } else {
+                const onlineData = await fetchOnlineData();
+                product = onlineData ? onlineData.find(p => String(p.id).trim() == cleanId) : null;
+                
+                if (product) {
+                    showProduct(product);
+                } else {
+                    // Removed alert() to fix the freeze/loop bug. Replaced with soft UI notification.
+                    showScannerError("Not Found! Code: " + cleanId);
+                }
+            }
+        });
+
+        // --- Search Bar Hybrid Logic ---
+        let searchTimeout;
+        function handleSearch() {
+            clearTimeout(searchTimeout);
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const dropdown = document.getElementById('searchDropdown');
+            
+            if (query.length < 1) { dropdown.style.display = 'none'; return; }
+
+            const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
+            const localMatches = localData.filter(p => 
+                (p.en && p.en.toLowerCase().includes(query)) || 
+                (p.ur && p.ur.toLowerCase().includes(query)) ||
+                (p.id && String(p.id).includes(query))
+            );
+
+            renderDropdown(localMatches);
+
+            if (localMatches.length === 0) {
+                dropdown.innerHTML = '<div class="status-msg">Searching online... 🔍</div>';
+                dropdown.style.display = 'block';
+                
+                searchTimeout = setTimeout(async () => {
+                    const onlineData = await fetchOnlineData();
+                    if (onlineData) {
+                        const onlineMatches = onlineData.filter(p => 
+                            (p.en && p.en.toLowerCase().includes(query)) || 
+                            (p.ur && p.ur.toLowerCase().includes(query))
+                        );
+                        renderDropdown(onlineMatches);
+                    } else {
+                        dropdown.innerHTML = '<div class="status-msg">No results found (Offline)</div>';
+                    }
+                }, 800);
+            }
         }
 
-        // File open hote he camera start ho jaye
-        window.onload = startCamera;
+        function renderDropdown(items) {
+            const dropdown = document.getElementById('searchDropdown');
+            dropdown.innerHTML = '';
+            if (items.length > 0) {
+                items.forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = 'search-item';
+                    item.innerHTML = `
+                        <img src="${p.img || 'https://via.placeholder.com/50'}" width="40" style="border-radius:5px;"> 
+                        <div style="flex:1"><b>${p.en}</b><br><small>${p.ur || ''}</small></div> 
+                        <div style="color:var(--accent); font-weight:bold;">Rs.${p.price}</div>`;
+                    item.onclick = () => { showProduct(p); dropdown.style.display = 'none'; document.getElementById('searchInput').value = ''; };
+                    dropdown.appendChild(item);
+                });
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.innerHTML = '<div class="status-msg">Item not found.</div>';
+            }
+        }
+
+        function showProduct(p) {
+            document.getElementById('p-en').innerText = p.en || "No Name";
+            document.getElementById('p-ur').innerText = p.ur || "";
+            document.getElementById('p-price').innerText = "Rs. " + (p.price || "0");
+            document.getElementById('p-img').src = (p.img && p.img.length > 20) ? p.img : "https://via.placeholder.com/150?text=No+Image";
+            document.getElementById('result').style.display = "block";
+            try { scanner.pause(true); } catch(e) {}
+        }
+
+        function closeResult() {
+            document.getElementById('result').style.display = "none";
+            try { scanner.resume(); } catch(e) {}
+        }
+
+        function switchView(view) {
+            document.getElementById('scanner-view').classList.toggle('hidden', view !== 'scanner');
+            document.getElementById('order-view').classList.toggle('hidden', view !== 'order');
+        }
+
+        // --- Firebase Demand List ---
+        db.ref('orders').on('value', (snap) => {
+            const list = document.getElementById('order-list');
+            list.innerHTML = '';
+            if(snap.exists()){
+                snap.forEach((child) => {
+                    const val = child.val();
+                    list.innerHTML += `<tr><td>${val.itemName}</td><td>${val.quantity}</td><td><button style="background:red; color:white; border:none; padding:5px; border-radius:4px;" onclick="db.ref('orders/${child.key}').remove()">🗑️</button></td></tr>`;
+                });
+            }
+        });
     </script>
 </body>
 </html>
