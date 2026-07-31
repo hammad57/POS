@@ -1,362 +1,435 @@
-<!DOCTYPE html>
+html_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Muluk Hussain - Hub</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0f172a">
-    
-    <title>Hammad Mart - Hybrid POS</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f1f5f9; --blue: #3b82f6; --red: #ef4444; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: 'Poppins', sans-serif; background: #0f172a; color: #f1f5f9; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
         
-        /* Header Styling */
-        .header { padding: 15px; background: var(--card); display: flex; align-items: center; border-bottom: 2px solid var(--accent); z-index: 10; gap: 15px; }
-        .menu-toggle { font-size: 24px; cursor: pointer; color: var(--accent); background: none; border: none; }
-        .mart-name { font-size: 18px; font-weight: 800; color: var(--accent); margin: 0; letter-spacing: 1px; flex-grow: 1; text-align: center; margin-right: 30px; }
+        .app-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(255, 255, 255, 0.05); position: relative; z-index: 10; overflow: hidden; }
+        .app-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(59,130,246,0.1), transparent); opacity: 0; transition: opacity 0.3s ease; }
+        .app-card:active { transform: scale(0.92); }
+        .app-card:active::before { opacity: 1; }
         
-        /* Side Slide Menu Styling */
-        .side-menu { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card); z-index: 3000; transition: 0.3s ease; box-shadow: 5px 0 15px rgba(0,0,0,0.5); padding-top: 20px; overflow-y: auto; }
-        .side-menu.open { left: 0; }
-        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; z-index: 2999; }
-        .menu-overlay.show { display: block; }
+        #appOverlay { position: fixed; inset: 0; background: #0f172a; z-index: 99998; display: none; opacity: 0; transition: opacity 0.3s ease; }
+        #appOverlay.active { opacity: 1; display: block; }
+        #closeAppBtn { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%) translateY(100px); z-index: 99999; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #closeAppBtn.active { transform: translateX(-50%) translateY(0); }
         
-        .menu-header { padding: 20px; border-bottom: 1px solid #334155; margin-bottom: 10px; }
-        .menu-header h3 { margin: 0; color: var(--accent); font-size: 20px; }
-
-        .side-menu a, .side-menu button { display: flex; align-items: center; gap: 15px; width: 100%; padding: 15px 20px; color: white; text-decoration: none; border: none; background: none; font-size: 16px; text-align: left; cursor: pointer; border-bottom: 1px solid #1e293b; transition: 0.2s; box-sizing: border-box; }
-        .side-menu a:hover, .side-menu button:hover { background: #334155; }
-        .side-menu .icon { font-size: 20px; width: 25px; text-align: center; }
-
-        /* View & Other Styles */
-        .view { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        .hidden { display: none !important; }
-
-        .search-container { padding: 10px; background: var(--card); position: relative; z-index: 100; }
-        #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
-        #searchDropdown { display: none; position: absolute; top: 100%; left: 10px; right: 10px; background: #1e293b; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; z-index: 200; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .search-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #334155; cursor: pointer; }
-        .status-msg { padding: 15px; font-size: 14px; text-align: center; color: #94a3b8; font-style: italic; }
-
-        #reader { width: 100% !important; background: black; border-radius: 0 0 20px 20px; overflow: hidden; }
-
-        .result-card { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); padding: 25px; border-radius: 30px 30px 0 0; z-index: 2000; text-align: center; box-shadow: 0 -10px 40px rgba(0,0,0,0.7); box-sizing: border-box; border-top: 3px solid var(--accent); }
-        .p-img { width: 130px; height: 130px; object-fit: contain; background: white; border-radius: 15px; margin-bottom: 10px; }
-
-        .order-container { padding: 15px; }
-        table { width: 100%; border-collapse: collapse; background: white; color: black; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #eee; }
-
-        #install-prompt { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 10px 20px; border-radius: 50px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,255,0,0.4); z-index: 3000; cursor: pointer; border:none; }
-
-        /* Custom Styles for New Additions */
-        #scanner-error-toast { display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--red); color: white; padding: 10px 20px; border-radius: 50px; z-index: 9999; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); font-size: 14px; }
+        .notify-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: 800; border: 2px solid #1e293b; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
         
-        #addLinkModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card); padding: 25px; border-radius: 15px; z-index: 4000; width: 85%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid #334155; }
-        #addLinkModal h3 { margin-top: 0; color: var(--accent); margin-bottom: 15px; }
-        .modal-input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
-        .modal-btn { padding: 12px; width: 100%; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 10px; }
-        .btn-save { background: var(--accent); color: white; }
-        .btn-cancel { background: transparent; color: #94a3b8; border: 1px solid #334155; }
+        #notifDropdown { 
+            display: none; 
+            position: absolute; 
+            right: 0; 
+            top: 60px; 
+            width: calc(100vw - 32px); 
+            max-width: 380px; 
+            z-index: 100000 !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform-origin: top right;
+        }
+        #notifDropdown.active { display: block; animation: scaleIn 0.2s ease-out forwards; }
+        
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        .balance-hidden { filter: blur(12px); pointer-events: none; user-select: none; transition: filter 0.4s ease; opacity: 0.5; }
+        
+        /* Modal Animation */
+        #addAppModal { opacity: 0; transition: opacity 0.3s ease; }
+        #addAppModal.active { opacity: 1; display: flex !important; }
+        #addAppModal > div { transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #addAppModal.active > div { transform: scale(1); }
+        
+        /* Icon Selector Active State */
+        .icon-option.selected { background: #2563eb; color: white; border-color: #3b82f6; transform: scale(1.1); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-6 lg:max-w-4xl lg:mx-auto">
 
-    <div id="scanner-error-toast">Item not found!</div>
-
-    <div id="addLinkModal">
-        <h3>Add Custom Link</h3>
-        <input type="text" id="newLinkName" class="modal-input" placeholder="Link Name (e.g. Reports)">
-        <input type="url" id="newLinkUrl" class="modal-input" placeholder="URL (e.g. https://...)">
-        <button class="modal-btn btn-save" onclick="saveCustomLink()">Save Link</button>
-        <button class="modal-btn btn-cancel" onclick="closeAddLinkModal()">Cancel</button>
-    </div>
-    <div class="menu-overlay" id="modalOverlay" onclick="closeAddLinkModal()" style="z-index: 3999;"></div>
-
-    <button id="install-prompt" onclick="installApp()">📲 Install App</button>
-
-    <div class="menu-overlay" id="overlay" onclick="toggleMenu()"></div>
-
-    <div class="header">
-        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-        <div class="mart-name">HAMMAD MART</div>
-    </div>
-
-    <div class="side-menu" id="sideMenu">
-        <div class="menu-header">
-            <h3>Navigation</h3>
+    <!-- Install Banner -->
+    <div id="installBanner" class="fixed bottom-6 left-4 right-4 glass p-4 rounded-2xl shadow-2xl border-t-2 border-blue-500 hidden items-center justify-between gap-4 z-[100001]">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg"><i class="fas fa-rocket text-white text-xl"></i></div>
+            <div><p class="text-sm font-bold text-white">Install Hub</p><p class="text-[11px] text-slate-400 mt-0.5">Add to your home screen</p></div>
         </div>
-        <button onclick="switchView('scanner'); toggleMenu();">
-            <span class="icon">📷</span> SCANNER
-        </button>
-        <a href="https://hammad57.github.io/POS/dashboard.html">
-            <span class="icon">🖥️</span> C PANEL
-        </a>
-        <a href="https://hammad57.github.io/POS/data.html">
-            <span class="icon">🔄</span> DATA SYNC
-        </a>
-        <a href="order.html">
-            <span class="icon">📦</span> ORDERS
-        </a>
-        <a href="items.html">
-            <span class="icon">⚙️</span> My Items
-        </a>
-        
-        <div id="dynamic-nav-links"></div>
-        
-        <button onclick="openAddLinkModal(); toggleMenu();" style="color: var(--accent); border-top: 1px solid #334155; margin-top: 10px; font-weight: bold;">
-            <span class="icon">➕</span> Add New Link
-        </button>
-    </div>
-
-    <div id="scanner-view" class="view">
-        <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Search Name or Code..." oninput="handleSearch()" onclick="closeResult()">
-            <div id="searchDropdown"></div>
-        </div>
-        <div id="reader"></div>
-    </div>
-
-    <div id="order-view" class="view hidden">
-        <div class="order-container" id="export-area">
-            <h2 style="color: black; margin-bottom:10px;">Live Demand List</h2>
-            <table>
-                <thead><tr><th>Item</th><th>Qty</th><th class="no-export">Action</th></tr></thead>
-                <tbody id="order-list"></tbody>
-            </table>
+        <div class="flex gap-3">
+            <button id="installBtn" class="bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-xl text-xs font-bold transition-colors">Install</button>
+            <button onclick="document.getElementById('installBanner').style.display='none'" class="text-slate-400 hover:text-white p-2 transition-colors"><i class="fas fa-times text-lg"></i></button>
         </div>
     </div>
 
-    <div id="result" class="result-card">
-        <img id="p-img" class="p-img" src="">
-        <div id="p-en" style="font-size:22px; font-weight:bold; color:white;"></div>
-        <div id="p-ur" style="font-size:26px; color:#94a3b8; margin: 5px 0;"></div>
-        <div id="p-price" style="font-size:40px; color:var(--accent); font-weight:900;"></div>
-        <button class="btn" style="background:var(--accent); width:100%; padding:15px; border-radius:12px; font-size:18px; color:white; border:none; margin-top:15px; cursor:pointer;" onclick="closeResult()">CONTINUE SCANNING 🔄</button>
+    <!-- App Overlay -->
+    <div id="appOverlay">
+        <iframe id="appFrame" class="w-full h-full border-none bg-slate-900"></iframe>
+    </div>
+    <button id="closeAppBtn" onclick="closeApp()" class="bg-slate-800 text-white px-6 py-3.5 rounded-full shadow-2xl font-semibold flex items-center gap-3 border border-slate-700 hover:bg-slate-700 active:scale-95 transition-all">
+        <div class="bg-red-500/20 p-1.5 rounded-full"><i class="fas fa-arrow-left text-red-500"></i></div>
+        Back to Dashboard
+    </button>
+
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-8 glass p-5 rounded-3xl relative z-[50]">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <i class="fas fa-user-astronaut text-white text-sm"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight leading-tight">Muluk Hussain</h1>
+                <p class="text-[10px] text-blue-400 font-medium uppercase tracking-widest">Dashboard Hub</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <button class="w-11 h-11 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center transition-colors border border-white/5" onclick="toggleNotif()">
+                    <i class="fas fa-bell text-slate-300"></i>
+                    <span id="notifBadge" class="notify-badge">0</span>
+                </button>
+                
+                <div id="notifDropdown" class="glass rounded-3xl overflow-hidden shadow-2xl">
+                    <div class="p-4 border-b border-white/10 bg-slate-800/80 flex justify-between items-center backdrop-blur-md">
+                        <span class="font-bold text-sm text-white flex items-center gap-2"><i class="fas fa-inbox text-blue-400"></i> Notifications</span>
+                        <button onclick="toggleNotif()" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center hover:bg-slate-600"><i class="fas fa-times text-slate-300 text-xs"></i></button>
+                    </div>
+                    <div id="notifList" class="max-h-[60vh] overflow-y-auto p-3 space-y-2 bg-slate-900/95">
+                        <!-- Notifications load here -->
+                    </div>
+                </div>
+            </div>
+            <button onclick="toggleModal('addAppModal')" class="bg-blue-600 hover:bg-blue-500 w-11 h-11 rounded-2xl shadow-lg shadow-blue-600/30 flex items-center justify-center transition-all active:scale-95">
+                <i class="fas fa-plus text-white"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="space-y-8">
+        
+        <!-- Balance Card -->
+        <div class="glass p-8 rounded-[2.5rem] bg-gradient-to-br from-blue-600/10 via-transparent to-purple-600/10 border border-white/10 text-center relative z-10 overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl"></div>
+            
+            <h3 class="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-[0.15em] flex justify-center items-center gap-2">
+                Total Net Balance
+                <button onclick="togglePrivacy()" class="w-8 h-8 rounded-full hover:bg-slate-800/50 flex items-center justify-center transition-colors">
+                    <i id="eyeIcon" class="fas fa-eye-slash text-slate-300 text-sm"></i>
+                </button>
+            </h3>
+            <p id="mainNetBalance" class="text-4xl md:text-5xl font-black balance-hidden tracking-tight text-white mt-2">Rs. 0</p>
+        </div>
+
+        <!-- Apps Grid Section -->
+        <div>
+            <h2 class="text-sm font-semibold text-slate-400 mb-4 px-2 flex items-center gap-2">
+                <i class="fas fa-border-all text-slate-500"></i> My Applications
+            </h2>
+            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-4" id="appsGrid">
+                <!-- Apps will be populated here -->
+            </div>
+        </div>
+
+        <!-- Bottom Install Area -->
+        <div class="flex justify-center mt-10 pb-8">
+            <button id="bottomInstallBtn" class="bg-slate-800/80 text-slate-300 border border-slate-700 px-6 py-3 rounded-2xl text-xs font-bold hidden items-center gap-3 hover:bg-slate-700 transition-all shadow-xl">
+                <div class="bg-blue-500/20 p-2 rounded-lg"><i class="fas fa-download text-blue-400"></i></div> 
+                Install Hub App
+            </button>
+        </div>
+    </main>
+
+    <!-- Add Shortcut Modal -->
+    <div id="addAppModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-[200000]">
+        <div class="glass p-6 md:p-8 rounded-[2.5rem] w-full max-w-sm border border-slate-700 shadow-2xl relative">
+            <button onclick="toggleModal('addAppModal')" class="absolute top-6 right-6 w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <h2 class="text-xl font-bold mb-6 text-white flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center"><i class="fas fa-link text-blue-400"></i></div>
+                Add Shortcut
+            </h2>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 mb-1.5 block ml-1">Application Name</label>
+                    <input type="text" id="newAppName" placeholder="e.g. Sales Report" class="w-full p-4 bg-slate-900/80 rounded-2xl outline-none text-sm text-white border border-slate-700 focus:border-blue-500 transition-colors shadow-inner">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 mb-1.5 block ml-1">File Link / URL</label>
+                    <input type="text" id="newAppLink" placeholder="e.g. data.html" class="w-full p-4 bg-slate-900/80 rounded-2xl outline-none text-sm text-white border border-slate-700 focus:border-blue-500 transition-colors shadow-inner">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 mb-1.5 block ml-1">Select Icon</label>
+                    <div id="iconGrid" class="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto p-3 bg-slate-900/80 rounded-2xl border border-slate-700"></div>
+                </div>
+            </div>
+            
+            <input type="hidden" id="selectedIcon" value="fa-cube">
+            <button onclick="saveApp()" class="w-full bg-blue-600 hover:bg-blue-500 p-4 rounded-2xl font-bold text-white shadow-lg shadow-blue-600/20 transition-all active:scale-95">
+                Save Application
+            </button>
+        </div>
     </div>
 
-    <script>
-        const SHEET_API = "https://script.google.com/macros/s/AKfycbzX73LEA1QPzu_n-oikZH46w3sK8XLx_teqF3UrpobrKMADJHifzyDOKJTC0As8ys6o/exec";
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
-            authDomain: "own-live-steam-web.firebaseapp.com",
-            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com", 
-            projectId: "own-live-steam-web",
-            storageBucket: "own-live-steam-web.appspot.com",
-            messagingSenderId: "931557929949",
-            appId: "1:931557929949:web:e2b28c8644369e8f49646b"
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/" };
+        const fbApp = initializeApp(firebaseConfig);
+        const db = getDatabase(fbApp);
+
+        // --- Core Functions ---
+        window.openApp = (url) => {
+            const overlay = document.getElementById('appOverlay');
+            const closeBtn = document.getElementById('closeAppBtn');
+            const frame = document.getElementById('appFrame');
+            
+            overlay.style.display = 'block';
+            // slight delay for animation
+            setTimeout(() => {
+                overlay.classList.add('active');
+                closeBtn.style.display = 'flex';
+                setTimeout(() => closeBtn.classList.add('active'), 50);
+            }, 10);
+            
+            frame.src = url;
+            document.body.style.overflow = 'hidden';
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        // --- Menu & Modal Logic ---
-        function toggleMenu() {
-            const menu = document.getElementById('sideMenu');
-            const overlay = document.getElementById('overlay');
-            menu.classList.toggle('open');
-            overlay.classList.toggle('show');
-        }
-
-        function openAddLinkModal() {
-            document.getElementById('addLinkModal').style.display = 'block';
-            document.getElementById('modalOverlay').style.display = 'block';
-        }
-
-        function closeAddLinkModal() {
-            document.getElementById('addLinkModal').style.display = 'none';
-            document.getElementById('modalOverlay').style.display = 'none';
-            document.getElementById('newLinkName').value = '';
-            document.getElementById('newLinkUrl').value = '';
-        }
-
-        function saveCustomLink() {
-            const name = document.getElementById('newLinkName').value.trim();
-            const url = document.getElementById('newLinkUrl').value.trim();
-            if (name && url) {
-                db.ref('custom_nav_links').push({ name: name, url: url });
-                closeAddLinkModal();
+        
+        window.closeApp = () => {
+            const overlay = document.getElementById('appOverlay');
+            const closeBtn = document.getElementById('closeAppBtn');
+            const frame = document.getElementById('appFrame');
+            
+            closeBtn.classList.remove('active');
+            overlay.classList.remove('active');
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                closeBtn.style.display = 'none';
+                frame.src = '';
+                document.body.style.overflow = 'auto';
+            }, 300);
+        };
+        
+        window.toggleModal = (id) => {
+            const modal = document.getElementById(id);
+            if(modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('active'), 10);
             } else {
-                alert("Please enter both Name and URL.");
+                modal.classList.remove('active');
+                setTimeout(() => modal.classList.add('hidden'), 300);
             }
-        }
+        };
+        
+        window.toggleNotif = () => document.getElementById('notifDropdown').classList.toggle('active');
 
-        // Fetch Dynamic Links from Firebase
-        db.ref('custom_nav_links').on('value', (snap) => {
-            const container = document.getElementById('dynamic-nav-links');
-            container.innerHTML = '';
-            if(snap.exists()){
-                snap.forEach((child) => {
-                    const val = child.val();
-                    container.innerHTML += `
-                        <a href="${val.url}" target="_blank">
-                            <span class="icon">🔗</span> ${val.name}
-                        </a>
-                    `;
-                });
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('notifDropdown');
+            const notifBtn = e.target.closest('button[onclick="toggleNotif()"]');
+            if (dropdown.classList.contains('active') && !dropdown.contains(e.target) && !notifBtn) {
+                dropdown.classList.remove('active');
             }
         });
 
-        window.onload = () => {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('sw.js').then(() => console.log("SW Registered"));
+        // Privacy Toggle
+        let isHidden = true;
+        window.togglePrivacy = () => {
+            isHidden = !isHidden;
+            const bal = document.getElementById('mainNetBalance');
+            const icon = document.getElementById('eyeIcon');
+            if(isHidden) {
+                bal.classList.add('balance-hidden');
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                bal.classList.remove('balance-hidden');
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
             }
         };
 
-        // --- Hybrid Data Fetcher ---
-        async function fetchOnlineData() {
-            try {
-                const response = await fetch(SHEET_API + "?action=read");
-                const onlineData = await response.json();
-                if (onlineData) {
-                    localStorage.setItem('mart_data', JSON.stringify(onlineData));
-                    return onlineData;
-                }
-            } catch (error) { console.error("Offline: Cannot reach API"); }
-            return null;
-        }
-
-        // --- Scanner Logic ---
-        const scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
-        let lastScannedCode = null;
-        let lastScanTime = 0;
-
-        function showScannerError(message) {
-            const toast = document.getElementById('scanner-error-toast');
-            toast.innerText = message;
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 2000);
-        }
-        
-        scanner.render(async (decodedText) => {
-            const cleanId = String(decodedText).trim();
-            const currentTime = new Date().getTime();
-
-            // Prevent repeated error scanning loop within 3 seconds for the same barcode
-            if (cleanId === lastScannedCode && (currentTime - lastScanTime) < 3000) {
-                return;
-            }
-            
-            lastScannedCode = cleanId;
-            lastScanTime = currentTime;
-
-            const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
-            let product = localData.find(p => String(p.id).trim() == cleanId);
-            
-            if (product) {
-                showProduct(product);
-            } else {
-                const onlineData = await fetchOnlineData();
-                product = onlineData ? onlineData.find(p => String(p.id).trim() == cleanId) : null;
-                
-                if (product) {
-                    showProduct(product);
-                } else {
-                    // Removed alert() to fix the freeze/loop bug. Replaced with soft UI notification.
-                    showScannerError("Not Found! Code: " + cleanId);
-                }
-            }
-        });
-
-        // --- Search Bar Hybrid Logic ---
-        let searchTimeout;
-        function handleSearch() {
-            clearTimeout(searchTimeout);
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const dropdown = document.getElementById('searchDropdown');
-            
-            if (query.length < 1) { dropdown.style.display = 'none'; return; }
-
-            const localData = JSON.parse(localStorage.getItem('mart_data') || "[]");
-            const localMatches = localData.filter(p => 
-                (p.en && p.en.toLowerCase().includes(query)) || 
-                (p.ur && p.ur.toLowerCase().includes(query)) ||
-                (p.id && String(p.id).includes(query))
-            );
-
-            renderDropdown(localMatches);
-
-            if (localMatches.length === 0) {
-                dropdown.innerHTML = '<div class="status-msg">Searching online... 🔍</div>';
-                dropdown.style.display = 'block';
-                
-                searchTimeout = setTimeout(async () => {
-                    const onlineData = await fetchOnlineData();
-                    if (onlineData) {
-                        const onlineMatches = onlineData.filter(p => 
-                            (p.en && p.en.toLowerCase().includes(query)) || 
-                            (p.ur && p.ur.toLowerCase().includes(query))
-                        );
-                        renderDropdown(onlineMatches);
-                    } else {
-                        dropdown.innerHTML = '<div class="status-msg">No results found (Offline)</div>';
-                    }
-                }, 800);
-            }
-        }
-
-        function renderDropdown(items) {
-            const dropdown = document.getElementById('searchDropdown');
-            dropdown.innerHTML = '';
-            if (items.length > 0) {
-                items.forEach(p => {
-                    const item = document.createElement('div');
-                    item.className = 'search-item';
-                    item.innerHTML = `
-                        <img src="${p.img || 'https://via.placeholder.com/50'}" width="40" style="border-radius:5px;"> 
-                        <div style="flex:1"><b>${p.en}</b><br><small>${p.ur || ''}</small></div> 
-                        <div style="color:var(--accent); font-weight:bold;">Rs.${p.price}</div>`;
-                    item.onclick = () => { showProduct(p); dropdown.style.display = 'none'; document.getElementById('searchInput').value = ''; };
-                    dropdown.appendChild(item);
-                });
-                dropdown.style.display = 'block';
-            } else {
-                dropdown.innerHTML = '<div class="status-msg">Item not found.</div>';
-            }
-        }
-
-        function showProduct(p) {
-            document.getElementById('p-en').innerText = p.en || "No Name";
-            document.getElementById('p-ur').innerText = p.ur || "";
-            document.getElementById('p-price').innerText = "Rs. " + (p.price || "0");
-            document.getElementById('p-img').src = (p.img && p.img.length > 20) ? p.img : "https://via.placeholder.com/150?text=No+Image";
-            document.getElementById('result').style.display = "block";
-            try { scanner.pause(true); } catch(e) {}
-        }
-
-        function closeResult() {
-            document.getElementById('result').style.display = "none";
-            try { scanner.resume(); } catch(e) {}
-        }
-
-        function switchView(view) {
-            document.getElementById('scanner-view').classList.toggle('hidden', view !== 'scanner');
-            document.getElementById('order-view').classList.toggle('hidden', view !== 'order');
-        }
-
-        // --- Firebase Demand List ---
-        db.ref('orders').on('value', (snap) => {
-            const list = document.getElementById('order-list');
+        // --- Data Handling ---
+        onValue(ref(db, 'notifications'), snap => {
+            const list = document.getElementById('notifList');
+            const badge = document.getElementById('notifBadge');
             list.innerHTML = '';
-            if(snap.exists()){
-                snap.forEach((child) => {
-                    const val = child.val();
-                    list.innerHTML += `<tr><td>${val.itemName}</td><td>${val.quantity}</td><td><button style="background:red; color:white; border:none; padding:5px; border-radius:4px;" onclick="db.ref('orders/${child.key}').remove()">🗑️</button></td></tr>`;
+            if(snap.exists()) {
+                const data = Object.values(snap.val()).reverse();
+                badge.innerText = data.length > 99 ? '99+' : data.length;
+                data.forEach(n => {
+                    list.innerHTML += `<div class="p-4 bg-slate-800 border-l-4 border-blue-500 rounded-2xl text-[12px] mb-2 shadow-md">
+                        <p class="text-slate-200 leading-relaxed font-medium">${n.text}</p>
+                        <div class="flex justify-between items-center mt-3 opacity-50 text-[10px] uppercase font-bold tracking-wider">
+                            <span><i class="far fa-calendar-alt mr-1"></i> ${n.date || ''}</span>
+                            <span><i class="far fa-clock mr-1"></i> ${n.time || ''}</span>
+                        </div>
+                    </div>`;
                 });
+            } else {
+                badge.innerText = "0";
+                list.innerHTML = `<div class="py-12 text-center flex flex-col items-center justify-center opacity-40">
+                    <i class="fas fa-inbox text-3xl mb-3"></i>
+                    <span class="italic text-sm">No new updates</span>
+                </div>`;
             }
         });
+
+        onValue(ref(db, 'bank_accounts'), snapBanks => {
+            onValue(ref(db, 'bank_transactions'), snapTrans => {
+                let total = 0;
+                if(snapBanks.exists()) {
+                    snapBanks.forEach(bSnap => {
+                        const bId = bSnap.key;
+                        let bBal = 0;
+                        if(snapTrans.exists() && snapTrans.val()[bId]) {
+                            Object.values(snapTrans.val()[bId]).forEach(t => {
+                                const amt = parseFloat(t.amount || 0);
+                                if(t.type.includes('In') || t.type.includes('Received')) bBal += amt;
+                                else bBal -= amt;
+                            });
+                        }
+                        total += bBal;
+                    });
+                }
+                document.getElementById('mainNetBalance').innerText = "Rs. " + total.toLocaleString();
+            });
+        });
+
+        // --- UI Rendering ---
+        const iconsList = ['fa-barcode', 'fa-vault', 'fa-chart-line', 'fa-user-gear', 'fa-store', 'fa-hand-holding-dollar', 'fa-users', 'fa-sync', 'fa-wallet', 'fa-receipt', 'fa-file-invoice', 'fa-box', 'fa-calculator', 'fa-calendar-alt', 'fa-clipboard-list', 'fa-cogs', 'fa-database', 'fa-envelope', 'fa-folder-open', 'fa-globe'];
+        
+        const renderIconGrid = () => {
+            const grid = document.getElementById('iconGrid');
+            grid.innerHTML = iconsList.map(i => `
+                <div id="icon-${i}" onclick="selectIcon('${i}')" class="icon-option p-3 bg-slate-800 rounded-xl text-center cursor-pointer hover:bg-slate-700 transition-colors border border-transparent">
+                    <i class="fas ${i} text-lg"></i>
+                </div>
+            `).join('');
+            selectIcon('fa-cube'); // default
+        };
+
+        window.selectIcon = (iconName) => { 
+            document.getElementById('selectedIcon').value = iconName; 
+            document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+            const selectedEl = document.getElementById(`icon-${iconName}`);
+            if(selectedEl) selectedEl.classList.add('selected');
+        };
+
+        renderIconGrid();
+
+        // Render Apps (Merge Defaults with Firebase dynamic apps)
+        onValue(ref(db, 'cpanel_apps'), snap => {
+            const grid = document.getElementById('appsGrid');
+            grid.innerHTML = '';
+            
+            const defaults = [
+                {name: 'Scanner', link: 'index.html', icon: 'fa-barcode'},
+                {name: 'Money', link: 'Money.html', icon: 'fa-vault'},
+                {name: 'Manager', link: 'manager.html', icon: 'fa-user-gear'},
+                {name: 'Expenses', link: 'expense.html', icon: 'fa-chart-line'},
+                {name: 'Shops', link: 'Shops_Manager.html', icon: 'fa-store'},
+                {name: 'Loans', link: 'Loan.html', icon: 'fa-hand-holding-dollar'},
+                {name: 'Salers', link: 'Saler.html', icon: 'fa-users'},
+                {name: 'Sync', link: 'data.html', icon: 'fa-sync'}
+            ];
+
+            let allApps = [...defaults];
+
+            if(snap.exists()) {
+                snap.forEach(child => {
+                    allApps.push(child.val());
+                });
+            }
+
+            allApps.forEach(a => {
+                const d = document.createElement('div');
+                d.className = 'app-card glass p-4 md:p-5 rounded-3xl flex flex-col items-center justify-center gap-3 text-center cursor-pointer group';
+                d.onclick = () => openApp(a.link);
+                d.innerHTML = `
+                    <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-slate-800/80 group-hover:bg-blue-600 group-hover:scale-110 transition-all duration-300 flex items-center justify-center shadow-inner border border-white/5">
+                        <i class="fas ${a.icon || 'fa-cube'} text-2xl md:text-3xl text-blue-400 group-hover:text-white transition-colors"></i>
+                    </div>
+                    <span class="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-slate-300 group-hover:text-white transition-colors line-clamp-1 w-full">${a.name}</span>
+                `;
+                grid.appendChild(d);
+            });
+        });
+
+        window.saveApp = () => {
+            const name = document.getElementById('newAppName').value.trim();
+            const link = document.getElementById('newAppLink').value.trim();
+            const icon = document.getElementById('selectedIcon').value;
+            
+            if(name && link) { 
+                push(ref(db, 'cpanel_apps'), {name, link, icon}).then(() => {
+                    document.getElementById('newAppName').value = '';
+                    document.getElementById('newAppLink').value = '';
+                    selectIcon('fa-cube');
+                    toggleModal('addAppModal'); 
+                });
+            } else {
+                alert("Please enter both Name and Link.");
+            }
+        };
+
+        // --- PWA Installation Logic ---
+        let deferredPrompt;
+        const bottomBtn = document.getElementById('bottomInstallBtn');
+        const topBannerBtn = document.getElementById('installBtn');
+        const installBanner = document.getElementById('installBanner');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            bottomBtn.classList.remove('hidden');
+            bottomBtn.classList.add('flex');
+            installBanner.classList.remove('hidden');
+            installBanner.classList.add('flex');
+        });
+
+        const handleInstallClick = async () => {
+            if (deferredPrompt !== null) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    deferredPrompt = null;
+                    bottomBtn.classList.add('hidden');
+                    bottomBtn.classList.remove('flex');
+                    installBanner.classList.add('hidden');
+                    installBanner.classList.remove('flex');
+                }
+            }
+        };
+
+        bottomBtn.addEventListener('click', handleInstallClick);
+        if(topBannerBtn) topBannerBtn.addEventListener('click', handleInstallClick);
+
     </script>
 </body>
-</html>
+</html>"""
+
+with open("dashboard_updated.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+    
+print("File saved successfully.")
