@@ -530,7 +530,7 @@
             const cardCol = document.createElement('div');
             cardCol.className = 'col-md-4 mb-3';
             cardCol.innerHTML = `
-                <div class="card-3d h-100 mb-0" style="border-left: 5px solid ${isEasypaisa ? '#0984e3' : 'var(--accent-green)'}; ${isEasypaisa ? 'cursor:pointer;' : ''}" ${isEasypaisa ? 'ondblclick="toggleEasypaisaPrivacy()"' : ''}>
+                <div class="card-3d h-100 mb-0" style="border-left: 5px solid ${isEasypaisa ? '#0984e3' : 'var(--accent-green)'}; ${isEasypaisa ? 'cursor:pointer;' : ''}" ${isEasypaisa ? 'onclick="toggleEasypaisaPrivacy()"' : ''}>
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <h6 class="fw-bold m-0 text-truncate" style="max-width: 200px;">${acc.name}</h6>
