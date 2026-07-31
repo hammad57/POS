@@ -1,4 +1,4 @@
-html_content = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -192,7 +192,7 @@ html_content = """<!DOCTYPE html>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        import { getDatabase, ref, onValue, push, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
         const firebaseConfig = { databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/" };
         const fbApp = initializeApp(firebaseConfig);
@@ -205,7 +205,6 @@ html_content = """<!DOCTYPE html>
             const frame = document.getElementById('appFrame');
             
             overlay.style.display = 'block';
-            // slight delay for animation
             setTimeout(() => {
                 overlay.classList.add('active');
                 closeBtn.style.display = 'flex';
@@ -244,6 +243,14 @@ html_content = """<!DOCTYPE html>
         };
         
         window.toggleNotif = () => document.getElementById('notifDropdown').classList.toggle('active');
+
+        // Delete Function (Only for dynamically added apps)
+        window.deleteApp = (e, key) => {
+            e.stopPropagation(); // Prevents opening the app when clicking delete
+            if(confirm("Kya aap waqai is shortcut ko delete karna chahte hain?")) {
+                remove(ref(db, `cpanel_apps/${key}`));
+            }
+        };
 
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
@@ -338,6 +345,31 @@ html_content = """<!DOCTYPE html>
 
         renderIconGrid();
 
+        // App Card Rendering Helper
+        const renderAppCard = (a, key = null) => {
+            const d = document.createElement('div');
+            d.className = 'app-card glass p-4 md:p-5 rounded-3xl flex flex-col items-center justify-center gap-3 text-center cursor-pointer group relative';
+            d.onclick = () => openApp(a.link);
+            
+            let deleteBtnHtml = '';
+            if(key) {
+                // Show delete button only if it has a Firebase key (custom app)
+                deleteBtnHtml = `
+                <button onclick="deleteApp(event, '${key}')" class="absolute top-2 right-2 w-6 h-6 bg-slate-800/80 border border-slate-600 text-red-400 hover:bg-red-500 hover:text-white rounded-full flex items-center justify-center transition-all z-20 shadow-md">
+                    <i class="fas fa-times text-[10px]"></i>
+                </button>`;
+            }
+
+            d.innerHTML = `
+                ${deleteBtnHtml}
+                <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-slate-800/80 group-hover:bg-blue-600 group-hover:scale-110 transition-all duration-300 flex items-center justify-center shadow-inner border border-white/5">
+                    <i class="fas ${a.icon || 'fa-cube'} text-2xl md:text-3xl text-blue-400 group-hover:text-white transition-colors"></i>
+                </div>
+                <span class="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-slate-300 group-hover:text-white transition-colors line-clamp-1 w-full">${a.name}</span>
+            `;
+            return d;
+        };
+
         // Render Apps (Merge Defaults with Firebase dynamic apps)
         onValue(ref(db, 'cpanel_apps'), snap => {
             const grid = document.getElementById('appsGrid');
@@ -354,26 +386,15 @@ html_content = """<!DOCTYPE html>
                 {name: 'Sync', link: 'data.html', icon: 'fa-sync'}
             ];
 
-            let allApps = [...defaults];
+            // Render Defaults (Without Delete Key)
+            defaults.forEach(a => grid.appendChild(renderAppCard(a)));
 
+            // Render Dynamically added apps from Firebase (With Delete Key)
             if(snap.exists()) {
                 snap.forEach(child => {
-                    allApps.push(child.val());
+                    grid.appendChild(renderAppCard(child.val(), child.key));
                 });
             }
-
-            allApps.forEach(a => {
-                const d = document.createElement('div');
-                d.className = 'app-card glass p-4 md:p-5 rounded-3xl flex flex-col items-center justify-center gap-3 text-center cursor-pointer group';
-                d.onclick = () => openApp(a.link);
-                d.innerHTML = `
-                    <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-slate-800/80 group-hover:bg-blue-600 group-hover:scale-110 transition-all duration-300 flex items-center justify-center shadow-inner border border-white/5">
-                        <i class="fas ${a.icon || 'fa-cube'} text-2xl md:text-3xl text-blue-400 group-hover:text-white transition-colors"></i>
-                    </div>
-                    <span class="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-slate-300 group-hover:text-white transition-colors line-clamp-1 w-full">${a.name}</span>
-                `;
-                grid.appendChild(d);
-            });
         });
 
         window.saveApp = () => {
@@ -427,9 +448,4 @@ html_content = """<!DOCTYPE html>
 
     </script>
 </body>
-</html>"""
-
-with open("dashboard_updated.html", "w", encoding="utf-8") as f:
-    f.write(html_content)
-    
-print("File saved successfully.")
+</html>
