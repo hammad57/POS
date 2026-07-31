@@ -80,6 +80,14 @@
         .accordion-button:focus {
             box-shadow: none !important;
         }
+        
+        /* Plan Tabs Styling */
+        .plan-tab-btn {
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -93,6 +101,11 @@
         </div>
         
         <div class="d-flex align-items-center gap-3">
+            <!-- Install App Button (PWA) -->
+            <button id="installAppBtn" class="btn btn-warning fw-bold rounded-pill px-3 py-2 shadow-sm" style="display: none;" onclick="installApp()">
+                <i class="bi bi-download me-1"></i> Install App
+            </button>
+            
             <!-- Add Investment Plan Button -->
             <button class="btn btn-success fw-bold rounded-pill px-3 py-2 shadow-sm" onclick="openAddPlanModal()">
                 <i class="bi bi-plus-circle-fill me-1"></i> Add Plan
@@ -110,21 +123,30 @@
         </div>
     </div>
     
+    <!-- Grand Total Bar -->
+    <div class="card-3d mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: var(--accent-green); color: white;">
+        <h4 class="m-0 fw-bold"><i class="bi bi-wallet2 me-2"></i>Grand Total Balance</h4>
+        <h2 class="m-0 fw-bold" id="grandTotalText">Rs. 0</h2>
+    </div>
+
     <!-- Top Dashboard: Active Plans & Accounts Cards -->
     <div class="row mb-3" id="plansDashboardGrid">
         <!-- Dynamic Cards rendered here -->
     </div>
 
-    <!-- Plan Selection Bar for Transaction History Focus -->
-    <div class="card-3d py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-diagram-3-fill text-success fs-5"></i>
-            <label class="fw-bold m-0">Active View Plan:</label>
-            <select id="activeViewPlanSelect" class="form-select form-select-sm filter-input fw-bold" style="width: 250px;" onchange="switchViewPlan(this.value)">
-                <!-- Dynamic Plan Options -->
-            </select>
+    <!-- Plan Selection Tabs for Transaction History Focus -->
+    <div class="card-3d py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3 w-100 flex-wrap">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-diagram-3-fill text-success fs-5"></i>
+                <label class="fw-bold m-0">Active View Plan:</label>
+            </div>
+            <!-- Tabs Container -->
+            <div id="activeViewPlanTabs" class="d-flex flex-wrap gap-2 flex-grow-1">
+                <!-- Dynamic Plan Tabs -->
+            </div>
         </div>
-        <div class="text-muted small" id="activePlanDetailSub">
+        <div class="text-muted small w-100 mt-2" id="activePlanDetailSub">
             Showing records for Green Paultry Farm
         </div>
     </div>
@@ -457,30 +479,40 @@
 
     function renderDashboard() {
         const grid = document.getElementById('plansDashboardGrid');
-        const viewSelect = document.getElementById('activeViewPlanSelect');
+        const viewTabsContainer = document.getElementById('activeViewPlanTabs');
         const entryAccountSelect = document.getElementById('entryAccountSelect');
 
         grid.innerHTML = '';
-        viewSelect.innerHTML = '';
+        viewTabsContainer.innerHTML = '';
         entryAccountSelect.innerHTML = '';
 
         const planKeys = Object.keys(accountsMap);
 
         if (planKeys.length === 0) {
             grid.innerHTML = '<div class="col-12 text-center text-muted">No Plans found. Click "Add Plan" to create one.</div>';
+            document.getElementById('grandTotalText').innerText = "Rs. 0";
             return;
         }
+
+        let grandTotal = 0;
+        let hasEasypaisa = false;
 
         planKeys.forEach(pId => {
             const acc = accountsMap[pId];
             const summary = getPlanSummary(pId);
+            
+            // Grand Total Calculation
+            const isEasypaisa = (acc.name === "Easypaisa");
+            if (isEasypaisa) hasEasypaisa = true;
+            grandTotal += summary.currentBalance;
 
-            // Active View Plan Options
-            const opt1 = document.createElement('option');
-            opt1.value = pId;
-            opt1.innerText = acc.name;
-            if (pId === activeViewPlanId) opt1.selected = true;
-            viewSelect.appendChild(opt1);
+            // Active View Plan Tabs
+            const tabBtn = document.createElement('button');
+            const isActiveTab = (pId === activeViewPlanId);
+            tabBtn.className = `btn btn-sm plan-tab-btn ${isActiveTab ? 'btn-success' : 'btn-outline-success'}`;
+            tabBtn.innerText = acc.name;
+            tabBtn.onclick = () => switchViewPlan(pId);
+            viewTabsContainer.appendChild(tabBtn);
 
             // Entry Form Plan Options
             const opt2 = document.createElement('option');
@@ -490,7 +522,6 @@
             entryAccountSelect.appendChild(opt2);
 
             // Render Card in Top Dashboard
-            const isEasypaisa = (acc.name === "Easypaisa");
             let displayBalStr = "Rs. " + summary.currentBalance.toLocaleString();
             if (isEasypaisa) {
                 displayBalStr = isEasypaisaVisible ? "Rs. " + summary.currentBalance.toLocaleString() : "Rs. *****";
@@ -517,6 +548,13 @@
             `;
             grid.appendChild(cardCol);
         });
+        
+        // Render Grand Total on Top
+        let displayGrandTotal = "Rs. " + grandTotal.toLocaleString();
+        if (hasEasypaisa && !isEasypaisaVisible) {
+            displayGrandTotal = "Rs. *****"; // Hide Grand total if Easypaisa is hidden to protect privacy
+        }
+        document.getElementById('grandTotalText').innerText = displayGrandTotal;
 
         // Update Subtitle & Live Heartbeat Meter for Active Selected Plan
         if (activeViewPlanId && accountsMap[activeViewPlanId]) {
@@ -812,6 +850,57 @@
         document.body.removeChild(link);
     };
 </script>
+
+<!-- PWA / App Installation Script -->
+<script>
+    const manifestJSON = {
+        "name": "Finance & Investment Dashboard",
+        "short_name": "FinanceApp",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#f4f7f6",
+        "theme_color": "#00b894",
+        "icons": [{
+            "src": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }]
+    };
+    const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/manifest+json'});
+    const manifestUrl = URL.createObjectURL(manifestBlob);
+    document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${manifestUrl}">`);
+
+    const swCode = `
+        self.addEventListener('install', (e) => self.skipWaiting());
+        self.addEventListener('fetch', (e) => {});
+    `;
+    const swBlob = new Blob([swCode], {type: 'application/javascript'});
+    const swUrl = URL.createObjectURL(swBlob);
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register(swUrl).catch((err) => console.log("Service Worker Registration Failed:", err));
+    }
+
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('installAppBtn').style.display = 'inline-flex';
+    });
+
+    function installApp() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                deferredPrompt = null;
+                document.getElementById('installAppBtn').style.display = 'none';
+            });
+        }
+    }
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
