@@ -308,12 +308,21 @@
                 if(snapBanks.exists()) {
                     snapBanks.forEach(bSnap => {
                         const bId = bSnap.key;
+                        const bankData = bSnap.val();
+                        
+                        if (bankData.excludeFromBalance || bankData.isHidden) return;
+                        
                         let bBal = 0;
                         if(snapTrans.exists() && snapTrans.val()[bId]) {
                             Object.values(snapTrans.val()[bId]).forEach(t => {
+                                if (t.excludeFromBalance) return;
+                                
                                 const amt = parseFloat(t.amount || 0);
-                                if(t.type.includes('In') || t.type.includes('Received')) bBal += amt;
-                                else bBal -= amt;
+                                if(t.type === 'Income' || t.type === 'Adjustment In') {
+                                    bBal += amt;
+                                } else if (t.type === 'Expense' || t.type === 'Adjustment Out') {
+                                    bBal -= amt;
+                                }
                             });
                         }
                         total += bBal;
