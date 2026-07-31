@@ -200,19 +200,7 @@
 
         // --- Core Functions ---
         window.openApp = (url) => {
-            const overlay = document.getElementById('appOverlay');
-            const closeBtn = document.getElementById('closeAppBtn');
-            const frame = document.getElementById('appFrame');
-            
-            overlay.style.display = 'block';
-            setTimeout(() => {
-                overlay.classList.add('active');
-                closeBtn.style.display = 'flex';
-                setTimeout(() => closeBtn.classList.add('active'), 50);
-            }, 10);
-            
-            frame.src = url;
-            document.body.style.overflow = 'hidden';
+            window.open(url, '_blank');
         };
         
         window.closeApp = () => {
