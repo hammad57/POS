@@ -244,9 +244,9 @@
         
         window.toggleNotif = () => document.getElementById('notifDropdown').classList.toggle('active');
 
-        // Delete Function (Only for dynamically added apps)
+        // Delete Function
         window.deleteApp = (e, key) => {
-            e.stopPropagation(); // Prevents opening the app when clicking delete
+            e.stopPropagation();
             if(confirm("Kya aap waqai is shortcut ko delete karna chahte hain?")) {
                 remove(ref(db, `cpanel_apps/${key}`));
             }
@@ -333,7 +333,7 @@
                     <i class="fas ${i} text-lg"></i>
                 </div>
             `).join('');
-            selectIcon('fa-cube'); // default
+            selectIcon('fa-cube');
         };
 
         window.selectIcon = (iconName) => { 
@@ -346,19 +346,15 @@
         renderIconGrid();
 
         // App Card Rendering Helper
-        const renderAppCard = (a, key = null) => {
+        const renderAppCard = (a, key) => {
             const d = document.createElement('div');
             d.className = 'app-card glass p-4 md:p-5 rounded-3xl flex flex-col items-center justify-center gap-3 text-center cursor-pointer group relative';
             d.onclick = () => openApp(a.link);
             
-            let deleteBtnHtml = '';
-            if(key) {
-                // Show delete button only if it has a Firebase key (custom app)
-                deleteBtnHtml = `
-                <button onclick="deleteApp(event, '${key}')" class="absolute top-2 right-2 w-6 h-6 bg-slate-800/80 border border-slate-600 text-red-400 hover:bg-red-500 hover:text-white rounded-full flex items-center justify-center transition-all z-20 shadow-md">
-                    <i class="fas fa-times text-[10px]"></i>
-                </button>`;
-            }
+            const deleteBtnHtml = `
+            <button onclick="deleteApp(event, '${key}')" class="absolute top-2 right-2 w-6 h-6 bg-slate-800/80 border border-slate-600 text-red-400 hover:bg-red-500 hover:text-white rounded-full flex items-center justify-center transition-all z-20 shadow-md">
+                <i class="fas fa-times text-[10px]"></i>
+            </button>`;
 
             d.innerHTML = `
                 ${deleteBtnHtml}
@@ -370,30 +366,17 @@
             return d;
         };
 
-        // Render Apps (Merge Defaults with Firebase dynamic apps)
+        // Render Apps (Only from Firebase)
         onValue(ref(db, 'cpanel_apps'), snap => {
             const grid = document.getElementById('appsGrid');
             grid.innerHTML = '';
             
-            const defaults = [
-                {name: 'Scanner', link: 'index.html', icon: 'fa-barcode'},
-                {name: 'Money', link: 'Money.html', icon: 'fa-vault'},
-                {name: 'Manager', link: 'manager.html', icon: 'fa-user-gear'},
-                {name: 'Expenses', link: 'expense.html', icon: 'fa-chart-line'},
-                {name: 'Shops', link: 'Shops_Manager.html', icon: 'fa-store'},
-                {name: 'Loans', link: 'Loan.html', icon: 'fa-hand-holding-dollar'},
-                {name: 'Salers', link: 'Saler.html', icon: 'fa-users'},
-                {name: 'Sync', link: 'data.html', icon: 'fa-sync'}
-            ];
-
-            // Render Defaults (Without Delete Key)
-            defaults.forEach(a => grid.appendChild(renderAppCard(a)));
-
-            // Render Dynamically added apps from Firebase (With Delete Key)
             if(snap.exists()) {
                 snap.forEach(child => {
                     grid.appendChild(renderAppCard(child.val(), child.key));
                 });
+            } else {
+                grid.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 text-xs italic">Koi application add nahi ki gayi. Naya shortcut bananay ke liye '+' dabayen.</div>`;
             }
         });
 
