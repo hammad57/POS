@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ur">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,73 +8,184 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <!-- PDF Generation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { background-color: #0b130a; color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .neon-border { box-shadow: 0 0 15px rgba(234, 179, 8, 0.3); }
-        .neon-text { text-shadow: 0 0 8px rgba(234, 179, 8, 0.5); }
+        .neon-border { box-shadow: 0 0 20px rgba(234, 179, 8, 0.35); }
+        .neon-text { text-shadow: 0 0 10px rgba(234, 179, 8, 0.6); }
         *, *::before, *::after { box-sizing: border-box; }
         
-        /* Custom scrollbar for batches */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: #18181b; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+
+        @keyframes rotateBox {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        .rotating-bg-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 340px;
+            height: 340px;
+            background: linear-gradient(135deg, rgba(234, 179, 8, 0.38) 0%, rgba(202, 138, 4, 0.12) 100%);
+            border-radius: 48px;
+            animation: rotateBox 18s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+            box-shadow: 0 0 50px rgba(234, 179, 8, 0.25);
+        }
     </style>
 </head>
-<body class="p-4 max-w-md mx-auto min-h-screen pb-24">
+<body class="p-4 max-w-md mx-auto min-h-screen pb-24 relative overflow-x-hidden">
 
-    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold transition-opacity duration-300 opacity-0 pointer-events-none z-50">
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold transition-opacity duration-300 opacity-0 pointer-events-none z-[10000]">
         Copied to clipboard!
     </div>
 
-    <div id="authContainer" class="block mt-10 bg-zinc-900 p-6 rounded-2xl border border-emerald-800/50 shadow-xl">
-        <h2 id="authTitle" class="text-2xl font-bold text-yellow-400 text-center mb-6 neon-text">Registration System</h2>
-        
-        <div id="refInfoBanner" class="hidden mb-4 p-3 bg-emerald-900/30 border border-emerald-700/50 rounded-lg text-xs text-center text-emerald-400">
-            Invited by: <span id="refNameDisplay" class="font-bold text-yellow-400">...</span>
+    <!-- CUSTOM GLOBAL ALERT MODAL -->
+    <div id="customAlertModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-[9999]">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative text-center">
+            <h3 id="customAlertTitle" class="text-xl font-bold text-yellow-400 mb-2 neon-text">Notification</h3>
+            <p id="customAlertMessage" class="text-zinc-300 text-sm mb-6 leading-relaxed"></p>
+            <button id="customAlertBtn" onclick="closeCustomAlert()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-zinc-950 font-bold py-3 rounded-xl shadow-lg transition-all">OK</button>
         </div>
-
-        <form id="registerForm" class="space-y-4">
-            <div>
-                <label class="block text-xs font-semibold text-emerald-400 mb-1">Full Name</label>
-                <input type="text" id="regName" required class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-emerald-400 mb-1">Mobile Number</label>
-                <input type="tel" id="regMobile" required class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-emerald-400 mb-1">Email Address</label>
-                <input type="email" id="regEmail" required class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-emerald-400 mb-1">Password</label>
-                <input type="password" id="regPassword" required class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
-            </div>
-            <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-zinc-950 font-bold py-3 rounded-xl shadow-lg transition-all">Sign Up</button>
-            <p class="text-xs text-center text-zinc-400 mt-4">Already have an account? <span onclick="toggleAuthMode(false)" class="text-yellow-400 cursor-pointer underline">Sign In</span></p>
-        </form>
-
-        <form id="loginForm" class="space-y-4 hidden">
-            <div>
-                <label class="block text-xs font-semibold text-emerald-400 mb-1">Email Address</label>
-                <input type="email" id="loginEmail" required class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-emerald-400 mb-1">Password</label>
-                <input type="password" id="loginPassword" required class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
-            </div>
-            <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-zinc-950 font-bold py-3 rounded-xl shadow-lg transition-all">Sign In</button>
-            <p class="text-xs text-center text-zinc-400 mt-4">Don't have an account? <span onclick="toggleAuthMode(true)" class="text-yellow-400 cursor-pointer underline">Register Here</span></p>
-        </form>
     </div>
 
-    <div id="dashboardContainer" class="hidden">
-        <div class="flex justify-between items-center mb-6 bg-zinc-900/80 p-4 rounded-xl border border-zinc-800 shadow-md">
-            <div>
-                <p class="text-xs text-zinc-400">KhushAamdeed 👋</p>
-                <h1 id="lblUserName" class="text-lg font-bold text-yellow-400 neon-text">Loading...</h1>
+    <!-- SIDE SLIDING MENU PANEL -->
+    <div id="sideMenuOverlay" onclick="toggleSideMenu()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9000] hidden transition-opacity"></div>
+    <div id="sideMenuPanel" class="fixed top-0 left-0 w-72 h-full bg-zinc-900 border-r border-zinc-800 shadow-2xl z-[9001] transform -translate-x-full transition-transform duration-300 ease-in-out p-5 flex flex-col justify-between">
+        <div>
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4">
+                <h3 class="font-bold text-yellow-400 text-lg flex items-center space-x-2">
+                    <span>🐔</span> <span>Navigation Menu</span>
+                </h3>
+                <button onclick="toggleSideMenu()" class="text-zinc-400 hover:text-white text-2xl font-bold">&times;</button>
             </div>
-            <button onclick="logout()" class="text-xs bg-red-900/40 border border-red-700 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded-lg transition-colors">Sign Out</button>
+            
+            <div class="space-y-2 text-xs">
+                <button onclick="toggleSideMenu(); window.scrollTo({top:0, behavior:'smooth'});" class="w-full bg-zinc-800/80 hover:bg-zinc-700 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
+                    <span class="text-lg">🏠</span> <span class="font-semibold text-zinc-200">Dashboard Home</span>
+                </button>
+                <button onclick="toggleSideMenu(); openPurchaseModal();" class="w-full bg-zinc-800/80 hover:bg-zinc-700 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
+                    <span class="text-lg">🐔</span> <span class="font-semibold text-yellow-400">Purchase Hen Asset</span>
+                </button>
+                <button onclick="toggleSideMenu(); openSaleModal();" class="w-full bg-zinc-800/80 hover:bg-zinc-700 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
+                    <span class="text-lg">💰</span> <span class="font-semibold text-emerald-400">Sale Out Eggs</span>
+                </button>
+                <button onclick="toggleSideMenu(); openUserSettingsModal();" class="w-full bg-zinc-800/80 hover:bg-zinc-700 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
+                    <span class="text-lg">⚙️</span> <span class="font-semibold text-zinc-200">Account Settings</span>
+                </button>
+                <button onclick="toggleSideMenu(); openTeamListModal();" class="w-full bg-zinc-800/80 hover:bg-zinc-700 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
+                    <span class="text-lg">👥</span> <span class="font-semibold text-zinc-200">My Team Network</span>
+                </button>
+                <button onclick="toggleSideMenu(); copyReferralLink();" class="w-full bg-zinc-800/80 hover:bg-zinc-700 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
+                    <span class="text-lg">🔗</span> <span class="font-semibold text-zinc-200">Copy Invite Link</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- WHATSAPP SUPPORT BUTTON AT BOTTOM OF MENU -->
+        <div class="border-t border-zinc-800 pt-4">
+            <a href="https://wa.me/923423944508" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl flex items-center justify-center space-x-2 shadow-lg transition-colors text-xs">
+                <span class="text-base">💬</span> <span>Need Help? WhatsApp Admin</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- AUTHENTICATION CONTAINER (MATCHING REFERENCE IMAGE WITH ROTATING BACKGROUND) -->
+    <div id="authContainer" class="block min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-8 px-4">
+        <!-- Rotating 4-corner background box -->
+        <div class="rotating-bg-box"></div>
+
+        <!-- Top Header & Logo -->
+        <div class="text-center z-10 mb-5">
+            <div class="inline-flex items-center justify-center w-14 h-14 bg-zinc-900 border border-yellow-500/50 rounded-2xl shadow-lg mb-2.5 neon-border">
+                <span class="text-2xl">🛡️</span>
+            </div>
+            <h1 class="text-2xl font-bold text-yellow-400 font-serif tracking-wide neon-text">Green Land Poultry Farm</h1>
+            <p class="text-[10px] tracking-widest text-zinc-400 uppercase mt-0.5">WELCOME BACK</p>
+        </div>
+
+        <!-- Authentication Card -->
+        <div class="bg-zinc-900/90 backdrop-blur-md border border-zinc-800 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative z-10 neon-border">
+            <div class="text-center mb-5">
+                <span class="inline-block bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-2">🔒 SECURE ACCESS</span>
+                <h2 id="authTitle" class="text-2xl font-bold text-yellow-400 font-serif">Sign In</h2>
+                <p id="authSubtitle" class="text-xs text-zinc-400 mt-1">Enter your credentials to access your dashboard. </p>
+            </div>
+            
+            <div id="refInfoBanner" class="hidden mb-4 p-3 bg-emerald-900/30 border border-emerald-700/50 rounded-lg text-xs text-center text-emerald-400">
+                Invited by: <span id="refNameDisplay" class="font-bold text-yellow-400">...</span>
+            </div>
+
+            <!-- LOGIN FORM (DEFAULT VISIBLE) -->
+            <form id="loginForm" class="space-y-4">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">@</div>
+                    <input type="email" id="loginEmail" placeholder="Email Address" required class="w-full bg-zinc-800/90 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400 transition-colors">
+                </div>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">🔒</div>
+                    <input type="password" id="loginPassword" placeholder="Password" required class="w-full bg-zinc-800/90 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400 transition-colors">
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-amber-600 via-yellow-500 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-zinc-950 font-bold py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 text-sm">
+                    <span>→</span> <span>Login Now</span>
+                </button>
+
+                <!-- Footer Encryption Info Icons -->
+                <div class="flex items-center justify-center space-x-3 text-[10px] text-zinc-500 pt-2 border-t border-zinc-800/80">
+                    <span>🛡️ ENCRYPTED</span>
+                    <span>🔒 PRIVATE</span>
+                    <span>🛡️ SAFE</span>
+                </div>
+
+                <p class="text-xs text-center text-zinc-400 pt-1">Now here? <span onclick="toggleAuthMode(true)" class="text-yellow-400 cursor-pointer font-bold hover:underline">Create Account</span></p>
+            </form>
+
+            <!-- REGISTRATION FORM (HIDDEN BY DEFAULT) -->
+            <form id="registerForm" class="space-y-3.5 hidden">
+                <div>
+                    <input type="text" id="regName" placeholder="Full Name" required class="w-full bg-zinc-800/90 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400">
+                </div>
+                <div>
+                    <input type="tel" id="regMobile" placeholder="Mobile Number" required class="w-full bg-zinc-800/90 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400">
+                </div>
+                <div>
+                    <input type="email" id="regEmail" placeholder="Email Address" required class="w-full bg-zinc-800/90 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400">
+                </div>
+                <div>
+                    <input type="password" id="regPassword" placeholder="Password (min 6 chars)" required class="w-full bg-zinc-800/90 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400">
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-amber-600 via-yellow-500 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-zinc-950 font-bold py-3.5 rounded-xl shadow-lg transition-all text-sm">Sign Up Account</button>
+                <p class="text-xs text-center text-zinc-400 pt-2">Already have an account? <span onclick="toggleAuthMode(false)" class="text-yellow-400 cursor-pointer font-bold hover:underline">Sign In</span></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- DASHBOARD CONTAINER -->
+    <div id="dashboardContainer" class="hidden">
+        <!-- HEADER WITH MENU ON LEFT & SETTINGS ON RIGHT -->
+        <div class="flex justify-between items-center mb-6 bg-zinc-900/80 p-4 rounded-xl border border-zinc-800 shadow-md">
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleSideMenu()" class="bg-emerald-900/40 border border-emerald-700/60 hover:bg-emerald-800/60 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1">
+                    <span>☰ Menu</span>
+                </button>
+                <div>
+                    <p class="text-xs text-zinc-400">Welcome 👋</p>
+                    <h1 id="lblUserName" class="text-lg font-bold text-yellow-400 neon-text">Loading...</h1>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button onclick="openUserSettingsModal()" title="Account Settings" class="p-2 bg-zinc-800 hover:bg-zinc-700 text-yellow-400 rounded-xl border border-zinc-700 transition-colors active:scale-95 text-xl">
+                    ⚙️
+                </button>
+                <button onclick="logout()" class="text-xs bg-red-900/40 border border-red-700 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded-lg transition-colors">Sign Out</button>
+            </div>
         </div>
 
         <div class="bg-gradient-to-br from-emerald-950 to-zinc-900 border border-emerald-800 rounded-2xl p-5 mb-6 shadow-xl relative overflow-hidden">
@@ -107,7 +218,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="grid grid-cols-2 gap-4 mb-4">
             <button onclick="openPurchaseModal()" class="bg-zinc-900 hover:bg-zinc-800 border border-emerald-700/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md transition-transform active:scale-95">
                 <span class="text-3xl mb-2">🐔</span>
                 <span class="font-bold text-sm text-yellow-400">Purchase Hen</span>
@@ -119,6 +230,35 @@
                 <span class="font-bold text-sm text-yellow-400">Sale Out Eggs</span>
                 <span class="text-[10px] text-zinc-400 mt-1">Instant Cashout</span>
             </button>
+        </div>
+
+        <!-- NEW EXPANDABLE TABS FOR HISTORY & STATUS -->
+        <div class="space-y-3 mb-6">
+            <!-- PURCHASING HISTORY ACCORDION TAB -->
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-md">
+                <button onclick="toggleAccordion('purchasesAccordionContent')" class="w-full p-3 flex justify-between items-center text-left bg-zinc-900 hover:bg-zinc-800/80 transition-colors">
+                    <span class="font-bold text-xs text-yellow-400 flex items-center space-x-2">
+                        <span>📜</span> <span>Purchasing History</span>
+                    </span>
+                    <span id="purchasesAccordionArrow" class="text-xs text-zinc-400 transition-transform">▼</span>
+                </button>
+                <div id="purchasesAccordionContent" class="hidden p-3 border-t border-zinc-800/60 bg-zinc-950/40 text-xs space-y-2 max-h-56 overflow-y-auto custom-scroll">
+                    <p class="text-zinc-500 italic text-center py-2">Loading purchases...</p>
+                </div>
+            </div>
+
+            <!-- WITHDRAW STATUS & HISTORY ACCORDION TAB -->
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-md">
+                <button onclick="toggleAccordion('withdrawalsAccordionContent')" class="w-full p-3 flex justify-between items-center text-left bg-zinc-900 hover:bg-zinc-800/80 transition-colors">
+                    <span class="font-bold text-xs text-yellow-400 flex items-center space-x-2">
+                        <span>💸</span> <span>Withdraw Status & History</span>
+                    </span>
+                    <span id="withdrawalsAccordionArrow" class="text-xs text-zinc-400 transition-transform">▼</span>
+                </button>
+                <div id="withdrawalsAccordionContent" class="hidden p-3 border-t border-zinc-800/60 bg-zinc-950/40 text-xs space-y-2 max-h-56 overflow-y-auto custom-scroll">
+                    <p class="text-zinc-500 italic text-center py-2">Loading withdrawal history...</p>
+                </div>
+            </div>
         </div>
 
         <div class="bg-zinc-900 rounded-xl border border-emerald-800/40 mb-6 overflow-hidden">
@@ -168,6 +308,29 @@
             </div>
         </div>
 
+        <!-- REFERRAL DETAILS OVERVIEW -->
+        <div class="bg-zinc-900 rounded-xl border border-zinc-800 p-4 mb-6 shadow-md">
+            <h3 class="font-bold text-yellow-400 mb-3 border-b border-zinc-800 pb-2">Referral Details Overview</h3>
+            <div class="grid grid-cols-4 gap-2 text-center">
+                <div class="bg-zinc-800/80 p-2 rounded-lg border border-zinc-700/50 cursor-pointer hover:bg-zinc-700 transition-colors" onclick="openTeamListModal()">
+                    <span class="text-xl block mb-1">👥</span>
+                    <span class="text-[10px] font-bold text-emerald-400">My Team</span>
+                </div>
+                <div class="bg-zinc-800/80 p-2 rounded-lg border border-zinc-700/50 cursor-pointer hover:bg-zinc-700 transition-colors" onclick="showTeamInvestAlert()">
+                    <span class="text-xl block mb-1">💰</span>
+                    <span class="text-[10px] font-bold text-yellow-400">Team Invest</span>
+                </div>
+                <div class="bg-zinc-800/80 p-2 rounded-lg border border-zinc-700/50 cursor-pointer hover:bg-zinc-700 transition-colors" onclick="showTeamWithdrawAlert()">
+                    <span class="text-xl block mb-1">🏦</span>
+                    <span class="text-[10px] font-bold text-amber-400">Team Withdraw</span>
+                </div>
+                <div class="bg-zinc-800/80 p-2 rounded-lg border border-zinc-700/50 cursor-pointer hover:bg-zinc-700 transition-colors" onclick="showTeamEggsAlert()">
+                    <span class="text-xl block mb-1">🥚</span>
+                    <span class="text-[10px] font-bold text-white">Team Eggs</span>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 mb-6 text-xs shadow-md">
             <h3 class="font-bold text-yellow-400 mb-3">Help & Support Desk</h3>
             <div class="space-y-2">
@@ -181,6 +344,57 @@
                 </a>
             </div>
         </div>
+    </div>
+
+    <!-- USER SETTINGS & PROFILE MODAL -->
+    <div id="userSettingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto custom-scroll space-y-4">
+            <button onclick="closeModal('userSettingsModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
+            <h3 class="text-base font-bold text-yellow-400 border-b border-zinc-800 pb-2 flex items-center space-x-2">
+                <span>⚙️</span> <span>User Account & Security Settings</span>
+            </h3>
+
+            <!-- Password Reset Section -->
+            <div class="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-3">
+                <h4 class="text-xs font-bold text-emerald-400">Change Security Password</h4>
+                <form id="changePasswordForm" class="space-y-2 text-xs">
+                    <input type="password" id="newPasswordInput" placeholder="Enter New Password (min 6 chars)" required class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none">
+                    <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-zinc-950 font-bold py-2 rounded-lg transition-all">Update Password</button>
+                </form>
+            </div>
+
+            <!-- Active Package Plan Section -->
+            <div class="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-1.5 text-xs">
+                <h4 class="font-bold text-emerald-400 border-b border-zinc-700/40 pb-1">Active Assets & Package Plan</h4>
+                <div class="flex justify-between"><span class="text-zinc-400">Current Plan Status:</span> <span class="text-green-400 font-bold">Standard Poultry Investor</span></div>
+                <div class="flex justify-between"><span class="text-zinc-400">Total Hens Owned:</span> <span id="settingTotalHens" class="text-yellow-400 font-bold">0</span></div>
+                <div class="flex justify-between"><span class="text-zinc-400">Rate per Egg Yield:</span> <span class="text-zinc-200">1 Egg / 24 hrs per Hen</span></div>
+            </div>
+
+            <!-- Detailed Eggs & Production Timer Breakdown -->
+            <div class="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-2 text-xs">
+                <h4 class="font-bold text-emerald-400 border-b border-zinc-700/40 pb-1">Eggs & Remaining Expiry Detail</h4>
+                <div id="settingsEggsBreakdown" class="space-y-1 max-h-32 overflow-y-auto custom-scroll pr-1 text-[11px]">
+                    <!-- Dynamically Injected -->
+                </div>
+            </div>
+
+            <!-- PDF Export Buttons -->
+            <div class="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-2 text-xs">
+                <h4 class="font-bold text-emerald-400 border-b border-zinc-700/40 pb-1">Download PDF Ledger Reports</h4>
+                <button onclick="downloadPDFReport('purchases')" class="w-full bg-emerald-800 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg transition-all flex items-center justify-center space-x-2">
+                    <span>📄</span> <span>Download Purchasing History PDF</span>
+                </button>
+                <button onclick="downloadPDFReport('withdrawals')" class="w-full bg-amber-800 hover:bg-amber-700 text-white font-bold py-2 rounded-lg transition-all flex items-center justify-center space-x-2">
+                    <span>📄</span> <span>Download Withdrawals History PDF</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HIDDEN CONTAINER FOR PDF GENERATION -->
+    <div id="pdfExportContainer" class="hidden p-6 bg-white text-black font-sans text-xs">
+        <!-- Rendered dynamically during download -->
     </div>
 
     <!-- Purchase Modal Wrapper -->
@@ -206,9 +420,9 @@
             <div id="purchaseStep2" class="hidden">
                 <h3 class="text-lg font-bold text-yellow-400 mb-2">Send Payment Proof</h3>
                 
-                <div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-xl my-3 text-center" dir="rtl">
+                <div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-xl my-3 text-center">
                     <p class="text-xs font-bold text-yellow-400 leading-relaxed">
-                        براہ کرم پیسے ایڈمن <span class="underline font-black text-sm text-white">"Muluk Hussain"</span> کے <span class="underline font-black text-sm text-white">"Easypaisa account number 03423944508"</span> پر ہی send کریں۔
+                        Please send the payment only to the Admin <span class="underline font-black text-sm text-white">"Muluk Hussain"</span> via <span class="underline font-black text-sm text-white">"Easypaisa account number 03423944508"</span>.
                     </p>
                 </div>
 
@@ -229,12 +443,11 @@
         </div>
     </div>
 
-    <!-- Sale Modal Wrapper (Updated with Marketplace) -->
+    <!-- Sale Modal Wrapper -->
     <div id="saleModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
             <button onclick="closeModal('saleModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
             
-            <!-- Step 1: Dealers Marketplace -->
             <div id="saleStep1Marketplace" class="block">
                 <div class="text-center mb-4">
                     <span class="bg-emerald-900/50 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">Marketplace</span>
@@ -247,7 +460,6 @@
                 </div>
             </div>
 
-            <!-- Step 2: Withdrawal Form -->
             <div id="saleStep2Withdrawal" class="hidden">
                 <button onclick="backToMarketplace()" class="text-xs text-zinc-400 hover:text-white mb-3 flex items-center space-x-1">
                     <span>←</span> <span>Back to Market</span>
@@ -315,9 +527,15 @@
         let currentUserData = null;
         let timerInterval = null;
         
-        // New Variables for Marketplace
         let activeDealers = {};
         let selectedDealerObj = null;
+
+        let globalTeamInvest = 0;
+        let globalTeamWithdraw = 0;
+        let globalTeamEggs = 0;
+
+        let cachedPurchases = [];
+        let cachedWithdrawals = [];
 
         const urlParams = new URLSearchParams(window.location.search);
         const refIdParam = urlParams.get('ref');
@@ -326,12 +544,78 @@
         if(refNameParam) {
             document.getElementById('refInfoBanner').classList.remove('hidden');
             document.getElementById('refNameDisplay').innerText = decodeURIComponent(refNameParam);
+            toggleAuthMode(true); 
+        }
+
+        // --- Side Sliding Menu Toggle ---
+        function toggleSideMenu() {
+            const panel = document.getElementById('sideMenuPanel');
+            const overlay = document.getElementById('sideMenuOverlay');
+            if (panel.classList.contains('-translate-x-full')) {
+                panel.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                panel.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // --- Custom Alert System ---
+        function showCustomAlert(title, message, callback = null) {
+            document.getElementById('customAlertTitle').innerText = title;
+            document.getElementById('customAlertMessage').innerText = message;
+            
+            const btn = document.getElementById('customAlertBtn');
+            btn.onclick = function() {
+                closeCustomAlert();
+                if(callback) callback();
+            };
+            
+            document.getElementById('customAlertModal').classList.remove('hidden');
+            document.getElementById('customAlertModal').classList.add('flex');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('customAlertModal').classList.remove('flex');
+            document.getElementById('customAlertModal').classList.add('hidden');
+        }
+
+        function handleAuthError(err) {
+            let msg = "System error occurred. Please try again later.";
+            if (err.code === "auth/weak-password") {
+                msg = "Password must be at least 6 characters long.";
+            } else if (err.code === "auth/email-already-in-use") {
+                msg = "This email address is already registered. Try a different one.";
+            } else if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
+                msg = "Invalid email address or password.";
+            } else if (err.code === "auth/invalid-email") {
+                msg = "Please enter a valid email address.";
+            } else if (err.code === "auth/requires-recent-login") {
+                msg = "Security requirement: Please sign out and sign in again before changing your password.";
+            }
+            showCustomAlert("Authentication Error", msg);
         }
 
         function toggleAuthMode(isRegister) {
-            document.getElementById('authTitle').innerText = isRegister ? "Registration System" : "Sign In Panel";
+            document.getElementById('authTitle').innerText = isRegister ? "Create Account" : "Sign In";
+            document.getElementById('authSubtitle').innerText = isRegister ? "Register your new account to start earning" : "Enter your credentials to access your dashboard. For Help:  Admin whatsapp 03423944508";
             document.getElementById('registerForm').classList.toggle('hidden', !isRegister);
             document.getElementById('loginForm').classList.toggle('hidden', isRegister);
+        }
+
+        function checkAndShowHenPopup() {
+            if (!currentUid) return;
+            const lastPopupTime = localStorage.getItem('lastHenPopup_' + currentUid);
+            const now = Date.now();
+            
+            if (!lastPopupTime || (now - lastPopupTime) > 86400000) {
+                showCustomAlert(
+                    "Boost Your Earnings! 🐔", 
+                    "To increase your daily income, buy a new Hen today. Click OK to purchase a Hen.", 
+                    function() { openPurchaseModal(); }
+                );
+                localStorage.setItem('lastHenPopup_' + currentUid, now);
+            }
         }
 
         auth.onAuthStateChanged(user => {
@@ -341,7 +625,7 @@
                 db.ref('users/' + currentUid).once('value').then(snapshot => {
                     const val = snapshot.val();
                     if(val && val.status === 'blocked') {
-                        alert("Aapka account block کر دیا گیا ہے۔ ایڈمن سے رابطہ کریں۔");
+                        showCustomAlert("Account Suspended", "Your account has been temporarily blocked. Please contact the administrator.");
                         auth.signOut();
                         return;
                     }
@@ -350,14 +634,19 @@
                     document.getElementById('dashboardContainer').classList.remove('hidden');
                     syncFarmDashboardData();
                     fetchTeamStats();
-                    fetchDealersMarketplace(); // Load Dealers
+                    fetchDealersMarketplace();
+                    fetchPurchasesAndWithdrawalsHistory();
+
                     if(timerInterval) clearInterval(timerInterval);
                     timerInterval = setInterval(updateBatchesTimers, 1000);
+
+                    setTimeout(checkAndShowHenPopup, 2000);
                 });
             } else {
                 currentUid = null;
                 document.getElementById('authContainer').classList.remove('hidden');
                 document.getElementById('dashboardContainer').classList.add('hidden');
+                toggleAuthMode(false); // Ensure login page is shown directly upon logout
                 if(timerInterval) clearInterval(timerInterval);
             }
         });
@@ -386,7 +675,7 @@
                     };
                     db.ref('users/' + cred.user.uid).set(profileData);
                 })
-                .catch(err => alert("Error: " + err.message));
+                .catch(err => handleAuthError(err));
         });
 
         document.getElementById('loginForm').addEventListener('submit', function(e) {
@@ -398,10 +687,14 @@
                 .then(cred => {
                     db.ref('users/' + cred.user.uid + '/password').set(password);
                 })
-                .catch(err => alert("Login Error: " + err.message));
+                .catch(err => handleAuthError(err));
         });
 
-        function logout() { auth.signOut(); }
+        function logout() { 
+            auth.signOut().then(() => {
+                toggleAuthMode(false);
+            }); 
+        }
 
         function syncFarmDashboardData() {
             if (!currentUid) return;
@@ -417,6 +710,8 @@
                 document.getElementById('lblGiftBalance').innerText = data.giftEggs || 0;
                 document.getElementById('lblTotalExpense').innerText = (data.totalExpense || 0) + " PKR";
                 document.getElementById('lblTotalWithdrawal').innerText = (data.totalWithdrawal || 0) + " PKR";
+                
+                document.getElementById('settingTotalHens').innerText = data.totalHens || 0;
                 
                 updateBatchesTimers(); 
             });
@@ -434,22 +729,135 @@
             });
         }
 
+        // --- Fetch & Render Purchase / Withdrawal History Tabs ---
+        function fetchPurchasesAndWithdrawalsHistory() {
+            if(!currentUid) return;
+
+            // Purchase Requests Listener
+            db.ref('purchase_requests').orderByChild('uid').equalTo(currentUid).on('value', snapshot => {
+                const pContainer = document.getElementById('purchasesAccordionContent');
+                pContainer.innerHTML = '';
+                cachedPurchases = [];
+
+                let hasRecords = false;
+                snapshot.forEach(child => {
+                    hasRecords = true;
+                    let p = child.val();
+                    cachedPurchases.push(p);
+
+                    let dateStr = p.timestamp ? new Date(p.timestamp).toLocaleString() : 'N/A';
+                    let statusColor = p.status === 'approved' ? 'text-green-400' : (p.status === 'rejected' ? 'text-red-400' : 'text-amber-400');
+                    
+                    let div = document.createElement('div');
+                    div.className = "p-2.5 bg-zinc-900 rounded-lg border border-zinc-800 flex justify-between items-center";
+                    div.innerHTML = `
+                        <div>
+                            <span class="font-bold text-yellow-400 text-xs">${p.quantity} Hen(s)</span>
+                            <span class="text-[10px] text-zinc-400 block">Trx: ${p.transactionId || 'N/A'} • ${dateStr}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-white text-xs block">${p.amount} PKR</span>
+                            <span class="text-[10px] uppercase font-black ${statusColor}">${p.status || 'pending'}</span>
+                        </div>
+                    `;
+                    pContainer.prepend(div);
+                });
+
+                if(!hasRecords) {
+                    pContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-2">No purchasing history available.</p>';
+                }
+            });
+
+            // Withdrawal Requests Listener
+            db.ref('withdrawal_requests').orderByChild('uid').equalTo(currentUid).on('value', snapshot => {
+                const wContainer = document.getElementById('withdrawalsAccordionContent');
+                wContainer.innerHTML = '';
+                cachedWithdrawals = [];
+
+                let hasRecords = false;
+                snapshot.forEach(child => {
+                    hasRecords = true;
+                    let w = child.val();
+                    cachedWithdrawals.push(w);
+
+                    let dateStr = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
+                    let statusColor = w.status === 'approved' ? 'text-green-400' : (w.status === 'rejected' ? 'text-red-400' : 'text-amber-400');
+
+                    let div = document.createElement('div');
+                    div.className = "p-2.5 bg-zinc-900 rounded-lg border border-zinc-800 flex justify-between items-center";
+                    div.innerHTML = `
+                        <div>
+                            <span class="font-bold text-amber-400 text-xs">${w.eggsDeductedCount} Eggs Sold</span>
+                            <span class="text-[10px] text-zinc-400 block">${w.dealerName || 'Dealer'} • ${dateStr}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-emerald-400 text-xs block">${w.totalPayout || 0} PKR</span>
+                            <span class="text-[10px] uppercase font-black ${statusColor}">${w.status || 'pending'}</span>
+                        </div>
+                    `;
+                    wContainer.prepend(div);
+                });
+
+                if(!hasRecords) {
+                    wContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-2">No withdrawal status available.</p>';
+                }
+            });
+        }
+
+        // Accordion Toggle Helper
+        function toggleAccordion(id) {
+            const el = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('Content', 'Arrow'));
+            if(el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                el.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
         function fetchTeamStats() {
             if(!currentUid) return;
             db.ref('users').orderByChild('referredBy').equalTo(currentUid).on('value', snap => {
                 let count = 0;
                 let hCount = 0;
                 let eCount = 0;
+                let investTotal = 0;
+                let withdrawTotal = 0;
+
                 snap.forEach(child => {
                     count++;
                     let uData = child.val();
                     hCount += (uData.totalHens || 0);
-                    eCount += (uData.availableEggs || 0) + (uData.giftEggs || 0);
+                    
+                    let userTotalEggs = (uData.availableEggs || 0) + (uData.giftEggs || 0);
+                    eCount += userTotalEggs;
+                    
+                    investTotal += (uData.totalExpense || 0);
+                    withdrawTotal += (uData.totalWithdrawal || 0);
                 });
+
                 document.getElementById('statTeamJoined').innerText = count;
                 document.getElementById('statTeamHens').innerText = hCount;
                 document.getElementById('statTeamEggs').innerText = eCount;
+
+                globalTeamInvest = investTotal;
+                globalTeamWithdraw = withdrawTotal;
+                globalTeamEggs = eCount;
             });
+        }
+
+        function showTeamInvestAlert() {
+            showCustomAlert("Team Total Invest", `Your referral team has invested a total of ${globalTeamInvest} PKR so far.`);
+        }
+
+        function showTeamWithdrawAlert() {
+            showCustomAlert("Team Total Withdraw", `Your referral team has withdrawn a total of ${globalTeamWithdraw} PKR so far.`);
+        }
+
+        function showTeamEggsAlert() {
+            showCustomAlert("Team Total Eggs", `Your referral team currently has a total of ${globalTeamEggs} eggs.`);
         }
 
         function openTeamListModal() {
@@ -472,7 +880,7 @@
                     container.appendChild(div);
                 });
                 if(!valid) {
-                    container.innerHTML = '<p class="text-zinc-500 text-center italic py-4">No network downlines linked yet.</p>';
+                    container.innerHTML = '<p class="text-zinc-500 text-center italic py-4">No members have joined your team yet.</p>';
                 }
             });
             document.getElementById('teamModal').classList.remove('hidden');
@@ -480,8 +888,12 @@
         }
 
         function updateBatchesTimers() {
+            const breakdownContainer = document.getElementById('settingsEggsBreakdown');
+            let breakdownHtml = '';
+
             if(!currentUserData || !currentUserData.hen_batches) {
                 document.getElementById('batchesContainer').innerHTML = '<div class="bg-zinc-900/80 p-4 rounded-xl border border-zinc-800 text-center text-xs text-zinc-500">No active egg production. Buy hens to start!</div>';
+                if(breakdownContainer) breakdownContainer.innerHTML = '<p class="text-zinc-500 italic">No active production batches.</p>';
                 return;
             }
             
@@ -530,8 +942,16 @@
                         <span class="text-lg ${progress > 95 ? 'animate-pulse' : 'animate-bounce'} drop-shadow-md">🥚</span>
                     </div>
                 </div>`;
+
+                breakdownHtml += `
+                    <div class="flex justify-between items-center bg-zinc-900 p-2 rounded border border-zinc-700/50">
+                        <span>🐔 ${batch.qty} Hens Batch</span>
+                        <span class="font-mono text-yellow-400">${pad(h)}h ${pad(m)}m ${pad(s)}s remaining</span>
+                    </div>
+                `;
             }
             document.getElementById('batchesContainer').innerHTML = html;
+            if(breakdownContainer) breakdownContainer.innerHTML = breakdownHtml;
         }
 
         function copyReferralLink() {
@@ -544,7 +964,7 @@
                 toast.classList.remove('opacity-0');
                 setTimeout(() => toast.classList.add('opacity-0'), 2500);
             }).catch(() => {
-                prompt("Please copy your link manually:", fullRefLinkGenerated);
+                showCustomAlert("Copy Link", `Please copy your link manually: ${fullRefLinkGenerated}`);
             });
         }
 
@@ -585,14 +1005,10 @@
 
             db.ref('purchase_requests').push(requestNodeData).then(() => {
                 closeModal('purchaseModal');
-                alert("Your payment proof has been sent successfully. Wait for admin verification.");
+                showCustomAlert("Request Submitted", "Your payment proof has been sent successfully. Please wait for admin verification.");
                 document.getElementById('paymentProofForm').reset();
             });
         });
-
-        // ==========================================
-        // NEW MARKETPLACE AND WITHDRAWAL LOGIC
-        // ==========================================
 
         function fetchDealersMarketplace() {
             db.ref('dealers').on('value', snapshot => {
@@ -675,14 +1091,14 @@
             e.preventDefault();
             
             if(!selectedDealerObj) {
-                alert("Please select a dealer first.");
+                showCustomAlert("Action Required", "Please select a dealer first.");
                 return;
             }
 
             const eggQty = parseInt(document.getElementById('wdEggQty').value);
             
             if (eggQty < selectedDealerObj.minLimit || eggQty > selectedDealerObj.maxLimit) {
-                alert(`Error: Quantity must be between ${selectedDealerObj.minLimit} and ${selectedDealerObj.maxLimit} for this dealer.`);
+                showCustomAlert("Invalid Quantity", `Quantity must be between ${selectedDealerObj.minLimit} and ${selectedDealerObj.maxLimit} for this dealer.`);
                 return;
             }
 
@@ -691,7 +1107,7 @@
             const combinedTotalEggs = userAvailableEggs + userGiftEggs;
             
             if (eggQty > combinedTotalEggs) {
-                alert("Insufficient eggs in your balance to meet this request!");
+                showCustomAlert("Insufficient Balance", "You do not have enough eggs to meet this sale request!");
                 return;
             }
 
@@ -716,12 +1132,9 @@
                 accountNumber: document.getElementById('wdNumber').value,
                 accountHolderName: document.getElementById('wdHolderName').value,
                 eggsDeductedCount: eggQty,
-                
-                // NEW: Attach specific dealer data for Admin Verification
                 dealerName: selectedDealerObj.name,
                 ratePerEgg: selectedDealerObj.rate,
                 totalPayout: calculatedTotalPayout,
-                
                 status: "pending",
                 timestamp: Date.now()
             };
@@ -734,11 +1147,121 @@
 
             db.ref().update(updates).then(() => {
                 closeModal('saleModal');
-                alert(`Your sale request for ${eggQty} eggs to ${selectedDealerObj.name} was sent! ${calculatedTotalPayout} PKR will be processed.`);
+                showCustomAlert("Sale Request Sent", `Your sale request for ${eggQty} eggs to ${selectedDealerObj.name} has been processed. You will receive ${calculatedTotalPayout} PKR soon.`);
                 document.getElementById('withdrawalForm').reset();
                 backToMarketplace();
             });
         });
+
+        // --- USER SETTINGS MODAL LOGIC & PASSWORD CHANGE ---
+        function openUserSettingsModal() {
+            updateBatchesTimers();
+            document.getElementById('userSettingsModal').classList.remove('hidden');
+            document.getElementById('userSettingsModal').classList.add('flex');
+        }
+
+        document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newPassword = document.getElementById('newPasswordInput').value;
+            const user = auth.currentUser;
+
+            if (user && newPassword.length >= 6) {
+                user.updatePassword(newPassword).then(() => {
+                    db.ref('users/' + user.uid + '/password').set(newPassword);
+                    showCustomAlert("Success", "Password updated successfully!");
+                    document.getElementById('changePasswordForm').reset();
+                }).catch(err => {
+                    handleAuthError(err);
+                });
+            } else {
+                showCustomAlert("Error", "Password must be at least 6 characters.");
+            }
+        });
+
+        // --- PDF DOWNLOAD FUNCTIONALITY ---
+        function downloadPDFReport(type) {
+            const pdfContainer = document.getElementById('pdfExportContainer');
+            pdfContainer.innerHTML = '';
+            pdfContainer.classList.remove('hidden');
+
+            const userName = currentUserData ? currentUserData.name : 'User';
+            const userEmail = currentUserData ? currentUserData.email : '';
+            const reportDate = new Date().toLocaleString();
+
+            let title = type === 'purchases' ? 'Purchasing History Statement' : 'Withdrawals History Statement';
+            let tableRowsHtml = '';
+
+            if (type === 'purchases') {
+                if (cachedPurchases.length === 0) {
+                    showCustomAlert("No Data", "No purchasing records available to generate PDF.");
+                    pdfContainer.classList.add('hidden');
+                    return;
+                }
+                tableRowsHtml = cachedPurchases.map(p => `
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 8px;">${p.transactionId || 'N/A'}</td>
+                        <td style="padding: 8px;">${p.quantity} Hen(s)</td>
+                        <td style="padding: 8px;">${p.amount} PKR</td>
+                        <td style="padding: 8px;">${p.timestamp ? new Date(p.timestamp).toLocaleDateString() : 'N/A'}</td>
+                        <td style="padding: 8px; text-transform: uppercase; font-weight: bold;">${p.status || 'pending'}</td>
+                    </tr>
+                `).join('');
+            } else {
+                if (cachedWithdrawals.length === 0) {
+                    showCustomAlert("No Data", "No withdrawal records available to generate PDF.");
+                    pdfContainer.classList.add('hidden');
+                    return;
+                }
+                tableRowsHtml = cachedWithdrawals.map(w => `
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 8px;">${w.dealerName || 'Dealer'}</td>
+                        <td style="padding: 8px;">${w.eggsDeductedCount} Eggs</td>
+                        <td style="padding: 8px;">${w.totalPayout || 0} PKR</td>
+                        <td style="padding: 8px;">${w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A'}</td>
+                        <td style="padding: 8px; text-transform: uppercase; font-weight: bold;">${w.status || 'pending'}</td>
+                    </tr>
+                `).join('');
+            }
+
+            pdfContainer.innerHTML = `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <div style="border-bottom: 2px solid #eab308; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h2 style="color: #0b130a; margin: 0;">Green Land Poultry Farm</h2>
+                        <h4 style="color: #555; margin: 5px 0;">${title}</h4>
+                    </div>
+                    <div style="margin-bottom: 20px; font-size: 12px; color: #333;">
+                        <p style="margin: 2px 0;"><strong>Investor Name:</strong> ${userName}</p>
+                        <p style="margin: 2px 0;"><strong>Email:</strong> ${userEmail}</p>
+                        <p style="margin: 2px 0;"><strong>Generated On:</strong> ${reportDate}</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 11px;">
+                        <thead>
+                            <tr style="background-color: #f3f4f6; border-bottom: 2px solid #ccc;">
+                                ${type === 'purchases' 
+                                    ? '<th style="padding: 8px;">Trx ID</th><th style="padding: 8px;">Qty</th><th style="padding: 8px;">Amount</th><th style="padding: 8px;">Date</th><th style="padding: 8px;">Status</th>' 
+                                    : '<th style="padding: 8px;">Dealer</th><th style="padding: 8px;">Eggs</th><th style="padding: 8px;">Payout</th><th style="padding: 8px;">Date & Time</th><th style="padding: 8px;">Status</th>'
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            const options = {
+                margin: 0.5,
+                filename: `${userName}_${type}_Statement.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(options).from(pdfContainer).save().then(() => {
+                pdfContainer.classList.add('hidden');
+            });
+        }
     </script>
 </body>
 </html>
