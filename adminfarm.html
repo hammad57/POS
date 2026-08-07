@@ -22,10 +22,14 @@
     <div id="adminPanel" class="flex h-screen overflow-hidden">
         
         <!-- SIDEBAR -->
-        <div class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-20 shadow-2xl relative">
-            <div class="p-5 border-b border-slate-800 text-center">
-                <h2 class="text-blue-400 font-black text-lg tracking-wider">GL COMMAND</h2>
-                <p class="text-[10px] text-slate-400 uppercase mt-1">Super Admin Panel</p>
+        <div id="mainSidebar" class="absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-30 shadow-2xl transition-transform duration-300">
+            <div class="p-5 border-b border-slate-800 flex justify-between items-center text-center">
+                <div>
+                    <h2 class="text-blue-400 font-black text-lg tracking-wider">GL COMMAND</h2>
+                    <p class="text-[10px] text-slate-400 uppercase mt-1">Super Admin Panel</p>
+                </div>
+                <!-- Close Button for Mobile -->
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
             </div>
             
             <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-1">
@@ -55,16 +59,19 @@
 
         <!-- MAIN CONTENT AREA -->
         <div class="flex-1 flex flex-col bg-slate-950 relative overflow-hidden">
-            <div class="h-12 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 z-10 shadow-md">
-                <span id="systemClock" class="font-mono text-cyan-400">Loading System Time...</span>
-                <span class="bg-emerald-900/50 text-emerald-400 px-3 py-1 rounded text-[10px] border border-emerald-800 uppercase tracking-widest font-bold">Encrypted Connection</span>
+            <div class="h-12 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 sm:px-6 z-10 shadow-md">
+                <div class="flex items-center">
+                    <button onclick="toggleSidebar()" class="md:hidden text-slate-300 hover:text-white mr-3 text-xl font-bold">☰</button>
+                    <span id="systemClock" class="font-mono text-cyan-400 text-[10px] sm:text-xs">Loading System Time...</span>
+                </div>
+                <span class="bg-emerald-900/50 text-emerald-400 px-2 sm:px-3 py-1 rounded text-[9px] sm:text-[10px] border border-emerald-800 uppercase tracking-widest font-bold">Encrypted Connection</span>
             </div>
 
-            <div class="flex-1 overflow-y-auto custom-scroll p-6">
+            <div class="flex-1 overflow-y-auto custom-scroll p-4 sm:p-6">
                 
                 <!-- TAB: DASHBOARD OVERVIEW -->
                 <div id="tab-dashboard" class="tab-content block space-y-6">
-                    <div class="grid grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow">
                             <p class="text-slate-400 uppercase tracking-widest mb-1 text-[10px]">Total Registered Users</p>
                             <h3 id="dashTotalUsers" class="text-3xl font-black text-blue-400">0</h3>
@@ -86,17 +93,17 @@
 
                 <!-- TAB: USERS LIST (OLD) -->
                 <div id="tab-users" class="tab-content hidden space-y-4">
-                    <div class="flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
-                        <h3 class="text-lg font-bold text-slate-200">Registered Users Directory</h3>
-                        <input type="text" id="searchUser" onkeyup="filterUsers()" placeholder="Search by name, email, phone..." class="bg-slate-950 border border-slate-700 rounded px-4 py-2 w-72 text-white focus:outline-none focus:border-blue-500 text-xs">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
+                        <h3 class="text-lg font-bold text-slate-200 w-full sm:w-auto text-left">Registered Users Directory</h3>
+                        <input type="text" id="searchUser" onkeyup="filterUsers()" placeholder="Search by name, email, phone..." class="bg-slate-950 border border-slate-700 rounded px-4 py-2 w-full sm:w-72 text-white focus:outline-none focus:border-blue-500 text-xs">
                     </div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
-                        <table class="w-full text-left border-collapse">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
                             <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
                                 <tr>
-                                    <th class="p-3">User Identifier</th>
-                                    <th class="p-3">Contact Detail</th>
-                                    <th class="p-3">Join Date</th>
+                                    <th class="p-3 min-w-[120px]">User Identifier</th>
+                                    <th class="p-3 min-w-[150px]">Contact Detail</th>
+                                    <th class="p-3 min-w-[120px]">Join Date</th>
                                     <th class="p-3 text-center">Hens</th>
                                     <th class="p-3 text-center">Eggs</th>
                                     <th class="p-3 text-right">Actions</th>
@@ -113,13 +120,13 @@
                         <h3 class="text-lg font-bold text-cyan-300">New Users Onboarding (Last 5 Days)</h3>
                         <p class="text-slate-400 text-[10px]">Users registered within the last 120 hours.</p>
                     </div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
-                        <table class="w-full text-left border-collapse">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
                             <thead class="bg-cyan-950 text-[10px] uppercase text-cyan-400 border-b border-cyan-900">
                                 <tr>
-                                    <th class="p-3">User Identifier</th>
-                                    <th class="p-3">Contact Detail</th>
-                                    <th class="p-3">Join Date</th>
+                                    <th class="p-3 min-w-[120px]">User Identifier</th>
+                                    <th class="p-3 min-w-[150px]">Contact Detail</th>
+                                    <th class="p-3 min-w-[120px]">Join Date</th>
                                     <th class="p-3 text-center">Hens</th>
                                     <th class="p-3 text-center">Eggs</th>
                                     <th class="p-3 text-right">Actions</th>
@@ -132,16 +139,16 @@
 
                 <!-- TAB: PURCHASES -->
                 <div id="tab-purchases" class="tab-content hidden">
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
-                        <table class="w-full text-left border-collapse">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
                             <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
                                 <tr>
-                                    <th class="p-3">Date</th>
-                                    <th class="p-3">User Detail</th>
-                                    <th class="p-3">Payment Info</th>
+                                    <th class="p-3 min-w-[100px]">Date</th>
+                                    <th class="p-3 min-w-[150px]">User Detail</th>
+                                    <th class="p-3 min-w-[150px]">Payment Info</th>
                                     <th class="p-3 text-center">Req Hens</th>
                                     <th class="p-3 text-center">Status</th>
-                                    <th class="p-3 text-right">Action</th>
+                                    <th class="p-3 text-right min-w-[120px]">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="tblPurchasesBody" class="divide-y divide-slate-800"></tbody>
@@ -151,16 +158,16 @@
 
                 <!-- TAB: WITHDRAWALS -->
                 <div id="tab-withdrawals" class="tab-content hidden">
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
-                        <table class="w-full text-left border-collapse">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
                             <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
                                 <tr>
-                                    <th class="p-3">Date</th>
-                                    <th class="p-3">User / Dealer</th>
-                                    <th class="p-3">Transfer Account</th>
+                                    <th class="p-3 min-w-[100px]">Date</th>
+                                    <th class="p-3 min-w-[150px]">User / Dealer</th>
+                                    <th class="p-3 min-w-[150px]">Transfer Account</th>
                                     <th class="p-3 text-center">Eggs / Amount</th>
                                     <th class="p-3 text-center">Status</th>
-                                    <th class="p-3 text-right">Action</th>
+                                    <th class="p-3 text-right min-w-[150px]">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="tblWithdrawalsBody" class="divide-y divide-slate-800"></tbody>
@@ -172,19 +179,19 @@
                 <div id="tab-dealers" class="tab-content hidden space-y-4">
                     <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow w-full max-w-2xl mb-6">
                         <h3 class="text-sm font-bold text-blue-400 mb-4 border-b border-slate-700 pb-2">Add New Egg Dealer</h3>
-                        <form id="dealerForm" class="grid grid-cols-2 gap-4">
+                        <form id="dealerForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Dealer Name</label><input type="text" id="dlrName" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
                             <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Rate (PKR per Egg)</label><input type="number" id="dlrRate" step="0.1" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-yellow-400 font-bold outline-none"></div>
                             <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Minimum Eggs Limit</label><input type="number" id="dlrMin" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
                             <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Maximum Eggs Limit</label><input type="number" id="dlrMax" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
-                            <div class="col-span-2 text-right"><button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded font-bold uppercase tracking-wider text-[11px] shadow">Save Dealer Record</button></div>
+                            <div class="col-span-1 sm:col-span-2 text-right"><button type="submit" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded font-bold uppercase tracking-wider text-[11px] shadow">Save Dealer Record</button></div>
                         </form>
                     </div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
-                        <table class="w-full text-left border-collapse">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
                             <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
                                 <tr>
-                                    <th class="p-3">Dealer Key ID</th>
+                                    <th class="p-3 min-w-[120px]">Dealer Key ID</th>
                                     <th class="p-3">Name</th>
                                     <th class="p-3 text-center">Egg Rate</th>
                                     <th class="p-3 text-center">Limits (Min-Max)</th>
@@ -200,7 +207,7 @@
         </div>
 
         <!-- RIGHT PANEL: USER DETAIL & TIMERS -->
-        <div id="userSidePanel" class="w-72 bg-slate-900 border-l border-slate-800 flex flex-col z-20 shadow-2xl relative transform translate-x-full transition-transform duration-300 absolute right-0 top-0 h-full">
+        <div id="userSidePanel" class="w-[85vw] sm:w-72 bg-slate-900 border-l border-slate-800 flex flex-col z-40 shadow-2xl relative transform translate-x-full transition-transform duration-300 absolute right-0 top-0 h-full">
             <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800">
                 <h3 class="text-sm font-bold text-white uppercase tracking-widest">User Insight</h3>
                 <button onclick="closeUserPanel()" class="text-slate-400 hover:text-white text-lg">&times;</button>
@@ -303,6 +310,12 @@
             initAdminDash();
         };
 
+        // Sidebar Toggle Function
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mainSidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
         function logoutAdmin() { location.reload(); }
 
         function switchTab(tabId) {
@@ -310,6 +323,11 @@
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.remove('hidden');
             event.currentTarget.classList.add('active');
+            
+            // Auto-hide sidebar on mobile when a tab is selected
+            if (window.innerWidth < 768) {
+                document.getElementById('mainSidebar').classList.add('-translate-x-full');
+            }
         }
 
         function initAdminDash() {
