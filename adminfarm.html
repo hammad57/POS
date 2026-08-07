@@ -3,220 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Green Land Poultry Farm - Admin Verification Command Suite</title>
+    <title>GL Poultry Admin Command Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
-        body { background-color: #090d08; color: #e4e4e7; font-family: system-ui, -apple-system, sans-serif; }
-        *, *::before, *::after { box-sizing: border-box; }
-        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px;}
-        .custom-scroll::-webkit-scrollbar-track { background: #18181b; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+        body { background: #020617; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
+        
+        .tab-btn.active { border-bottom: 2px solid #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
     </style>
 </head>
-<body class="p-6 max-w-7xl mx-auto min-h-screen">
+<body class="min-h-screen text-xs overflow-x-hidden">
 
-    <header class="mb-8 border-b border-zinc-800 pb-5 flex justify-between items-center">
-        <div>
-            <h1 class="text-3xl font-black text-yellow-400 uppercase tracking-wider">Admin Control Suite</h1>
-            <p class="text-zinc-400 text-sm mt-1">Manage Users, Pending Hen Requests, Payouts, & Market Dealers.</p>
-        </div>
-        <div class="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-xs">
-            <span class="text-zinc-500">Node Status:</span> <span class="text-green-400 font-bold">Live Connected</span>
-        </div>
-    </header>
-
-    <div class="space-y-10">
+    <div id="adminPanel" class="flex h-screen overflow-hidden">
         
-        <!-- NEW SECTION: DEALER MARKETPLACE MANAGEMENT -->
-        <section class="bg-zinc-900/60 rounded-xl border border-emerald-900/50 p-5 shadow-lg">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-emerald-400 flex items-center space-x-2">
-                    <span>🏪</span> <span>Egg Dealers (Marketplace) Management</span>
-                </h2>
-                <button onclick="openDealerModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded shadow text-xs transition-colors">
-                    + Add New Dealer
+        <!-- SIDEBAR -->
+        <div class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-20 shadow-2xl relative">
+            <div class="p-5 border-b border-slate-800 text-center">
+                <h2 class="text-blue-400 font-black text-lg tracking-wider">GL COMMAND</h2>
+                <p class="text-[10px] text-slate-400 uppercase mt-1">Super Admin Panel</p>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-1">
+                <button onclick="switchTab('tab-dashboard')" class="tab-btn active w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                    <span>📊 Network Dashboard</span>
+                </button>
+                <button onclick="switchTab('tab-users')" class="tab-btn w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                    <span>👥 All Old Users</span> <span id="badgeUsers" class="bg-blue-600 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
+                </button>
+                <button onclick="switchTab('tab-new-users')" class="tab-btn w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                    <span>🌟 New Users (5 Days)</span> <span id="badgeNewUsers" class="bg-cyan-600 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
+                </button>
+                <button onclick="switchTab('tab-purchases')" class="tab-btn w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                    <span>🐔 Purchase Requests</span> <span id="badgePurchases" class="bg-yellow-500 text-slate-900 px-2 py-0.5 rounded-full text-[9px]">0</span>
+                </button>
+                <button onclick="switchTab('tab-withdrawals')" class="tab-btn w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                    <span>💸 Payout Requests</span> <span id="badgeWithdrawals" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
+                </button>
+                <button onclick="switchTab('tab-dealers')" class="tab-btn w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                    <span>🏪 Dealers Market</span>
                 </button>
             </div>
-            <div class="overflow-x-auto custom-scroll">
-                <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
-                    <thead>
-                        <tr class="border-b border-zinc-800 text-zinc-400 bg-zinc-950">
-                            <th class="p-3">Dealer Company Name</th>
-                            <th class="p-3">Purchase Rate / Egg</th>
-                            <th class="p-3">Minimum Limit</th>
-                            <th class="p-3">Maximum Limit</th>
-                            <th class="p-3 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tblDealersBody" class="divide-y divide-zinc-800/60 bg-zinc-900">
-                        <tr>
-                            <td colspan="5" class="p-4 text-center text-zinc-500">Loading active market dealers...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="p-4 border-t border-slate-800">
+                <button onclick="logoutAdmin()" class="w-full bg-red-900/50 hover:bg-red-800 text-red-300 py-2 rounded uppercase font-bold text-[10px] border border-red-800">System Refresh</button>
             </div>
-        </section>
-
-        <!-- USERS DIRECTORY -->
-        <section class="bg-zinc-900/60 rounded-xl border border-zinc-800 p-5 shadow-lg">
-            <h2 class="text-lg font-bold text-emerald-400 mb-4 flex items-center space-x-2">
-                <span>👥</span> <span>All Registered Users Directory (Live Monitor)</span>
-            </h2>
-            <div class="overflow-x-auto custom-scroll">
-                <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
-                    <thead>
-                        <tr class="border-b border-zinc-800 text-zinc-400 bg-zinc-950">
-                            <th class="p-3">User Details</th>
-                            <th class="p-3">Referral Info</th>
-                            <th class="p-3">Assets (Hens & Eggs)</th>
-                            <th class="p-3">Financial Ledger</th>
-                            <th class="p-3">Active Timers (Next Egg Drop)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tblAllUsersBody" class="divide-y divide-zinc-800/60 bg-zinc-900">
-                        <tr>
-                            <td colspan="5" class="p-4 text-center text-zinc-500">Loading user directory...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- PENDING PURCHASES -->
-        <section class="bg-zinc-900/60 rounded-xl border border-zinc-800 p-5 shadow-lg">
-            <h2 class="text-lg font-bold text-yellow-400 mb-4 flex items-center space-x-2">
-                <span>🐔</span> <span>Pending Hen Purchase Requests</span>
-            </h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="border-b border-zinc-800 text-zinc-400 bg-zinc-950">
-                            <th class="p-3">User UID</th>
-                            <th class="p-3">Qty Requested</th>
-                            <th class="p-3">Calculated Cost</th>
-                            <th class="p-3">Trx ID Reference</th>
-                            <th class="p-3">Account Holder</th>
-                            <th class="p-3 text-center">Payment Proof</th>
-                            <th class="p-3 text-center">Action Handlers</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tblPurchaseRequestsBody" class="divide-y divide-zinc-800/60">
-                        <tr><td colspan="7" class="p-4 text-center text-zinc-500">Fetching...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- PENDING WITHDRAWALS -->
-        <section class="bg-zinc-900/60 rounded-xl border border-zinc-800 p-5 shadow-lg">
-            <h2 class="text-lg font-bold text-amber-500 mb-4 flex items-center space-x-2">
-                <span>💰</span> <span>Pending Withdrawal Settlements</span>
-            </h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="border-b border-zinc-800 text-zinc-400 bg-zinc-950">
-                            <th class="p-3">User Info</th>
-                            <th class="p-3">Bank Details</th>
-                            <th class="p-3">Dealer Selected</th>
-                            <th class="p-3">Eggs Count x Rate</th>
-                            <th class="p-3 text-emerald-400">Total Payout</th>
-                            <th class="p-3 text-center">Action Handlers</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tblWithdrawRequestsBody" class="divide-y divide-zinc-800/60">
-                        <tr><td colspan="6" class="p-4 text-center text-zinc-500">Fetching...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </div>
-
-    <!-- Dealer Management Modal (NEW) -->
-    <div id="dealerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative">
-            <button onclick="closeDealerModal()" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-            <h3 id="dealerModalTitle" class="text-lg font-bold text-emerald-400 mb-4">Add Market Dealer</h3>
-            
-            <form id="dealerForm" class="space-y-3 text-xs">
-                <input type="hidden" id="dealerIdField">
-                <div>
-                    <label class="block font-semibold text-zinc-400 mb-1">Company / Dealer Name</label>
-                    <input type="text" id="dealerName" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 focus:outline-none focus:border-emerald-400">
-                </div>
-                <div>
-                    <label class="block font-semibold text-zinc-400 mb-1">Price Per Egg (PKR)</label>
-                    <input type="number" id="dealerRate" step="0.01" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 focus:outline-none focus:border-yellow-400 text-yellow-400 font-bold">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-semibold text-zinc-400 mb-1">Minimum Limit</label>
-                        <input type="number" id="dealerMin" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-zinc-400 mb-1">Maximum Limit</label>
-                        <input type="number" id="dealerMax" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 focus:outline-none">
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-md mt-2">Save Dealer To Market</button>
-            </form>
         </div>
-    </div>
 
-    <!-- User Management Modal Suite -->
-    <div id="editUserModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-5 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
-            <button onclick="closeEditUserModal()" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-            <h3 class="text-lg font-bold text-yellow-400 mb-4">Manage User Account Suite</h3>
-            <input type="hidden" id="editUid">
-            
-            <div class="space-y-4 text-xs">
-                <div>
-                    <label class="block font-semibold text-zinc-400 mb-1">User Password (View / Edit)</label>
-                    <input type="text" id="editPassword" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-yellow-400 font-bold text-sm focus:outline-none focus:border-yellow-400">
-                </div>
+        <!-- MAIN CONTENT AREA -->
+        <div class="flex-1 flex flex-col bg-slate-950 relative overflow-hidden">
+            <div class="h-12 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 z-10 shadow-md">
+                <span id="systemClock" class="font-mono text-cyan-400">Loading System Time...</span>
+                <span class="bg-emerald-900/50 text-emerald-400 px-3 py-1 rounded text-[10px] border border-emerald-800 uppercase tracking-widest font-bold">Encrypted Connection</span>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scroll p-6">
                 
-                <div class="grid grid-cols-3 gap-2">
-                    <div>
-                        <label class="block font-semibold text-zinc-400 mb-1">Total Hens</label>
-                        <input type="number" id="editHens" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 font-bold text-emerald-400 text-sm focus:outline-none focus:border-emerald-400">
+                <!-- TAB: DASHBOARD OVERVIEW -->
+                <div id="tab-dashboard" class="tab-content block space-y-6">
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow">
+                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[10px]">Total Registered Users</p>
+                            <h3 id="dashTotalUsers" class="text-3xl font-black text-blue-400">0</h3>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow">
+                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[10px]">Total System Hens</p>
+                            <h3 id="dashTotalHens" class="text-3xl font-black text-yellow-400">0</h3>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow">
+                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[10px]">Active Available Eggs</p>
+                            <h3 id="dashTotalEggs" class="text-3xl font-black text-emerald-400">0</h3>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow">
+                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[10px]">Total Cash Withdrawn</p>
+                            <h3 id="dashTotalPayouts" class="text-3xl font-black text-red-400">0 PKR</h3>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block font-semibold text-zinc-400 mb-1">Reg. Eggs</label>
-                        <input type="number" id="editRegEggs" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 font-bold text-yellow-400 text-sm focus:outline-none focus:border-yellow-400">
+                </div>
+
+                <!-- TAB: USERS LIST (OLD) -->
+                <div id="tab-users" class="tab-content hidden space-y-4">
+                    <div class="flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
+                        <h3 class="text-lg font-bold text-slate-200">Registered Users Directory</h3>
+                        <input type="text" id="searchUser" onkeyup="filterUsers()" placeholder="Search by name, email, phone..." class="bg-slate-950 border border-slate-700 rounded px-4 py-2 w-72 text-white focus:outline-none focus:border-blue-500 text-xs">
                     </div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
+                                <tr>
+                                    <th class="p-3">User Identifier</th>
+                                    <th class="p-3">Contact Detail</th>
+                                    <th class="p-3">Join Date</th>
+                                    <th class="p-3 text-center">Hens</th>
+                                    <th class="p-3 text-center">Eggs</th>
+                                    <th class="p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblUsersBody" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB: NEW USERS (LAST 5 DAYS) -->
+                <div id="tab-new-users" class="tab-content hidden space-y-4">
+                    <div class="bg-cyan-900/30 border border-cyan-800 p-4 rounded-xl shadow mb-4">
+                        <h3 class="text-lg font-bold text-cyan-300">New Users Onboarding (Last 5 Days)</h3>
+                        <p class="text-slate-400 text-[10px]">Users registered within the last 120 hours.</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-cyan-950 text-[10px] uppercase text-cyan-400 border-b border-cyan-900">
+                                <tr>
+                                    <th class="p-3">User Identifier</th>
+                                    <th class="p-3">Contact Detail</th>
+                                    <th class="p-3">Join Date</th>
+                                    <th class="p-3 text-center">Hens</th>
+                                    <th class="p-3 text-center">Eggs</th>
+                                    <th class="p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblNewUsersBody" class="divide-y divide-blue-900/60"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB: PURCHASES -->
+                <div id="tab-purchases" class="tab-content hidden">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
+                                <tr>
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">User Detail</th>
+                                    <th class="p-3">Payment Info</th>
+                                    <th class="p-3 text-center">Req Hens</th>
+                                    <th class="p-3 text-center">Status</th>
+                                    <th class="p-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblPurchasesBody" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB: WITHDRAWALS -->
+                <div id="tab-withdrawals" class="tab-content hidden">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
+                                <tr>
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">User / Dealer</th>
+                                    <th class="p-3">Transfer Account</th>
+                                    <th class="p-3 text-center">Eggs / Amount</th>
+                                    <th class="p-3 text-center">Status</th>
+                                    <th class="p-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblWithdrawalsBody" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB: DEALERS -->
+                <div id="tab-dealers" class="tab-content hidden space-y-4">
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow w-full max-w-2xl mb-6">
+                        <h3 class="text-sm font-bold text-blue-400 mb-4 border-b border-slate-700 pb-2">Add New Egg Dealer</h3>
+                        <form id="dealerForm" class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Dealer Name</label><input type="text" id="dlrName" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
+                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Rate (PKR per Egg)</label><input type="number" id="dlrRate" step="0.1" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-yellow-400 font-bold outline-none"></div>
+                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Minimum Eggs Limit</label><input type="number" id="dlrMin" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
+                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Maximum Eggs Limit</label><input type="number" id="dlrMax" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
+                            <div class="col-span-2 text-right"><button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded font-bold uppercase tracking-wider text-[11px] shadow">Save Dealer Record</button></div>
+                        </form>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
+                                <tr>
+                                    <th class="p-3">Dealer Key ID</th>
+                                    <th class="p-3">Name</th>
+                                    <th class="p-3 text-center">Egg Rate</th>
+                                    <th class="p-3 text-center">Limits (Min-Max)</th>
+                                    <th class="p-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblDealersBody" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: USER DETAIL & TIMERS -->
+        <div id="userSidePanel" class="w-72 bg-slate-900 border-l border-slate-800 flex flex-col z-20 shadow-2xl relative transform translate-x-full transition-transform duration-300 absolute right-0 top-0 h-full">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800">
+                <h3 class="text-sm font-bold text-white uppercase tracking-widest">User Insight</h3>
+                <button onclick="closeUserPanel()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-4">
+                <div class="text-center pb-4 border-b border-slate-800">
+                    <div class="w-12 h-12 bg-slate-700 rounded-full mx-auto mb-2 flex items-center justify-center text-xl">👤</div>
+                    <h4 id="panelUserName" class="font-bold text-blue-400 text-sm">Loading...</h4>
+                    <p id="panelUserEmail" class="text-[10px] text-slate-400 break-all"></p>
+                    <div class="mt-2 text-[10px] bg-slate-950 rounded p-1">Ref By: <span id="panelUserRef" class="text-cyan-400">None</span></div>
+                </div>
+
+                <!-- ADMIN CONTROL TO MANIPULATE EGGS AND HENS -->
+                <div class="bg-slate-950 p-3 rounded border border-slate-800 space-y-2">
+                    <h5 class="text-[10px] uppercase text-slate-500 font-bold mb-2 border-b border-slate-800 pb-1">Manual Balance & Details Override</h5>
+                    
                     <div>
-                        <label class="block font-semibold text-zinc-400 mb-1">Gift Eggs</label>
-                        <input type="number" id="editGiftEggs" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 font-bold text-amber-400 text-sm focus:outline-none focus:border-amber-400">
+                        <label class="text-[9px] text-slate-400 uppercase">User Password</label>
+                        <div class="flex space-x-1 mt-0.5">
+                            <input type="text" id="overridePassword" class="w-full bg-slate-900 border border-slate-700 text-red-400 text-xs px-2 py-1 outline-none rounded">
+                            <button onclick="saveManualOverride('password', 'overridePassword')" class="bg-red-600 hover:bg-red-500 px-3 rounded text-white text-[10px]">SAVE</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[9px] text-slate-400 uppercase">Available Eggs Balance</label>
+                        <div class="flex space-x-1 mt-0.5">
+                            <input type="number" id="overrideEggs" class="w-full bg-slate-900 border border-slate-700 text-yellow-400 text-xs px-2 py-1 outline-none rounded">
+                            <button onclick="saveManualOverride('availableEggs', 'overrideEggs')" class="bg-blue-600 hover:bg-blue-500 px-3 rounded text-white text-[10px]">SAVE</button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="text-[9px] text-slate-400 uppercase">Gift Eggs Balance</label>
+                        <div class="flex space-x-1 mt-0.5">
+                            <input type="number" id="overrideGift" class="w-full bg-slate-900 border border-slate-700 text-yellow-400 text-xs px-2 py-1 outline-none rounded">
+                            <button onclick="saveManualOverride('giftEggs', 'overrideGift')" class="bg-blue-600 hover:bg-blue-500 px-3 rounded text-white text-[10px]">SAVE</button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="text-[9px] text-slate-400 uppercase">Total Hens Count</label>
+                        <div class="flex space-x-1 mt-0.5">
+                            <input type="number" id="overrideHens" class="w-full bg-slate-900 border border-slate-700 text-yellow-400 text-xs px-2 py-1 outline-none rounded">
+                            <button onclick="saveManualOverride('totalHens', 'overrideHens')" class="bg-blue-600 hover:bg-blue-500 px-3 rounded text-white text-[10px]">SAVE</button>
+                        </div>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-semibold text-zinc-400 mb-1">Adjust Active Batches (Reset Countdowns)</label>
-                    <div id="editUserTimersContainer" class="space-y-1.5 bg-zinc-950 p-3 rounded-xl border border-zinc-800 max-h-36 overflow-y-auto custom-scroll">
-                        <!-- Batches injected dynamically -->
-                    </div>
+                    <h5 class="text-[10px] uppercase text-slate-500 font-bold mb-2">Live Hen Production Batches</h5>
+                    <div id="panelBatchesContainer" class="space-y-2 max-h-64 overflow-y-auto custom-scroll pr-1"></div>
                 </div>
 
-                <div class="flex space-x-2 pt-2">
-                    <button onclick="saveUserData()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-md transition-colors">Save Asset Updates</button>
-                    <button id="btnBlockUnblock" onclick="toggleBlockStatus()" class="bg-amber-600 hover:bg-amber-500 text-zinc-950 font-bold px-5 py-3 rounded-xl shadow-md transition-colors">Block User</button>
-                </div>
-
-                <div class="border-t border-zinc-800 pt-3 mt-2">
-                    <button onclick="deleteUserAccount()" class="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-2.5 rounded-xl shadow-md transition-colors uppercase tracking-wider">⚠️ Delete Account Permanently</button>
+                <div class="border-t border-slate-800 pt-3">
+                    <button id="btnBlockUser" onclick="toggleUserBlock()" class="w-full bg-red-900/50 hover:bg-red-800 text-red-300 py-2 rounded text-[10px] uppercase font-bold border border-red-800 transition-colors">BLOCK USER</button>
+                    <button onclick="deleteUserAccount()" class="w-full bg-slate-800 hover:bg-red-700 text-slate-400 hover:text-white mt-2 py-1.5 rounded text-[9px] uppercase font-bold transition-colors">⚠️ Delete DB Record</button>
                 </div>
             </div>
         </div>
+
     </div>
 
-    <!-- Image Viewer Modal For Screenshots -->
-    <div id="imageModal" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4 z-[60]">
-        <div class="relative max-w-2xl w-full flex flex-col items-center">
-            <button onclick="closeImageModal()" class="absolute -top-12 right-0 text-white hover:text-yellow-400 text-4xl font-bold transition-colors">&times;</button>
-            <img id="modalImageViewer" src="" class="w-full h-auto max-h-[85vh] object-contain rounded-xl border border-zinc-700 shadow-2xl">
+    <!-- REJECTION REASON MODAL -->
+    <div id="rejectModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-lg p-5 shadow-2xl">
+            <h3 class="text-sm font-bold text-red-400 mb-3 uppercase tracking-wider">Provide Rejection Reason</h3>
+            <textarea id="rejectReasonInput" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded p-3 text-white outline-none focus:border-red-500 text-xs mb-3" placeholder="Why is this request being rejected?"></textarea>
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeRejectModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded text-xs hover:bg-slate-700">Cancel</button>
+                <button id="btnConfirmReject" class="px-4 py-2 bg-red-600 text-white rounded text-xs hover:bg-red-500 font-bold">Confirm Reject</button>
+            </div>
         </div>
     </div>
 
@@ -226,482 +282,382 @@
             authDomain: "own-live-steam-web-default.firebaseapp.com",
             databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
             projectId: "own-live-steam-web-default",
-            storageBucket: "own-live-steam-web-default.appspot.com"
+            storageBucket: "own-live-steam-web-default.appspot.com",
+            messagingSenderId: "xxxxxxxxxxx",
+            appId: "xxxxxxxxxxx"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+
         let allUsersGlobal = {};
-        let activeDealersGlobal = {};
+        let allDealersGlobal = {};
+        let currentInspectedUid = null;
+        let adminTimerInterval = null;
+        
+        let rejectActionTarget = null; 
+        let rejectActionType = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchLiveDealers();
-            fetchLiveUsersDirectory();
-            fetchLivePurchaseRequests();
-            fetchLiveWithdrawalRequests();
-            setInterval(updateAdminTimersUI, 1000); 
-        });
+        setInterval(() => { document.getElementById('systemClock').innerText = new Date().toLocaleString(); }, 1000);
 
-        // ==========================================
-        // NEW DEALER MARKETPLACE MANAGEMENT
-        // ==========================================
+        window.onload = function() {
+            initAdminDash();
+        };
 
-        function fetchLiveDealers() {
-            db.ref('dealers').on('value', snapshot => {
-                activeDealersGlobal = snapshot.val() || {};
-                renderDealersTable();
+        function logoutAdmin() { location.reload(); }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.remove('hidden');
+            event.currentTarget.classList.add('active');
+        }
+
+        function initAdminDash() {
+            renderDashboardAndUsers();
+            renderPurchases();
+            renderWithdrawals();
+            renderDealers();
+            if(adminTimerInterval) clearInterval(adminTimerInterval);
+            adminTimerInterval = setInterval(updateAdminTimersUI, 1000);
+        }
+
+        function renderDashboardAndUsers() {
+            db.ref('users').on('value', snapshot => {
+                allUsersGlobal = snapshot.val() || {};
+                let tUsers = 0, tHens = 0, tEggs = 0, newUsersCount = 0;
+                
+                const tbodyAll = document.getElementById('tblUsersBody');
+                const tbodyNew = document.getElementById('tblNewUsersBody');
+                tbodyAll.innerHTML = '';
+                tbodyNew.innerHTML = '';
+
+                for(let uid in allUsersGlobal) {
+                    tUsers++;
+                    let data = allUsersGlobal[uid];
+                    tHens += (data.totalHens || 0);
+                    tEggs += ((data.availableEggs || 0) + (data.giftEggs || 0));
+
+                    let regDateMs = Number(data.createdAt) || 0; 
+                    let isNewUser = false;
+                    let formattedDate = "Legacy User";
+                    
+                    if(regDateMs > 0) {
+                        const d = new Date(regDateMs);
+                        formattedDate = d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        if((Date.now() - regDateMs) <= (5 * 24 * 60 * 60 * 1000)) { 
+                            isNewUser = true; 
+                            newUsersCount++; 
+                        }
+                    }
+
+                    let uEggs = (data.availableEggs || 0) + (data.giftEggs || 0);
+                    let statusClr = data.status === 'blocked' ? 'text-red-500' : 'text-green-500';
+                    
+                    let tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-800/50 transition-colors user-row group";
+                    tr.setAttribute('data-search', `${data.name} ${data.email} ${data.mobile}`.toLowerCase());
+                    tr.innerHTML = `
+                        <td class="p-3 border-t border-slate-800">
+                            <span class="font-bold text-blue-300 block">${data.name || 'N/A'}</span>
+                            <span class="text-[9px] text-slate-500 font-mono">${uid.substring(0,8)}...</span>
+                        </td>
+                        <td class="p-3 border-t border-slate-800 text-[10px]">
+                            <span class="block text-slate-300">${data.email || 'N/A'}</span>
+                            <span class="block text-slate-400 font-mono">${data.mobile || 'N/A'}</span>
+                        </td>
+                        <td class="p-3 border-t border-slate-800 text-[10px] text-slate-400">${formattedDate}</td>
+                        <td class="p-3 border-t border-slate-800 text-center"><span class="font-bold text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded">${data.totalHens || 0}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-center"><span class="font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">${uEggs}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-right">
+                            <button onclick="openUserPanel('${uid}')" class="bg-blue-900/60 hover:bg-blue-600 text-blue-300 hover:text-white px-3 py-1 rounded border border-blue-700/50 text-[10px] font-bold uppercase transition-colors">Manage <span class="${statusClr}">●</span></button>
+                        </td>
+                    `;
+                    
+                    if(isNewUser) tbodyNew.appendChild(tr);
+                    else tbodyAll.appendChild(tr);
+                }
+
+                document.getElementById('dashTotalUsers').innerText = tUsers;
+                document.getElementById('dashTotalHens').innerText = tHens;
+                document.getElementById('dashTotalEggs').innerText = tEggs;
+                document.getElementById('badgeUsers').innerText = tUsers - newUsersCount;
+                document.getElementById('badgeNewUsers').innerText = newUsersCount;
+                
+                if(currentInspectedUid) updateAdminTimersUI();
+            });
+
+            db.ref('withdrawal_requests').on('value', snap => {
+                let totalWD = 0;
+                snap.forEach(c => { if(c.val().status === 'approved') totalWD += (c.val().totalPayout || 0); });
+                document.getElementById('dashTotalPayouts').innerText = totalWD + " PKR";
             });
         }
 
-        function renderDealersTable() {
-            const tbody = document.getElementById('tblDealersBody');
-            tbody.innerHTML = '';
+        function filterUsers() {
+            let q = document.getElementById('searchUser').value.toLowerCase();
+            document.querySelectorAll('.user-row').forEach(row => {
+                row.style.display = row.getAttribute('data-search').includes(q) ? '' : 'none';
+            });
+        }
+
+        function renderPurchases() {
+            db.ref('purchase_requests').on('value', snap => {
+                let pendingCount = 0; const tbody = document.getElementById('tblPurchasesBody'); tbody.innerHTML = '';
+                snap.forEach(child => {
+                    let p = child.val(); let key = child.key;
+                    if(p.status === 'pending') pendingCount++;
+                    let userObj = allUsersGlobal[p.uid] || {};
+                    let dStr = new Date(p.timestamp).toLocaleString();
+                    let stClr = p.status==='approved'?'text-emerald-400':(p.status==='rejected'?'text-red-400':'text-yellow-400');
+                    
+                    let actHtml = p.status === 'pending' ? `
+                        <button onclick="approvePurchase('${key}', '${p.uid}', ${p.quantity}, ${p.amount})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1 rounded text-[9px] uppercase font-bold mr-1">Approve</button>
+                        <button onclick="promptReject('purchase', '${key}')" class="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-[9px] uppercase font-bold">Reject</button>
+                    ` : `<span class="${stClr} font-bold uppercase text-[9px]">${p.status}</span>`;
+
+                    let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
+                    tr.innerHTML = `
+                        <td class="p-3 border-t border-slate-800 text-[9px] text-slate-400">${dStr}</td>
+                        <td class="p-3 border-t border-slate-800"><span class="block text-blue-300 font-bold">${userObj.name||'Unknown'}</span><span class="block text-[9px] font-mono text-slate-500">${userObj.email||'N/A'}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-[10px]"><span class="text-white block font-bold">${p.amount} PKR</span><span class="text-slate-400">Trx: ${p.transactionId}</span><br><span class="text-slate-500 text-[9px]">Sender: ${p.accountHolderName}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-center font-bold text-yellow-400">${p.quantity} Hens</td>
+                        <td class="p-3 border-t border-slate-800 text-center"><span class="${stClr} uppercase text-[9px] font-black tracking-wider bg-slate-950 px-2 py-1 rounded border border-slate-700">${p.status}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-right">${actHtml}</td>
+                    `;
+                    tbody.prepend(tr);
+                });
+                document.getElementById('badgePurchases').innerText = pendingCount;
+            });
+        }
+
+        function approvePurchase(reqId, uid, qty, amount) {
+            if(!confirm(`Approve purchase of ${qty} hens for ${amount} PKR?`)) return;
+            let updates = {};
+            updates[`purchase_requests/${reqId}/status`] = 'approved';
             
-            let hasDealers = false;
-            for(let id in activeDealersGlobal) {
-                hasDealers = true;
-                let data = activeDealersGlobal[id];
-                let tr = document.createElement('tr');
-                tr.className = `hover:bg-zinc-800/40 transition-colors`;
+            let newBatchKey = db.ref().child(`users/${uid}/hen_batches`).push().key;
+            updates[`users/${uid}/hen_batches/${newBatchKey}`] = {
+                qty: qty, purchasedAt: Date.now(), lastCollectedAt: Date.now()
+            };
+            
+            db.ref().update(updates).then(() => {
+                db.ref(`users/${uid}/totalHens`).transaction(c => (c || 0) + qty);
+                db.ref(`users/${uid}/totalExpense`).transaction(c => (c || 0) + amount);
                 
-                tr.innerHTML = `
-                    <td class="p-3 font-bold text-white flex items-center space-x-2">
-                        <span>🏪</span> <span>${data.name}</span>
-                    </td>
-                    <td class="p-3 font-bold text-yellow-400">${data.rate} PKR</td>
-                    <td class="p-3 text-zinc-300">${data.minLimit} Eggs</td>
-                    <td class="p-3 text-zinc-300">${data.maxLimit} Eggs</td>
-                    <td class="p-3 text-center space-x-1">
-                        <button onclick="editDealer('${id}')" class="bg-zinc-700 hover:bg-zinc-600 text-white px-2 py-1 rounded shadow text-[10px] font-bold">Edit</button>
-                        <button onclick="deleteDealer('${id}')" class="bg-red-800/80 hover:bg-red-700 text-white px-2 py-1 rounded shadow text-[10px] font-bold">Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+                db.ref(`users/${uid}/giftEggs`).transaction(c => (c || 0) + qty);
+
+                db.ref(`users/${uid}/referredBy`).once('value').then(snap => {
+                    const referrerUid = snap.val();
+                    if(referrerUid && referrerUid !== 'none') {
+                        db.ref(`users/${referrerUid}/giftEggs`).transaction(c => (c || 0) + qty);
+                    }
+                });
+            });
+        }
+
+        function renderWithdrawals() {
+            db.ref('withdrawal_requests').on('value', snap => {
+                let pendingWCount = 0; const tbody = document.getElementById('tblWithdrawalsBody'); tbody.innerHTML = '';
+                snap.forEach(child => {
+                    let w = child.val(); let key = child.key;
+                    if(w.status === 'pending') pendingWCount++;
+                    let userObj = allUsersGlobal[w.uid] || {};
+                    let dStr = new Date(w.timestamp).toLocaleString();
+                    let stClr = w.status==='approved'?'text-emerald-400':(w.status==='rejected'?'text-red-400':'text-yellow-400');
+                    
+                    let actHtml = w.status === 'pending' ? `
+                        <button onclick="approveWithdrawal('${key}', '${w.uid}', ${w.totalPayout})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1 rounded text-[9px] uppercase font-bold mr-1">Paid</button>
+                        <button onclick="promptReject('withdrawal', '${key}', '${w.uid}', ${w.eggsDeductedCount})" class="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-[9px] uppercase font-bold">Reject & Refund</button>
+                    ` : `<span class="${stClr} font-bold uppercase text-[9px]">${w.status}</span>`;
+
+                    let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
+                    tr.innerHTML = `
+                        <td class="p-3 border-t border-slate-800 text-[9px] text-slate-400">${dStr}</td>
+                        <td class="p-3 border-t border-slate-800"><span class="block text-blue-300 font-bold">${userObj.name||'Unknown'}</span><span class="block text-[9px] text-yellow-400 uppercase tracking-widest mt-0.5">Dealer: ${w.dealerName}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-[10px]"><span class="text-white block font-bold">${w.accountType}</span><span class="text-cyan-300 font-mono text-[11px]">${w.accountNumber}</span><br><span class="text-slate-500 text-[9px]">Name: ${w.accountHolderName}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-center"><span class="text-yellow-400 font-bold block">${w.eggsDeductedCount} Eggs</span><span class="text-emerald-400 font-black text-xs block">${w.totalPayout} PKR</span></td>
+                        <td class="p-3 border-t border-slate-800 text-center"><span class="${stClr} uppercase text-[9px] font-black tracking-wider bg-slate-950 px-2 py-1 rounded border border-slate-700">${w.status}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-right">${actHtml}</td>
+                    `;
+                    tbody.prepend(tr);
+                });
+                document.getElementById('badgeWithdrawals').innerText = pendingWCount;
+            });
+        }
+
+        function approveWithdrawal(reqId, uid, amount) {
+            if(!confirm(`Confirm payment of ${amount} PKR has been sent?`)) return;
+            db.ref(`withdrawal_requests/${reqId}/status`).set('approved');
+            db.ref(`users/${uid}/totalWithdrawal`).transaction(c => (c || 0) + amount);
+        }
+
+        function promptReject(type, reqId, uid = null, refundEggs = 0) {
+            rejectActionType = type;
+            rejectActionTarget = { reqId, uid, refundEggs };
+            document.getElementById('rejectReasonInput').value = '';
+            document.getElementById('rejectModal').classList.remove('hidden');
+            document.getElementById('rejectModal').classList.add('flex');
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').classList.remove('flex');
+            document.getElementById('rejectModal').classList.add('hidden');
+            rejectActionType = null; rejectActionTarget = null;
+        }
+
+        document.getElementById('btnConfirmReject').addEventListener('click', function() {
+            const reason = document.getElementById('rejectReasonInput').value.trim() || 'Admin rejected the request.';
+            if(rejectActionType === 'purchase') {
+                db.ref(`purchase_requests/${rejectActionTarget.reqId}`).update({ status: 'rejected', rejectReason: reason });
+            } else if(rejectActionType === 'withdrawal') {
+                db.ref(`withdrawal_requests/${rejectActionTarget.reqId}`).update({ status: 'rejected', rejectReason: reason });
+                if(rejectActionTarget.uid && rejectActionTarget.refundEggs > 0) {
+                    db.ref(`users/${rejectActionTarget.uid}/availableEggs`).transaction(c => (c || 0) + rejectActionTarget.refundEggs);
+                }
             }
-            if(!hasDealers) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-zinc-500 italic">No dealers added yet. Create one above.</td></tr>`;
-            }
-        }
-
-        function openDealerModal() {
-            document.getElementById('dealerForm').reset();
-            document.getElementById('dealerIdField').value = '';
-            document.getElementById('dealerModalTitle').innerText = 'Add Market Dealer';
-            document.getElementById('dealerModal').classList.remove('hidden');
-            document.getElementById('dealerModal').classList.add('flex');
-        }
-
-        function closeDealerModal() {
-            document.getElementById('dealerModal').classList.add('hidden');
-            document.getElementById('dealerModal').classList.remove('flex');
-        }
-
-        function editDealer(id) {
-            const data = activeDealersGlobal[id];
-            if(!data) return;
-            document.getElementById('dealerIdField').value = id;
-            document.getElementById('dealerName').value = data.name;
-            document.getElementById('dealerRate').value = data.rate;
-            document.getElementById('dealerMin').value = data.minLimit;
-            document.getElementById('dealerMax').value = data.maxLimit;
-            
-            document.getElementById('dealerModalTitle').innerText = 'Edit Market Dealer';
-            document.getElementById('dealerModal').classList.remove('hidden');
-            document.getElementById('dealerModal').classList.add('flex');
-        }
+            closeRejectModal();
+        });
 
         document.getElementById('dealerForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const id = document.getElementById('dealerIdField').value;
-            const payload = {
-                name: document.getElementById('dealerName').value,
-                rate: parseFloat(document.getElementById('dealerRate').value),
-                minLimit: parseInt(document.getElementById('dealerMin').value),
-                maxLimit: parseInt(document.getElementById('dealerMax').value)
-            };
-
-            if(id) {
-                db.ref(`dealers/${id}`).update(payload).then(() => {
-                    closeDealerModal();
-                    alert("Dealer updated successfully!");
-                });
-            } else {
-                db.ref('dealers').push(payload).then(() => {
-                    closeDealerModal();
-                    alert("New dealer added to marketplace!");
-                });
-            }
+            db.ref('dealers').push({
+                name: document.getElementById('dlrName').value,
+                rate: parseFloat(document.getElementById('dlrRate').value),
+                minLimit: parseInt(document.getElementById('dlrMin').value),
+                maxLimit: parseInt(document.getElementById('dlrMax').value),
+                active: true
+            }).then(() => { e.target.reset(); });
         });
 
-        function deleteDealer(id) {
-            if(confirm("Delete this dealer from the marketplace?")) {
-                db.ref(`dealers/${id}`).remove();
-            }
-        }
-
-        // ==========================================
-        // EXISTING LOGIC (WITHDRAWALS UPDATED)
-        // ==========================================
-
-        function fetchLiveUsersDirectory() {
-            db.ref('users').on('value', snapshot => {
-                allUsersGlobal = snapshot.val() || {};
-                renderUsersTable();
+        function renderDealers() {
+            db.ref('dealers').on('value', snap => {
+                const tbody = document.getElementById('tblDealersBody'); tbody.innerHTML = '';
+                allDealersGlobal = snap.val() || {};
+                for(let id in allDealersGlobal) {
+                    let d = allDealersGlobal[id];
+                    let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
+                    tr.innerHTML = `
+                        <td class="p-3 border-t border-slate-800 text-[9px] font-mono text-slate-500">${id}</td>
+                        <td class="p-3 border-t border-slate-800 font-bold text-white">${d.name}</td>
+                        <td class="p-3 border-t border-slate-800 text-center font-black text-emerald-400">${d.rate} PKR</td>
+                        <td class="p-3 border-t border-slate-800 text-center text-slate-400 text-[10px]">${d.minLimit} to ${d.maxLimit}</td>
+                        <td class="p-3 border-t border-slate-800 text-right"><button onclick="deleteDealer('${id}')" class="text-red-400 hover:text-red-300 text-[10px] font-bold uppercase underline">Remove</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                }
             });
         }
+        function deleteDealer(id) { if(confirm("Remove this dealer from marketplace?")) db.ref(`dealers/${id}`).remove(); }
 
-        function renderUsersTable() {
-            const tbody = document.getElementById('tblAllUsersBody');
-            tbody.innerHTML = '';
+        function openUserPanel(uid) {
+            currentInspectedUid = uid;
+            const u = allUsersGlobal[uid];
+            if(!u) return;
             
-            for(let uid in allUsersGlobal) {
-                let data = allUsersGlobal[uid];
-                
-                let teamCount = 0;
-                for(let u in allUsersGlobal) { if(allUsersGlobal[u].referredBy === uid) teamCount++; }
+            document.getElementById('panelUserName').innerText = u.name;
+            document.getElementById('panelUserEmail').innerText = u.email;
+            
+            // Password Overriding implemented
+            document.getElementById('overridePassword').value = u.password || '';
+            document.getElementById('overrideEggs').value = u.availableEggs || 0;
+            document.getElementById('overrideGift').value = u.giftEggs || 0;
+            document.getElementById('overrideHens').value = u.totalHens || 0;
+            
+            document.getElementById('btnBlockUser').innerText = u.status === 'blocked' ? 'UNBLOCK USER' : 'BLOCK USER';
+            document.getElementById('btnBlockUser').className = u.status === 'blocked' ? 
+                "w-full bg-emerald-900/50 hover:bg-emerald-800 text-emerald-300 py-2 rounded text-[10px] uppercase font-bold border border-emerald-800 transition-colors" : 
+                "w-full bg-red-900/50 hover:bg-red-800 text-red-300 py-2 rounded text-[10px] uppercase font-bold border border-red-800 transition-colors";
+            
+            if(u.referredBy && u.referredBy !== 'none') {
+                db.ref(`users/${u.referredBy}/name`).once('value').then(s => {
+                    document.getElementById('panelUserRef').innerText = s.val() || 'Unknown ID';
+                });
+            } else { document.getElementById('panelUserRef').innerText = 'None'; }
 
-                let tr = document.createElement('tr');
-                tr.className = `hover:bg-zinc-800/40 transition-colors ${data.status === 'blocked' ? 'bg-red-950/20 opacity-80' : ''}`;
-                
-                let timerDivId = `admin_timer_${uid}`;
-                
-                let referrerDisplay = "None";
-                if(data.referredBy && data.referredBy !== 'none') {
-                    if(allUsersGlobal[data.referredBy]) {
-                        referrerDisplay = allUsersGlobal[data.referredBy].name || "Unknown User";
-                    } else {
-                        referrerDisplay = "Unknown Reference";
-                    }
-                }
+            document.getElementById('userSidePanel').classList.remove('translate-x-full');
+            updateAdminTimersUI();
+        }
 
-                tr.innerHTML = `
-                    <td class="p-3">
-                        <div class="font-bold text-yellow-400 text-sm flex items-center space-x-2">
-                            <span>${data.name || 'Unknown'}</span>
-                            ${data.status === 'blocked' ? '<span class="bg-red-600 text-white font-bold px-1.5 py-0.5 rounded text-[9px]">BLOCKED</span>' : ''}
-                        </div>
-                        <div class="text-zinc-400">${data.email} | ${data.mobile}</div>
-                        <div class="text-zinc-500 font-mono text-[10px] mt-1">ID: ${uid}</div>
-                        <button onclick="openEditUserModal('${uid}')" class="mt-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 px-2.5 py-1 rounded text-[10px] font-bold text-yellow-400 flex items-center space-x-1">
-                            <span>⚙️</span> <span>Manage Account</span>
-                        </button>
-                    </td>
-                    <td class="p-3">
-                        <div class="text-zinc-300">Invited by: <span class="text-emerald-400 font-bold">${referrerDisplay}</span></div>
-                        <div class="text-zinc-400 mt-1">Team Built: <span class="text-yellow-400 font-bold">${teamCount} Users</span></div>
-                    </td>
-                    <td class="p-3">
-                        <div class="font-bold text-emerald-400">${data.totalHens || 0} Hens</div>
-                        <div class="text-zinc-300">${data.availableEggs || 0} Reg. Eggs</div>
-                        <div class="text-zinc-400">${data.giftEggs || 0} Gift Eggs</div>
-                    </td>
-                    <td class="p-3 font-mono">
-                        <div class="text-red-400">Exp: ${data.totalExpense || 0} PKR</div>
-                        <div class="text-green-400">Wd: ${data.totalWithdrawal || 0} PKR</div>
-                    </td>
-                    <td class="p-3" id="${timerDivId}">
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            }
+        function closeUserPanel() {
+            document.getElementById('userSidePanel').classList.add('translate-x-full');
+            currentInspectedUid = null;
+        }
+
+        window.adjustBatchTime = function(uid, batchKey, msDelta) {
+            db.ref(`users/${uid}/hen_batches/${batchKey}/lastCollectedAt`).transaction(current => {
+                if(!current) return Date.now();
+                return current + msDelta; 
+            });
         }
 
         function updateAdminTimersUI() {
+            if(!currentInspectedUid || !allUsersGlobal[currentInspectedUid]) return;
+            const u = allUsersGlobal[currentInspectedUid];
+            const container = document.getElementById('panelBatchesContainer');
+            if(!u.hen_batches) { container.innerHTML = '<p class="text-slate-500 italic text-center py-4">No active hens.</p>'; return; }
+            
+            let html = '';
             let now = Date.now();
             const dayMs = 24 * 60 * 60 * 1000;
+            const expiryLimitMs = 120 * dayMs;
+            let uid = currentInspectedUid;
 
-            for(let uid in allUsersGlobal) {
-                let timerDiv = document.getElementById(`admin_timer_${uid}`);
-                if(!timerDiv) continue;
+            for(let k in u.hen_batches) {
+                let b = u.hen_batches[k];
+                let purchasedAt = b.purchasedAt || b.lastCollectedAt;
+                let lifeElapsed = now - purchasedAt;
+                let daysLeft = Math.ceil((expiryLimitMs - lifeElapsed) / dayMs);
                 
-                let data = allUsersGlobal[uid];
-                if(!data.hen_batches) {
-                    timerDiv.innerHTML = '<span class="text-zinc-600 italic text-[10px]">No active batches</span>';
-                    continue;
-                }
-
-                let timersHtml = '';
-                for(let bKey in data.hen_batches) {
-                    let b = data.hen_batches[bKey];
-                    let elapsed = now - b.lastCollectedAt;
-                    let timeLeft = dayMs - elapsed;
-                    if(timeLeft < 0) timeLeft = 0; 
-
-                    let h = Math.floor(timeLeft / (1000 * 60 * 60));
-                    let m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                    let s = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                    let pad = (n) => n.toString().padStart(2, '0');
-
-                    timersHtml += `<div class="bg-zinc-800 border border-zinc-700 px-2 py-1 rounded text-[10px] mb-1 text-zinc-300 flex justify-between w-40"><span>${b.qty} Hens:</span> <span class="font-mono text-yellow-400">${pad(h)}h ${pad(m)}m ${pad(s)}s</span></div>`;
-                }
-                timerDiv.innerHTML = timersHtml;
+                let elapsed = now - b.lastCollectedAt;
+                let timeLeft = dayMs - (elapsed % dayMs);
+                
+                let h = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
+                let m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+                
+                html += `<div class="bg-blue-900/40 p-1 rounded border border-blue-800/50 flex flex-col gap-1 mb-1">
+                    <div class="flex justify-between items-center">
+                        <span><span class="text-yellow-400 font-bold">${b.qty}H</span> <span class="text-cyan-300 ml-1 font-mono"> ${h}h ${m}m </span></span>
+                        <span class="text-red-300 ml-1 font-bold text-[10px]"> Exp: ${daysLeft}D </span>
+                    </div>
+                    <div class="flex gap-1 mt-1 border-t border-blue-800/50 pt-1">
+                        <button onclick="adjustBatchTime('${uid}', '${k}', 3600000)" class="flex-1 bg-emerald-700 hover:bg-emerald-600 rounded text-white text-[9px] py-0.5" title="Add 1 Hour to Time Left">+1H</button>
+                        <button onclick="adjustBatchTime('${uid}', '${k}', -3600000)" class="flex-1 bg-red-700 hover:bg-red-600 rounded text-white text-[9px] py-0.5" title="Reduce 1 Hour from Time Left">-1H</button>
+                        <button onclick="adjustBatchTime('${uid}', '${k}', 60000)" class="flex-1 bg-emerald-700 hover:bg-emerald-600 rounded text-white text-[9px] py-0.5" title="Add 1 Minute to Time Left">+1M</button>
+                        <button onclick="adjustBatchTime('${uid}', '${k}', -60000)" class="flex-1 bg-red-700 hover:bg-red-600 rounded text-white text-[9px] py-0.5" title="Reduce 1 Minute from Time Left">-1M</button>
+                    </div>
+                </div>`;
             }
+            container.innerHTML = html;
         }
 
-        function openEditUserModal(uid) {
-            const user = allUsersGlobal[uid];
-            if(!user) return;
-
-            document.getElementById('editUid').value = uid;
-            document.getElementById('editPassword').value = user.password || '';
-            document.getElementById('editHens').value = user.totalHens || 0;
-            document.getElementById('editRegEggs').value = user.availableEggs || 0;
-            document.getElementById('editGiftEggs').value = user.giftEggs || 0;
-
-            const blockBtn = document.getElementById('btnBlockUnblock');
-            if(user.status === 'blocked') {
-                blockBtn.innerText = "Unblock User";
-                blockBtn.className = "bg-green-600 hover:bg-green-500 text-white font-bold px-5 py-3 rounded-xl shadow-md transition-colors";
-            } else {
-                blockBtn.innerText = "Block User";
-                blockBtn.className = "bg-amber-600 hover:bg-amber-500 text-zinc-950 font-bold px-5 py-3 rounded-xl shadow-md transition-colors";
-            }
-
-            const timersContainer = document.getElementById('editUserTimersContainer');
-            timersContainer.innerHTML = '';
-            if(user.hen_batches) {
-                for(let bKey in user.hen_batches) {
-                    let b = user.hen_batches[bKey];
-                    let row = document.createElement('div');
-                    row.className = "flex justify-between items-center bg-zinc-900 border border-zinc-800 p-2 rounded-lg text-[11px]";
-                    row.innerHTML = `
-                        <span class="font-bold text-zinc-300">${b.qty} Hens Batch</span>
-                        <button onclick="resetBatchTimer('${uid}', '${bKey}')" class="bg-yellow-500 hover:bg-yellow-600 text-zinc-950 px-2 py-0.5 rounded font-black text-[10px] uppercase">Reset (Ready)</button>
-                    `;
-                    timersContainer.appendChild(row);
-                }
-            } else {
-                timersContainer.innerHTML = '<span class="text-zinc-600 italic">No production batches found.</span>';
-            }
-
-            document.getElementById('editUserModal').classList.remove('hidden');
-            document.getElementById('editUserModal').classList.add('flex');
-        }
-
-        function closeEditUserModal() {
-            document.getElementById('editUserModal').classList.remove('flex');
-            document.getElementById('editUserModal').classList.add('hidden');
-        }
-
-        function resetBatchTimer(uid, bKey) {
-            const dayMs = 24 * 60 * 60 * 1000;
-            db.ref(`users/${uid}/hen_batches/${bKey}/lastCollectedAt`).set(Date.now() - dayMs).then(() => {
-                alert("Timer shifted successfully! Production cycle is immediately collection-ready.");
-                openEditUserModal(uid);
+        function saveManualOverride(field, inputId) {
+            if(!currentInspectedUid) return;
+            const inputVal = document.getElementById(inputId).value;
+            let val = field === 'password' ? inputVal : (parseInt(inputVal) || 0);
+            db.ref(`users/${currentInspectedUid}/${field}`).set(val).then(() => {
+                alert(`${field} updated successfully!`);
             });
         }
 
-        function saveUserData() {
-            const uid = document.getElementById('editUid').value;
-            const password = document.getElementById('editPassword').value;
-            const hens = parseInt(document.getElementById('editHens').value) || 0;
-            const regEggs = parseInt(document.getElementById('editRegEggs').value) || 0;
-            const giftEggs = parseInt(document.getElementById('editGiftEggs').value) || 0;
-
-            let updates = {};
-            updates[`users/${uid}/password`] = password;
-            updates[`users/${uid}/totalHens`] = hens;
-            updates[`users/${uid}/availableEggs`] = regEggs;
-            updates[`users/${uid}/giftEggs`] = giftEggs;
-
-            db.ref().update(updates).then(() => {
-                alert("Account credentials and farm inventory updated safely.");
-                closeEditUserModal();
-            });
-        }
-
-        function toggleBlockStatus() {
-            const uid = document.getElementById('editUid').value;
-            const user = allUsersGlobal[uid];
-            if(!user) return;
-
-            const currentStatus = user.status || "active";
-            const targetStatus = currentStatus === "blocked" ? "active" : "blocked";
-
-            db.ref(`users/${uid}/status`).set(targetStatus).then(() => {
-                alert(`Account status updated to ${targetStatus.toUpperCase()}`);
-                closeEditUserModal();
+        function toggleUserBlock() {
+            if(!currentInspectedUid) return;
+            const u = allUsersGlobal[currentInspectedUid];
+            const newStatus = u.status === 'blocked' ? 'active' : 'blocked';
+            db.ref(`users/${currentInspectedUid}/status`).set(newStatus).then(() => {
+                openUserPanel(currentInspectedUid);
             });
         }
 
         function deleteUserAccount() {
-            const uid = document.getElementById('editUid').value;
-            if(!confirm("Are you absolutely certain you want to purge this user permanently from database? This process cannot be reversed.")) return;
-            
-            db.ref(`users/${uid}`).remove().then(() => {
-                alert("User successfully eliminated from registry.");
-                closeEditUserModal();
-            });
-        }
-
-        function fetchLivePurchaseRequests() {
-            db.ref('purchase_requests').on('value', snapshot => {
-                const tbody = document.getElementById('tblPurchaseRequestsBody');
-                tbody.innerHTML = '';
-                let hasRecords = false;
-                snapshot.forEach(child => {
-                    const reqId = child.key;
-                    const data = child.val();
-                    if (data.status === 'pending') {
-                        hasRecords = true;
-                        const tr = document.createElement('tr');
-                        tr.className = "hover:bg-zinc-800/30 transition-colors";
-                        
-                        let imageProofHtml = '';
-                        if (data.screenshotData && data.screenshotData.startsWith('data:image')) {
-                            imageProofHtml = `<button onclick="viewImage('${data.screenshotData}')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded shadow text-xs transition-colors">🖼️ View Image</button>`;
-                        } else {
-                            imageProofHtml = `<span class="text-zinc-400 max-w-[120px] truncate block text-[10px]" title="${data.screenshotData}">${data.screenshotData}</span>`;
-                        }
-
-                        tr.innerHTML = `
-                            <td class="p-3 font-mono text-[11px] text-zinc-400">${data.uid.substring(0, 8)}...</td>
-                            <td class="p-3 font-bold text-yellow-400">${data.quantity} Hens</td>
-                            <td class="p-3 font-semibold text-emerald-400">${data.amount} PKR</td>
-                            <td class="p-3 font-mono text-zinc-300">${data.transactionId}</td>
-                            <td class="p-3 text-zinc-300">${data.accountHolderName}</td>
-                            <td class="p-3 text-center">${imageProofHtml}</td>
-                            <td class="p-3 text-center">
-                                <button onclick="approvePurchaseOrder('${reqId}', '${data.uid}', ${data.quantity}, ${data.amount})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded shadow">Verify & Issue Assets</button>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    }
-                });
-                if (!hasRecords) tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-zinc-500 italic">Queue cleared.</td></tr>`;
-            });
-        }
-
-        function viewImage(base64Data) {
-            document.getElementById('modalImageViewer').src = base64Data;
-            document.getElementById('imageModal').classList.remove('hidden');
-            document.getElementById('imageModal').classList.add('flex');
-        }
-
-        function closeImageModal() {
-            document.getElementById('imageModal').classList.remove('flex');
-            document.getElementById('imageModal').classList.add('hidden');
-        }
-
-        function fetchLiveWithdrawalRequests() {
-            db.ref('withdrawal_requests').on('value', snapshot => {
-                const tbody = document.getElementById('tblWithdrawRequestsBody');
-                tbody.innerHTML = '';
-                let hasRecords = false;
-                snapshot.forEach(child => {
-                    const reqId = child.key;
-                    const data = child.val();
-                    if (data.status === 'pending') {
-                        hasRecords = true;
-                        
-                        // Extract specific dealer transaction data if available
-                        const dealerDisplay = data.dealerName || "Old System";
-                        const rateDisplay = data.ratePerEgg ? `${data.ratePerEgg} PKR` : "Standard (37)";
-                        const exactPayout = data.totalPayout || (data.eggsDeductedCount * 37);
-
-                        const tr = document.createElement('tr');
-                        tr.className = "hover:bg-zinc-800/30 transition-colors";
-                        tr.innerHTML = `
-                            <td class="p-3 font-mono text-[11px] text-zinc-400">${data.uid.substring(0, 8)}...</td>
-                            <td class="p-3">
-                                <span class="font-bold text-amber-400 block">${data.methodType}</span>
-                                <span class="font-mono text-zinc-300 text-[10px]">${data.accountNumber}</span><br>
-                                <span class="text-zinc-400 text-[10px]">${data.accountHolderName}</span>
-                            </td>
-                            <td class="p-3 font-bold text-emerald-400">${dealerDisplay}</td>
-                            <td class="p-3">
-                                <span class="text-yellow-500 font-bold block">${data.eggsDeductedCount} Eggs</span>
-                                <span class="text-zinc-500 text-[10px]">Rate: ${rateDisplay}</span>
-                            </td>
-                            <td class="p-3 text-lg font-black text-white bg-emerald-900/20 rounded border border-emerald-900/50">
-                                ${exactPayout} PKR
-                            </td>
-                            <td class="p-3 text-center space-x-1.5 flex flex-col space-y-1.5 items-center justify-center">
-                                <button onclick="approveWithdrawalSettlement('${reqId}', '${data.uid}', ${exactPayout})" class="w-full bg-amber-600 hover:bg-amber-500 text-zinc-950 font-bold px-3 py-1.5 rounded shadow">Confirm Payout Done</button>
-                                <button onclick="rejectWithdrawalSettlement('${reqId}', '${data.uid}', ${data.eggsDeductedCount})" class="w-full bg-red-700 hover:bg-red-600 text-white font-bold px-3 py-1.5 rounded shadow text-[10px]">Reject & Refund</button>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    }
-                });
-                if (!hasRecords) tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-zinc-500 italic">Queue cleared.</td></tr>`;
-            });
-        }
-
-        function approvePurchaseOrder(reqId, uid, qty, amount) {
-            if (!confirm(`Verify Payment and Issue ${qty} Hens + IMMEDIATE ${qty} Eggs to User?`)) return;
-
-            db.ref('users/' + uid).once('value').then(snapshot => {
-                const userData = snapshot.val();
-                if (!userData) return;
-
-                const batchId = db.ref().child(`users/${uid}/hen_batches`).push().key;
-                
-                const updatedAvailableEggs = (userData.availableEggs || 0) + qty;
-                const updatedHensCount = (userData.totalHens || 0) + qty;
-                const updatedExpenseRecord = (userData.totalExpense || 0) + amount;
-
-                let payload = {};
-                payload[`users/${uid}/availableEggs`] = updatedAvailableEggs; 
-                payload[`users/${uid}/totalHens`] = updatedHensCount;
-                payload[`users/${uid}/totalExpense`] = updatedExpenseRecord;
-                
-                payload[`users/${uid}/hen_batches/${batchId}`] = {
-                    qty: qty,
-                    approvedAt: Date.now(),
-                    lastCollectedAt: Date.now() 
-                };
-                
-                payload[`purchase_requests/${reqId}/status`] = "approved";
-
-                if (userData.referredBy && userData.referredBy !== "none") {
-                    const referrerUid = userData.referredBy;
-                    db.ref('users/' + referrerUid).once('value').then(refSnapshot => {
-                        const referrerData = refSnapshot.val();
-                        if (referrerData) {
-                            payload[`users/${referrerUid}/giftEggs`] = (referrerData.giftEggs || 0) + qty;
-                        }
-                        db.ref().update(payload).then(() => alert("Hens, immediate Eggs, and Team Bonus applied!"));
-                    });
-                } else {
-                    db.ref().update(payload).then(() => alert("Hens and immediate Eggs issued successfully!"));
-                }
-            });
-        }
-
-        // Updated Function: Accepts pre-calculated exactPayout instead of assuming (eggs * 37)
-        function approveWithdrawalSettlement(reqId, uid, exactPayoutAmount) {
-            if (!confirm(`Confirm payout transaction execution of ${exactPayoutAmount} PKR?`)) return;
-
-            db.ref('users/' + uid).once('value').then(snapshot => {
-                const userData = snapshot.val();
-                if (!userData) return;
-
-                const updatedWd = (userData.totalWithdrawal || 0) + exactPayoutAmount;
-
-                let payload = {};
-                payload[`users/${uid}/totalWithdrawal`] = updatedWd;
-                payload[`withdrawal_requests/${reqId}/status`] = "completed";
-
-                db.ref().update(payload).then(() => alert("Withdrawal completed. Ledger status updated."));
-            });
-        }
-
-        function rejectWithdrawalSettlement(reqId, uid, eggsCount) {
-            if (!confirm(`Reject request and return ${eggsCount} Eggs back to user balance?`)) return;
-
-            db.ref('users/' + uid).once('value').then(snapshot => {
-                const userData = snapshot.val();
-                if (!userData) return;
-
-                const restoredRegEggs = (userData.availableEggs || 0) + parseInt(eggsCount);
-                
-                let payload = {};
-                payload[`users/${uid}/availableEggs`] = restoredRegEggs;
-                payload[`withdrawal_requests/${reqId}/status`] = "rejected";
-
-                db.ref().update(payload).then(() => alert("Withdrawal request rejected. Eggs returned safely to user."));
-            });
+            if(!currentInspectedUid) return;
+            let email = allUsersGlobal[currentInspectedUid].email;
+            if(confirm(`EXTREME DANGER:\nAre you absolutely sure you want to permanently delete ALL DB records for ${email}?\n\nAuthentication removal must be done via Firebase Console manually.`)) {
+                let pswd = prompt("Type master key '786786' to confirm deletion:");
+                if(pswd === "786786") {
+                    db.ref(`users/${currentInspectedUid}`).remove();
+                    closeUserPanel();
+                } else { alert("Deletion aborted."); }
+            }
         }
     </script>
 </body>
