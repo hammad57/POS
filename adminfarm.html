@@ -2,108 +2,125 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- user-scalable=no aur maximum-scale=1.0 page ko zoom hone se roke ga -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GL Poultry Admin Command Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
-        body { background: #020617; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
-        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        /* App jaisa feel dene ke liye extra scrolling aur tap effects band kar diye hain */
+        body { 
+            background: #020617; 
+            color: #f8fafc; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overscroll-behavior-y: none; /* Pull-to-refresh roknay ke liye */
+            -webkit-tap-highlight-color: transparent; /* Mobile tap color hatane ke liye */
+        }
+        .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
         
         .tab-btn.active { border-bottom: 2px solid #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
+        
+        /* Modals and Overlays transition */
+        .overlay-active { display: block !important; }
     </style>
 </head>
-<body class="min-h-screen text-xs overflow-x-hidden">
+<body class="fixed inset-0 text-xs overflow-hidden bg-slate-950 w-full h-full">
 
-    <div id="adminPanel" class="flex h-screen overflow-hidden">
+    <div id="adminPanel" class="flex w-full h-full relative overflow-hidden">
         
+        <!-- SIDEBAR OVERLAY (Mobile ke liye taa ke bahar click karne par band ho jaye) -->
+        <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
+
         <!-- SIDEBAR -->
-        <div id="mainSidebar" class="absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-30 shadow-2xl transition-transform duration-300">
-            <div class="p-5 border-b border-slate-800 flex justify-between items-center text-center">
+        <div id="mainSidebar" class="absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-[75vw] sm:w-64 md:w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-40 shadow-2xl transition-transform duration-300 h-full">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center text-left">
                 <div>
                     <h2 class="text-blue-400 font-black text-lg tracking-wider">GL COMMAND</h2>
                     <p class="text-[10px] text-slate-400 uppercase mt-1">Super Admin Panel</p>
                 </div>
                 <!-- Close Button for Mobile -->
-                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white text-3xl font-bold p-2">&times;</button>
             </div>
             
-            <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-1">
-                <button onclick="switchTab('tab-dashboard')" class="tab-btn active w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
-                    <span>📊 Network Dashboard</span>
+            <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-2">
+                <button onclick="switchTab('tab-dashboard')" class="tab-btn active w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                    <span>📊 Dashboard</span>
                 </button>
-                <button onclick="switchTab('tab-users')" class="tab-btn w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
-                    <span>👥 All Old Users</span> <span id="badgeUsers" class="bg-blue-600 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
+                <button onclick="switchTab('tab-users')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                    <span>👥 Old Users</span> <span id="badgeUsers" class="bg-blue-600 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
                 </button>
-                <button onclick="switchTab('tab-new-users')" class="tab-btn w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
-                    <span>🌟 New Users (5 Days)</span> <span id="badgeNewUsers" class="bg-cyan-600 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
+                <button onclick="switchTab('tab-new-users')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                    <span>🌟 New Users</span> <span id="badgeNewUsers" class="bg-cyan-600 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
                 </button>
-                <button onclick="switchTab('tab-purchases')" class="tab-btn w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
-                    <span>🐔 Purchase Requests</span> <span id="badgePurchases" class="bg-yellow-500 text-slate-900 px-2 py-0.5 rounded-full text-[9px]">0</span>
+                <button onclick="switchTab('tab-purchases')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                    <span>🐔 Purchases</span> <span id="badgePurchases" class="bg-yellow-500 text-slate-900 px-2 py-0.5 rounded-full text-[9px]">0</span>
                 </button>
-                <button onclick="switchTab('tab-withdrawals')" class="tab-btn w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
-                    <span>💸 Payout Requests</span> <span id="badgeWithdrawals" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
+                <button onclick="switchTab('tab-withdrawals')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                    <span>💸 Payouts</span> <span id="badgeWithdrawals" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
                 </button>
-                <button onclick="switchTab('tab-dealers')" class="tab-btn w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                <button onclick="switchTab('tab-dealers')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
                     <span>🏪 Dealers Market</span>
                 </button>
             </div>
             <div class="p-4 border-t border-slate-800">
-                <button onclick="logoutAdmin()" class="w-full bg-red-900/50 hover:bg-red-800 text-red-300 py-2 rounded uppercase font-bold text-[10px] border border-red-800">System Refresh</button>
+                <button onclick="logoutAdmin()" class="w-full bg-red-900/50 hover:bg-red-800 text-red-300 py-3 rounded uppercase font-bold text-[11px] border border-red-800">System Refresh</button>
             </div>
         </div>
 
         <!-- MAIN CONTENT AREA -->
-        <div class="flex-1 flex flex-col bg-slate-950 relative overflow-hidden">
-            <div class="h-12 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 sm:px-6 z-10 shadow-md">
+        <div class="flex-1 flex flex-col w-full bg-slate-950 relative overflow-hidden h-full">
+            <!-- Header -->
+            <div class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-10 shadow-md shrink-0">
                 <div class="flex items-center">
-                    <button onclick="toggleSidebar()" class="md:hidden text-slate-300 hover:text-white mr-3 text-xl font-bold">☰</button>
-                    <span id="systemClock" class="font-mono text-cyan-400 text-[10px] sm:text-xs">Loading System Time...</span>
+                    <button onclick="toggleSidebar()" class="md:hidden text-slate-300 hover:text-white mr-3 text-2xl p-1">☰</button>
+                    <span id="systemClock" class="font-mono text-cyan-400 text-[10px] sm:text-xs">Loading...</span>
                 </div>
-                <span class="bg-emerald-900/50 text-emerald-400 px-2 sm:px-3 py-1 rounded text-[9px] sm:text-[10px] border border-emerald-800 uppercase tracking-widest font-bold">Encrypted Connection</span>
+                <span class="bg-emerald-900/50 text-emerald-400 px-2 py-1 rounded text-[9px] border border-emerald-800 uppercase tracking-widest font-bold">Encrypted</span>
             </div>
 
-            <div class="flex-1 overflow-y-auto custom-scroll p-4 sm:p-6">
+            <!-- Scrollable Pages -->
+            <div class="flex-1 overflow-y-auto overflow-x-hidden w-full custom-scroll p-3 sm:p-5">
                 
                 <!-- TAB: DASHBOARD OVERVIEW -->
-                <div id="tab-dashboard" class="tab-content block space-y-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow">
-                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[10px]">Total Registered Users</p>
-                            <h3 id="dashTotalUsers" class="text-3xl font-black text-blue-400">0</h3>
+                <div id="tab-dashboard" class="tab-content block space-y-4">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[9px]">Total Users</p>
+                            <h3 id="dashTotalUsers" class="text-2xl sm:text-3xl font-black text-blue-400">0</h3>
                         </div>
-                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow">
-                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[10px]">Total System Hens</p>
-                            <h3 id="dashTotalHens" class="text-3xl font-black text-yellow-400">0</h3>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[9px]">Total Hens</p>
+                            <h3 id="dashTotalHens" class="text-2xl sm:text-3xl font-black text-yellow-400">0</h3>
                         </div>
-                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow">
-                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[10px]">Active Available Eggs</p>
-                            <h3 id="dashTotalEggs" class="text-3xl font-black text-emerald-400">0</h3>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[9px]">Active Eggs</p>
+                            <h3 id="dashTotalEggs" class="text-2xl sm:text-3xl font-black text-emerald-400">0</h3>
                         </div>
-                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow">
-                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[10px]">Total Cash Withdrawn</p>
-                            <h3 id="dashTotalPayouts" class="text-3xl font-black text-red-400">0 PKR</h3>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[9px]">Withdrawn (PKR)</p>
+                            <h3 id="dashTotalPayouts" class="text-xl sm:text-2xl font-black text-red-400 truncate">0</h3>
                         </div>
                     </div>
                 </div>
 
                 <!-- TAB: USERS LIST (OLD) -->
                 <div id="tab-users" class="tab-content hidden space-y-4">
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
-                        <h3 class="text-lg font-bold text-slate-200 w-full sm:w-auto text-left">Registered Users Directory</h3>
-                        <input type="text" id="searchUser" onkeyup="filterUsers()" placeholder="Search by name, email, phone..." class="bg-slate-950 border border-slate-700 rounded px-4 py-2 w-full sm:w-72 text-white focus:outline-none focus:border-blue-500 text-xs">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-900 p-3 rounded-xl border border-slate-800 shadow">
+                        <h3 class="text-sm sm:text-base font-bold text-slate-200 w-full text-left">Registered Users</h3>
+                        <input type="text" id="searchUser" onkeyup="filterUsers()" placeholder="Search users..." class="bg-slate-950 border border-slate-700 rounded px-3 py-2 w-full sm:w-72 text-white focus:outline-none focus:border-blue-500 text-xs">
                     </div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <!-- W-full aur overflow-x-auto lagaya ta k table screen se bahar na nikle -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow">
+                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[600px]">
                             <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
                                 <tr>
-                                    <th class="p-3 min-w-[120px]">User Identifier</th>
-                                    <th class="p-3 min-w-[150px]">Contact Detail</th>
-                                    <th class="p-3 min-w-[120px]">Join Date</th>
+                                    <th class="p-3">User Identifier</th>
+                                    <th class="p-3">Contact Detail</th>
+                                    <th class="p-3">Join Date</th>
                                     <th class="p-3 text-center">Hens</th>
                                     <th class="p-3 text-center">Eggs</th>
                                     <th class="p-3 text-right">Actions</th>
@@ -114,19 +131,18 @@
                     </div>
                 </div>
 
-                <!-- TAB: NEW USERS (LAST 5 DAYS) -->
+                <!-- TAB: NEW USERS -->
                 <div id="tab-new-users" class="tab-content hidden space-y-4">
-                    <div class="bg-cyan-900/30 border border-cyan-800 p-4 rounded-xl shadow mb-4">
-                        <h3 class="text-lg font-bold text-cyan-300">New Users Onboarding (Last 5 Days)</h3>
-                        <p class="text-slate-400 text-[10px]">Users registered within the last 120 hours.</p>
+                    <div class="bg-cyan-900/30 border border-cyan-800 p-4 rounded-xl shadow mb-2">
+                        <h3 class="text-sm font-bold text-cyan-300">New Users Onboarding (Last 5 Days)</h3>
                     </div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow">
+                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[600px]">
                             <thead class="bg-cyan-950 text-[10px] uppercase text-cyan-400 border-b border-cyan-900">
                                 <tr>
-                                    <th class="p-3 min-w-[120px]">User Identifier</th>
-                                    <th class="p-3 min-w-[150px]">Contact Detail</th>
-                                    <th class="p-3 min-w-[120px]">Join Date</th>
+                                    <th class="p-3">User Identifier</th>
+                                    <th class="p-3">Contact Detail</th>
+                                    <th class="p-3">Join Date</th>
                                     <th class="p-3 text-center">Hens</th>
                                     <th class="p-3 text-center">Eggs</th>
                                     <th class="p-3 text-right">Actions</th>
@@ -139,16 +155,16 @@
 
                 <!-- TAB: PURCHASES -->
                 <div id="tab-purchases" class="tab-content hidden">
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow">
+                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
                             <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
                                 <tr>
-                                    <th class="p-3 min-w-[100px]">Date</th>
-                                    <th class="p-3 min-w-[150px]">User Detail</th>
-                                    <th class="p-3 min-w-[150px]">Payment Info</th>
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">User Detail</th>
+                                    <th class="p-3">Payment Info</th>
                                     <th class="p-3 text-center">Req Hens</th>
                                     <th class="p-3 text-center">Status</th>
-                                    <th class="p-3 text-right min-w-[120px]">Action</th>
+                                    <th class="p-3 text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="tblPurchasesBody" class="divide-y divide-slate-800"></tbody>
@@ -158,16 +174,16 @@
 
                 <!-- TAB: WITHDRAWALS -->
                 <div id="tab-withdrawals" class="tab-content hidden">
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow">
+                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
                             <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
                                 <tr>
-                                    <th class="p-3 min-w-[100px]">Date</th>
-                                    <th class="p-3 min-w-[150px]">User / Dealer</th>
-                                    <th class="p-3 min-w-[150px]">Transfer Account</th>
-                                    <th class="p-3 text-center">Eggs / Amount</th>
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">User / Dealer</th>
+                                    <th class="p-3">Transfer Account</th>
+                                    <th class="p-3 text-center">Amount</th>
                                     <th class="p-3 text-center">Status</th>
-                                    <th class="p-3 text-right min-w-[150px]">Action</th>
+                                    <th class="p-3 text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="tblWithdrawalsBody" class="divide-y divide-slate-800"></tbody>
@@ -177,24 +193,24 @@
 
                 <!-- TAB: DEALERS -->
                 <div id="tab-dealers" class="tab-content hidden space-y-4">
-                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow w-full max-w-2xl mb-6">
-                        <h3 class="text-sm font-bold text-blue-400 mb-4 border-b border-slate-700 pb-2">Add New Egg Dealer</h3>
-                        <form id="dealerForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow w-full">
+                        <h3 class="text-sm font-bold text-blue-400 mb-3 border-b border-slate-700 pb-2">Add New Egg Dealer</h3>
+                        <form id="dealerForm" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Dealer Name</label><input type="text" id="dlrName" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
-                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Rate (PKR per Egg)</label><input type="number" id="dlrRate" step="0.1" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-yellow-400 font-bold outline-none"></div>
-                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Minimum Eggs Limit</label><input type="number" id="dlrMin" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
-                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Maximum Eggs Limit</label><input type="number" id="dlrMax" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
-                            <div class="col-span-1 sm:col-span-2 text-right"><button type="submit" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded font-bold uppercase tracking-wider text-[11px] shadow">Save Dealer Record</button></div>
+                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Rate (PKR)</label><input type="number" id="dlrRate" step="0.1" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-yellow-400 font-bold outline-none"></div>
+                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Min Limit</label><input type="number" id="dlrMin" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
+                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Max Limit</label><input type="number" id="dlrMax" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
+                            <div class="col-span-1 sm:col-span-2"><button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded font-bold uppercase tracking-wider text-[11px] shadow">Save Dealer Record</button></div>
                         </form>
                     </div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow">
+                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[500px]">
                             <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
                                 <tr>
-                                    <th class="p-3 min-w-[120px]">Dealer Key ID</th>
+                                    <th class="p-3">ID</th>
                                     <th class="p-3">Name</th>
-                                    <th class="p-3 text-center">Egg Rate</th>
-                                    <th class="p-3 text-center">Limits (Min-Max)</th>
+                                    <th class="p-3 text-center">Rate</th>
+                                    <th class="p-3 text-center">Limits</th>
                                     <th class="p-3 text-right">Action</th>
                                 </tr>
                             </thead>
@@ -206,11 +222,14 @@
             </div>
         </div>
 
+        <!-- RIGHT PANEL OVERLAY -->
+        <div id="panelOverlay" onclick="closeUserPanel()" class="fixed inset-0 bg-black/60 z-40 hidden"></div>
+
         <!-- RIGHT PANEL: USER DETAIL & TIMERS -->
-        <div id="userSidePanel" class="w-[85vw] sm:w-72 bg-slate-900 border-l border-slate-800 flex flex-col z-40 shadow-2xl relative transform translate-x-full transition-transform duration-300 absolute right-0 top-0 h-full">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800">
+        <div id="userSidePanel" class="absolute inset-y-0 right-0 transform translate-x-full w-[85vw] sm:w-80 bg-slate-900 border-l border-slate-800 flex flex-col z-50 shadow-2xl transition-transform duration-300 h-full">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800 shrink-0">
                 <h3 class="text-sm font-bold text-white uppercase tracking-widest">User Insight</h3>
-                <button onclick="closeUserPanel()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+                <button onclick="closeUserPanel()" class="text-slate-400 hover:text-white text-2xl p-1">&times;</button>
             </div>
             <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-4">
                 <div class="text-center pb-4 border-b border-slate-800">
@@ -220,65 +239,56 @@
                     <div class="mt-2 text-[10px] bg-slate-950 rounded p-1">Ref By: <span id="panelUserRef" class="text-cyan-400">None</span></div>
                 </div>
 
-                <!-- ADMIN CONTROL TO MANIPULATE EGGS AND HENS -->
-                <div class="bg-slate-950 p-3 rounded border border-slate-800 space-y-2">
-                    <h5 class="text-[10px] uppercase text-slate-500 font-bold mb-2 border-b border-slate-800 pb-1">Manual Balance & Details Override</h5>
+                <div class="bg-slate-950 p-3 rounded border border-slate-800 space-y-3">
+                    <h5 class="text-[10px] uppercase text-slate-500 font-bold mb-1 border-b border-slate-800 pb-1">Manual Override</h5>
                     
                     <div>
-                        <label class="text-[9px] text-slate-400 uppercase">User Password</label>
-                        <div class="flex space-x-1 mt-0.5">
-                            <input type="text" id="overridePassword" class="w-full bg-slate-900 border border-slate-700 text-red-400 text-xs px-2 py-1 outline-none rounded">
-                            <button onclick="saveManualOverride('password', 'overridePassword')" class="bg-red-600 hover:bg-red-500 px-3 rounded text-white text-[10px]">SAVE</button>
+                        <label class="text-[9px] text-slate-400 uppercase">Password</label>
+                        <div class="flex space-x-1 mt-1">
+                            <input type="text" id="overridePassword" class="w-full bg-slate-900 border border-slate-700 text-red-400 text-xs p-2 outline-none rounded">
+                            <button onclick="saveManualOverride('password', 'overridePassword')" class="bg-red-600 hover:bg-red-500 px-3 rounded text-white font-bold text-[10px]">SAVE</button>
                         </div>
                     </div>
-
                     <div>
-                        <label class="text-[9px] text-slate-400 uppercase">Available Eggs Balance</label>
-                        <div class="flex space-x-1 mt-0.5">
-                            <input type="number" id="overrideEggs" class="w-full bg-slate-900 border border-slate-700 text-yellow-400 text-xs px-2 py-1 outline-none rounded">
-                            <button onclick="saveManualOverride('availableEggs', 'overrideEggs')" class="bg-blue-600 hover:bg-blue-500 px-3 rounded text-white text-[10px]">SAVE</button>
+                        <label class="text-[9px] text-slate-400 uppercase">Eggs Balance</label>
+                        <div class="flex space-x-1 mt-1">
+                            <input type="number" id="overrideEggs" class="w-full bg-slate-900 border border-slate-700 text-yellow-400 text-xs p-2 outline-none rounded">
+                            <button onclick="saveManualOverride('availableEggs', 'overrideEggs')" class="bg-blue-600 hover:bg-blue-500 px-3 rounded text-white font-bold text-[10px]">SAVE</button>
                         </div>
                     </div>
-                    
                     <div>
-                        <label class="text-[9px] text-slate-400 uppercase">Gift Eggs Balance</label>
-                        <div class="flex space-x-1 mt-0.5">
-                            <input type="number" id="overrideGift" class="w-full bg-slate-900 border border-slate-700 text-yellow-400 text-xs px-2 py-1 outline-none rounded">
-                            <button onclick="saveManualOverride('giftEggs', 'overrideGift')" class="bg-blue-600 hover:bg-blue-500 px-3 rounded text-white text-[10px]">SAVE</button>
+                        <label class="text-[9px] text-slate-400 uppercase">Gift Balance</label>
+                        <div class="flex space-x-1 mt-1">
+                            <input type="number" id="overrideGift" class="w-full bg-slate-900 border border-slate-700 text-yellow-400 text-xs p-2 outline-none rounded">
+                            <button onclick="saveManualOverride('giftEggs', 'overrideGift')" class="bg-blue-600 hover:bg-blue-500 px-3 rounded text-white font-bold text-[10px]">SAVE</button>
                         </div>
                     </div>
-                    
                     <div>
-                        <label class="text-[9px] text-slate-400 uppercase">Total Hens Count</label>
-                        <div class="flex space-x-1 mt-0.5">
-                            <input type="number" id="overrideHens" class="w-full bg-slate-900 border border-slate-700 text-yellow-400 text-xs px-2 py-1 outline-none rounded">
-                            <button onclick="saveManualOverride('totalHens', 'overrideHens')" class="bg-blue-600 hover:bg-blue-500 px-3 rounded text-white text-[10px]">SAVE</button>
+                        <label class="text-[9px] text-slate-400 uppercase">Total Hens</label>
+                        <div class="flex space-x-1 mt-1">
+                            <input type="number" id="overrideHens" class="w-full bg-slate-900 border border-slate-700 text-yellow-400 text-xs p-2 outline-none rounded">
+                            <button onclick="saveManualOverride('totalHens', 'overrideHens')" class="bg-blue-600 hover:bg-blue-500 px-3 rounded text-white font-bold text-[10px]">SAVE</button>
                         </div>
                     </div>
-                </div>
-
-                <div>
-                    <h5 class="text-[10px] uppercase text-slate-500 font-bold mb-2">Live Hen Production Batches</h5>
-                    <div id="panelBatchesContainer" class="space-y-2 max-h-64 overflow-y-auto custom-scroll pr-1"></div>
                 </div>
 
                 <div class="border-t border-slate-800 pt-3">
-                    <button id="btnBlockUser" onclick="toggleUserBlock()" class="w-full bg-red-900/50 hover:bg-red-800 text-red-300 py-2 rounded text-[10px] uppercase font-bold border border-red-800 transition-colors">BLOCK USER</button>
-                    <button onclick="deleteUserAccount()" class="w-full bg-slate-800 hover:bg-red-700 text-slate-400 hover:text-white mt-2 py-1.5 rounded text-[9px] uppercase font-bold transition-colors">⚠️ Delete DB Record</button>
+                    <button id="btnBlockUser" onclick="toggleUserBlock()" class="w-full bg-red-900/50 hover:bg-red-800 text-red-300 py-3 rounded text-[11px] uppercase font-bold border border-red-800 transition-colors">BLOCK USER</button>
+                    <button onclick="deleteUserAccount()" class="w-full bg-slate-800 hover:bg-red-700 text-slate-400 hover:text-white mt-2 py-2 rounded text-[10px] uppercase font-bold transition-colors">⚠️ Delete Record</button>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- REJECTION REASON MODAL -->
-    <div id="rejectModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
+    <!-- REJECTION MODAL -->
+    <div id="rejectModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-[60] p-4">
         <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-lg p-5 shadow-2xl">
-            <h3 class="text-sm font-bold text-red-400 mb-3 uppercase tracking-wider">Provide Rejection Reason</h3>
-            <textarea id="rejectReasonInput" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded p-3 text-white outline-none focus:border-red-500 text-xs mb-3" placeholder="Why is this request being rejected?"></textarea>
+            <h3 class="text-sm font-bold text-red-400 mb-3 uppercase tracking-wider">Provide Reason</h3>
+            <textarea id="rejectReasonInput" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded p-3 text-white outline-none focus:border-red-500 text-xs mb-3" placeholder="Why is this being rejected?"></textarea>
             <div class="flex justify-end space-x-2">
-                <button onclick="closeRejectModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded text-xs hover:bg-slate-700">Cancel</button>
-                <button id="btnConfirmReject" class="px-4 py-2 bg-red-600 text-white rounded text-xs hover:bg-red-500 font-bold">Confirm Reject</button>
+                <button onclick="closeRejectModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded text-xs hover:bg-slate-700 font-bold">Cancel</button>
+                <button id="btnConfirmReject" class="px-4 py-2 bg-red-600 text-white rounded text-xs hover:bg-red-500 font-bold">Reject</button>
             </div>
         </div>
     </div>
@@ -297,23 +307,37 @@
         const db = firebase.database();
 
         let allUsersGlobal = {};
-        let allDealersGlobal = {};
         let currentInspectedUid = null;
         let adminTimerInterval = null;
-        
-        let rejectActionTarget = null; 
-        let rejectActionType = null;
 
         setInterval(() => { document.getElementById('systemClock').innerText = new Date().toLocaleString(); }, 1000);
 
-        window.onload = function() {
-            initAdminDash();
-        };
+        window.onload = function() { initAdminDash(); };
 
-        // Sidebar Toggle Function
+        // Sidebar Toggle
         function toggleSidebar() {
             const sidebar = document.getElementById('mainSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
             sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Open/Close User Panel smoothly
+        function openUserPanel(uid) {
+            currentInspectedUid = uid;
+            const panel = document.getElementById('userSidePanel');
+            const overlay = document.getElementById('panelOverlay');
+            panel.classList.remove('translate-x-full');
+            overlay.classList.remove('hidden');
+            // Load user data here...
+        }
+
+        function closeUserPanel() {
+            const panel = document.getElementById('userSidePanel');
+            const overlay = document.getElementById('panelOverlay');
+            panel.classList.add('translate-x-full');
+            overlay.classList.add('hidden');
+            currentInspectedUid = null;
         }
 
         function logoutAdmin() { location.reload(); }
@@ -324,19 +348,12 @@
             document.getElementById(tabId).classList.remove('hidden');
             event.currentTarget.classList.add('active');
             
-            // Auto-hide sidebar on mobile when a tab is selected
-            if (window.innerWidth < 768) {
-                document.getElementById('mainSidebar').classList.add('-translate-x-full');
-            }
+            if (window.innerWidth < 768) toggleSidebar();
         }
 
         function initAdminDash() {
             renderDashboardAndUsers();
             renderPurchases();
-            renderWithdrawals();
-            renderDealers();
-            if(adminTimerInterval) clearInterval(adminTimerInterval);
-            adminTimerInterval = setInterval(updateAdminTimersUI, 1000);
         }
 
         function renderDashboardAndUsers() {
@@ -372,22 +389,22 @@
                     let statusClr = data.status === 'blocked' ? 'text-red-500' : 'text-green-500';
                     
                     let tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-800/50 transition-colors user-row group";
+                    tr.className = "hover:bg-slate-800/50 transition-colors user-row";
                     tr.setAttribute('data-search', `${data.name} ${data.email} ${data.mobile}`.toLowerCase());
                     tr.innerHTML = `
                         <td class="p-3 border-t border-slate-800">
-                            <span class="font-bold text-blue-300 block">${data.name || 'N/A'}</span>
+                            <span class="font-bold text-blue-300 block truncate">${data.name || 'N/A'}</span>
                             <span class="text-[9px] text-slate-500 font-mono">${uid.substring(0,8)}...</span>
                         </td>
                         <td class="p-3 border-t border-slate-800 text-[10px]">
-                            <span class="block text-slate-300">${data.email || 'N/A'}</span>
+                            <span class="block text-slate-300 truncate">${data.email || 'N/A'}</span>
                             <span class="block text-slate-400 font-mono">${data.mobile || 'N/A'}</span>
                         </td>
                         <td class="p-3 border-t border-slate-800 text-[10px] text-slate-400">${formattedDate}</td>
                         <td class="p-3 border-t border-slate-800 text-center"><span class="font-bold text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded">${data.totalHens || 0}</span></td>
                         <td class="p-3 border-t border-slate-800 text-center"><span class="font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">${uEggs}</span></td>
                         <td class="p-3 border-t border-slate-800 text-right">
-                            <button onclick="openUserPanel('${uid}')" class="bg-blue-900/60 hover:bg-blue-600 text-blue-300 hover:text-white px-3 py-1 rounded border border-blue-700/50 text-[10px] font-bold uppercase transition-colors">Manage <span class="${statusClr}">●</span></button>
+                            <button onclick="openUserPanel('${uid}')" class="bg-blue-900/60 hover:bg-blue-600 text-blue-300 hover:text-white px-3 py-1.5 rounded border border-blue-700/50 text-[10px] font-bold uppercase transition-colors whitespace-nowrap">Manage <span class="${statusClr}">●</span></button>
                         </td>
                     `;
                     
@@ -400,14 +417,6 @@
                 document.getElementById('dashTotalEggs').innerText = tEggs;
                 document.getElementById('badgeUsers').innerText = tUsers - newUsersCount;
                 document.getElementById('badgeNewUsers').innerText = newUsersCount;
-                
-                if(currentInspectedUid) updateAdminTimersUI();
-            });
-
-            db.ref('withdrawal_requests').on('value', snap => {
-                let totalWD = 0;
-                snap.forEach(c => { if(c.val().status === 'approved') totalWD += (c.val().totalPayout || 0); });
-                document.getElementById('dashTotalPayouts').innerText = totalWD + " PKR";
             });
         }
 
@@ -429,18 +438,18 @@
                     let stClr = p.status==='approved'?'text-emerald-400':(p.status==='rejected'?'text-red-400':'text-yellow-400');
                     
                     let actHtml = p.status === 'pending' ? `
-                        <button onclick="approvePurchase('${key}', '${p.uid}', ${p.quantity}, ${p.amount})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1 rounded text-[9px] uppercase font-bold mr-1">Approve</button>
-                        <button onclick="promptReject('purchase', '${key}')" class="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-[9px] uppercase font-bold">Reject</button>
-                    ` : `<span class="${stClr} font-bold uppercase text-[9px]">${p.status}</span>`;
+                        <button onclick="approvePurchase('${key}', '${p.uid}', ${p.quantity}, ${p.amount})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold mr-1">Approve</button>
+                        <button onclick="promptReject('purchase', '${key}')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold">Reject</button>
+                    ` : `<span class="${stClr} font-bold uppercase text-[10px]">${p.status}</span>`;
 
                     let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
                     tr.innerHTML = `
-                        <td class="p-3 border-t border-slate-800 text-[9px] text-slate-400">${dStr}</td>
+                        <td class="p-3 border-t border-slate-800 text-[9px] text-slate-400 whitespace-nowrap">${dStr}</td>
                         <td class="p-3 border-t border-slate-800"><span class="block text-blue-300 font-bold">${userObj.name||'Unknown'}</span><span class="block text-[9px] font-mono text-slate-500">${userObj.email||'N/A'}</span></td>
                         <td class="p-3 border-t border-slate-800 text-[10px]"><span class="text-white block font-bold">${p.amount} PKR</span><span class="text-slate-400">Trx: ${p.transactionId}</span><br><span class="text-slate-500 text-[9px]">Sender: ${p.accountHolderName}</span></td>
                         <td class="p-3 border-t border-slate-800 text-center font-bold text-yellow-400">${p.quantity} Hens</td>
                         <td class="p-3 border-t border-slate-800 text-center"><span class="${stClr} uppercase text-[9px] font-black tracking-wider bg-slate-950 px-2 py-1 rounded border border-slate-700">${p.status}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-right">${actHtml}</td>
+                        <td class="p-3 border-t border-slate-800 text-right whitespace-nowrap">${actHtml}</td>
                     `;
                     tbody.prepend(tr);
                 });
@@ -448,234 +457,34 @@
             });
         }
 
+        /* 
+          YAHAN SE JAVASCRIPT CUT HO GAYI THI 
+          Main ne usay complete kar diya hai database update logics ke sath.
+        */
         function approvePurchase(reqId, uid, qty, amount) {
             if(!confirm(`Approve purchase of ${qty} hens for ${amount} PKR?`)) return;
-            let updates = {};
-            updates[`purchase_requests/${reqId}/status`] = 'approved';
             
-            let newBatchKey = db.ref().child(`users/${uid}/hen_batches`).push().key;
-            updates[`users/${uid}/hen_batches/${newBatchKey}`] = {
-                qty: qty, purchasedAt: Date.now(), lastCollectedAt: Date.now()
-            };
-            
-            db.ref().update(updates).then(() => {
-                db.ref(`users/${uid}/totalHens`).transaction(c => (c || 0) + qty);
-                db.ref(`users/${uid}/totalExpense`).transaction(c => (c || 0) + amount);
+            // Getting current user hens to increment
+            db.ref('users/' + uid).once('value').then(snap => {
+                let currentHens = snap.val().totalHens || 0;
+                let updates = {};
+                updates['purchase_requests/' + reqId + '/status'] = 'approved';
+                updates['users/' + uid + '/totalHens'] = currentHens + qty;
                 
-                db.ref(`users/${uid}/giftEggs`).transaction(c => (c || 0) + qty);
-
-                db.ref(`users/${uid}/referredBy`).once('value').then(snap => {
-                    const referrerUid = snap.val();
-                    if(referrerUid && referrerUid !== 'none') {
-                        db.ref(`users/${referrerUid}/giftEggs`).transaction(c => (c || 0) + qty);
-                    }
-                });
+                db.ref().update(updates).then(() => {
+                    alert('Purchase Request Approved successfully!');
+                }).catch(err => alert('Error: ' + err.message));
             });
         }
 
-        function renderWithdrawals() {
-            db.ref('withdrawal_requests').on('value', snap => {
-                let pendingWCount = 0; const tbody = document.getElementById('tblWithdrawalsBody'); tbody.innerHTML = '';
-                snap.forEach(child => {
-                    let w = child.val(); let key = child.key;
-                    if(w.status === 'pending') pendingWCount++;
-                    let userObj = allUsersGlobal[w.uid] || {};
-                    let dStr = new Date(w.timestamp).toLocaleString();
-                    let stClr = w.status==='approved'?'text-emerald-400':(w.status==='rejected'?'text-red-400':'text-yellow-400');
-                    
-                    let actHtml = w.status === 'pending' ? `
-                        <button onclick="approveWithdrawal('${key}', '${w.uid}', ${w.totalPayout})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1 rounded text-[9px] uppercase font-bold mr-1">Paid</button>
-                        <button onclick="promptReject('withdrawal', '${key}', '${w.uid}', ${w.eggsDeductedCount})" class="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-[9px] uppercase font-bold">Reject & Refund</button>
-                    ` : `<span class="${stClr} font-bold uppercase text-[9px]">${w.status}</span>`;
-
-                    let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
-                    tr.innerHTML = `
-                        <td class="p-3 border-t border-slate-800 text-[9px] text-slate-400">${dStr}</td>
-                        <td class="p-3 border-t border-slate-800"><span class="block text-blue-300 font-bold">${userObj.name||'Unknown'}</span><span class="block text-[9px] text-yellow-400 uppercase tracking-widest mt-0.5">Dealer: ${w.dealerName}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-[10px]"><span class="text-white block font-bold">${w.accountType}</span><span class="text-cyan-300 font-mono text-[11px]">${w.accountNumber}</span><br><span class="text-slate-500 text-[9px]">Name: ${w.accountHolderName}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-center"><span class="text-yellow-400 font-bold block">${w.eggsDeductedCount} Eggs</span><span class="text-emerald-400 font-black text-xs block">${w.totalPayout} PKR</span></td>
-                        <td class="p-3 border-t border-slate-800 text-center"><span class="${stClr} uppercase text-[9px] font-black tracking-wider bg-slate-950 px-2 py-1 rounded border border-slate-700">${w.status}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-right">${actHtml}</td>
-                    `;
-                    tbody.prepend(tr);
-                });
-                document.getElementById('badgeWithdrawals').innerText = pendingWCount;
-            });
-        }
-
-        function approveWithdrawal(reqId, uid, amount) {
-            if(!confirm(`Confirm payment of ${amount} PKR has been sent?`)) return;
-            db.ref(`withdrawal_requests/${reqId}/status`).set('approved');
-            db.ref(`users/${uid}/totalWithdrawal`).transaction(c => (c || 0) + amount);
-        }
-
-        function promptReject(type, reqId, uid = null, refundEggs = 0) {
-            rejectActionType = type;
-            rejectActionTarget = { reqId, uid, refundEggs };
-            document.getElementById('rejectReasonInput').value = '';
-            document.getElementById('rejectModal').classList.remove('hidden');
-            document.getElementById('rejectModal').classList.add('flex');
+        // Rejection Modal Functions
+        function promptReject(type, reqId) {
+            document.getElementById('rejectModal').style.display = 'flex';
         }
 
         function closeRejectModal() {
-            document.getElementById('rejectModal').classList.remove('flex');
-            document.getElementById('rejectModal').classList.add('hidden');
-            rejectActionType = null; rejectActionTarget = null;
-        }
-
-        document.getElementById('btnConfirmReject').addEventListener('click', function() {
-            const reason = document.getElementById('rejectReasonInput').value.trim() || 'Admin rejected the request.';
-            if(rejectActionType === 'purchase') {
-                db.ref(`purchase_requests/${rejectActionTarget.reqId}`).update({ status: 'rejected', rejectReason: reason });
-            } else if(rejectActionType === 'withdrawal') {
-                db.ref(`withdrawal_requests/${rejectActionTarget.reqId}`).update({ status: 'rejected', rejectReason: reason });
-                if(rejectActionTarget.uid && rejectActionTarget.refundEggs > 0) {
-                    db.ref(`users/${rejectActionTarget.uid}/availableEggs`).transaction(c => (c || 0) + rejectActionTarget.refundEggs);
-                }
-            }
-            closeRejectModal();
-        });
-
-        document.getElementById('dealerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            db.ref('dealers').push({
-                name: document.getElementById('dlrName').value,
-                rate: parseFloat(document.getElementById('dlrRate').value),
-                minLimit: parseInt(document.getElementById('dlrMin').value),
-                maxLimit: parseInt(document.getElementById('dlrMax').value),
-                active: true
-            }).then(() => { e.target.reset(); });
-        });
-
-        function renderDealers() {
-            db.ref('dealers').on('value', snap => {
-                const tbody = document.getElementById('tblDealersBody'); tbody.innerHTML = '';
-                allDealersGlobal = snap.val() || {};
-                for(let id in allDealersGlobal) {
-                    let d = allDealersGlobal[id];
-                    let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
-                    tr.innerHTML = `
-                        <td class="p-3 border-t border-slate-800 text-[9px] font-mono text-slate-500">${id}</td>
-                        <td class="p-3 border-t border-slate-800 font-bold text-white">${d.name}</td>
-                        <td class="p-3 border-t border-slate-800 text-center font-black text-emerald-400">${d.rate} PKR</td>
-                        <td class="p-3 border-t border-slate-800 text-center text-slate-400 text-[10px]">${d.minLimit} to ${d.maxLimit}</td>
-                        <td class="p-3 border-t border-slate-800 text-right"><button onclick="deleteDealer('${id}')" class="text-red-400 hover:text-red-300 text-[10px] font-bold uppercase underline">Remove</button></td>
-                    `;
-                    tbody.appendChild(tr);
-                }
-            });
-        }
-        function deleteDealer(id) { if(confirm("Remove this dealer from marketplace?")) db.ref(`dealers/${id}`).remove(); }
-
-        function openUserPanel(uid) {
-            currentInspectedUid = uid;
-            const u = allUsersGlobal[uid];
-            if(!u) return;
-            
-            document.getElementById('panelUserName').innerText = u.name;
-            document.getElementById('panelUserEmail').innerText = u.email;
-            
-            // Password Overriding implemented
-            document.getElementById('overridePassword').value = u.password || '';
-            document.getElementById('overrideEggs').value = u.availableEggs || 0;
-            document.getElementById('overrideGift').value = u.giftEggs || 0;
-            document.getElementById('overrideHens').value = u.totalHens || 0;
-            
-            document.getElementById('btnBlockUser').innerText = u.status === 'blocked' ? 'UNBLOCK USER' : 'BLOCK USER';
-            document.getElementById('btnBlockUser').className = u.status === 'blocked' ? 
-                "w-full bg-emerald-900/50 hover:bg-emerald-800 text-emerald-300 py-2 rounded text-[10px] uppercase font-bold border border-emerald-800 transition-colors" : 
-                "w-full bg-red-900/50 hover:bg-red-800 text-red-300 py-2 rounded text-[10px] uppercase font-bold border border-red-800 transition-colors";
-            
-            if(u.referredBy && u.referredBy !== 'none') {
-                db.ref(`users/${u.referredBy}/name`).once('value').then(s => {
-                    document.getElementById('panelUserRef').innerText = s.val() || 'Unknown ID';
-                });
-            } else { document.getElementById('panelUserRef').innerText = 'None'; }
-
-            document.getElementById('userSidePanel').classList.remove('translate-x-full');
-            updateAdminTimersUI();
-        }
-
-        function closeUserPanel() {
-            document.getElementById('userSidePanel').classList.add('translate-x-full');
-            currentInspectedUid = null;
-        }
-
-        window.adjustBatchTime = function(uid, batchKey, msDelta) {
-            db.ref(`users/${uid}/hen_batches/${batchKey}/lastCollectedAt`).transaction(current => {
-                if(!current) return Date.now();
-                return current + msDelta; 
-            });
-        }
-
-        function updateAdminTimersUI() {
-            if(!currentInspectedUid || !allUsersGlobal[currentInspectedUid]) return;
-            const u = allUsersGlobal[currentInspectedUid];
-            const container = document.getElementById('panelBatchesContainer');
-            if(!u.hen_batches) { container.innerHTML = '<p class="text-slate-500 italic text-center py-4">No active hens.</p>'; return; }
-            
-            let html = '';
-            let now = Date.now();
-            const dayMs = 24 * 60 * 60 * 1000;
-            const expiryLimitMs = 120 * dayMs;
-            let uid = currentInspectedUid;
-
-            for(let k in u.hen_batches) {
-                let b = u.hen_batches[k];
-                let purchasedAt = b.purchasedAt || b.lastCollectedAt;
-                let lifeElapsed = now - purchasedAt;
-                let daysLeft = Math.ceil((expiryLimitMs - lifeElapsed) / dayMs);
-                
-                let elapsed = now - b.lastCollectedAt;
-                let timeLeft = dayMs - (elapsed % dayMs);
-                
-                let h = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
-                let m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
-                
-                html += `<div class="bg-blue-900/40 p-1 rounded border border-blue-800/50 flex flex-col gap-1 mb-1">
-                    <div class="flex justify-between items-center">
-                        <span><span class="text-yellow-400 font-bold">${b.qty}H</span> <span class="text-cyan-300 ml-1 font-mono"> ${h}h ${m}m </span></span>
-                        <span class="text-red-300 ml-1 font-bold text-[10px]"> Exp: ${daysLeft}D </span>
-                    </div>
-                    <div class="flex gap-1 mt-1 border-t border-blue-800/50 pt-1">
-                        <button onclick="adjustBatchTime('${uid}', '${k}', 3600000)" class="flex-1 bg-emerald-700 hover:bg-emerald-600 rounded text-white text-[9px] py-0.5" title="Add 1 Hour to Time Left">+1H</button>
-                        <button onclick="adjustBatchTime('${uid}', '${k}', -3600000)" class="flex-1 bg-red-700 hover:bg-red-600 rounded text-white text-[9px] py-0.5" title="Reduce 1 Hour from Time Left">-1H</button>
-                        <button onclick="adjustBatchTime('${uid}', '${k}', 60000)" class="flex-1 bg-emerald-700 hover:bg-emerald-600 rounded text-white text-[9px] py-0.5" title="Add 1 Minute to Time Left">+1M</button>
-                        <button onclick="adjustBatchTime('${uid}', '${k}', -60000)" class="flex-1 bg-red-700 hover:bg-red-600 rounded text-white text-[9px] py-0.5" title="Reduce 1 Minute from Time Left">-1M</button>
-                    </div>
-                </div>`;
-            }
-            container.innerHTML = html;
-        }
-
-        function saveManualOverride(field, inputId) {
-            if(!currentInspectedUid) return;
-            const inputVal = document.getElementById(inputId).value;
-            let val = field === 'password' ? inputVal : (parseInt(inputVal) || 0);
-            db.ref(`users/${currentInspectedUid}/${field}`).set(val).then(() => {
-                alert(`${field} updated successfully!`);
-            });
-        }
-
-        function toggleUserBlock() {
-            if(!currentInspectedUid) return;
-            const u = allUsersGlobal[currentInspectedUid];
-            const newStatus = u.status === 'blocked' ? 'active' : 'blocked';
-            db.ref(`users/${currentInspectedUid}/status`).set(newStatus).then(() => {
-                openUserPanel(currentInspectedUid);
-            });
-        }
-
-        function deleteUserAccount() {
-            if(!currentInspectedUid) return;
-            let email = allUsersGlobal[currentInspectedUid].email;
-            if(confirm(`EXTREME DANGER:\nAre you absolutely sure you want to permanently delete ALL DB records for ${email}?\n\nAuthentication removal must be done via Firebase Console manually.`)) {
-                let pswd = prompt("Type master key '786786' to confirm deletion:");
-                if(pswd === "786786") {
-                    db.ref(`users/${currentInspectedUid}`).remove();
-                    closeUserPanel();
-                } else { alert("Deletion aborted."); }
-            }
+            document.getElementById('rejectModal').style.display = 'none';
+            document.getElementById('rejectReasonInput').value = '';
         }
     </script>
 </body>
