@@ -145,8 +145,14 @@
                 </div>
 
                 <!-- TAB: PURCHASES -->
-                <div id="tab-purchases" class="tab-content hidden">
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow">
+                <div id="tab-purchases" class="tab-content hidden space-y-4">
+                    
+                    <!-- PENDING PURCHASES (Always Open) -->
+                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center shadow cursor-pointer" onclick="toggleSection('purchasesPending', 'iconPurchasePending')">
+                        <h3 class="text-sm font-bold text-yellow-500 flex items-center gap-2">⏳ Pending Purchase Requests <span class="bg-yellow-500 text-slate-900 text-[10px] px-2 rounded-full" id="lblPendingPurchasesCount">0</span></h3>
+                        <span id="iconPurchasePending" class="text-slate-400 transform transition-transform rotate-180">▼</span>
+                    </div>
+                    <div id="purchasesPending" class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow block">
                         <table class="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
                             <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
                                 <tr>
@@ -161,11 +167,38 @@
                             <tbody id="tblPurchasesBody" class="divide-y divide-slate-800"></tbody>
                         </table>
                     </div>
+
+                    <!-- PURCHASES HISTORY (Minimized by default) -->
+                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center shadow cursor-pointer mt-4" onclick="toggleSection('purchasesHistory', 'iconPurchaseHistory')">
+                        <h3 class="text-sm font-bold text-slate-400">📜 Purchasing History (Approved/Rejected)</h3>
+                        <span id="iconPurchaseHistory" class="text-slate-400 transform transition-transform">▼</span>
+                    </div>
+                    <div id="purchasesHistory" class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow hidden">
+                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
+                            <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
+                                <tr>
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">User Detail</th>
+                                    <th class="p-3">Payment Info</th>
+                                    <th class="p-3 text-center">Req Hens</th>
+                                    <th class="p-3 text-center">Status</th>
+                                    <th class="p-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblPurchasesHistoryBody" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- TAB: WITHDRAWALS -->
-                <div id="tab-withdrawals" class="tab-content hidden">
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow">
+                <div id="tab-withdrawals" class="tab-content hidden space-y-4">
+                    
+                    <!-- PENDING WITHDRAWALS (Always Open) -->
+                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center shadow cursor-pointer" onclick="toggleSection('withdrawalsPending', 'iconWithdrawalPending')">
+                        <h3 class="text-sm font-bold text-emerald-400 flex items-center gap-2">💸 Pending Sale/Payout Requests <span class="bg-emerald-500 text-white text-[10px] px-2 rounded-full" id="lblPendingWithdrawalsCount">0</span></h3>
+                        <span id="iconWithdrawalPending" class="text-slate-400 transform transition-transform rotate-180">▼</span>
+                    </div>
+                    <div id="withdrawalsPending" class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow block">
                         <table class="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
                             <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
                                 <tr>
@@ -178,6 +211,27 @@
                                 </tr>
                             </thead>
                             <tbody id="tblWithdrawalsBody" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- WITHDRAWAL HISTORY (Minimized by default) -->
+                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center shadow cursor-pointer mt-4" onclick="toggleSection('withdrawalsHistory', 'iconWithdrawalHistory')">
+                        <h3 class="text-sm font-bold text-slate-400">📜 Withdrawals History (Approved/Rejected)</h3>
+                        <span id="iconWithdrawalHistory" class="text-slate-400 transform transition-transform">▼</span>
+                    </div>
+                    <div id="withdrawalsHistory" class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow hidden">
+                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
+                            <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
+                                <tr>
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">User / Dealer</th>
+                                    <th class="p-3">Transfer Account</th>
+                                    <th class="p-3 text-center">Amount</th>
+                                    <th class="p-3 text-center">Status</th>
+                                    <th class="p-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblWithdrawalsHistoryBody" class="divide-y divide-slate-800"></tbody>
                         </table>
                     </div>
                 </div>
@@ -300,12 +354,8 @@
 
         let allUsersGlobal = {};
         let currentInspectedUid = null;
-        
-        // MODIFIED: Added global variables to track User ID and Eggs Quantity during rejection
         let rejectType = null;
         let rejectId = null;
-        let rejectUid = null; 
-        let rejectEggsQty = null;
 
         setInterval(() => { document.getElementById('systemClock').innerText = new Date().toLocaleString(); }, 1000);
 
@@ -324,6 +374,20 @@
             document.getElementById(tabId).classList.remove('hidden');
             event.currentTarget.classList.add('active');
             if (window.innerWidth < 768) toggleSidebar();
+        }
+
+        function toggleSection(sectionId, iconId) {
+            const sec = document.getElementById(sectionId);
+            const icon = document.getElementById(iconId);
+            if(sec.classList.contains('hidden')) {
+                sec.classList.remove('hidden');
+                sec.classList.add('block');
+                icon.classList.add('rotate-180');
+            } else {
+                sec.classList.remove('block');
+                sec.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
         }
 
         function logoutAdmin() { location.reload(); }
@@ -400,7 +464,6 @@
                 document.getElementById('badgeUsers').innerText = tUsers - newUsersCount;
                 document.getElementById('badgeNewUsers').innerText = newUsersCount;
                 
-                // Agar User Panel open hai tou live update ho
                 if(currentInspectedUid && allUsersGlobal[currentInspectedUid]) {
                     populateUserPanelData(currentInspectedUid);
                 }
@@ -442,7 +505,6 @@
             document.getElementById('panelUserEmail').innerText = data.email || data.mobile || 'N/A';
             document.getElementById('panelUserRef').innerText = data.referredBy || 'None';
             
-            // Only update inputs if they are not actively being focused/typed in
             if(document.activeElement.id !== 'overridePassword') document.getElementById('overridePassword').value = data.password || '';
             if(document.activeElement.id !== 'overrideEggs') document.getElementById('overrideEggs').value = data.availableEggs || 0;
             if(document.activeElement.id !== 'overrideGift') document.getElementById('overrideGift').value = data.giftEggs || 0;
@@ -495,143 +557,252 @@
         // =======================
         function renderPurchases() {
             db.ref('purchase_requests').on('value', snap => {
-                let pendingCount = 0; 
-                const tbody = document.getElementById('tblPurchasesBody'); 
-                tbody.innerHTML = '';
+                let pendingCount = 0;
+                
+                const pendingBody = document.getElementById('tblPurchasesBody');
+                const historyBody = document.getElementById('tblPurchasesHistoryBody');
+                pendingBody.innerHTML = '';
+                historyBody.innerHTML = '';
                 
                 snap.forEach(child => {
-                    let p = child.val(); let key = child.key;
-                    if(p.status === 'pending') pendingCount++;
+                    let p = child.val(); 
+                    let key = child.key;
                     let userObj = allUsersGlobal[p.uid] || {};
                     let dStr = p.timestamp ? new Date(p.timestamp).toLocaleString() : 'N/A';
-                    let stClr = p.status==='approved'?'text-emerald-400':(p.status==='rejected'?'text-red-400':'text-yellow-400');
+                    let stClr = p.status === 'approved' ? 'text-emerald-400' : (p.status === 'rejected' ? 'text-red-400' : 'text-yellow-400');
                     
-                    // MODIFIED: promptReject me ab p.uid pass kar rahe hain
-                    let actHtml = p.status === 'pending' ? `
-                        <button onclick="approvePurchase('${key}', '${p.uid}', ${p.quantity}, ${p.amount})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold mr-1">Approve</button>
-                        <button onclick="promptReject('purchase', '${key}', '${p.uid}')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold">Reject</button>
-                    ` : `<span class="${stClr} font-bold uppercase text-[10px]">${p.status}</span>`;
+                    let actHtml = '';
+                    if(p.status === 'pending') {
+                        pendingCount++;
+                        actHtml = `<button onclick="approvePurchase('${key}', '${p.uid}', ${p.quantity}, ${p.amount})" class="bg-green-600 hover:bg-green-500 text-white px-2 py-1 rounded text-[10px] font-bold mr-1">Approve</button>
+                                   <button onclick="openRejectModal('purchase', '${key}')" class="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold">Reject</button>`;
+                    } else {
+                        actHtml = `<span class="text-[9px] uppercase font-bold ${stClr}">${p.status}</span>`;
+                    }
 
-                    let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
+                    let tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-800/50 transition-colors";
                     tr.innerHTML = `
-                        <td class="p-3 border-t border-slate-800 text-[9px] text-slate-400 whitespace-nowrap">${dStr}</td>
-                        <td class="p-3 border-t border-slate-800"><span class="block text-blue-300 font-bold">${userObj.name||'Unknown'}</span><span class="block text-[9px] font-mono text-slate-500">${userObj.email||'N/A'}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-[10px]"><span class="text-white block font-bold">${p.amount} PKR</span><span class="text-slate-400">Trx: ${p.transactionId}</span><br><span class="text-slate-500 text-[9px]">Sender: ${p.accountHolderName}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-[10px] text-slate-400">${dStr}</td>
+                        <td class="p-3 border-t border-slate-800">
+                            <span class="font-bold text-blue-300 block">${userObj.name || 'User'}</span>
+                            <span class="text-[9px] text-slate-500 font-mono">${p.uid ? p.uid.substring(0,8) : ''}...</span>
+                        </td>
+                        <td class="p-3 border-t border-slate-800 text-[10px]">
+                            <span class="block text-slate-300">${p.accountHolderName || 'N/A'}</span>
+                            <span class="block font-mono text-cyan-400">Trx: ${p.transactionId || 'N/A'}</span>
+                        </td>
                         <td class="p-3 border-t border-slate-800 text-center font-bold text-yellow-400">${p.quantity} Hens</td>
-                        <td class="p-3 border-t border-slate-800 text-center"><span class="${stClr} uppercase text-[9px] font-black tracking-wider bg-slate-950 px-2 py-1 rounded border border-slate-700">${p.status}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-right whitespace-nowrap">${actHtml}</td>
+                        <td class="p-3 border-t border-slate-800 text-center"><span class="${stClr} text-[10px] uppercase font-black">${p.status}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-right">${actHtml}</td>
                     `;
-                    tbody.prepend(tr);
+                    
+                    if(p.status === 'pending') {
+                        pendingBody.appendChild(tr);
+                    } else {
+                        historyBody.prepend(tr); // Put newest history on top
+                    }
                 });
+
                 document.getElementById('badgePurchases').innerText = pendingCount;
+                document.getElementById('lblPendingPurchasesCount').innerText = pendingCount;
             });
         }
 
         function approvePurchase(reqId, uid, qty, amount) {
-            if(!confirm(`Approve purchase of ${qty} hens?`)) return;
-            let currentHens = (allUsersGlobal[uid] && allUsersGlobal[uid].totalHens) ? Number(allUsersGlobal[uid].totalHens) : 0;
-            let currentExpense = (allUsersGlobal[uid] && allUsersGlobal[uid].totalExpense) ? Number(allUsersGlobal[uid].totalExpense) : 0;
-            
-            let updates = {};
-            updates['purchase_requests/' + reqId + '/status'] = 'approved';
-            updates['users/' + uid + '/totalHens'] = currentHens + Number(qty);
-            updates['users/' + uid + '/totalExpense'] = currentExpense + Number(amount);
-            
-            db.ref().update(updates);
+            if(confirm("Approve this purchase request?")) {
+                let userRef = db.ref('users/' + uid);
+                userRef.once('value').then(snap => {
+                    let user = snap.val();
+                    let newHens = (Number(user.totalHens) || 0) + qty;
+                    let newExp = (Number(user.totalExpense) || 0) + amount;
+                    
+                    let batchKey = userRef.child('hen_batches').push().key;
+                    
+                    let updates = {
+                        totalHens: newHens,
+                        totalExpense: newExp,
+                        [`hen_batches/${batchKey}`]: {
+                            qty: qty,
+                            boughtAt: firebase.database.ServerValue.TIMESTAMP,
+                            lastCollectedAt: firebase.database.ServerValue.TIMESTAMP
+                        }
+                    };
+                    
+                    return userRef.update(updates);
+                }).then(() => {
+                    return db.ref('purchase_requests/' + reqId).update({ status: 'approved' });
+                }).catch(e => alert(e.message));
+            }
         }
 
         // =======================
-        // WITHDRAWALS
+        // WITHDRAWALS / EGG SALES
         // =======================
         function renderWithdrawals() {
             db.ref('withdraw_requests').on('value', snap => {
-                let pendingCount = 0; 
-                let totalPayout = 0;
-                const tbody = document.getElementById('tblWithdrawalsBody'); 
-                tbody.innerHTML = '';
+                let pendingCount = 0;
+                let totalPayouts = 0;
+                
+                const pendingBody = document.getElementById('tblWithdrawalsBody');
+                const historyBody = document.getElementById('tblWithdrawalsHistoryBody');
+                pendingBody.innerHTML = '';
+                historyBody.innerHTML = '';
 
                 snap.forEach(child => {
-                    let w = child.val(); let key = child.key;
-                    if(w.status === 'pending') pendingCount++;
-                    
-                    let payoutAmount = Number(w.amount || w.totalPayout || 0);
-                    if(w.status === 'approved') totalPayout += payoutAmount;
-
+                    let w = child.val(); 
+                    let key = child.key;
                     let userObj = allUsersGlobal[w.uid] || {};
                     let dStr = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
-                    let stClr = w.status==='approved'?'text-emerald-400':(w.status==='rejected'?'text-red-400':'text-yellow-400');
                     
-                    let accTitle = w.accountTitle || w.accountHolderName || 'N/A';
-                    let accNum = w.accountNumber || 'N/A';
-                    let bank = w.bankName || w.accountType || 'N/A';
-                    let eggsCount = w.eggsSold || w.eggsDeductedCount || 0;
+                    if(w.status === 'approved') {
+                        totalPayouts += (Number(w.amount || w.totalPayout) || 0);
+                    }
 
-                    // MODIFIED: promptReject me w.uid aur eggsCount pass kiye gaye hain taake refund handle ho sakay
-                    let actHtml = w.status === 'pending' ? `
-                        <button onclick="approveWithdrawal('${key}', '${w.uid}', ${payoutAmount})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold mr-1">Paid</button>
-                        <button onclick="promptReject('withdraw', '${key}', '${w.uid}', ${eggsCount})" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold">Reject</button>
-                    ` : `<span class="${stClr} font-bold uppercase text-[10px]">${w.status}</span>`;
+                    let stClr = w.status === 'approved' ? 'text-emerald-400' : (w.status === 'rejected' ? 'text-red-400' : 'text-yellow-400');
+                    
+                    let actHtml = '';
+                    if(w.status === 'pending') {
+                        pendingCount++;
+                        let wdAmount = w.amount || w.totalPayout || 0;
+                        actHtml = `<button onclick="approveWithdrawal('${key}', '${w.uid}', ${wdAmount})" class="bg-green-600 hover:bg-green-500 text-white px-2 py-1 rounded text-[10px] font-bold mr-1">Approve</button>
+                                   <button onclick="openRejectModal('withdrawal', '${key}')" class="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold">Reject</button>`;
+                    } else {
+                        actHtml = `<span class="text-[9px] uppercase font-bold ${stClr}">${w.status}</span>`;
+                    }
 
-                    let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
+                    let eggCountStr = w.eggsSold || w.eggsDeductedCount || 0;
+                    let amtStr = w.amount || w.totalPayout || 0;
+
+                    let tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-800/50 transition-colors";
                     tr.innerHTML = `
-                        <td class="p-3 border-t border-slate-800 text-[9px] text-slate-400 whitespace-nowrap">${dStr}</td>
-                        <td class="p-3 border-t border-slate-800"><span class="block text-blue-300 font-bold">${userObj.name||'Unknown'}</span><span class="block text-[9px] text-yellow-400">Dealer: ${w.dealerName||'N/A'}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-[10px]"><span class="text-white block font-bold">${accTitle}</span><span class="text-slate-400">${accNum}</span><br><span class="text-slate-500 text-[9px]">${bank}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-center font-bold text-emerald-400">${payoutAmount} PKR<br><span class="text-[9px] text-slate-500">${eggsCount} Eggs</span></td>
-                        <td class="p-3 border-t border-slate-800 text-center"><span class="${stClr} uppercase text-[9px] font-black tracking-wider bg-slate-950 px-2 py-1 rounded border border-slate-700">${w.status}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-right whitespace-nowrap">${actHtml}</td>
+                        <td class="p-3 border-t border-slate-800 text-[10px] text-slate-400">${dStr}</td>
+                        <td class="p-3 border-t border-slate-800">
+                            <span class="font-bold text-blue-300 block">${userObj.name || 'User'}</span>
+                            <span class="text-[9px] text-slate-500 font-mono">${eggCountStr} Eggs to ${w.dealerName || 'Dealer'}</span>
+                        </td>
+                        <td class="p-3 border-t border-slate-800 text-[10px]">
+                            <span class="block text-slate-300">${w.accountTitle || w.accountHolderName || 'N/A'} (${w.bankName || w.accountType || 'N/A'})</span>
+                            <span class="block font-mono text-cyan-400">${w.accountNumber || 'N/A'}</span>
+                        </td>
+                        <td class="p-3 border-t border-slate-800 text-center font-bold text-emerald-400">${amtStr} PKR</td>
+                        <td class="p-3 border-t border-slate-800 text-center"><span class="${stClr} text-[10px] uppercase font-black">${w.status}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-right">${actHtml}</td>
                     `;
-                    tbody.prepend(tr);
+                    
+                    if(w.status === 'pending') {
+                        pendingBody.appendChild(tr);
+                    } else {
+                        historyBody.prepend(tr); // Put newest history on top
+                    }
                 });
+
                 document.getElementById('badgeWithdrawals').innerText = pendingCount;
-                document.getElementById('dashTotalPayouts').innerText = totalPayout.toLocaleString();
+                document.getElementById('lblPendingWithdrawalsCount').innerText = pendingCount;
+                document.getElementById('dashTotalPayouts').innerText = totalPayouts;
             });
         }
 
         function approveWithdrawal(reqId, uid, amount) {
-            if(!confirm(`Mark this withdrawal as PAID?`)) return;
-            
-            let updates = {};
-            updates['withdraw_requests/' + reqId + '/status'] = 'approved';
-            
-            if(uid && allUsersGlobal[uid]) {
-                let currentWd = Number(allUsersGlobal[uid].totalWithdrawal) || 0;
-                updates['users/' + uid + '/totalWithdrawal'] = currentWd + Number(amount || 0);
+            if(confirm("Mark this withdrawal as paid?")) {
+                db.ref('users/' + uid).once('value').then(snap => {
+                    let user = snap.val();
+                    let newWithdrawal = (Number(user.totalWithdrawal) || 0) + amount;
+                    return db.ref('users/' + uid).update({ totalWithdrawal: newWithdrawal });
+                }).then(() => {
+                    return db.ref('withdraw_requests/' + reqId).update({ status: 'approved' });
+                }).catch(e => alert(e.message));
             }
-            
-            db.ref().update(updates);
         }
 
         // =======================
-        // DEALERS
+        // REJECTION MODAL LOGIC (With Automatic Refund)
+        // =======================
+        function openRejectModal(type, id) {
+            rejectType = type;
+            rejectId = id;
+            document.getElementById('rejectReasonInput').value = '';
+            document.getElementById('rejectModal').classList.remove('hidden');
+            document.getElementById('rejectModal').classList.add('flex');
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').classList.remove('flex');
+            document.getElementById('rejectModal').classList.add('hidden');
+            rejectType = null;
+            rejectId = null;
+        }
+
+        function confirmRejection() {
+            let reason = document.getElementById('rejectReasonInput').value || "Rejected by Admin";
+            
+            if(rejectType === 'purchase') {
+                db.ref('purchase_requests/' + rejectId).update({ status: 'rejected', reason: reason })
+                .then(() => closeRejectModal());
+            } 
+            else if(rejectType === 'withdrawal') {
+                // Pehlay pending request check karo aur user ke eggs refund karo
+                db.ref('withdraw_requests/' + rejectId).once('value').then(snap => {
+                    let reqData = snap.val();
+                    if(reqData && reqData.status === 'pending') {
+                        let refundAmount = parseInt(reqData.eggsSold) || parseInt(reqData.eggsDeductedCount) || 0;
+                        let userId = reqData.uid;
+
+                        // 1. Request status rejected karo
+                        db.ref('withdraw_requests/' + rejectId).update({ 
+                            status: 'rejected', 
+                            reason: reason 
+                        }).then(() => {
+                            // 2. User ke balance mein eggs refund karo
+                            db.ref('users/' + userId + '/availableEggs').once('value').then(uSnap => {
+                                let currentBal = parseInt(uSnap.val()) || 0;
+                                db.ref('users/' + userId).update({ availableEggs: currentBal + refundAmount });
+                            });
+                        });
+                    }
+                }).then(() => {
+                    closeRejectModal();
+                });
+            }
+        }
+
+        // =======================
+        // DEALERS MARKET
         // =======================
         document.getElementById('dealerForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            const dName = document.getElementById('dlrName').value;
+            const dRate = parseFloat(document.getElementById('dlrRate').value);
+            const dMin = parseInt(document.getElementById('dlrMin').value);
+            const dMax = parseInt(document.getElementById('dlrMax').value);
+
             db.ref('dealers').push({
-                name: document.getElementById('dlrName').value,
-                rate: Number(document.getElementById('dlrRate').value),
-                minLimit: Number(document.getElementById('dlrMin').value),
-                maxLimit: Number(document.getElementById('dlrMax').value)
+                name: dName,
+                rate: dRate,
+                minLimit: dMin,
+                maxLimit: dMax
             }).then(() => {
-                alert('Dealer added!');
+                alert("Dealer Added!");
                 this.reset();
-            });
+            }).catch(err => alert(err.message));
         });
 
         function renderDealers() {
             db.ref('dealers').on('value', snap => {
-                const tbody = document.getElementById('tblDealersBody'); 
+                const tbody = document.getElementById('tblDealersBody');
                 tbody.innerHTML = '';
                 snap.forEach(child => {
                     let d = child.val(); let key = child.key;
-                    let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
+                    let tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-800/50 transition-colors";
                     tr.innerHTML = `
-                        <td class="p-3 border-t border-slate-800 text-[9px] font-mono text-slate-500">${key.substring(0,6)}</td>
-                        <td class="p-3 border-t border-slate-800 font-bold text-blue-300">${d.name}</td>
+                        <td class="p-3 border-t border-slate-800 text-[10px] text-slate-500 font-mono">${key.substring(0,6)}...</td>
+                        <td class="p-3 border-t border-slate-800 font-bold text-white">${d.name}</td>
                         <td class="p-3 border-t border-slate-800 text-center font-bold text-yellow-400">${d.rate} PKR</td>
-                        <td class="p-3 border-t border-slate-800 text-center text-[10px] text-slate-400">${d.minLimit} - ${d.maxLimit}</td>
+                        <td class="p-3 border-t border-slate-800 text-center text-slate-300 text-[10px]">${d.minLimit} - ${d.maxLimit}</td>
                         <td class="p-3 border-t border-slate-800 text-right">
-                            <button onclick="deleteDealer('${key}')" class="text-red-500 hover:text-red-400 font-bold text-[10px] uppercase">Remove</button>
+                            <button onclick="deleteDealer('${key}')" class="bg-red-900/50 hover:bg-red-600 text-red-300 hover:text-white px-2 py-1 rounded text-[10px] font-bold border border-red-700/50 transition-colors">Delete</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -640,55 +811,9 @@
         }
 
         function deleteDealer(id) {
-            if(confirm("Remove this dealer?")) db.ref('dealers/' + id).remove();
-        }
-
-        // =======================
-        // REJECTION MODAL LOGIC (UPDATED WITH REFUND LOGIC)
-        // =======================
-        
-        // MODIFIED: uid aur eggsQty ko handle karne ke liye parameters update kiye
-        function promptReject(type, reqId, uid = null, eggsQty = 0) {
-            rejectType = type;
-            rejectId = reqId;
-            rejectUid = uid;
-            rejectEggsQty = eggsQty;
-            document.getElementById('rejectModal').style.display = 'flex';
-        }
-
-        function closeRejectModal() {
-            document.getElementById('rejectModal').style.display = 'none';
-            document.getElementById('rejectReasonInput').value = '';
-            rejectType = null;
-            rejectId = null;
-            rejectUid = null;
-            rejectEggsQty = null;
-        }
-
-        function confirmRejection() {
-            let reason = document.getElementById('rejectReasonInput').value;
-            if(!reason) { alert("Please enter a reason"); return; }
-            
-            let path = rejectType === 'purchase' ? 'purchase_requests/' : 'withdraw_requests/';
-            
-            let updates = {};
-            updates[path + rejectId + '/status'] = 'rejected';
-            updates[path + rejectId + '/rejectReason'] = reason;
-            
-            // MAIN FIX: Jab withdraw reject ho, tab users ko unkay eggs wapas balance main mil jayenge
-            if (rejectType === 'withdraw' && rejectUid && rejectEggsQty > 0) {
-                let currentEggs = 0;
-                if(allUsersGlobal[rejectUid] && allUsersGlobal[rejectUid].availableEggs !== undefined) {
-                    currentEggs = Number(allUsersGlobal[rejectUid].availableEggs);
-                }
-                updates['users/' + rejectUid + '/availableEggs'] = currentEggs + Number(rejectEggsQty);
+            if(confirm("Remove this dealer?")) {
+                db.ref('dealers/' + id).remove();
             }
-            
-            db.ref().update(updates).then(() => {
-                closeRejectModal();
-            }).catch((e) => {
-                alert("Error rejecting request: " + e.message);
-            });
         }
     </script>
 </body>
