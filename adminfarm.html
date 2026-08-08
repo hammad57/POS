@@ -1,819 +1,955 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <!-- Screen zoom aur drag ko rokne ke liye viewport settings -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GL Poultry Admin Command Suite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Land Poultry Farm - Admin Panel</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <style>
-        body { 
-            background: #020617; 
-            color: #f8fafc; 
-            font-family: system-ui, -apple-system, sans-serif; 
-            overscroll-behavior-y: none; 
-            -webkit-tap-highlight-color: transparent; 
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            800: '#166534',
+                            900: '#14532d',
+                            950: '#052e16',
+                        }
+                    }
+                }
+            }
         }
-        .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
-        .tab-btn.active { border-bottom: 2px solid #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
+    </script>
+    <!-- Firebase SDKs (Compat v8) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
     </style>
 </head>
-<body class="fixed inset-0 text-xs overflow-hidden bg-slate-950 w-full h-full">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col md:flex-row custom-scroll">
 
-    <div id="adminPanel" class="flex w-full h-full relative overflow-hidden">
-        
-        <!-- SIDEBAR OVERLAY -->
-        <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
+    <!-- MOBILE TOP BAR -->
+    <div class="md:hidden bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center sticky top-0 z-40">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl">🐔</span>
+            <span class="font-bold text-yellow-400 text-base">Green Land Admin</span>
+        </div>
+        <button onclick="toggleMobileMenu()" class="text-slate-300 p-2 rounded-lg bg-slate-800 hover:bg-slate-700">
+            ☰
+        </button>
+    </div>
 
-        <!-- SIDEBAR -->
-        <div id="mainSidebar" class="absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-[75vw] sm:w-64 md:w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-40 shadow-2xl transition-transform duration-300 h-full">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center text-left">
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out flex flex-col justify-between shrink-0">
+        <div>
+            <!-- BRAND HEADER -->
+            <div class="p-5 border-b border-slate-800 hidden md:flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-950 border border-emerald-700 flex items-center justify-center text-xl shadow">
+                    🐔
+                </div>
                 <div>
-                    <h2 class="text-blue-400 font-black text-lg tracking-wider">GL COMMAND</h2>
-                    <p class="text-[10px] text-slate-400 uppercase mt-1">Super Admin Panel</p>
+                    <h1 class="font-bold text-yellow-400 text-sm tracking-wide">GREEN LAND</h1>
+                    <p class="text-[10px] text-emerald-400 font-semibold tracking-wider uppercase">Poultry Admin Panel</p>
                 </div>
-                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white text-3xl font-bold p-2">&times;</button>
+            </div>
+
+            <!-- MENU ITEMS -->
+            <nav class="p-3 space-y-1">
+                <button onclick="switchTab('tab-dashboard')" id="btn-tab-dashboard" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-emerald-400 bg-slate-800/80 font-bold uppercase text-[11px] tracking-wide flex items-center space-x-2 border-l-4 border-emerald-500">
+                    <span>📊</span> <span>Dashboard</span>
+                </button>
+                <button onclick="switchTab('tab-users')" id="btn-tab-users" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex items-center space-x-2">
+                    <span>👥</span> <span>User Management</span>
+                </button>
+                <button onclick="switchTab('tab-batches')" id="btn-tab-batches" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex items-center space-x-2">
+                    <span>⏳</span> <span>Hen Batches (120 Days)</span>
+                </button>
+                <button onclick="switchTab('tab-rates')" id="btn-tab-rates" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex items-center space-x-2">
+                    <span>🥚</span> <span>Egg Rates</span>
+                </button>
+                <button onclick="switchTab('tab-dealers')" id="btn-tab-dealers" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex items-center space-x-2">
+                    <span>🏪</span> <span>Dealers Market</span>
+                </button>
+                <button onclick="switchTab('tab-transactions')" id="btn-tab-transactions" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex items-center space-x-2">
+                    <span>💳</span> <span>Transactions</span>
+                </button>
+                <button onclick="switchTab('tab-announcements')" id="btn-tab-announcements" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex items-center space-x-2">
+                    <span>📢</span> <span>Announcements</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- FOOTER & LOGOUT -->
+        <div class="p-3 border-t border-slate-800">
+            <div class="px-3 py-2 bg-slate-950 rounded-lg border border-slate-800 mb-2">
+                <p class="text-[10px] text-slate-400">Logged in as:</p>
+                <p id="adminEmailDisplay" class="text-xs font-mono text-emerald-400 truncate">admin@greenland.com</p>
+            </div>
+            <button onclick="adminLogout()" class="w-full bg-red-900/40 hover:bg-red-800 text-red-300 border border-red-700/60 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors">
+                🚪 Sign Out
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 p-4 md:p-6 overflow-y-auto max-w-7xl mx-auto w-full custom-scroll">
+
+        <!-- TOP BAR / HEADER -->
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 mb-6 border-b border-slate-800 gap-3">
+            <div>
+                <h2 id="currentTabTitle" class="text-xl font-bold text-yellow-400 tracking-wide">Admin Overview</h2>
+                <p class="text-xs text-slate-400">Real-time control panel for Green Land Poultry Farm system</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="px-3 py-1 bg-emerald-950 border border-emerald-700 text-emerald-400 text-xs rounded-full font-mono flex items-center space-x-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>SYSTEM LIVE</span>
+                </span>
+            </div>
+        </header>
+
+        <!-- ==================== TAB 1: DASHBOARD OVERVIEW ==================== -->
+        <section id="tab-dashboard" class="tab-content space-y-6">
+            <!-- METRIC CARDS -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
+                    <div class="flex justify-between items-center text-slate-400 text-xs font-semibold uppercase">
+                        <span>Total Users</span>
+                        <span class="text-xl">👥</span>
+                    </div>
+                    <div id="statTotalUsers" class="text-2xl font-bold text-white mt-2 font-mono">0</div>
+                    <p class="text-[10px] text-emerald-400 mt-1">Registered Accounts</p>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
+                    <div class="flex justify-between items-center text-slate-400 text-xs font-semibold uppercase">
+                        <span>Active Hens</span>
+                        <span class="text-xl">🐔</span>
+                    </div>
+                    <div id="statTotalHens" class="text-2xl font-bold text-yellow-400 mt-2 font-mono">0</div>
+                    <p class="text-[10px] text-slate-400 mt-1">Active in Farm Batches</p>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
+                    <div class="flex justify-between items-center text-slate-400 text-xs font-semibold uppercase">
+                        <span>Pending Withdrawals</span>
+                        <span class="text-xl">⏳</span>
+                    </div>
+                    <div id="statPendingWithdrawals" class="text-2xl font-bold text-amber-400 mt-2 font-mono">0</div>
+                    <p class="text-[10px] text-amber-300 mt-1">Requires Admin Action</p>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
+                    <div class="flex justify-between items-center text-slate-400 text-xs font-semibold uppercase">
+                        <span>Active Announcements</span>
+                        <span class="text-xl">📢</span>
+                    </div>
+                    <div id="statAnnouncementsCount" class="text-2xl font-bold text-blue-400 mt-2 font-mono">0</div>
+                    <p class="text-[10px] text-blue-300 mt-1">Live for User Dashboard</p>
+                </div>
+            </div>
+
+            <!-- QUICK ANNOUNCEMENT & SYSTEM SUMMARY -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Recent Announcements Box -->
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow-lg">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+                        <h3 class="font-bold text-yellow-400 text-sm flex items-center space-x-2">
+                            <span>📢</span> <span>Latest Farm Announcements</span>
+                        </h3>
+                        <button onclick="switchTab('tab-announcements')" class="text-xs text-blue-400 hover:text-blue-300 underline font-semibold">Manage All</button>
+                    </div>
+                    <div id="dashboardAnnouncementsPreview" class="space-y-3">
+                        <p class="text-xs text-slate-500 italic">Loading announcements...</p>
+                    </div>
+                </div>
+
+                <!-- Hen Expiry Overview Box -->
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow-lg">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+                        <h3 class="font-bold text-yellow-400 text-sm flex items-center space-x-2">
+                            <span>⏳</span> <span>Hen Batches Lifespan Summary</span>
+                        </h3>
+                        <button onclick="switchTab('tab-batches')" class="text-xs text-emerald-400 hover:text-emerald-300 underline font-semibold">View Batches</button>
+                    </div>
+                    <div id="dashboardBatchesSummary" class="space-y-3">
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Every hen batch remains active for exactly <strong class="text-yellow-400">120 Days</strong> from purchase. After 120 days, batches are automatically deleted and hen count is adjusted.
+                        </p>
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-xs flex justify-between items-center">
+                            <span class="text-slate-300">Auto-Expiry Clean Utility:</span>
+                            <button onclick="runGlobalBatchCleanup()" class="bg-red-900/50 hover:bg-red-800 text-red-300 border border-red-700 px-3 py-1 rounded text-[11px] font-bold">
+                                Clean Expired Batches
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: USER MANAGEMENT ==================== -->
+        <section id="tab-users" class="tab-content hidden space-y-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow flex flex-col sm:flex-row justify-between gap-3 items-center">
+                <h3 class="font-bold text-yellow-400 text-sm">Registered Users List</h3>
+                <input type="text" id="userSearchInput" onkeyup="filterUsersTable()" placeholder="Search by name, email, phone..." class="w-full sm:w-64 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll shadow">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="p-3">User Details</th>
+                            <th class="p-3">Balance (PKR)</th>
+                            <th class="p-3">Total Hens</th>
+                            <th class="p-3">Referrals</th>
+                            <th class="p-3">Status</th>
+                            <th class="p-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody" class="divide-y divide-slate-800/60 font-mono">
+                        <tr>
+                            <td colspan="6" class="p-4 text-center text-slate-500 italic">Loading users data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: HEN BATCHES (120 DAYS) ==================== -->
+        <section id="tab-batches" class="tab-content hidden space-y-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-yellow-400 text-sm">Active Hen Batches & 120-Day Timer Monitoring</h3>
+                    <p class="text-[11px] text-slate-400 mt-0.5">All active hen batches owned by farm users with remaining days calculation</p>
+                </div>
+                <button onclick="refreshBatchesTable()" class="bg-emerald-900/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700 px-3 py-1.5 rounded text-xs font-bold">
+                    🔄 Refresh
+                </button>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll shadow">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="p-3">User / UID</th>
+                            <th class="p-3">Batch Quantity</th>
+                            <th class="p-3">Purchased At</th>
+                            <th class="p-3">Lifespan Status</th>
+                            <th class="p-3">Days Remaining</th>
+                            <th class="p-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="batchesTableBody" class="divide-y divide-slate-800/60 font-mono">
+                        <tr>
+                            <td colspan="6" class="p-4 text-center text-slate-500 italic">Loading hen batches...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 4: EGG RATES ==================== -->
+        <section id="tab-rates" class="tab-content hidden space-y-4">
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow max-w-xl">
+                <h3 class="font-bold text-yellow-400 text-sm border-b border-slate-800 pb-2 mb-4">Set System Egg & Hen Rates</h3>
+                <form id="ratesForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Egg Selling Price (PKR per Egg)</label>
+                        <input type="number" step="0.01" id="rateEggPrice" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-yellow-400 font-mono focus:outline-none focus:border-yellow-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Hen Purchase Cost (PKR per Hen)</label>
+                        <input type="number" step="0.01" id="rateHenPrice" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-emerald-400 font-mono focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Daily Egg Production Rate (Eggs per Hen / Day)</label>
+                        <input type="number" step="0.1" id="rateEggPerHen" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white font-mono focus:outline-none focus:border-blue-500">
+                    </div>
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg uppercase tracking-wider text-xs shadow transition-colors">
+                        Save Rates Configuration
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 5: DEALERS MARKET ==================== -->
+        <section id="tab-dealers" class="tab-content hidden space-y-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+                <h3 class="text-sm font-bold text-yellow-400 mb-3 border-b border-slate-700 pb-2">Create / Edit Dealer Offer</h3>
+                <form id="dealerForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <input type="hidden" id="dealerEditId">
+                    <div>
+                        <label class="block text-slate-400 text-[10px] uppercase mb-1">Dealer Name</label>
+                        <input type="text" id="dealerName" required placeholder="e.g. Lahore Farm Dealer" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-[10px] uppercase mb-1">Hen Batch Quantity</label>
+                        <input type="number" id="dealerQty" required placeholder="e.g. 50" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-[10px] uppercase mb-1">Price per Hen (PKR)</label>
+                        <input type="number" id="dealerPrice" required placeholder="e.g. 450" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-[10px] uppercase mb-1">Discount (%)</label>
+                        <input type="number" id="dealerDiscount" value="0" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white outline-none">
+                    </div>
+                    <div class="sm:col-span-2 lg:col-span-4 flex space-x-2 pt-2">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded font-bold uppercase tracking-wider text-[11px] shadow">Save Dealer Offer</button>
+                        <button type="button" onclick="resetDealerForm()" class="bg-slate-700 hover:bg-slate-600 text-white px-6 py-2 rounded font-bold uppercase tracking-wider text-[11px] shadow">Clear</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll shadow">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="p-3">Dealer</th>
+                            <th class="p-3">Batch Qty</th>
+                            <th class="p-3">Price / Hen</th>
+                            <th class="p-3">Discount</th>
+                            <th class="p-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dealersTableBody" class="divide-y divide-slate-800/60 font-mono">
+                        <tr>
+                            <td colspan="5" class="p-4 text-center text-slate-500 italic">No dealers loaded.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 6: TRANSACTIONS ==================== -->
+        <section id="tab-transactions" class="tab-content hidden space-y-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow flex justify-between items-center">
+                <h3 class="font-bold text-yellow-400 text-sm">User Deposit & Withdrawal Requests</h3>
+                <span class="text-xs text-slate-400">Real-time Approval System</span>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll shadow">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="p-3">Date</th>
+                            <th class="p-3">User UID</th>
+                            <th class="p-3">Type</th>
+                            <th class="p-3">Amount</th>
+                            <th class="p-3">Account / Proof</th>
+                            <th class="p-3">Status</th>
+                            <th class="p-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTableBody" class="divide-y divide-slate-800/60 font-mono">
+                        <tr>
+                            <td colspan="7" class="p-4 text-center text-slate-500 italic">Loading transactions...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 7: ANNOUNCEMENTS ==================== -->
+        <section id="tab-announcements" class="tab-content hidden space-y-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow w-full">
+                <h3 class="text-sm font-bold text-yellow-400 mb-3 border-b border-slate-700 pb-2">Publish New Announcement</h3>
+                <form id="announcementForm" class="grid grid-cols-1 gap-3">
+                    <input type="hidden" id="annEditId">
+                    <div>
+                        <label class="block text-slate-400 text-[10px] uppercase mb-1">Title / Heading</label>
+                        <input type="text" id="annTitle" required placeholder="e.g., Server Maintenance or Price Update" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-[10px] uppercase mb-1">Announcement Message</label>
+                        <textarea id="annMessage" rows="3" required placeholder="Write your professional message here..." class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none custom-scroll"></textarea>
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded font-bold uppercase tracking-wider text-[11px] shadow">Publish Now</button>
+                        <button type="button" onclick="resetAnnForm()" class="w-full sm:w-auto bg-slate-700 hover:bg-slate-600 text-white px-6 py-2 rounded font-bold uppercase tracking-wider text-[11px] shadow mt-2 sm:mt-0 sm:ml-2">Clear</button>
+                    </div>
+                </form>
             </div>
             
-            <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-2">
-                <button onclick="switchTab('tab-dashboard')" class="tab-btn active w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide">
-                    <span>📊 Dashboard</span>
-                </button>
-                <button onclick="switchTab('tab-users')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
-                    <span>👥 Old Users</span> <span id="badgeUsers" class="bg-blue-600 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
-                </button>
-                <button onclick="switchTab('tab-new-users')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
-                    <span>🌟 New Users</span> <span id="badgeNewUsers" class="bg-cyan-600 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
-                </button>
-                <button onclick="switchTab('tab-purchases')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
-                    <span>🐔 Purchases</span> <span id="badgePurchases" class="bg-yellow-500 text-slate-900 px-2 py-0.5 rounded-full text-[9px]">0</span>
-                </button>
-                <button onclick="switchTab('tab-withdrawals')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
-                    <span>💸 Payouts</span> <span id="badgeWithdrawals" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
-                </button>
-                <button onclick="switchTab('tab-dealers')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide">
-                    <span>🏪 Dealers Market</span>
-                </button>
-            </div>
-            <div class="p-4 border-t border-slate-800">
-                <button onclick="logoutAdmin()" class="w-full bg-red-900/50 hover:bg-red-800 text-red-300 py-3 rounded uppercase font-bold text-[11px] border border-red-800">System Refresh</button>
-            </div>
-        </div>
-
-        <!-- MAIN CONTENT AREA -->
-        <div class="flex-1 flex flex-col w-full bg-slate-950 relative overflow-hidden h-full">
-            <div class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-10 shadow-md shrink-0">
-                <div class="flex items-center">
-                    <button onclick="toggleSidebar()" class="md:hidden text-slate-300 hover:text-white mr-3 text-2xl p-1">☰</button>
-                    <span id="systemClock" class="font-mono text-cyan-400 text-[10px] sm:text-xs">Loading...</span>
-                </div>
-                <span class="bg-emerald-900/50 text-emerald-400 px-2 py-1 rounded text-[9px] border border-emerald-800 uppercase tracking-widest font-bold">Encrypted</span>
-            </div>
-
-            <div class="flex-1 overflow-y-auto overflow-x-hidden w-full custom-scroll p-3 sm:p-5">
-                
-                <!-- TAB: DASHBOARD -->
-                <div id="tab-dashboard" class="tab-content block space-y-4">
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[9px]">Total Users</p>
-                            <h3 id="dashTotalUsers" class="text-2xl sm:text-3xl font-black text-blue-400">0</h3>
-                        </div>
-                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[9px]">Total Hens</p>
-                            <h3 id="dashTotalHens" class="text-2xl sm:text-3xl font-black text-yellow-400">0</h3>
-                        </div>
-                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[9px]">Active Eggs</p>
-                            <h3 id="dashTotalEggs" class="text-2xl sm:text-3xl font-black text-emerald-400">0</h3>
-                        </div>
-                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-                            <p class="text-slate-400 uppercase tracking-widest mb-1 text-[9px]">Withdrawn (PKR)</p>
-                            <h3 id="dashTotalPayouts" class="text-xl sm:text-2xl font-black text-red-400 truncate">0</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB: OLD USERS -->
-                <div id="tab-users" class="tab-content hidden space-y-4">
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-900 p-3 rounded-xl border border-slate-800 shadow">
-                        <h3 class="text-sm font-bold text-slate-200 w-full text-left">Registered Users</h3>
-                        <input type="text" id="searchUser" onkeyup="filterUsers()" placeholder="Search users..." class="bg-slate-950 border border-slate-700 rounded px-3 py-2 w-full sm:w-72 text-white focus:outline-none focus:border-blue-500 text-xs">
-                    </div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow">
-                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[600px]">
-                            <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
-                                <tr>
-                                    <th class="p-3">User Identifier</th>
-                                    <th class="p-3">Contact Detail</th>
-                                    <th class="p-3">Join Date</th>
-                                    <th class="p-3 text-center">Hens</th>
-                                    <th class="p-3 text-center">Eggs</th>
-                                    <th class="p-3 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tblUsersBody" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- TAB: NEW USERS -->
-                <div id="tab-new-users" class="tab-content hidden space-y-4">
-                    <div class="bg-cyan-900/30 border border-cyan-800 p-4 rounded-xl shadow mb-2">
-                        <h3 class="text-sm font-bold text-cyan-300">New Users Onboarding (Last 5 Days)</h3>
-                    </div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow">
-                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[600px]">
-                            <thead class="bg-cyan-950 text-[10px] uppercase text-cyan-400 border-b border-cyan-900">
-                                <tr>
-                                    <th class="p-3">User Identifier</th>
-                                    <th class="p-3">Contact Detail</th>
-                                    <th class="p-3">Join Date</th>
-                                    <th class="p-3 text-center">Hens</th>
-                                    <th class="p-3 text-center">Eggs</th>
-                                    <th class="p-3 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tblNewUsersBody" class="divide-y divide-blue-900/60"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- TAB: PURCHASES -->
-                <div id="tab-purchases" class="tab-content hidden space-y-4">
-                    
-                    <!-- PENDING PURCHASES (Always Open) -->
-                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center shadow cursor-pointer" onclick="toggleSection('purchasesPending', 'iconPurchasePending')">
-                        <h3 class="text-sm font-bold text-yellow-500 flex items-center gap-2">⏳ Pending Purchase Requests <span class="bg-yellow-500 text-slate-900 text-[10px] px-2 rounded-full" id="lblPendingPurchasesCount">0</span></h3>
-                        <span id="iconPurchasePending" class="text-slate-400 transform transition-transform rotate-180">▼</span>
-                    </div>
-                    <div id="purchasesPending" class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow block">
-                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
-                            <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
-                                <tr>
-                                    <th class="p-3">Date</th>
-                                    <th class="p-3">User Detail</th>
-                                    <th class="p-3">Payment Info</th>
-                                    <th class="p-3 text-center">Req Hens</th>
-                                    <th class="p-3 text-center">Status</th>
-                                    <th class="p-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tblPurchasesBody" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
-
-                    <!-- PURCHASES HISTORY (Minimized by default) -->
-                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center shadow cursor-pointer mt-4" onclick="toggleSection('purchasesHistory', 'iconPurchaseHistory')">
-                        <h3 class="text-sm font-bold text-slate-400">📜 Purchasing History (Approved/Rejected)</h3>
-                        <span id="iconPurchaseHistory" class="text-slate-400 transform transition-transform">▼</span>
-                    </div>
-                    <div id="purchasesHistory" class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow hidden">
-                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
-                            <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
-                                <tr>
-                                    <th class="p-3">Date</th>
-                                    <th class="p-3">User Detail</th>
-                                    <th class="p-3">Payment Info</th>
-                                    <th class="p-3 text-center">Req Hens</th>
-                                    <th class="p-3 text-center">Status</th>
-                                    <th class="p-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tblPurchasesHistoryBody" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- TAB: WITHDRAWALS -->
-                <div id="tab-withdrawals" class="tab-content hidden space-y-4">
-                    
-                    <!-- PENDING WITHDRAWALS (Always Open) -->
-                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center shadow cursor-pointer" onclick="toggleSection('withdrawalsPending', 'iconWithdrawalPending')">
-                        <h3 class="text-sm font-bold text-emerald-400 flex items-center gap-2">💸 Pending Sale/Payout Requests <span class="bg-emerald-500 text-white text-[10px] px-2 rounded-full" id="lblPendingWithdrawalsCount">0</span></h3>
-                        <span id="iconWithdrawalPending" class="text-slate-400 transform transition-transform rotate-180">▼</span>
-                    </div>
-                    <div id="withdrawalsPending" class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow block">
-                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
-                            <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
-                                <tr>
-                                    <th class="p-3">Date</th>
-                                    <th class="p-3">User / Dealer</th>
-                                    <th class="p-3">Transfer Account</th>
-                                    <th class="p-3 text-center">Amount</th>
-                                    <th class="p-3 text-center">Status</th>
-                                    <th class="p-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tblWithdrawalsBody" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
-
-                    <!-- WITHDRAWAL HISTORY (Minimized by default) -->
-                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center shadow cursor-pointer mt-4" onclick="toggleSection('withdrawalsHistory', 'iconWithdrawalHistory')">
-                        <h3 class="text-sm font-bold text-slate-400">📜 Withdrawals History (Approved/Rejected)</h3>
-                        <span id="iconWithdrawalHistory" class="text-slate-400 transform transition-transform">▼</span>
-                    </div>
-                    <div id="withdrawalsHistory" class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow hidden">
-                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
-                            <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
-                                <tr>
-                                    <th class="p-3">Date</th>
-                                    <th class="p-3">User / Dealer</th>
-                                    <th class="p-3">Transfer Account</th>
-                                    <th class="p-3 text-center">Amount</th>
-                                    <th class="p-3 text-center">Status</th>
-                                    <th class="p-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tblWithdrawalsHistoryBody" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- TAB: DEALERS -->
-                <div id="tab-dealers" class="tab-content hidden space-y-4">
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow w-full">
-                        <h3 class="text-sm font-bold text-blue-400 mb-3 border-b border-slate-700 pb-2">Add New Egg Dealer</h3>
-                        <form id="dealerForm" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Dealer Name</label><input type="text" id="dlrName" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
-                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Rate (PKR)</label><input type="number" id="dlrRate" step="0.1" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-yellow-400 font-bold outline-none"></div>
-                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Min Limit</label><input type="number" id="dlrMin" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
-                            <div><label class="block text-slate-400 text-[10px] uppercase mb-1">Max Limit</label><input type="number" id="dlrMax" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white outline-none"></div>
-                            <div class="col-span-1 sm:col-span-2"><button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded font-bold uppercase tracking-wider text-[11px] shadow">Save Dealer Record</button></div>
-                        </form>
-                    </div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow">
-                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[500px]">
-                            <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
-                                <tr>
-                                    <th class="p-3">ID</th>
-                                    <th class="p-3">Name</th>
-                                    <th class="p-3 text-center">Rate</th>
-                                    <th class="p-3 text-center">Limits</th>
-                                    <th class="p-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tblDealersBody" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- RIGHT PANEL OVERLAY -->
-        <div id="panelOverlay" onclick="closeUserPanel()" class="fixed inset-0 bg-black/60 z-40 hidden"></div>
-
-        <!-- RIGHT PANEL: USER DETAIL & TIMERS -->
-        <div id="userSidePanel" class="absolute inset-y-0 right-0 transform translate-x-full w-[85vw] sm:w-80 bg-slate-900 border-l border-slate-800 flex flex-col z-50 shadow-2xl transition-transform duration-300 h-full">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800 shrink-0">
-                <h3 class="text-sm font-bold text-white uppercase tracking-widest">User Insight</h3>
-                <button onclick="closeUserPanel()" class="text-slate-400 hover:text-white text-2xl p-1">&times;</button>
-            </div>
-            <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-4">
-                <div class="text-center pb-4 border-b border-slate-800">
-                    <div class="w-12 h-12 bg-slate-700 rounded-full mx-auto mb-2 flex items-center justify-center text-xl">👤</div>
-                    <h4 id="panelUserName" class="font-bold text-blue-400 text-sm">Loading...</h4>
-                    <p id="panelUserEmail" class="text-[10px] text-slate-400 break-all"></p>
-                    <div class="mt-2 text-[10px] bg-slate-950 rounded p-1">Ref By: <span id="panelUserRef" class="text-cyan-400">None</span></div>
-                </div>
-
-                <div class="bg-slate-950 p-3 rounded border border-slate-800 space-y-3">
-                    <h5 class="text-[10px] uppercase text-slate-500 font-bold mb-1 border-b border-slate-800 pb-1">Manual Override</h5>
-                    
-                    <div>
-                        <label class="text-[9px] text-slate-400 uppercase">Password</label>
-                        <div class="flex space-x-1 mt-1">
-                            <input type="text" id="overridePassword" class="w-full bg-slate-900 border border-slate-700 text-red-400 text-xs p-2 outline-none rounded">
-                            <button onclick="saveManualOverride('password', 'overridePassword')" class="bg-red-600 hover:bg-red-500 px-3 rounded text-white font-bold text-[10px]">SAVE</button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[9px] text-slate-400 uppercase">Eggs Balance</label>
-                        <div class="flex space-x-1 mt-1">
-                            <input type="number" id="overrideEggs" class="w-full bg-slate-900 border border-slate-700 text-yellow-400 text-xs p-2 outline-none rounded">
-                            <button onclick="saveManualOverride('availableEggs', 'overrideEggs')" class="bg-blue-600 hover:bg-blue-500 px-3 rounded text-white font-bold text-[10px]">SAVE</button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[9px] text-slate-400 uppercase">Gift Balance</label>
-                        <div class="flex space-x-1 mt-1">
-                            <input type="number" id="overrideGift" class="w-full bg-slate-900 border border-slate-700 text-yellow-400 text-xs p-2 outline-none rounded">
-                            <button onclick="saveManualOverride('giftEggs', 'overrideGift')" class="bg-blue-600 hover:bg-blue-500 px-3 rounded text-white font-bold text-[10px]">SAVE</button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[9px] text-slate-400 uppercase">Total Hens</label>
-                        <div class="flex space-x-1 mt-1">
-                            <input type="number" id="overrideHens" class="w-full bg-slate-900 border border-slate-700 text-yellow-400 text-xs p-2 outline-none rounded">
-                            <button onclick="saveManualOverride('totalHens', 'overrideHens')" class="bg-blue-600 hover:bg-blue-500 px-3 rounded text-white font-bold text-[10px]">SAVE</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="border-t border-slate-800 pt-3">
-                    <button id="btnBlockUser" onclick="toggleUserBlock()" class="w-full bg-red-900/50 hover:bg-red-800 text-red-300 py-3 rounded text-[11px] uppercase font-bold border border-red-800 transition-colors">BLOCK USER</button>
-                    <button onclick="deleteUserAccount()" class="w-full bg-slate-800 hover:bg-red-700 text-slate-400 hover:text-white mt-2 py-2 rounded text-[10px] uppercase font-bold transition-colors">⚠️ Delete Record</button>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow p-3">
+                <h3 class="text-xs font-bold text-slate-400 mb-3">Live Announcements</h3>
+                <div id="announcementsList" class="space-y-3">
+                    <!-- Injected via JS -->
                 </div>
             </div>
-        </div>
+        </section>
 
-    </div>
+    </main>
 
-    <!-- REJECTION MODAL -->
-    <div id="rejectModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-[60] p-4">
-        <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-lg p-5 shadow-2xl">
-            <h3 class="text-sm font-bold text-red-400 mb-3 uppercase tracking-wider">Provide Reason</h3>
-            <textarea id="rejectReasonInput" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded p-3 text-white outline-none focus:border-red-500 text-xs mb-3" placeholder="Why is this being rejected?"></textarea>
-            <div class="flex justify-end space-x-2">
-                <button onclick="closeRejectModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded text-xs hover:bg-slate-700 font-bold">Cancel</button>
-                <button id="btnConfirmReject" onclick="confirmRejection()" class="px-4 py-2 bg-red-600 text-white rounded text-xs hover:bg-red-500 font-bold">Reject</button>
-            </div>
+    <!-- MODAL: EDIT USER BALANCE -->
+    <div id="userModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl relative">
+            <button onclick="closeModal('userModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl">&times;</button>
+            <h3 class="text-sm font-bold text-yellow-400 mb-3 border-b border-slate-800 pb-2">Adjust User Account</h3>
+            <form id="editUserForm" class="space-y-3 text-xs">
+                <input type="hidden" id="modalUid">
+                <div>
+                    <label class="block text-slate-400 mb-1">User Name / Email</label>
+                    <input type="text" id="modalUserName" disabled class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-slate-400">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Current Balance (PKR)</label>
+                    <input type="number" step="0.01" id="modalUserBalance" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-yellow-400 font-mono">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Total Hens Count</label>
+                    <input type="number" id="modalUserHens" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-emerald-400 font-mono">
+                </div>
+                <div class="pt-2 flex space-x-2">
+                    <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded font-bold uppercase text-xs">Save Changes</button>
+                    <button type="button" onclick="closeModal('userModal')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded font-bold uppercase text-xs">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 
+    <!-- SCRIPT LOGIC -->
     <script>
-        // Apni Firebase Config Yahan Laga Lein
+        // --- FIREBASE CONFIGURATION ---
+        // Ensure your Firebase credentials match your project setup
         const firebaseConfig = {
-            apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
-            authDomain: "own-live-steam-web-default.firebaseapp.com",
-            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
-            projectId: "own-live-steam-web-default",
-            storageBucket: "own-live-steam-web-default.appspot.com",
-            messagingSenderId: "xxxxxxxxxxx",
-            appId: "xxxxxxxxxxx"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
         const db = firebase.database();
+        const auth = firebase.auth();
 
-        let allUsersGlobal = {};
-        let currentInspectedUid = null;
-        let rejectType = null;
-        let rejectId = null;
+        let allUsersData = {};
+        const dayMs = 24 * 60 * 60 * 1000;
 
-        setInterval(() => { document.getElementById('systemClock').innerText = new Date().toLocaleString(); }, 1000);
-
-        window.onload = function() { initAdminDash(); };
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('mainSidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.remove('hidden');
-            event.currentTarget.classList.add('active');
-            if (window.innerWidth < 768) toggleSidebar();
-        }
-
-        function toggleSection(sectionId, iconId) {
-            const sec = document.getElementById(sectionId);
-            const icon = document.getElementById(iconId);
-            if(sec.classList.contains('hidden')) {
-                sec.classList.remove('hidden');
-                sec.classList.add('block');
-                icon.classList.add('rotate-180');
+        // --- AUTH CHECK & INIT ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('adminEmailDisplay').innerText = user.email || user.uid;
+                initAdminDash();
             } else {
-                sec.classList.remove('block');
-                sec.classList.add('hidden');
-                icon.classList.remove('rotate-180');
+                // If unauthenticated in production, redirect or allow login UI
+                console.log("Admin auth required");
             }
-        }
-
-        function logoutAdmin() { location.reload(); }
-
-        function initAdminDash() {
-            renderDashboardAndUsers();
-            renderPurchases();
-            renderWithdrawals();
-            renderDealers();
-        }
-
-        // =======================
-        // USERS & DASHBOARD
-        // =======================
-        function renderDashboardAndUsers() {
-            db.ref('users').on('value', snapshot => {
-                allUsersGlobal = snapshot.val() || {};
-                let tUsers = 0, tHens = 0, tEggs = 0, newUsersCount = 0;
-                
-                const tbodyAll = document.getElementById('tblUsersBody');
-                const tbodyNew = document.getElementById('tblNewUsersBody');
-                tbodyAll.innerHTML = '';
-                tbodyNew.innerHTML = '';
-
-                for(let uid in allUsersGlobal) {
-                    tUsers++;
-                    let data = allUsersGlobal[uid];
-                    tHens += (Number(data.totalHens) || 0);
-                    tEggs += ((Number(data.availableEggs) || 0) + (Number(data.giftEggs) || 0));
-
-                    let regDateMs = Number(data.createdAt) || 0; 
-                    let isNewUser = false;
-                    let formattedDate = "Legacy User";
-                    
-                    if(regDateMs > 0) {
-                        const d = new Date(regDateMs);
-                        formattedDate = d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        if((Date.now() - regDateMs) <= (5 * 24 * 60 * 60 * 1000)) { 
-                            isNewUser = true; 
-                            newUsersCount++; 
-                        }
-                    }
-
-                    let uEggs = (Number(data.availableEggs) || 0) + (Number(data.giftEggs) || 0);
-                    let statusClr = data.status === 'blocked' ? 'text-red-500' : 'text-green-500';
-                    
-                    let tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-800/50 transition-colors user-row";
-                    tr.setAttribute('data-search', `${data.name} ${data.email} ${data.mobile}`.toLowerCase());
-                    tr.innerHTML = `
-                        <td class="p-3 border-t border-slate-800">
-                            <span class="font-bold text-blue-300 block truncate">${data.name || 'N/A'}</span>
-                            <span class="text-[9px] text-slate-500 font-mono">${uid.substring(0,8)}...</span>
-                        </td>
-                        <td class="p-3 border-t border-slate-800 text-[10px]">
-                            <span class="block text-slate-300 truncate">${data.email || 'N/A'}</span>
-                            <span class="block text-slate-400 font-mono">${data.mobile || 'N/A'}</span>
-                        </td>
-                        <td class="p-3 border-t border-slate-800 text-[10px] text-slate-400">${formattedDate}</td>
-                        <td class="p-3 border-t border-slate-800 text-center"><span class="font-bold text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded">${data.totalHens || 0}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-center"><span class="font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">${uEggs}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-right">
-                            <button onclick="openUserPanel('${uid}')" class="bg-blue-900/60 hover:bg-blue-600 text-blue-300 hover:text-white px-3 py-1.5 rounded border border-blue-700/50 text-[10px] font-bold uppercase transition-colors whitespace-nowrap">Manage <span class="${statusClr}">●</span></button>
-                        </td>
-                    `;
-                    
-                    if(isNewUser) tbodyNew.appendChild(tr);
-                    else tbodyAll.appendChild(tr);
-                }
-
-                document.getElementById('dashTotalUsers').innerText = tUsers;
-                document.getElementById('dashTotalHens').innerText = tHens;
-                document.getElementById('dashTotalEggs').innerText = tEggs;
-                document.getElementById('badgeUsers').innerText = tUsers - newUsersCount;
-                document.getElementById('badgeNewUsers').innerText = newUsersCount;
-                
-                if(currentInspectedUid && allUsersGlobal[currentInspectedUid]) {
-                    populateUserPanelData(currentInspectedUid);
-                }
-            });
-        }
-
-        function filterUsers() {
-            let q = document.getElementById('searchUser').value.toLowerCase();
-            document.querySelectorAll('.user-row').forEach(row => {
-                row.style.display = row.getAttribute('data-search').includes(q) ? '' : 'none';
-            });
-        }
-
-        // =======================
-        // USER PANEL & ACTIONS
-        // =======================
-        function openUserPanel(uid) {
-            currentInspectedUid = uid;
-            const panel = document.getElementById('userSidePanel');
-            const overlay = document.getElementById('panelOverlay');
-            panel.classList.remove('translate-x-full');
-            overlay.classList.remove('hidden');
-            populateUserPanelData(uid);
-        }
-
-        function closeUserPanel() {
-            const panel = document.getElementById('userSidePanel');
-            const overlay = document.getElementById('panelOverlay');
-            panel.classList.add('translate-x-full');
-            overlay.classList.add('hidden');
-            currentInspectedUid = null;
-        }
-
-        function populateUserPanelData(uid) {
-            let data = allUsersGlobal[uid];
-            if(!data) return;
-
-            document.getElementById('panelUserName').innerText = data.name || 'N/A';
-            document.getElementById('panelUserEmail').innerText = data.email || data.mobile || 'N/A';
-            document.getElementById('panelUserRef').innerText = data.referredBy || 'None';
-            
-            if(document.activeElement.id !== 'overridePassword') document.getElementById('overridePassword').value = data.password || '';
-            if(document.activeElement.id !== 'overrideEggs') document.getElementById('overrideEggs').value = data.availableEggs || 0;
-            if(document.activeElement.id !== 'overrideGift') document.getElementById('overrideGift').value = data.giftEggs || 0;
-            if(document.activeElement.id !== 'overrideHens') document.getElementById('overrideHens').value = data.totalHens || 0;
-
-            let btnBlock = document.getElementById('btnBlockUser');
-            if(data.status === 'blocked') {
-                btnBlock.innerText = "UNBLOCK USER";
-                btnBlock.className = "w-full bg-green-900/50 hover:bg-green-800 text-green-300 py-3 rounded text-[11px] uppercase font-bold border border-green-800 transition-colors";
-            } else {
-                btnBlock.innerText = "BLOCK USER";
-                btnBlock.className = "w-full bg-red-900/50 hover:bg-red-800 text-red-300 py-3 rounded text-[11px] uppercase font-bold border border-red-800 transition-colors";
-            }
-        }
-
-        function saveManualOverride(field, inputId) {
-            if(!currentInspectedUid) return;
-            let val = document.getElementById(inputId).value;
-            if(field !== 'password') val = Number(val);
-            
-            db.ref('users/' + currentInspectedUid).update({
-                [field]: val
-            }).then(() => {
-                alert(field + ' updated successfully!');
-            }).catch(e => alert(e.message));
-        }
-
-        function toggleUserBlock() {
-            if(!currentInspectedUid) return;
-            let currentStatus = allUsersGlobal[currentInspectedUid].status || 'active';
-            let newStatus = currentStatus === 'blocked' ? 'active' : 'blocked';
-            
-            db.ref('users/' + currentInspectedUid).update({
-                status: newStatus
-            });
-        }
-
-        function deleteUserAccount() {
-            if(!currentInspectedUid) return;
-            if(confirm("DANGER: Are you sure you want to permanently delete this user? This cannot be undone!")) {
-                db.ref('users/' + currentInspectedUid).remove().then(() => {
-                    alert("User Deleted.");
-                    closeUserPanel();
-                });
-            }
-        }
-
-        // =======================
-        // PURCHASES
-        // =======================
-        function renderPurchases() {
-            db.ref('purchase_requests').on('value', snap => {
-                let pendingCount = 0;
-                
-                const pendingBody = document.getElementById('tblPurchasesBody');
-                const historyBody = document.getElementById('tblPurchasesHistoryBody');
-                pendingBody.innerHTML = '';
-                historyBody.innerHTML = '';
-                
-                snap.forEach(child => {
-                    let p = child.val(); 
-                    let key = child.key;
-                    let userObj = allUsersGlobal[p.uid] || {};
-                    let dStr = p.timestamp ? new Date(p.timestamp).toLocaleString() : 'N/A';
-                    let stClr = p.status === 'approved' ? 'text-emerald-400' : (p.status === 'rejected' ? 'text-red-400' : 'text-yellow-400');
-                    
-                    let actHtml = '';
-                    if(p.status === 'pending') {
-                        pendingCount++;
-                        actHtml = `<button onclick="approvePurchase('${key}', '${p.uid}', ${p.quantity}, ${p.amount})" class="bg-green-600 hover:bg-green-500 text-white px-2 py-1 rounded text-[10px] font-bold mr-1">Approve</button>
-                                   <button onclick="openRejectModal('purchase', '${key}')" class="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold">Reject</button>`;
-                    } else {
-                        actHtml = `<span class="text-[9px] uppercase font-bold ${stClr}">${p.status}</span>`;
-                    }
-
-                    let tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-800/50 transition-colors";
-                    tr.innerHTML = `
-                        <td class="p-3 border-t border-slate-800 text-[10px] text-slate-400">${dStr}</td>
-                        <td class="p-3 border-t border-slate-800">
-                            <span class="font-bold text-blue-300 block">${userObj.name || 'User'}</span>
-                            <span class="text-[9px] text-slate-500 font-mono">${p.uid ? p.uid.substring(0,8) : ''}...</span>
-                        </td>
-                        <td class="p-3 border-t border-slate-800 text-[10px]">
-                            <span class="block text-slate-300">${p.accountHolderName || 'N/A'}</span>
-                            <span class="block font-mono text-cyan-400">Trx: ${p.transactionId || 'N/A'}</span>
-                        </td>
-                        <td class="p-3 border-t border-slate-800 text-center font-bold text-yellow-400">${p.quantity} Hens</td>
-                        <td class="p-3 border-t border-slate-800 text-center"><span class="${stClr} text-[10px] uppercase font-black">${p.status}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-right">${actHtml}</td>
-                    `;
-                    
-                    if(p.status === 'pending') {
-                        pendingBody.appendChild(tr);
-                    } else {
-                        historyBody.prepend(tr); // Put newest history on top
-                    }
-                });
-
-                document.getElementById('badgePurchases').innerText = pendingCount;
-                document.getElementById('lblPendingPurchasesCount').innerText = pendingCount;
-            });
-        }
-
-        function approvePurchase(reqId, uid, qty, amount) {
-            if(confirm("Approve this purchase request?")) {
-                let userRef = db.ref('users/' + uid);
-                userRef.once('value').then(snap => {
-                    let user = snap.val();
-                    let newHens = (Number(user.totalHens) || 0) + qty;
-                    let newExp = (Number(user.totalExpense) || 0) + amount;
-                    
-                    let batchKey = userRef.child('hen_batches').push().key;
-                    
-                    let updates = {
-                        totalHens: newHens,
-                        totalExpense: newExp,
-                        [`hen_batches/${batchKey}`]: {
-                            qty: qty,
-                            boughtAt: firebase.database.ServerValue.TIMESTAMP,
-                            lastCollectedAt: firebase.database.ServerValue.TIMESTAMP
-                        }
-                    };
-                    
-                    return userRef.update(updates);
-                }).then(() => {
-                    return db.ref('purchase_requests/' + reqId).update({ status: 'approved' });
-                }).catch(e => alert(e.message));
-            }
-        }
-
-        // =======================
-        // WITHDRAWALS / EGG SALES
-        // =======================
-        function renderWithdrawals() {
-            db.ref('withdraw_requests').on('value', snap => {
-                let pendingCount = 0;
-                let totalPayouts = 0;
-                
-                const pendingBody = document.getElementById('tblWithdrawalsBody');
-                const historyBody = document.getElementById('tblWithdrawalsHistoryBody');
-                pendingBody.innerHTML = '';
-                historyBody.innerHTML = '';
-
-                snap.forEach(child => {
-                    let w = child.val(); 
-                    let key = child.key;
-                    let userObj = allUsersGlobal[w.uid] || {};
-                    let dStr = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
-                    
-                    if(w.status === 'approved') {
-                        totalPayouts += (Number(w.amount || w.totalPayout) || 0);
-                    }
-
-                    let stClr = w.status === 'approved' ? 'text-emerald-400' : (w.status === 'rejected' ? 'text-red-400' : 'text-yellow-400');
-                    
-                    let actHtml = '';
-                    if(w.status === 'pending') {
-                        pendingCount++;
-                        let wdAmount = w.amount || w.totalPayout || 0;
-                        actHtml = `<button onclick="approveWithdrawal('${key}', '${w.uid}', ${wdAmount})" class="bg-green-600 hover:bg-green-500 text-white px-2 py-1 rounded text-[10px] font-bold mr-1">Approve</button>
-                                   <button onclick="openRejectModal('withdrawal', '${key}')" class="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold">Reject</button>`;
-                    } else {
-                        actHtml = `<span class="text-[9px] uppercase font-bold ${stClr}">${w.status}</span>`;
-                    }
-
-                    let eggCountStr = w.eggsSold || w.eggsDeductedCount || 0;
-                    let amtStr = w.amount || w.totalPayout || 0;
-
-                    let tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-800/50 transition-colors";
-                    tr.innerHTML = `
-                        <td class="p-3 border-t border-slate-800 text-[10px] text-slate-400">${dStr}</td>
-                        <td class="p-3 border-t border-slate-800">
-                            <span class="font-bold text-blue-300 block">${userObj.name || 'User'}</span>
-                            <span class="text-[9px] text-slate-500 font-mono">${eggCountStr} Eggs to ${w.dealerName || 'Dealer'}</span>
-                        </td>
-                        <td class="p-3 border-t border-slate-800 text-[10px]">
-                            <span class="block text-slate-300">${w.accountTitle || w.accountHolderName || 'N/A'} (${w.bankName || w.accountType || 'N/A'})</span>
-                            <span class="block font-mono text-cyan-400">${w.accountNumber || 'N/A'}</span>
-                        </td>
-                        <td class="p-3 border-t border-slate-800 text-center font-bold text-emerald-400">${amtStr} PKR</td>
-                        <td class="p-3 border-t border-slate-800 text-center"><span class="${stClr} text-[10px] uppercase font-black">${w.status}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-right">${actHtml}</td>
-                    `;
-                    
-                    if(w.status === 'pending') {
-                        pendingBody.appendChild(tr);
-                    } else {
-                        historyBody.prepend(tr); // Put newest history on top
-                    }
-                });
-
-                document.getElementById('badgeWithdrawals').innerText = pendingCount;
-                document.getElementById('lblPendingWithdrawalsCount').innerText = pendingCount;
-                document.getElementById('dashTotalPayouts').innerText = totalPayouts;
-            });
-        }
-
-        function approveWithdrawal(reqId, uid, amount) {
-            if(confirm("Mark this withdrawal as paid?")) {
-                db.ref('users/' + uid).once('value').then(snap => {
-                    let user = snap.val();
-                    let newWithdrawal = (Number(user.totalWithdrawal) || 0) + amount;
-                    return db.ref('users/' + uid).update({ totalWithdrawal: newWithdrawal });
-                }).then(() => {
-                    return db.ref('withdraw_requests/' + reqId).update({ status: 'approved' });
-                }).catch(e => alert(e.message));
-            }
-        }
-
-        // =======================
-        // REJECTION MODAL LOGIC (With Automatic Refund)
-        // =======================
-        function openRejectModal(type, id) {
-            rejectType = type;
-            rejectId = id;
-            document.getElementById('rejectReasonInput').value = '';
-            document.getElementById('rejectModal').classList.remove('hidden');
-            document.getElementById('rejectModal').classList.add('flex');
-        }
-
-        function closeRejectModal() {
-            document.getElementById('rejectModal').classList.remove('flex');
-            document.getElementById('rejectModal').classList.add('hidden');
-            rejectType = null;
-            rejectId = null;
-        }
-
-        function confirmRejection() {
-            let reason = document.getElementById('rejectReasonInput').value || "Rejected by Admin";
-            
-            if(rejectType === 'purchase') {
-                db.ref('purchase_requests/' + rejectId).update({ status: 'rejected', reason: reason })
-                .then(() => closeRejectModal());
-            } 
-            else if(rejectType === 'withdrawal') {
-                // Pehlay pending request check karo aur user ke eggs refund karo
-                db.ref('withdraw_requests/' + rejectId).once('value').then(snap => {
-                    let reqData = snap.val();
-                    if(reqData && reqData.status === 'pending') {
-                        let refundAmount = parseInt(reqData.eggsSold) || parseInt(reqData.eggsDeductedCount) || 0;
-                        let userId = reqData.uid;
-
-                        // 1. Request status rejected karo
-                        db.ref('withdraw_requests/' + rejectId).update({ 
-                            status: 'rejected', 
-                            reason: reason 
-                        }).then(() => {
-                            // 2. User ke balance mein eggs refund karo
-                            db.ref('users/' + userId + '/availableEggs').once('value').then(uSnap => {
-                                let currentBal = parseInt(uSnap.val()) || 0;
-                                db.ref('users/' + userId).update({ availableEggs: currentBal + refundAmount });
-                            });
-                        });
-                    }
-                }).then(() => {
-                    closeRejectModal();
-                });
-            }
-        }
-
-        // =======================
-        // DEALERS MARKET
-        // =======================
-        document.getElementById('dealerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const dName = document.getElementById('dlrName').value;
-            const dRate = parseFloat(document.getElementById('dlrRate').value);
-            const dMin = parseInt(document.getElementById('dlrMin').value);
-            const dMax = parseInt(document.getElementById('dlrMax').value);
-
-            db.ref('dealers').push({
-                name: dName,
-                rate: dRate,
-                minLimit: dMin,
-                maxLimit: dMax
-            }).then(() => {
-                alert("Dealer Added!");
-                this.reset();
-            }).catch(err => alert(err.message));
         });
 
-        function renderDealers() {
+        function adminLogout() {
+            auth.signOut().then(() => {
+                window.location.reload();
+            });
+        }
+
+        // --- NAVIGATION & TABS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-slate-800/80', 'text-emerald-400', 'border-l-4', 'border-emerald-500');
+                btn.classList.add('text-slate-300');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-slate-800/80', 'text-emerald-400', 'border-l-4', 'border-emerald-500');
+                activeBtn.classList.remove('text-slate-300');
+            }
+
+            // Update Header Title
+            const titles = {
+                'tab-dashboard': 'Admin Overview',
+                'tab-users': 'User Accounts Management',
+                'tab-batches': 'Hen Batches & 120-Day Timer Overview',
+                'tab-rates': 'System Egg & Hen Rates Config',
+                'tab-dealers': 'Dealers Market Management',
+                'tab-transactions': 'Deposit & Withdrawal Approvals',
+                'tab-announcements': 'Farm Announcements Portal'
+            };
+            document.getElementById('currentTabTitle').innerText = titles[tabId] || 'Admin Panel';
+
+            // Close mobile menu if open
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.getElementById(modalId).classList.remove('flex');
+        }
+
+        // --- INITIALIZE ALL LISTENERS ---
+        function initAdminDash() {
+            fetchUsersData();
+            fetchRates();
+            fetchDealers();
+            fetchTransactions();
+            fetchAnnouncements();
+        }
+
+        // --- 1. USERS & BATCHES LISTENER ---
+        function fetchUsersData() {
+            db.ref('users').on('value', snap => {
+                allUsersData = snap.val() || {};
+                renderUsersTable(allUsersData);
+                renderBatchesTable(allUsersData);
+                updateOverviewStats(allUsersData);
+            });
+        }
+
+        function updateOverviewStats(users) {
+            let totalUsers = 0;
+            let totalHens = 0;
+
+            for (let uid in users) {
+                totalUsers++;
+                let u = users[uid];
+                totalHens += (u.totalHens || 0);
+            }
+
+            document.getElementById('statTotalUsers').innerText = totalUsers;
+            document.getElementById('statTotalHens').innerText = totalHens;
+        }
+
+        function renderUsersTable(users) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            let count = 0;
+            for (let uid in users) {
+                count++;
+                let u = users[uid];
+                let isBlocked = u.status === 'blocked';
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-900/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <div class="font-bold text-slate-200">${u.name || 'Anonymous User'}</div>
+                        <div class="text-[10px] text-slate-500 font-mono">${u.email || uid}</div>
+                    </td>
+                    <td class="p-3 text-yellow-400 font-bold">Rs. ${parseFloat(u.balance || 0).toFixed(2)}</td>
+                    <td class="p-3 text-emerald-400 font-bold">${u.totalHens || 0} Hens</td>
+                    <td class="p-3 text-slate-300">${u.referralsCount || 0}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${isBlocked ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
+                            ${isBlocked ? 'Blocked' : 'Active'}
+                        </span>
+                    </td>
+                    <td class="p-3 text-right space-x-1">
+                        <button onclick="openEditUserModal('${uid}', '${u.name || 'User'}', ${u.balance || 0}, ${u.totalHens || 0})" class="bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-2 py-1 rounded text-[10px] font-bold uppercase border border-blue-800">Edit</button>
+                        <button onclick="toggleBlockUser('${uid}', '${u.status}')" class="${isBlocked ? 'bg-emerald-900/50 text-emerald-300 border-emerald-800' : 'bg-amber-900/50 text-amber-300 border-amber-800'} hover:opacity-80 px-2 py-1 rounded text-[10px] font-bold uppercase border">
+                            ${isBlocked ? 'Unblock' : 'Block'}
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            if (count === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500 italic">No users found.</td></tr>';
+            }
+        }
+
+        function filterUsersTable() {
+            const query = document.getElementById('userSearchInput').value.toLowerCase();
+            const filtered = {};
+            for (let uid in allUsersData) {
+                let u = allUsersData[uid];
+                let name = (u.name || '').toLowerCase();
+                let email = (u.email || '').toLowerCase();
+                let phone = (u.phone || '').toLowerCase();
+                if (name.includes(query) || email.includes(query) || phone.includes(query) || uid.toLowerCase().includes(query)) {
+                    filtered[uid] = u;
+                }
+            }
+            renderUsersTable(filtered);
+        }
+
+        // --- 2. HEN BATCHES (120 DAYS TIMER) ---
+        function renderBatchesTable(users) {
+            const tbody = document.getElementById('batchesTableBody');
+            tbody.innerHTML = '';
+            let now = Date.now();
+            let totalBatchesCount = 0;
+
+            for (let uid in users) {
+                let u = users[uid];
+                if (u.hen_batches) {
+                    for (let batchKey in u.hen_batches) {
+                        totalBatchesCount++;
+                        let batch = u.hen_batches[batchKey];
+                        let purchasedAt = batch.purchasedAt || batch.lastCollectedAt || now;
+                        let elapsed = now - purchasedAt;
+                        let daysRemaining = Math.ceil(((120 * dayMs) - elapsed) / dayMs);
+                        let isExpired = elapsed >= (120 * dayMs);
+
+                        let tr = document.createElement('tr');
+                        tr.className = "hover:bg-slate-900/50 transition-colors";
+                        tr.innerHTML = `
+                            <td class="p-3">
+                                <div class="font-bold text-slate-200">${u.name || 'User'}</div>
+                                <div class="text-[9px] text-slate-500 font-mono">${uid}</div>
+                            </td>
+                            <td class="p-3 text-yellow-400 font-bold">${batch.qty} Hens</td>
+                            <td class="p-3 text-slate-400">${new Date(purchasedAt).toLocaleDateString()}</td>
+                            <td class="p-3">
+                                <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${isExpired ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
+                                    ${isExpired ? 'EXPIRED' : 'ACTIVE'}
+                                </span>
+                            </td>
+                            <td class="p-3 font-bold ${daysRemaining <= 10 ? 'text-red-400' : 'text-emerald-400'}">
+                                ${isExpired ? '0 Days (Expired)' : daysRemaining + ' Days Remaining'}
+                            </td>
+                            <td class="p-3 text-right">
+                                <button onclick="deleteBatch('${uid}', '${batchKey}', ${batch.qty})" class="bg-red-900/50 hover:bg-red-800 text-red-300 px-2 py-1 rounded text-[10px] font-bold uppercase border border-red-800">
+                                    Remove
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+                }
+            }
+
+            if (totalBatchesCount === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500 italic">No active hen batches in system.</td></tr>';
+            }
+        }
+
+        function refreshBatchesTable() {
+            renderBatchesTable(allUsersData);
+        }
+
+        function deleteBatch(uid, batchKey, qty) {
+            if (confirm(`Are you sure you want to delete this batch of ${qty} hens?`)) {
+                db.ref(`users/${uid}/hen_batches/${batchKey}`).remove();
+                db.ref(`users/${uid}/totalHens`).transaction(curr => Math.max(0, (curr || 0) - qty));
+            }
+        }
+
+        function runGlobalBatchCleanup() {
+            let now = Date.now();
+            let cleanedCount = 0;
+            for (let uid in allUsersData) {
+                let u = allUsersData[uid];
+                if (u.hen_batches) {
+                    for (let batchKey in u.hen_batches) {
+                        let batch = u.hen_batches[batchKey];
+                        let purchasedAt = batch.purchasedAt || batch.lastCollectedAt || now;
+                        if ((now - purchasedAt) >= (120 * dayMs)) {
+                            cleanedCount++;
+                            db.ref(`users/${uid}/hen_batches/${batchKey}`).remove();
+                            db.ref(`users/${uid}/totalHens`).transaction(curr => Math.max(0, (curr || 0) - batch.qty));
+                        }
+                    }
+                }
+            }
+            alert(`Batch Cleanup Complete! Cleaned ${cleanedCount} expired batches.`);
+        }
+
+        // --- 3. EDIT USER MODAL LOGIC ---
+        function openEditUserModal(uid, name, balance, totalHens) {
+            document.getElementById('modalUid').value = uid;
+            document.getElementById('modalUserName').value = name;
+            document.getElementById('modalUserBalance').value = balance;
+            document.getElementById('modalUserHens').value = totalHens;
+
+            const modal = document.getElementById('userModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        document.getElementById('editUserForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const uid = document.getElementById('modalUid').value;
+            const newBal = parseFloat(document.getElementById('modalUserBalance').value);
+            const newHens = parseInt(document.getElementById('modalUserHens').value);
+
+            db.ref(`users/${uid}`).update({
+                balance: newBal,
+                totalHens: newHens
+            }).then(() => {
+                closeModal('userModal');
+            });
+        });
+
+        function toggleBlockUser(uid, currentStatus) {
+            const newStatus = currentStatus === 'blocked' ? 'active' : 'blocked';
+            db.ref(`users/${uid}/status`).set(newStatus);
+        }
+
+        // --- 4. EGG RATES LOGIC ---
+        function fetchRates() {
+            db.ref('rates').on('value', snap => {
+                const r = snap.val() || {};
+                document.getElementById('rateEggPrice').value = r.eggPrice || 12;
+                document.getElementById('rateHenPrice').value = r.henPrice || 500;
+                document.getElementById('rateEggPerHen').value = r.eggPerHen || 1;
+            });
+        }
+
+        document.getElementById('ratesForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            db.ref('rates').update({
+                eggPrice: parseFloat(document.getElementById('rateEggPrice').value),
+                henPrice: parseFloat(document.getElementById('rateHenPrice').value),
+                eggPerHen: parseFloat(document.getElementById('rateEggPerHen').value)
+            }).then(() => {
+                alert('Rates updated successfully!');
+            });
+        });
+
+        // --- 5. DEALERS MARKET LOGIC ---
+        function fetchDealers() {
             db.ref('dealers').on('value', snap => {
-                const tbody = document.getElementById('tblDealersBody');
+                const tbody = document.getElementById('dealersTableBody');
                 tbody.innerHTML = '';
+                let count = 0;
                 snap.forEach(child => {
-                    let d = child.val(); let key = child.key;
+                    count++;
+                    let key = child.key;
+                    let d = child.val();
                     let tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-800/50 transition-colors";
+                    tr.className = "hover:bg-slate-900/50";
                     tr.innerHTML = `
-                        <td class="p-3 border-t border-slate-800 text-[10px] text-slate-500 font-mono">${key.substring(0,6)}...</td>
-                        <td class="p-3 border-t border-slate-800 font-bold text-white">${d.name}</td>
-                        <td class="p-3 border-t border-slate-800 text-center font-bold text-yellow-400">${d.rate} PKR</td>
-                        <td class="p-3 border-t border-slate-800 text-center text-slate-300 text-[10px]">${d.minLimit} - ${d.maxLimit}</td>
-                        <td class="p-3 border-t border-slate-800 text-right">
-                            <button onclick="deleteDealer('${key}')" class="bg-red-900/50 hover:bg-red-600 text-red-300 hover:text-white px-2 py-1 rounded text-[10px] font-bold border border-red-700/50 transition-colors">Delete</button>
+                        <td class="p-3 font-bold text-slate-200">${d.name}</td>
+                        <td class="p-3 text-yellow-400 font-bold">${d.qty} Hens</td>
+                        <td class="p-3 text-emerald-400">Rs. ${d.price}</td>
+                        <td class="p-3 text-slate-300">${d.discount || 0}%</td>
+                        <td class="p-3 text-right space-x-1">
+                            <button onclick="editDealer('${key}', '${d.name}', ${d.qty}, ${d.price}, ${d.discount || 0})" class="bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-2 py-1 rounded text-[10px] uppercase border border-blue-800">Edit</button>
+                            <button onclick="deleteDealer('${key}')" class="bg-red-900/50 hover:bg-red-800 text-red-300 px-2 py-1 rounded text-[10px] uppercase border border-red-800">Delete</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
+                if(count === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500 italic">No dealers added yet.</td></tr>';
+                }
             });
         }
 
+        document.getElementById('dealerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('dealerEditId').value;
+            const data = {
+                name: document.getElementById('dealerName').value,
+                qty: parseInt(document.getElementById('dealerQty').value),
+                price: parseFloat(document.getElementById('dealerPrice').value),
+                discount: parseFloat(document.getElementById('dealerDiscount').value) || 0
+            };
+
+            if(id) {
+                db.ref('dealers/' + id).update(data).then(() => resetDealerForm());
+            } else {
+                db.ref('dealers').push(data).then(() => resetDealerForm());
+            }
+        });
+
+        function editDealer(id, name, qty, price, disc) {
+            document.getElementById('dealerEditId').value = id;
+            document.getElementById('dealerName').value = name;
+            document.getElementById('dealerQty').value = qty;
+            document.getElementById('dealerPrice').value = price;
+            document.getElementById('dealerDiscount').value = disc;
+        }
+
         function deleteDealer(id) {
-            if(confirm("Remove this dealer?")) {
+            if(confirm("Delete this dealer offer?")) {
                 db.ref('dealers/' + id).remove();
             }
+        }
+
+        function resetDealerForm() {
+            document.getElementById('dealerEditId').value = '';
+            document.getElementById('dealerForm').reset();
+        }
+
+        // --- 6. TRANSACTIONS APPROVAL LOGIC ---
+        function fetchTransactions() {
+            db.ref('transactions').on('value', snap => {
+                const tbody = document.getElementById('transactionsTableBody');
+                tbody.innerHTML = '';
+                let pendingCount = 0;
+                let count = 0;
+
+                snap.forEach(child => {
+                    count++;
+                    let key = child.key;
+                    let tx = child.val();
+                    let isPending = tx.status === 'pending';
+                    if(isPending && tx.type === 'withdrawal') pendingCount++;
+
+                    let tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-900/50";
+                    tr.innerHTML = `
+                        <td class="p-3 text-slate-400 text-[10px]">${tx.timestamp ? new Date(tx.timestamp).toLocaleString() : 'N/A'}</td>
+                        <td class="p-3 font-bold text-slate-200">${tx.uid || 'N/A'}</td>
+                        <td class="p-3 uppercase font-bold text-[10px] ${tx.type === 'deposit' ? 'text-emerald-400' : 'text-amber-400'}">${tx.type}</td>
+                        <td class="p-3 font-bold text-yellow-400">Rs. ${parseFloat(tx.amount || 0).toFixed(2)}</td>
+                        <td class="p-3 text-slate-300 text-[10px]">${tx.accountDetails || tx.trxId || 'N/A'}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${tx.status === 'approved' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : tx.status === 'rejected' ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">
+                                ${tx.status || 'pending'}
+                            </span>
+                        </td>
+                        <td class="p-3 text-right space-x-1">
+                            ${isPending ? `
+                                <button onclick="approveTx('${key}', '${tx.type}', '${tx.uid}', ${tx.amount})" class="bg-emerald-900/50 hover:bg-emerald-800 text-emerald-300 px-2 py-1 rounded text-[10px] font-bold uppercase border border-emerald-800">Approve</button>
+                                <button onclick="rejectTx('${key}')" class="bg-red-900/50 hover:bg-red-800 text-red-300 px-2 py-1 rounded text-[10px] font-bold uppercase border border-red-800">Reject</button>
+                            ` : '<span class="text-slate-600 text-[10px]">Completed</span>'}
+                        </td>
+                    `;
+                    tbody.prepend(tr);
+                });
+
+                document.getElementById('statPendingWithdrawals').innerText = pendingCount;
+
+                if(count === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-500 italic">No transactions recorded.</td></tr>';
+                }
+            });
+        }
+
+        function approveTx(txId, type, uid, amount) {
+            if(confirm("Approve this transaction?")) {
+                db.ref('transactions/' + txId).update({ status: 'approved' }).then(() => {
+                    if (type === 'deposit') {
+                        db.ref(`users/${uid}/balance`).transaction(curr => (curr || 0) + amount);
+                    }
+                });
+            }
+        }
+
+        function rejectTx(txId) {
+            if(confirm("Reject this transaction?")) {
+                db.ref('transactions/' + txId).update({ status: 'rejected' });
+            }
+        }
+
+        // --- 7. ANNOUNCEMENTS PORTAL LOGIC ---
+        function fetchAnnouncements() {
+            db.ref('announcements').on('value', snap => {
+                const container = document.getElementById('announcementsList');
+                const previewContainer = document.getElementById('dashboardAnnouncementsPreview');
+                
+                container.innerHTML = '';
+                previewContainer.innerHTML = '';
+                
+                let count = 0;
+
+                snap.forEach(child => {
+                    count++;
+                    let ann = child.val();
+                    let key = child.key;
+                    let dateStr = ann.timestamp ? new Date(ann.timestamp).toLocaleString() : 'Recent';
+                    
+                    // Admin Tab Card
+                    let div = document.createElement('div');
+                    div.className = "bg-slate-950 border border-slate-800 p-3 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center gap-3";
+                    div.innerHTML = `
+                        <div>
+                            <h4 class="font-bold text-yellow-400 text-sm">${ann.title}</h4>
+                            <p class="text-xs text-slate-300 mt-1">${ann.message}</p>
+                            <span class="text-[9px] text-slate-500 block mt-2 font-mono">${dateStr}</span>
+                        </div>
+                        <div class="flex space-x-2 shrink-0">
+                            <button onclick="editAnnouncement('${key}', \`${ann.title}\`, \`${ann.message}\`)" class="bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-3 py-1.5 rounded text-[10px] font-bold uppercase border border-blue-800">Edit</button>
+                            <button onclick="deleteAnnouncement('${key}')" class="bg-red-900/50 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded text-[10px] font-bold uppercase border border-red-800">Delete</button>
+                        </div>
+                    `;
+                    container.prepend(div);
+
+                    // Dashboard Preview (Show top 3)
+                    if (count <= 3) {
+                        let prevDiv = document.createElement('div');
+                        prevDiv.className = "bg-slate-950 p-3 rounded-lg border border-slate-800";
+                        prevDiv.innerHTML = `
+                            <div class="flex justify-between items-center mb-1">
+                                <h5 class="font-bold text-yellow-400 text-xs">${ann.title}</h5>
+                                <span class="text-[9px] text-slate-500 font-mono">${dateStr}</span>
+                            </div>
+                            <p class="text-[11px] text-slate-300 line-clamp-2">${ann.message}</p>
+                        `;
+                        previewContainer.prepend(prevDiv);
+                    }
+                });
+
+                document.getElementById('statAnnouncementsCount').innerText = count;
+
+                if(count === 0) {
+                    container.innerHTML = '<p class="text-slate-500 italic text-xs p-2">No announcements published yet.</p>';
+                    previewContainer.innerHTML = '<p class="text-slate-500 italic text-xs">No active announcements.</p>';
+                }
+            });
+        }
+
+        document.getElementById('announcementForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('annEditId').value;
+            const title = document.getElementById('annTitle').value;
+            const message = document.getElementById('annMessage').value;
+
+            const data = {
+                title: title,
+                message: message,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            if(id) {
+                db.ref('announcements/' + id).update(data).then(() => resetAnnForm());
+            } else {
+                db.ref('announcements').push(data).then(() => resetAnnForm());
+            }
+        });
+
+        function editAnnouncement(id, title, msg) {
+            document.getElementById('annEditId').value = id;
+            document.getElementById('annTitle').value = title;
+            document.getElementById('annMessage').value = msg;
+            document.getElementById('annTitle').focus();
+        }
+
+        function deleteAnnouncement(id) {
+            if(confirm("Are you sure you want to delete this announcement?")) {
+                db.ref('announcements/' + id).remove();
+            }
+        }
+
+        function resetAnnForm() {
+            document.getElementById('annEditId').value = '';
+            document.getElementById('announcementForm').reset();
         }
     </script>
 </body>
