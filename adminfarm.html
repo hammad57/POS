@@ -300,8 +300,12 @@
 
         let allUsersGlobal = {};
         let currentInspectedUid = null;
+        
+        // MODIFIED: Added global variables to track User ID and Eggs Quantity during rejection
         let rejectType = null;
         let rejectId = null;
+        let rejectUid = null; 
+        let rejectEggsQty = null;
 
         setInterval(() => { document.getElementById('systemClock').innerText = new Date().toLocaleString(); }, 1000);
 
@@ -502,9 +506,10 @@
                     let dStr = p.timestamp ? new Date(p.timestamp).toLocaleString() : 'N/A';
                     let stClr = p.status==='approved'?'text-emerald-400':(p.status==='rejected'?'text-red-400':'text-yellow-400');
                     
+                    // MODIFIED: promptReject me ab p.uid pass kar rahe hain
                     let actHtml = p.status === 'pending' ? `
                         <button onclick="approvePurchase('${key}', '${p.uid}', ${p.quantity}, ${p.amount})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold mr-1">Approve</button>
-                        <button onclick="promptReject('purchase', '${key}')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold">Reject</button>
+                        <button onclick="promptReject('purchase', '${key}', '${p.uid}')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold">Reject</button>
                     ` : `<span class="${stClr} font-bold uppercase text-[10px]">${p.status}</span>`;
 
                     let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
@@ -561,9 +566,10 @@
                     let bank = w.bankName || w.accountType || 'N/A';
                     let eggsCount = w.eggsSold || w.eggsDeductedCount || 0;
 
+                    // MODIFIED: promptReject me w.uid aur eggsCount pass kiye gaye hain taake refund handle ho sakay
                     let actHtml = w.status === 'pending' ? `
                         <button onclick="approveWithdrawal('${key}', '${w.uid}', ${payoutAmount})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold mr-1">Paid</button>
-                        <button onclick="promptReject('withdraw', '${key}')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold">Reject</button>
+                        <button onclick="promptReject('withdraw', '${key}', '${w.uid}', ${eggsCount})" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold">Reject</button>
                     ` : `<span class="${stClr} font-bold uppercase text-[10px]">${w.status}</span>`;
 
                     let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
@@ -638,11 +644,15 @@
         }
 
         // =======================
-        // REJECTION MODAL LOGIC
+        // REJECTION MODAL LOGIC (UPDATED WITH REFUND LOGIC)
         // =======================
-        function promptReject(type, reqId) {
+        
+        // MODIFIED: uid aur eggsQty ko handle karne ke liye parameters update kiye
+        function promptReject(type, reqId, uid = null, eggsQty = 0) {
             rejectType = type;
             rejectId = reqId;
+            rejectUid = uid;
+            rejectEggsQty = eggsQty;
             document.getElementById('rejectModal').style.display = 'flex';
         }
 
@@ -651,6 +661,8 @@
             document.getElementById('rejectReasonInput').value = '';
             rejectType = null;
             rejectId = null;
+            rejectUid = null;
+            rejectEggsQty = null;
         }
 
         function confirmRejection() {
@@ -658,11 +670,24 @@
             if(!reason) { alert("Please enter a reason"); return; }
             
             let path = rejectType === 'purchase' ? 'purchase_requests/' : 'withdraw_requests/';
-            db.ref(path + rejectId).update({
-                status: 'rejected',
-                rejectReason: reason
-            }).then(() => {
+            
+            let updates = {};
+            updates[path + rejectId + '/status'] = 'rejected';
+            updates[path + rejectId + '/rejectReason'] = reason;
+            
+            // MAIN FIX: Jab withdraw reject ho, tab users ko unkay eggs wapas balance main mil jayenge
+            if (rejectType === 'withdraw' && rejectUid && rejectEggsQty > 0) {
+                let currentEggs = 0;
+                if(allUsersGlobal[rejectUid] && allUsersGlobal[rejectUid].availableEggs !== undefined) {
+                    currentEggs = Number(allUsersGlobal[rejectUid].availableEggs);
+                }
+                updates['users/' + rejectUid + '/availableEggs'] = currentEggs + Number(rejectEggsQty);
+            }
+            
+            db.ref().update(updates).then(() => {
                 closeRejectModal();
+            }).catch((e) => {
+                alert("Error rejecting request: " + e.message);
             });
         }
     </script>
