@@ -141,7 +141,7 @@
             <div class="text-center mb-5">
                 <span class="inline-block bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-2">🔒 SECURE ACCESS</span>
                 <h2 id="authTitle" class="text-2xl font-bold text-yellow-400 font-serif">Sign In</h2>
-                <p id="authSubtitle" class="text-xs text-zinc-300 mt-1">Enter your credentials to access your dashboard. </p>
+                <p id="authSubtitle" class="text-xs text-zinc-300 mt-1">Enter your credentials to access your dashboard.</p>
             </div>
             
             <div id="refInfoBanner" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-700/50 rounded-lg text-xs text-center text-emerald-300">
@@ -554,6 +554,7 @@
         
         let activeDealers = {};
         let selectedDealerObj = null;
+        let selectedDealerKey = null;
 
         let globalTeamInvest = 0;
         let globalTeamWithdraw = 0;
@@ -595,7 +596,6 @@
             btn.onclick = function() {
                 closeCustomAlert();
                 if(callback) callback();
-                // Reset button text just in case for next time
                 setTimeout(() => { btn.innerText = "OK"; }, 300);
             };
             
@@ -697,6 +697,7 @@
                         totalExpense: 0,
                         totalWithdrawal: 0,
                         status: "active",
+                        createdAt: firebase.database.ServerValue.TIMESTAMP,
                         referredBy: refIdParam ? refIdParam : "none"
                     };
                     db.ref('users/' + cred.user.uid).set(profileData);
@@ -748,7 +749,8 @@
                 document.getElementById('lblPendingPurchase').innerText = pendingCount + " requests";
             });
 
-            db.ref('withdrawal_requests').orderByChild('uid').equalTo(currentUid).on('value', snap => {
+            // FIXED PATH TO withdraw_requests FOR LIVE ADMIN SYNC
+            db.ref('withdraw_requests').orderByChild('uid').equalTo(currentUid).on('value', snap => {
                 let pendingWdCount = 0;
                 snap.forEach(child => { if (child.val().status === 'pending') pendingWdCount++; });
                 document.getElementById('lblPendingWithdraw').innerText = pendingWdCount + " requests";
@@ -793,7 +795,8 @@
                 }
             });
 
-            db.ref('withdrawal_requests').orderByChild('uid').equalTo(currentUid).on('value', snapshot => {
+            // FIXED PATH TO withdraw_requests
+            db.ref('withdraw_requests').orderByChild('uid').equalTo(currentUid).on('value', snapshot => {
                 const wContainer = document.getElementById('withdrawalsAccordionContent');
                 wContainer.innerHTML = '';
                 cachedWithdrawals = [];
@@ -806,16 +809,18 @@
 
                     let dateStr = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
                     let statusColor = w.status === 'approved' ? 'text-green-400' : (w.status === 'rejected' ? 'text-red-400' : 'text-amber-400');
+                    let eggsCount = w.eggsSold || w.eggsDeductedCount || 0;
+                    let totalAmount = w.amount || w.totalPayout || 0;
 
                     let div = document.createElement('div');
                     div.className = "p-2.5 bg-emerald-900/60 rounded-lg border border-emerald-800/80 flex justify-between items-center";
                     div.innerHTML = `
                         <div>
-                            <span class="font-bold text-amber-400 text-xs">${w.eggsDeductedCount} Eggs Sold</span>
+                            <span class="font-bold text-amber-400 text-xs">${eggsCount} Eggs Sold</span>
                             <span class="text-[10px] text-zinc-300 block">${w.dealerName || 'Dealer'} • ${dateStr}</span>
                         </div>
                         <div class="text-right">
-                            <span class="font-bold text-emerald-400 text-xs block">${w.totalPayout || 0} PKR</span>
+                            <span class="font-bold text-emerald-400 text-xs block">${totalAmount} PKR</span>
                             <span class="text-[10px] uppercase font-black ${statusColor}">${w.status || 'pending'}</span>
                         </div>
                     `;
@@ -910,7 +915,6 @@
             document.getElementById('teamModal').classList.add('flex');
         }
 
-        // UPDATED TIMER LOGIC FOR AUTOMATIC CONTINUOUS EGG EARNING & RESTARTING TIMER
         function updateBatchesTimers() {
             const breakdownContainer = document.getElementById('settingsEggsBreakdown');
             let breakdownHtml = '';
@@ -929,16 +933,13 @@
                 let batch = currentUserData.hen_batches[key];
                 let elapsed = now - batch.lastCollectedAt;
                 
-                // IF 24 HOURS OR MORE COMPLETED
                 if(elapsed >= dayMs) {
                     let cycles = Math.floor(elapsed / dayMs);
                     let eggsEarned = cycles * batch.qty;
                     let newLastCollected = batch.lastCollectedAt + (cycles * dayMs);
                     
-                    // Update in-memory local state instantly to avoid interval multi-triggering before DB callback
                     batch.lastCollectedAt = newLastCollected;
                     
-                    // Credit Eggs & reset 24hr cycle in Firebase
                     db.ref(`users/${currentUid}/availableEggs`).transaction(current => (current || 0) + eggsEarned);
                     db.ref(`users/${currentUid}/hen_batches/${key}/lastCollectedAt`).set(newLastCollected);
                     
@@ -953,7 +954,6 @@
                 let s = Math.floor((timeLeft % (1000 * 60)) / 1000);
                 
                 let pad = (num) => num.toString().padStart(2, '0');
-                
                 let progress = (elapsed / dayMs) * 100;
                 let circumference = 113; 
                 let dashOffset = circumference - (circumference * progress / 100);
@@ -965,53 +965,34 @@
                         <div class="text-zinc-200 text-xs font-mono tracking-widest">${d}d : ${pad(h)}h : ${pad(m)}m : ${pad(s)}s</div>
                     </div>
                     <div class="relative w-12 h-12 flex items-center justify-center">
-                        <svg class="absolute inset-0 w-full h-full transform -rotate-90">
-                            <circle cx="24" cy="24" r="18" stroke="#062314" stroke-width="3" fill="none" />
-                            <circle cx="24" cy="24" r="18" stroke="#eab308" stroke-width="3" fill="none" stroke-dasharray="113" stroke-dashoffset="${dashOffset}" class="transition-all duration-1000 ease-linear" />
+                        <svg class="w-12 h-12 transform -rotate-90">
+                            <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="4" class="text-emerald-950" fill="transparent" />
+                            <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="4" class="text-yellow-400" fill="transparent" stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}" stroke-linecap="round" />
                         </svg>
-                        <span class="text-lg ${progress > 95 ? 'animate-pulse' : 'animate-bounce'} drop-shadow-md">🥚</span>
+                        <span class="absolute text-[10px] font-bold text-yellow-400">${Math.floor(progress)}%</span>
                     </div>
                 </div>`;
 
-                breakdownHtml += `
-                    <div class="flex justify-between items-center bg-emerald-950 p-2 rounded border border-emerald-800/80">
-                        <span>🐔 ${batch.qty} Hens Batch</span>
-                        <span class="font-mono text-yellow-400">${pad(h)}h ${pad(m)}m ${pad(s)}s remaining</span>
-                    </div>
-                `;
+                breakdownHtml += `<div class="flex justify-between py-1 border-b border-emerald-800/40"><span>Batch (${batch.qty} Hens)</span><span class="font-mono text-yellow-400">${pad(h)}h ${pad(m)}m ${pad(s)}s left</span></div>`;
             }
+
             document.getElementById('batchesContainer').innerHTML = html;
             if(breakdownContainer) breakdownContainer.innerHTML = breakdownHtml;
         }
 
-        function copyReferralLink() {
-            if (!currentUserData) return;
-            const cleanBaseUrl = window.location.origin + window.location.pathname;
-            const fullRefLinkGenerated = `${cleanBaseUrl}?ref=${currentUid}&n=${encodeURIComponent(currentUserData.name)}`;
-            
-            navigator.clipboard.writeText(fullRefLinkGenerated).then(() => {
-                const toast = document.getElementById('toast');
-                toast.classList.remove('opacity-0');
-                setTimeout(() => toast.classList.add('opacity-0'), 2500);
-            }).catch(() => {
-                showCustomAlert("Copy Link", `Please copy your link manually: ${fullRefLinkGenerated}`);
-            });
-        }
-
+        // --- MODAL & ACTION HANDLERS ---
         function openPurchaseModal() {
             document.getElementById('purchaseStep1').classList.remove('hidden');
             document.getElementById('purchaseStep2').classList.add('hidden');
+            document.getElementById('purchaseQty').value = 1;
+            updateHenPriceValue(1);
             document.getElementById('purchaseModal').classList.remove('hidden');
             document.getElementById('purchaseModal').classList.add('flex');
         }
 
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('flex');
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        function updateHenPriceValue(qty) {
-            document.getElementById('purchaseTotalCost').innerText = (qty * 499) + " PKR";
+        function updateHenPriceValue(val) {
+            let q = parseInt(val) || 1;
+            document.getElementById('purchaseTotalCost').innerText = (q * 499) + " PKR";
         }
 
         function proceedToPaymentProof() {
@@ -1021,296 +1002,228 @@
 
         document.getElementById('paymentProofForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const qty = parseInt(document.getElementById('purchaseQty').value);
-            const trxId = document.getElementById('proofTrxId').value;
-            const totalAmount = qty * 499;
+            let qty = parseInt(document.getElementById('purchaseQty').value) || 1;
+            let trx = document.getElementById('proofTrxId').value;
+            let holder = document.getElementById('proofHolderName').value;
 
-            const requestNodeData = {
+            db.ref('purchase_requests').push({
                 uid: currentUid,
                 quantity: qty,
-                amount: totalAmount,
-                transactionId: trxId,
-                accountHolderName: document.getElementById('proofHolderName').value,
-                status: "pending",
-                timestamp: Date.now()
-            };
-
-            db.ref('purchase_requests').push(requestNodeData).then(() => {
+                amount: qty * 499,
+                transactionId: trx,
+                accountHolderName: holder,
+                status: 'pending',
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
                 closeModal('purchaseModal');
-                
-                // Preparing dynamic WhatsApp message for Admin
-                const waMsg = encodeURIComponent(`Hello Admin, I have submitted a new Hen Purchase request.\nQuantity: ${qty} Hens\nAmount: ${totalAmount} PKR\nTrx ID: ${trxId}\nPlease approve my request.`);
-                
-                showCustomAlert(
-                    "Request Submitted", 
-                    "Your payment proof has been sent successfully. Click the button below to send details to Admin on WhatsApp for quick approval.", 
-                    () => { window.open(`https://wa.me/923285719803?text=${waMsg}`, '_blank'); },
-                    "Send to WhatsApp"
-                );
-                
-                document.getElementById('paymentProofForm').reset();
+                showCustomAlert("Request Submitted", "Your hen purchase request has been submitted to admin for verification.");
             });
         });
 
         function fetchDealersMarketplace() {
-            db.ref('dealers').on('value', snapshot => {
-                activeDealers = snapshot.val() || {};
-                const container = document.getElementById('dealersContainer');
-                container.innerHTML = '';
-
-                let hasDealers = false;
-                for(let id in activeDealers) {
-                    hasDealers = true;
-                    let d = activeDealers[id];
-                    let div = document.createElement('div');
-                    div.className = "bg-emerald-900/60 border border-emerald-700/60 rounded-xl p-4 flex flex-col relative overflow-hidden";
-                    div.innerHTML = `
-                        <div class="flex justify-between items-start mb-3 border-b border-emerald-800/80 pb-3">
-                            <div class="flex items-center space-x-3">
-                                <div class="bg-yellow-500/10 p-2 rounded-lg text-yellow-500">🏪</div>
-                                <div>
-                                    <h4 class="font-bold text-sm text-zinc-100">${d.name}</h4>
-                                    <div class="text-[9px] text-zinc-300 mt-0.5 flex items-center space-x-2">
-                                        <span>⭐ 5.0</span> <span>• Active Buyer</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-end">
-                            <div>
-                                <p class="text-[10px] text-emerald-300 uppercase font-bold tracking-wider mb-1">Price Per Egg</p>
-                                <div class="text-yellow-400 font-bold">
-                                    <span class="text-[10px]">Rs.</span> <span class="text-xl">${d.rate}</span> <span class="text-[10px] text-zinc-300 font-normal">/egg</span>
-                                </div>
-                                <p class="text-[10px] text-zinc-300 mt-2 bg-emerald-950 px-2 py-1 rounded inline-block">
-                                    Limit: ${d.minLimit} - ${d.maxLimit} Eggs
-                                </p>
-                            </div>
-                            <button onclick="selectDealerToSell('${id}')" class="bg-[#bbed21] hover:bg-[#a6d11d] text-zinc-950 font-black px-5 py-2 rounded-lg text-sm shadow-md transition-transform active:scale-95">
-                                → Sell
-                            </button>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                }
-
-                if(!hasDealers) {
-                    container.innerHTML = '<p class="text-center text-xs text-zinc-400 italic py-4">No egg dealers available at the moment.</p>';
-                }
+            db.ref('dealers').on('value', snap => {
+                activeDealers = snap.val() || {};
             });
         }
 
         function openSaleModal() {
+            const container = document.getElementById('dealersContainer');
+            container.innerHTML = '';
+            
+            let count = 0;
+            for(let key in activeDealers) {
+                count++;
+                let d = activeDealers[key];
+                let div = document.createElement('div');
+                div.className = "bg-emerald-900/60 border border-emerald-700/60 p-3 rounded-xl flex justify-between items-center";
+                div.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-white text-sm">${d.name}</h4>
+                        <p class="text-[10px] text-zinc-300">Rate: <span class="text-yellow-400 font-bold">${d.rate} PKR</span> / egg</p>
+                        <p class="text-[9px] text-emerald-400">Limits: ${d.minLimit} - ${d.maxLimit} eggs</p>
+                    </div>
+                    <button onclick="selectDealer('${key}')" class="bg-yellow-500 hover:bg-yellow-400 text-zinc-950 px-3 py-2 rounded-lg font-bold text-xs shadow">Sell Eggs</button>
+                `;
+                container.appendChild(div);
+            }
+
+            if(count === 0) {
+                container.innerHTML = '<p class="text-center text-xs text-zinc-400 italic py-4">No active dealers available right now.</p>';
+            }
+
             document.getElementById('saleStep1Marketplace').classList.remove('hidden');
             document.getElementById('saleStep2Withdrawal').classList.add('hidden');
             document.getElementById('saleModal').classList.remove('hidden');
             document.getElementById('saleModal').classList.add('flex');
         }
 
-        function selectDealerToSell(dealerId) {
-            selectedDealerObj = activeDealers[dealerId];
-            if(!selectedDealerObj) return;
-
+        function selectDealer(key) {
+            selectedDealerKey = key;
+            selectedDealerObj = activeDealers[key];
+            
             document.getElementById('lblSelectedDealerName').innerText = selectedDealerObj.name;
             document.getElementById('lblSelectedDealerRate').innerText = selectedDealerObj.rate;
-            document.getElementById('lblSelectedDealerLimit').innerText = `Limit Valid Between: ${selectedDealerObj.minLimit} to ${selectedDealerObj.maxLimit} Eggs`;
+            document.getElementById('lblSelectedDealerLimit').innerText = `Limit: ${selectedDealerObj.minLimit} to ${selectedDealerObj.maxLimit} Eggs`;
             
-            document.getElementById('wdEggQty').min = selectedDealerObj.minLimit;
-            document.getElementById('wdEggQty').max = selectedDealerObj.maxLimit;
-            document.getElementById('wdEggQty').placeholder = `Min: ${selectedDealerObj.minLimit}`;
-
             document.getElementById('saleStep1Marketplace').classList.add('hidden');
             document.getElementById('saleStep2Withdrawal').classList.remove('hidden');
         }
 
         function backToMarketplace() {
-            document.getElementById('saleStep1Marketplace').classList.remove('hidden');
             document.getElementById('saleStep2Withdrawal').classList.add('hidden');
-            selectedDealerObj = null;
+            document.getElementById('saleStep1Marketplace').classList.remove('hidden');
         }
 
+        // FIXED EGG SALE / WITHDRAWAL FORM SUBMISSION TO SYNC WITH ADMIN PANEL
         document.getElementById('withdrawalForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            if(!selectedDealerObj) {
-                showCustomAlert("Action Required", "Please select a dealer first.");
+            if(!selectedDealerObj) return;
+
+            let eggQty = parseInt(document.getElementById('wdEggQty').value) || 0;
+            let currentAvail = currentUserData ? (currentUserData.availableEggs || 0) : 0;
+            let currentGift = currentUserData ? (currentUserData.giftEggs || 0) : 0;
+            let totalUserEggs = currentAvail + currentGift;
+
+            if(eggQty <= 0) {
+                showCustomAlert("Invalid Amount", "Please enter a valid egg quantity.");
                 return;
             }
 
-            const eggQty = parseInt(document.getElementById('wdEggQty').value);
-            
-            if (eggQty < selectedDealerObj.minLimit || eggQty > selectedDealerObj.maxLimit) {
-                showCustomAlert("Invalid Quantity", `Quantity must be between ${selectedDealerObj.minLimit} and ${selectedDealerObj.maxLimit} for this dealer.`);
+            if(eggQty > totalUserEggs) {
+                showCustomAlert("Insufficient Eggs", "You do not have enough eggs in your balance!");
                 return;
             }
 
-            const userAvailableEggs = currentUserData.availableEggs || 0;
-            const userGiftEggs = currentUserData.giftEggs || 0;
-            const combinedTotalEggs = userAvailableEggs + userGiftEggs;
-            
-            if (eggQty > combinedTotalEggs) {
-                showCustomAlert("Insufficient Balance", "You do not have enough eggs to meet this sale request!");
+            if(eggQty < selectedDealerObj.minLimit || eggQty > selectedDealerObj.maxLimit) {
+                showCustomAlert("Limit Exceeded", `Dealer accepts between ${selectedDealerObj.minLimit} and ${selectedDealerObj.maxLimit} eggs.`);
                 return;
             }
 
+            let wdType = document.getElementById('wdType').value;
+            let wdNumber = document.getElementById('wdNumber').value;
+            let wdHolderName = document.getElementById('wdHolderName').value;
+            let totalPayout = eggQty * selectedDealerObj.rate;
+
+            // Deduct Eggs from User Balance
             let remainingToDeduct = eggQty;
-            let updatedGiftEggs = userGiftEggs;
-            let updatedAvailableEggs = userAvailableEggs;
+            let newAvail = currentAvail;
+            let newGift = currentGift;
 
-            if (updatedGiftEggs >= remainingToDeduct) {
-                updatedGiftEggs -= remainingToDeduct;
-                remainingToDeduct = 0;
+            if(newAvail >= remainingToDeduct) {
+                newAvail -= remainingToDeduct;
             } else {
-                remainingToDeduct -= updatedGiftEggs;
-                updatedGiftEggs = 0;
-                updatedAvailableEggs = Math.max(0, updatedAvailableEggs - remainingToDeduct);
+                remainingToDeduct -= newAvail;
+                newAvail = 0;
+                newGift = Math.max(0, newGift - remainingToDeduct);
             }
 
-            const calculatedTotalPayout = eggQty * selectedDealerObj.rate;
-
-            const withdrawalNodeData = {
+            // Write to withdraw_requests node so Admin Panel receives it instantly
+            const requestData = {
                 uid: currentUid,
-                methodType: document.getElementById('wdType').value,
-                accountNumber: document.getElementById('wdNumber').value,
-                accountHolderName: document.getElementById('wdHolderName').value,
-                eggsDeductedCount: eggQty,
+                dealerId: selectedDealerKey,
                 dealerName: selectedDealerObj.name,
-                ratePerEgg: selectedDealerObj.rate,
-                totalPayout: calculatedTotalPayout,
-                status: "pending",
-                timestamp: Date.now()
+                accountTitle: wdHolderName,
+                accountHolderName: wdHolderName,
+                accountNumber: wdNumber,
+                bankName: wdType,
+                accountType: wdType,
+                amount: totalPayout,
+                totalPayout: totalPayout,
+                eggsSold: eggQty,
+                eggsDeductedCount: eggQty,
+                status: 'pending',
+                timestamp: firebase.database.ServerValue.TIMESTAMP
             };
 
-            let updates = {};
-            const newWdKey = db.ref().child('withdrawal_requests').push().key;
-            updates[`withdrawal_requests/${newWdKey}`] = withdrawalNodeData;
-            updates[`users/${currentUid}/availableEggs`] = updatedAvailableEggs;
-            updates[`users/${currentUid}/giftEggs`] = updatedGiftEggs;
-
-            db.ref().update(updates).then(() => {
+            db.ref('withdraw_requests').push(requestData).then(() => {
+                return db.ref('users/' + currentUid).update({
+                    availableEggs: newAvail,
+                    giftEggs: newGift
+                });
+            }).then(() => {
                 closeModal('saleModal');
-                
-                // Preparing dynamic WhatsApp message for Admin
-                const waMsg = encodeURIComponent(`Hello Admin, I have submitted a new Egg Sale/Withdrawal request.\nEggs Sold: ${eggQty}\nTotal Payout: ${calculatedTotalPayout} PKR\nDealer: ${selectedDealerObj.name}\nPlease approve my request.`);
-                
-                showCustomAlert(
-                    "Sale Request Sent", 
-                    `Your sale request for ${eggQty} eggs to ${selectedDealerObj.name} has been processed. Click the button below to notify Admin on WhatsApp for quick approval.`, 
-                    () => { window.open(`https://wa.me/923285719803?text=${waMsg}`, '_blank'); },
-                    "Send to WhatsApp"
-                );
-                
-                document.getElementById('withdrawalForm').reset();
-                backToMarketplace();
+                showCustomAlert("Request Submitted", `Egg sale request of ${eggQty} eggs submitted successfully!`);
+            }).catch(err => {
+                showCustomAlert("Error", err.message);
             });
         });
 
         function openUserSettingsModal() {
-            updateBatchesTimers();
             document.getElementById('userSettingsModal').classList.remove('hidden');
             document.getElementById('userSettingsModal').classList.add('flex');
         }
 
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('flex');
+            document.getElementById(id).classList.add('hidden');
+        }
+
         document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const newPassword = document.getElementById('newPasswordInput').value;
-            const user = auth.currentUser;
-
-            if (user && newPassword.length >= 6) {
-                user.updatePassword(newPassword).then(() => {
-                    db.ref('users/' + user.uid + '/password').set(newPassword);
-                    showCustomAlert("Success", "Password updated successfully!");
-                    document.getElementById('changePasswordForm').reset();
-                }).catch(err => {
-                    handleAuthError(err);
-                });
-            } else {
-                showCustomAlert("Error", "Password must be at least 6 characters.");
-            }
+            let newPass = document.getElementById('newPasswordInput').value;
+            
+            if(!auth.currentUser) return;
+            
+            auth.currentUser.updatePassword(newPass).then(() => {
+                return db.ref('users/' + currentUid + '/password').set(newPass);
+            }).then(() => {
+                showCustomAlert("Password Updated", "Your password has been changed successfully.");
+                document.getElementById('newPasswordInput').value = '';
+            }).catch(err => handleAuthError(err));
         });
+
+        function copyReferralLink() {
+            if(!currentUid) return;
+            let nameEncoded = currentUserData ? encodeURIComponent(currentUserData.name || '') : '';
+            let link = window.location.origin + window.location.pathname + '?ref=' + currentUid + '&n=' + nameEncoded;
+            
+            navigator.clipboard.writeText(link).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.remove('opacity-0', 'pointer-events-none');
+                toast.classList.add('opacity-100');
+                setTimeout(() => {
+                    toast.classList.remove('opacity-100');
+                    toast.classList.add('opacity-0', 'pointer-events-none');
+                }, 2000);
+            });
+        }
 
         function downloadPDFReport(type) {
             const pdfContainer = document.getElementById('pdfExportContainer');
             pdfContainer.innerHTML = '';
-            pdfContainer.classList.remove('hidden');
-
-            const userName = currentUserData ? currentUserData.name : 'User';
-            const userEmail = currentUserData ? currentUserData.email : '';
-            const reportDate = new Date().toLocaleString();
-
-            let title = type === 'purchases' ? 'Purchasing History Statement' : 'Withdrawals History Statement';
-            let tableRowsHtml = '';
-
-            if (type === 'purchases') {
-                if (cachedPurchases.length === 0) {
-                    showCustomAlert("No Data", "No purchasing records available to generate PDF.");
-                    pdfContainer.classList.add('hidden');
-                    return;
-                }
-                tableRowsHtml = cachedPurchases.map(p => `
-                    <tr style="border-bottom: 1px solid #ddd;">
-                        <td style="padding: 8px;">${p.transactionId || 'N/A'}</td>
-                        <td style="padding: 8px;">${p.quantity} Hen(s)</td>
-                        <td style="padding: 8px;">${p.amount} PKR</td>
-                        <td style="padding: 8px;">${p.timestamp ? new Date(p.timestamp).toLocaleDateString() : 'N/A'}</td>
-                        <td style="padding: 8px; text-transform: uppercase; font-weight: bold;">${p.status || 'pending'}</td>
-                    </tr>
-                `).join('');
+            
+            let html = `<h2 style="font-size:16px; font-weight:bold; margin-bottom:10px;">Green Land Poultry Farm - ${type === 'purchases' ? 'Purchasing Ledger' : 'Withdrawals Ledger'}</h2>`;
+            html += `<p style="margin-bottom:15px;">User: ${currentUserData ? currentUserData.name : ''} (${currentUserData ? currentUserData.email : ''})</p>`;
+            
+            let list = type === 'purchases' ? cachedPurchases : cachedWithdrawals;
+            
+            if(list.length === 0) {
+                html += '<p>No records found.</p>';
             } else {
-                if (cachedWithdrawals.length === 0) {
-                    showCustomAlert("No Data", "No withdrawal records available to generate PDF.");
-                    pdfContainer.classList.add('hidden');
-                    return;
-                }
-                tableRowsHtml = cachedWithdrawals.map(w => `
-                    <tr style="border-bottom: 1px solid #ddd;">
-                        <td style="padding: 8px;">${w.dealerName || 'Dealer'}</td>
-                        <td style="padding: 8px;">${w.eggsDeductedCount} Eggs</td>
-                        <td style="padding: 8px;">${w.totalPayout || 0} PKR</td>
-                        <td style="padding: 8px;">${w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A'}</td>
-                        <td style="padding: 8px; text-transform: uppercase; font-weight: bold;">${w.status || 'pending'}</td>
-                    </tr>
-                `).join('');
+                html += '<table style="width:100%; border-collapse:collapse; font-size:10px;" border="1" cellpadding="5">';
+                html += '<tr style="background:#f2f2f2;"><th>Date</th><th>Detail</th><th>Amount</th><th>Status</th></tr>';
+                
+                list.forEach(item => {
+                    let dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A';
+                    let detail = type === 'purchases' ? `${item.quantity} Hens (Trx: ${item.transactionId || 'N/A'})` : `${item.eggsSold || item.eggsDeductedCount || 0} Eggs (${item.dealerName || 'Dealer'})`;
+                    let amt = type === 'purchases' ? `${item.amount} PKR` : `${item.amount || item.totalPayout || 0} PKR`;
+                    
+                    html += `<tr><td>${dateStr}</td><td>${detail}</td><td>${amt}</td><td>${item.status || 'pending'}</td></tr>`;
+                });
+                html += '</table>';
             }
 
-            pdfContainer.innerHTML = `
-                <div style="font-family: Arial, sans-serif; padding: 20px;">
-                    <div style="border-bottom: 2px solid #eab308; padding-bottom: 10px; margin-bottom: 20px;">
-                        <h2 style="color: #0b130a; margin: 0;">Green Land Poultry Farm</h2>
-                        <h4 style="color: #555; margin: 5px 0;">${title}</h4>
-                    </div>
-                    <div style="margin-bottom: 20px; font-size: 12px; color: #333;">
-                        <p style="margin: 2px 0;"><strong>Investor Name:</strong> ${userName}</p>
-                        <p style="margin: 2px 0;"><strong>Email:</strong> ${userEmail}</p>
-                        <p style="margin: 2px 0;"><strong>Generated On:</strong> ${reportDate}</p>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 11px;">
-                        <thead>
-                            <tr style="background-color: #f3f4f6; border-bottom: 2px solid #ccc;">
-                                ${type === 'purchases' 
-                                    ? '<th style="padding: 8px;">Trx ID</th><th style="padding: 8px;">Qty</th><th style="padding: 8px;">Amount</th><th style="padding: 8px;">Date</th><th style="padding: 8px;">Status</th>' 
-                                    : '<th style="padding: 8px;">Dealer</th><th style="padding: 8px;">Eggs</th><th style="padding: 8px;">Payout</th><th style="padding: 8px;">Date & Time</th><th style="padding: 8px;">Status</th>'
-                                }
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${tableRowsHtml}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            const options = {
-                margin: 0.5,
-                filename: `${userName}_${type}_Statement.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            pdfContainer.innerHTML = html;
+            
+            const opt = {
+                margin:       0.5,
+                filename:     `GL_Poultry_${type}_Report.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
-
-            html2pdf().set(options).from(pdfContainer).save().then(() => {
-                pdfContainer.classList.add('hidden');
-            });
+            
+            html2pdf().set(opt).from(pdfContainer).save();
         }
     </script>
 </body>
