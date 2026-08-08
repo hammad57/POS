@@ -499,7 +499,7 @@
                     let p = child.val(); let key = child.key;
                     if(p.status === 'pending') pendingCount++;
                     let userObj = allUsersGlobal[p.uid] || {};
-                    let dStr = new Date(p.timestamp).toLocaleString();
+                    let dStr = p.timestamp ? new Date(p.timestamp).toLocaleString() : 'N/A';
                     let stClr = p.status==='approved'?'text-emerald-400':(p.status==='rejected'?'text-red-400':'text-yellow-400');
                     
                     let actHtml = p.status === 'pending' ? `
@@ -525,10 +525,12 @@
         function approvePurchase(reqId, uid, qty, amount) {
             if(!confirm(`Approve purchase of ${qty} hens?`)) return;
             let currentHens = (allUsersGlobal[uid] && allUsersGlobal[uid].totalHens) ? Number(allUsersGlobal[uid].totalHens) : 0;
+            let currentExpense = (allUsersGlobal[uid] && allUsersGlobal[uid].totalExpense) ? Number(allUsersGlobal[uid].totalExpense) : 0;
             
             let updates = {};
             updates['purchase_requests/' + reqId + '/status'] = 'approved';
             updates['users/' + uid + '/totalHens'] = currentHens + Number(qty);
+            updates['users/' + uid + '/totalExpense'] = currentExpense + Number(amount);
             
             db.ref().update(updates);
         }
@@ -546,14 +548,21 @@
                 snap.forEach(child => {
                     let w = child.val(); let key = child.key;
                     if(w.status === 'pending') pendingCount++;
-                    if(w.status === 'approved') totalPayout += Number(w.amount || 0);
+                    
+                    let payoutAmount = Number(w.amount || w.totalPayout || 0);
+                    if(w.status === 'approved') totalPayout += payoutAmount;
 
                     let userObj = allUsersGlobal[w.uid] || {};
-                    let dStr = new Date(w.timestamp).toLocaleString();
+                    let dStr = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
                     let stClr = w.status==='approved'?'text-emerald-400':(w.status==='rejected'?'text-red-400':'text-yellow-400');
                     
+                    let accTitle = w.accountTitle || w.accountHolderName || 'N/A';
+                    let accNum = w.accountNumber || 'N/A';
+                    let bank = w.bankName || w.accountType || 'N/A';
+                    let eggsCount = w.eggsSold || w.eggsDeductedCount || 0;
+
                     let actHtml = w.status === 'pending' ? `
-                        <button onclick="approveWithdrawal('${key}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold mr-1">Paid</button>
+                        <button onclick="approveWithdrawal('${key}', '${w.uid}', ${payoutAmount})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold mr-1">Paid</button>
                         <button onclick="promptReject('withdraw', '${key}')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold">Reject</button>
                     ` : `<span class="${stClr} font-bold uppercase text-[10px]">${w.status}</span>`;
 
@@ -561,8 +570,8 @@
                     tr.innerHTML = `
                         <td class="p-3 border-t border-slate-800 text-[9px] text-slate-400 whitespace-nowrap">${dStr}</td>
                         <td class="p-3 border-t border-slate-800"><span class="block text-blue-300 font-bold">${userObj.name||'Unknown'}</span><span class="block text-[9px] text-yellow-400">Dealer: ${w.dealerName||'N/A'}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-[10px]"><span class="text-white block font-bold">${w.accountTitle}</span><span class="text-slate-400">${w.accountNumber}</span><br><span class="text-slate-500 text-[9px]">${w.bankName}</span></td>
-                        <td class="p-3 border-t border-slate-800 text-center font-bold text-emerald-400">${w.amount} PKR<br><span class="text-[9px] text-slate-500">${w.eggsSold} Eggs</span></td>
+                        <td class="p-3 border-t border-slate-800 text-[10px]"><span class="text-white block font-bold">${accTitle}</span><span class="text-slate-400">${accNum}</span><br><span class="text-slate-500 text-[9px]">${bank}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-center font-bold text-emerald-400">${payoutAmount} PKR<br><span class="text-[9px] text-slate-500">${eggsCount} Eggs</span></td>
                         <td class="p-3 border-t border-slate-800 text-center"><span class="${stClr} uppercase text-[9px] font-black tracking-wider bg-slate-950 px-2 py-1 rounded border border-slate-700">${w.status}</span></td>
                         <td class="p-3 border-t border-slate-800 text-right whitespace-nowrap">${actHtml}</td>
                     `;
@@ -573,9 +582,18 @@
             });
         }
 
-        function approveWithdrawal(reqId) {
+        function approveWithdrawal(reqId, uid, amount) {
             if(!confirm(`Mark this withdrawal as PAID?`)) return;
-            db.ref('withdraw_requests/' + reqId).update({ status: 'approved' });
+            
+            let updates = {};
+            updates['withdraw_requests/' + reqId + '/status'] = 'approved';
+            
+            if(uid && allUsersGlobal[uid]) {
+                let currentWd = Number(allUsersGlobal[uid].totalWithdrawal) || 0;
+                updates['users/' + uid + '/totalWithdrawal'] = currentWd + Number(amount || 0);
+            }
+            
+            db.ref().update(updates);
         }
 
         // =======================
