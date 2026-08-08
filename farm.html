@@ -585,15 +585,18 @@
             }
         }
 
-        // --- Custom Alert System ---
-        function showCustomAlert(title, message, callback = null) {
+        // --- Custom Alert System Modified for Dynamic Button Text ---
+        function showCustomAlert(title, message, callback = null, btnText = "OK") {
             document.getElementById('customAlertTitle').innerText = title;
             document.getElementById('customAlertMessage').innerText = message;
             
             const btn = document.getElementById('customAlertBtn');
+            btn.innerText = btnText;
             btn.onclick = function() {
                 closeCustomAlert();
                 if(callback) callback();
+                // Reset button text just in case for next time
+                setTimeout(() => { btn.innerText = "OK"; }, 300);
             };
             
             document.getElementById('customAlertModal').classList.remove('hidden');
@@ -1019,12 +1022,14 @@
         document.getElementById('paymentProofForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const qty = parseInt(document.getElementById('purchaseQty').value);
+            const trxId = document.getElementById('proofTrxId').value;
+            const totalAmount = qty * 499;
 
             const requestNodeData = {
                 uid: currentUid,
                 quantity: qty,
-                amount: qty * 499,
-                transactionId: document.getElementById('proofTrxId').value,
+                amount: totalAmount,
+                transactionId: trxId,
                 accountHolderName: document.getElementById('proofHolderName').value,
                 status: "pending",
                 timestamp: Date.now()
@@ -1032,7 +1037,17 @@
 
             db.ref('purchase_requests').push(requestNodeData).then(() => {
                 closeModal('purchaseModal');
-                showCustomAlert("Request Submitted", "Your payment proof has been sent successfully. Please wait for admin verification.");
+                
+                // Preparing dynamic WhatsApp message for Admin
+                const waMsg = encodeURIComponent(`Hello Admin, I have submitted a new Hen Purchase request.\nQuantity: ${qty} Hens\nAmount: ${totalAmount} PKR\nTrx ID: ${trxId}\nPlease approve my request.`);
+                
+                showCustomAlert(
+                    "Request Submitted", 
+                    "Your payment proof has been sent successfully. Click the button below to send details to Admin on WhatsApp for quick approval.", 
+                    () => { window.open(`https://wa.me/923285719803?text=${waMsg}`, '_blank'); },
+                    "Send to WhatsApp"
+                );
+                
                 document.getElementById('paymentProofForm').reset();
             });
         });
@@ -1174,7 +1189,17 @@
 
             db.ref().update(updates).then(() => {
                 closeModal('saleModal');
-                showCustomAlert("Sale Request Sent", `Your sale request for ${eggQty} eggs to ${selectedDealerObj.name} has been processed. You will receive ${calculatedTotalPayout} PKR soon.`);
+                
+                // Preparing dynamic WhatsApp message for Admin
+                const waMsg = encodeURIComponent(`Hello Admin, I have submitted a new Egg Sale/Withdrawal request.\nEggs Sold: ${eggQty}\nTotal Payout: ${calculatedTotalPayout} PKR\nDealer: ${selectedDealerObj.name}\nPlease approve my request.`);
+                
+                showCustomAlert(
+                    "Sale Request Sent", 
+                    `Your sale request for ${eggQty} eggs to ${selectedDealerObj.name} has been processed. Click the button below to notify Admin on WhatsApp for quick approval.`, 
+                    () => { window.open(`https://wa.me/923285719803?text=${waMsg}`, '_blank'); },
+                    "Send to WhatsApp"
+                );
+                
                 document.getElementById('withdrawalForm').reset();
                 backToMarketplace();
             });
