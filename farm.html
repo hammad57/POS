@@ -1016,7 +1016,11 @@
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
                 closeModal('purchaseModal');
-                showCustomAlert("Request Submitted", "Your hen purchase request has been submitted to admin for verification.");
+                let waMessage = `*New Hen Purchase Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nQuantity: ${qty} Hens\nAmount: ${qty * 499} PKR\nTrx ID: ${trx}\nAccount Holder: ${holder}`;
+                let waUrl = `https://wa.me/923285719803?text=${encodeURIComponent(waMessage)}`;
+                showCustomAlert("Request Submitted", "Your hen purchase request has been submitted. Click below to send details to Admin on WhatsApp.", () => {
+                    window.open(waUrl, '_blank');
+                }, "Send to WhatsApp");
             });
         });
 
@@ -1142,7 +1146,11 @@
                 });
             }).then(() => {
                 closeModal('saleModal');
-                showCustomAlert("Request Submitted", `Egg sale request of ${eggQty} eggs submitted successfully!`);
+                let waMessage = `*New Egg Sale Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nDealer: ${selectedDealerObj.name}\nEggs Sold: ${eggQty}\nTotal Amount: ${totalPayout} PKR\nAccount Type: ${wdType}\nAccount Title: ${wdHolderName}\nAccount No: ${wdNumber}`;
+                let waUrl = `https://wa.me/923285719803?text=${encodeURIComponent(waMessage)}`;
+                showCustomAlert("Request Submitted", `Egg sale request of ${eggQty} eggs submitted successfully! Click below to send details to Admin on WhatsApp.`, () => {
+                    window.open(waUrl, '_blank');
+                }, "Send to WhatsApp");
             }).catch(err => {
                 showCustomAlert("Error", err.message);
             });
