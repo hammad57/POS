@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- user-scalable=no aur maximum-scale=1.0 page ko zoom hone se roke ga -->
+    <!-- Screen zoom aur drag ko rokne ke liye viewport settings -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GL Poultry Admin Command Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -10,29 +10,24 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
-        /* App jaisa feel dene ke liye extra scrolling aur tap effects band kar diye hain */
         body { 
             background: #020617; 
             color: #f8fafc; 
             font-family: system-ui, -apple-system, sans-serif; 
-            overscroll-behavior-y: none; /* Pull-to-refresh roknay ke liye */
-            -webkit-tap-highlight-color: transparent; /* Mobile tap color hatane ke liye */
+            overscroll-behavior-y: none; 
+            -webkit-tap-highlight-color: transparent; 
         }
         .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
-        
         .tab-btn.active { border-bottom: 2px solid #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
-        
-        /* Modals and Overlays transition */
-        .overlay-active { display: block !important; }
     </style>
 </head>
 <body class="fixed inset-0 text-xs overflow-hidden bg-slate-950 w-full h-full">
 
     <div id="adminPanel" class="flex w-full h-full relative overflow-hidden">
         
-        <!-- SIDEBAR OVERLAY (Mobile ke liye taa ke bahar click karne par band ho jaye) -->
+        <!-- SIDEBAR OVERLAY -->
         <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
 
         <!-- SIDEBAR -->
@@ -42,12 +37,11 @@
                     <h2 class="text-blue-400 font-black text-lg tracking-wider">GL COMMAND</h2>
                     <p class="text-[10px] text-slate-400 uppercase mt-1">Super Admin Panel</p>
                 </div>
-                <!-- Close Button for Mobile -->
                 <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white text-3xl font-bold p-2">&times;</button>
             </div>
             
             <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-2">
-                <button onclick="switchTab('tab-dashboard')" class="tab-btn active w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                <button onclick="switchTab('tab-dashboard')" class="tab-btn active w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide">
                     <span>📊 Dashboard</span>
                 </button>
                 <button onclick="switchTab('tab-users')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
@@ -62,7 +56,7 @@
                 <button onclick="switchTab('tab-withdrawals')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
                     <span>💸 Payouts</span> <span id="badgeWithdrawals" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[9px]">0</span>
                 </button>
-                <button onclick="switchTab('tab-dealers')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex justify-between items-center">
+                <button onclick="switchTab('tab-dealers')" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide">
                     <span>🏪 Dealers Market</span>
                 </button>
             </div>
@@ -73,7 +67,6 @@
 
         <!-- MAIN CONTENT AREA -->
         <div class="flex-1 flex flex-col w-full bg-slate-950 relative overflow-hidden h-full">
-            <!-- Header -->
             <div class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-10 shadow-md shrink-0">
                 <div class="flex items-center">
                     <button onclick="toggleSidebar()" class="md:hidden text-slate-300 hover:text-white mr-3 text-2xl p-1">☰</button>
@@ -82,10 +75,9 @@
                 <span class="bg-emerald-900/50 text-emerald-400 px-2 py-1 rounded text-[9px] border border-emerald-800 uppercase tracking-widest font-bold">Encrypted</span>
             </div>
 
-            <!-- Scrollable Pages -->
             <div class="flex-1 overflow-y-auto overflow-x-hidden w-full custom-scroll p-3 sm:p-5">
                 
-                <!-- TAB: DASHBOARD OVERVIEW -->
+                <!-- TAB: DASHBOARD -->
                 <div id="tab-dashboard" class="tab-content block space-y-4">
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
@@ -107,13 +99,12 @@
                     </div>
                 </div>
 
-                <!-- TAB: USERS LIST (OLD) -->
+                <!-- TAB: OLD USERS -->
                 <div id="tab-users" class="tab-content hidden space-y-4">
                     <div class="flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-900 p-3 rounded-xl border border-slate-800 shadow">
-                        <h3 class="text-sm sm:text-base font-bold text-slate-200 w-full text-left">Registered Users</h3>
+                        <h3 class="text-sm font-bold text-slate-200 w-full text-left">Registered Users</h3>
                         <input type="text" id="searchUser" onkeyup="filterUsers()" placeholder="Search users..." class="bg-slate-950 border border-slate-700 rounded px-3 py-2 w-full sm:w-72 text-white focus:outline-none focus:border-blue-500 text-xs">
                     </div>
-                    <!-- W-full aur overflow-x-auto lagaya ta k table screen se bahar na nikle -->
                     <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll w-full shadow">
                         <table class="w-full text-left border-collapse whitespace-nowrap min-w-[600px]">
                             <thead class="bg-slate-800 text-[10px] uppercase text-slate-400 border-b border-slate-700">
@@ -288,12 +279,13 @@
             <textarea id="rejectReasonInput" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded p-3 text-white outline-none focus:border-red-500 text-xs mb-3" placeholder="Why is this being rejected?"></textarea>
             <div class="flex justify-end space-x-2">
                 <button onclick="closeRejectModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded text-xs hover:bg-slate-700 font-bold">Cancel</button>
-                <button id="btnConfirmReject" class="px-4 py-2 bg-red-600 text-white rounded text-xs hover:bg-red-500 font-bold">Reject</button>
+                <button id="btnConfirmReject" onclick="confirmRejection()" class="px-4 py-2 bg-red-600 text-white rounded text-xs hover:bg-red-500 font-bold">Reject</button>
             </div>
         </div>
     </div>
 
     <script>
+        // Apni Firebase Config Yahan Laga Lein
         const firebaseConfig = {
             apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
             authDomain: "own-live-steam-web-default.firebaseapp.com",
@@ -303,18 +295,18 @@
             messagingSenderId: "xxxxxxxxxxx",
             appId: "xxxxxxxxxxx"
         };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
 
         let allUsersGlobal = {};
         let currentInspectedUid = null;
-        let adminTimerInterval = null;
+        let rejectType = null;
+        let rejectId = null;
 
         setInterval(() => { document.getElementById('systemClock').innerText = new Date().toLocaleString(); }, 1000);
 
         window.onload = function() { initAdminDash(); };
 
-        // Sidebar Toggle
         function toggleSidebar() {
             const sidebar = document.getElementById('mainSidebar');
             const overlay = document.getElementById('sidebarOverlay');
@@ -322,40 +314,26 @@
             overlay.classList.toggle('hidden');
         }
 
-        // Open/Close User Panel smoothly
-        function openUserPanel(uid) {
-            currentInspectedUid = uid;
-            const panel = document.getElementById('userSidePanel');
-            const overlay = document.getElementById('panelOverlay');
-            panel.classList.remove('translate-x-full');
-            overlay.classList.remove('hidden');
-            // Load user data here...
-        }
-
-        function closeUserPanel() {
-            const panel = document.getElementById('userSidePanel');
-            const overlay = document.getElementById('panelOverlay');
-            panel.classList.add('translate-x-full');
-            overlay.classList.add('hidden');
-            currentInspectedUid = null;
-        }
-
-        function logoutAdmin() { location.reload(); }
-
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.remove('hidden');
             event.currentTarget.classList.add('active');
-            
             if (window.innerWidth < 768) toggleSidebar();
         }
+
+        function logoutAdmin() { location.reload(); }
 
         function initAdminDash() {
             renderDashboardAndUsers();
             renderPurchases();
+            renderWithdrawals();
+            renderDealers();
         }
 
+        // =======================
+        // USERS & DASHBOARD
+        // =======================
         function renderDashboardAndUsers() {
             db.ref('users').on('value', snapshot => {
                 allUsersGlobal = snapshot.val() || {};
@@ -369,8 +347,8 @@
                 for(let uid in allUsersGlobal) {
                     tUsers++;
                     let data = allUsersGlobal[uid];
-                    tHens += (data.totalHens || 0);
-                    tEggs += ((data.availableEggs || 0) + (data.giftEggs || 0));
+                    tHens += (Number(data.totalHens) || 0);
+                    tEggs += ((Number(data.availableEggs) || 0) + (Number(data.giftEggs) || 0));
 
                     let regDateMs = Number(data.createdAt) || 0; 
                     let isNewUser = false;
@@ -385,7 +363,7 @@
                         }
                     }
 
-                    let uEggs = (data.availableEggs || 0) + (data.giftEggs || 0);
+                    let uEggs = (Number(data.availableEggs) || 0) + (Number(data.giftEggs) || 0);
                     let statusClr = data.status === 'blocked' ? 'text-red-500' : 'text-green-500';
                     
                     let tr = document.createElement('tr');
@@ -417,6 +395,11 @@
                 document.getElementById('dashTotalEggs').innerText = tEggs;
                 document.getElementById('badgeUsers').innerText = tUsers - newUsersCount;
                 document.getElementById('badgeNewUsers').innerText = newUsersCount;
+                
+                // Agar User Panel open hai tou live update ho
+                if(currentInspectedUid && allUsersGlobal[currentInspectedUid]) {
+                    populateUserPanelData(currentInspectedUid);
+                }
             });
         }
 
@@ -427,9 +410,91 @@
             });
         }
 
+        // =======================
+        // USER PANEL & ACTIONS
+        // =======================
+        function openUserPanel(uid) {
+            currentInspectedUid = uid;
+            const panel = document.getElementById('userSidePanel');
+            const overlay = document.getElementById('panelOverlay');
+            panel.classList.remove('translate-x-full');
+            overlay.classList.remove('hidden');
+            populateUserPanelData(uid);
+        }
+
+        function closeUserPanel() {
+            const panel = document.getElementById('userSidePanel');
+            const overlay = document.getElementById('panelOverlay');
+            panel.classList.add('translate-x-full');
+            overlay.classList.add('hidden');
+            currentInspectedUid = null;
+        }
+
+        function populateUserPanelData(uid) {
+            let data = allUsersGlobal[uid];
+            if(!data) return;
+
+            document.getElementById('panelUserName').innerText = data.name || 'N/A';
+            document.getElementById('panelUserEmail').innerText = data.email || data.mobile || 'N/A';
+            document.getElementById('panelUserRef').innerText = data.referredBy || 'None';
+            
+            // Only update inputs if they are not actively being focused/typed in
+            if(document.activeElement.id !== 'overridePassword') document.getElementById('overridePassword').value = data.password || '';
+            if(document.activeElement.id !== 'overrideEggs') document.getElementById('overrideEggs').value = data.availableEggs || 0;
+            if(document.activeElement.id !== 'overrideGift') document.getElementById('overrideGift').value = data.giftEggs || 0;
+            if(document.activeElement.id !== 'overrideHens') document.getElementById('overrideHens').value = data.totalHens || 0;
+
+            let btnBlock = document.getElementById('btnBlockUser');
+            if(data.status === 'blocked') {
+                btnBlock.innerText = "UNBLOCK USER";
+                btnBlock.className = "w-full bg-green-900/50 hover:bg-green-800 text-green-300 py-3 rounded text-[11px] uppercase font-bold border border-green-800 transition-colors";
+            } else {
+                btnBlock.innerText = "BLOCK USER";
+                btnBlock.className = "w-full bg-red-900/50 hover:bg-red-800 text-red-300 py-3 rounded text-[11px] uppercase font-bold border border-red-800 transition-colors";
+            }
+        }
+
+        function saveManualOverride(field, inputId) {
+            if(!currentInspectedUid) return;
+            let val = document.getElementById(inputId).value;
+            if(field !== 'password') val = Number(val);
+            
+            db.ref('users/' + currentInspectedUid).update({
+                [field]: val
+            }).then(() => {
+                alert(field + ' updated successfully!');
+            }).catch(e => alert(e.message));
+        }
+
+        function toggleUserBlock() {
+            if(!currentInspectedUid) return;
+            let currentStatus = allUsersGlobal[currentInspectedUid].status || 'active';
+            let newStatus = currentStatus === 'blocked' ? 'active' : 'blocked';
+            
+            db.ref('users/' + currentInspectedUid).update({
+                status: newStatus
+            });
+        }
+
+        function deleteUserAccount() {
+            if(!currentInspectedUid) return;
+            if(confirm("DANGER: Are you sure you want to permanently delete this user? This cannot be undone!")) {
+                db.ref('users/' + currentInspectedUid).remove().then(() => {
+                    alert("User Deleted.");
+                    closeUserPanel();
+                });
+            }
+        }
+
+        // =======================
+        // PURCHASES
+        // =======================
         function renderPurchases() {
             db.ref('purchase_requests').on('value', snap => {
-                let pendingCount = 0; const tbody = document.getElementById('tblPurchasesBody'); tbody.innerHTML = '';
+                let pendingCount = 0; 
+                const tbody = document.getElementById('tblPurchasesBody'); 
+                tbody.innerHTML = '';
+                
                 snap.forEach(child => {
                     let p = child.val(); let key = child.key;
                     if(p.status === 'pending') pendingCount++;
@@ -457,34 +522,130 @@
             });
         }
 
-        /* 
-          YAHAN SE JAVASCRIPT CUT HO GAYI THI 
-          Main ne usay complete kar diya hai database update logics ke sath.
-        */
         function approvePurchase(reqId, uid, qty, amount) {
-            if(!confirm(`Approve purchase of ${qty} hens for ${amount} PKR?`)) return;
+            if(!confirm(`Approve purchase of ${qty} hens?`)) return;
+            let currentHens = (allUsersGlobal[uid] && allUsersGlobal[uid].totalHens) ? Number(allUsersGlobal[uid].totalHens) : 0;
             
-            // Getting current user hens to increment
-            db.ref('users/' + uid).once('value').then(snap => {
-                let currentHens = snap.val().totalHens || 0;
-                let updates = {};
-                updates['purchase_requests/' + reqId + '/status'] = 'approved';
-                updates['users/' + uid + '/totalHens'] = currentHens + qty;
-                
-                db.ref().update(updates).then(() => {
-                    alert('Purchase Request Approved successfully!');
-                }).catch(err => alert('Error: ' + err.message));
+            let updates = {};
+            updates['purchase_requests/' + reqId + '/status'] = 'approved';
+            updates['users/' + uid + '/totalHens'] = currentHens + Number(qty);
+            
+            db.ref().update(updates);
+        }
+
+        // =======================
+        // WITHDRAWALS
+        // =======================
+        function renderWithdrawals() {
+            db.ref('withdraw_requests').on('value', snap => {
+                let pendingCount = 0; 
+                let totalPayout = 0;
+                const tbody = document.getElementById('tblWithdrawalsBody'); 
+                tbody.innerHTML = '';
+
+                snap.forEach(child => {
+                    let w = child.val(); let key = child.key;
+                    if(w.status === 'pending') pendingCount++;
+                    if(w.status === 'approved') totalPayout += Number(w.amount || 0);
+
+                    let userObj = allUsersGlobal[w.uid] || {};
+                    let dStr = new Date(w.timestamp).toLocaleString();
+                    let stClr = w.status==='approved'?'text-emerald-400':(w.status==='rejected'?'text-red-400':'text-yellow-400');
+                    
+                    let actHtml = w.status === 'pending' ? `
+                        <button onclick="approveWithdrawal('${key}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold mr-1">Paid</button>
+                        <button onclick="promptReject('withdraw', '${key}')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold">Reject</button>
+                    ` : `<span class="${stClr} font-bold uppercase text-[10px]">${w.status}</span>`;
+
+                    let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
+                    tr.innerHTML = `
+                        <td class="p-3 border-t border-slate-800 text-[9px] text-slate-400 whitespace-nowrap">${dStr}</td>
+                        <td class="p-3 border-t border-slate-800"><span class="block text-blue-300 font-bold">${userObj.name||'Unknown'}</span><span class="block text-[9px] text-yellow-400">Dealer: ${w.dealerName||'N/A'}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-[10px]"><span class="text-white block font-bold">${w.accountTitle}</span><span class="text-slate-400">${w.accountNumber}</span><br><span class="text-slate-500 text-[9px]">${w.bankName}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-center font-bold text-emerald-400">${w.amount} PKR<br><span class="text-[9px] text-slate-500">${w.eggsSold} Eggs</span></td>
+                        <td class="p-3 border-t border-slate-800 text-center"><span class="${stClr} uppercase text-[9px] font-black tracking-wider bg-slate-950 px-2 py-1 rounded border border-slate-700">${w.status}</span></td>
+                        <td class="p-3 border-t border-slate-800 text-right whitespace-nowrap">${actHtml}</td>
+                    `;
+                    tbody.prepend(tr);
+                });
+                document.getElementById('badgeWithdrawals').innerText = pendingCount;
+                document.getElementById('dashTotalPayouts').innerText = totalPayout.toLocaleString();
             });
         }
 
-        // Rejection Modal Functions
+        function approveWithdrawal(reqId) {
+            if(!confirm(`Mark this withdrawal as PAID?`)) return;
+            db.ref('withdraw_requests/' + reqId).update({ status: 'approved' });
+        }
+
+        // =======================
+        // DEALERS
+        // =======================
+        document.getElementById('dealerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            db.ref('dealers').push({
+                name: document.getElementById('dlrName').value,
+                rate: Number(document.getElementById('dlrRate').value),
+                minLimit: Number(document.getElementById('dlrMin').value),
+                maxLimit: Number(document.getElementById('dlrMax').value)
+            }).then(() => {
+                alert('Dealer added!');
+                this.reset();
+            });
+        });
+
+        function renderDealers() {
+            db.ref('dealers').on('value', snap => {
+                const tbody = document.getElementById('tblDealersBody'); 
+                tbody.innerHTML = '';
+                snap.forEach(child => {
+                    let d = child.val(); let key = child.key;
+                    let tr = document.createElement('tr'); tr.className="hover:bg-slate-800/50";
+                    tr.innerHTML = `
+                        <td class="p-3 border-t border-slate-800 text-[9px] font-mono text-slate-500">${key.substring(0,6)}</td>
+                        <td class="p-3 border-t border-slate-800 font-bold text-blue-300">${d.name}</td>
+                        <td class="p-3 border-t border-slate-800 text-center font-bold text-yellow-400">${d.rate} PKR</td>
+                        <td class="p-3 border-t border-slate-800 text-center text-[10px] text-slate-400">${d.minLimit} - ${d.maxLimit}</td>
+                        <td class="p-3 border-t border-slate-800 text-right">
+                            <button onclick="deleteDealer('${key}')" class="text-red-500 hover:text-red-400 font-bold text-[10px] uppercase">Remove</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        function deleteDealer(id) {
+            if(confirm("Remove this dealer?")) db.ref('dealers/' + id).remove();
+        }
+
+        // =======================
+        // REJECTION MODAL LOGIC
+        // =======================
         function promptReject(type, reqId) {
+            rejectType = type;
+            rejectId = reqId;
             document.getElementById('rejectModal').style.display = 'flex';
         }
 
         function closeRejectModal() {
             document.getElementById('rejectModal').style.display = 'none';
             document.getElementById('rejectReasonInput').value = '';
+            rejectType = null;
+            rejectId = null;
+        }
+
+        function confirmRejection() {
+            let reason = document.getElementById('rejectReasonInput').value;
+            if(!reason) { alert("Please enter a reason"); return; }
+            
+            let path = rejectType === 'purchase' ? 'purchase_requests/' : 'withdraw_requests/';
+            db.ref(path + rejectId).update({
+                status: 'rejected',
+                rejectReason: reason
+            }).then(() => {
+                closeRejectModal();
+            });
         }
     </script>
 </body>
