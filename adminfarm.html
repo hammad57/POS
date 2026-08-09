@@ -838,6 +838,7 @@
             });
         }
 
+        // ====== YAHAN TABDEELI KI GAYI HY ======
         function approvePurchase(reqId, uid, qty, amount) {
             if(confirm("Approve this purchase request?")) {
                 let userRef = db.ref('users/' + uid);
@@ -845,12 +846,15 @@
                     let user = snap.val() || {};
                     let newHens = (Number(user.totalHens) || 0) + qty;
                     let newExp = (Number(user.totalExpense) || 0) + amount;
+                    // Nayi Tabdeeli: User ke mojooda eggs mein khareedi gayi murghiyon ki tadaad shamil ki ja rahi hy
+                    let newAvailableEggs = (Number(user.availableEggs) || 0) + qty;
                     
                     let batchKey = userRef.child('hen_batches').push().key;
                     
                     let updates = {
                         totalHens: newHens,
                         totalExpense: newExp,
+                        availableEggs: newAvailableEggs, // Nayi Tabdeeli
                         [`hen_batches/${batchKey}`]: {
                             qty: qty,
                             boughtAt: firebase.database.ServerValue.TIMESTAMP,
@@ -864,6 +868,7 @@
                 }).catch(e => alert(e.message));
             }
         }
+        // ========================================
 
         // --- 4. WITHDRAWALS LISTENER ---
         function fetchWithdrawals() {
