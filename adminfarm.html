@@ -212,15 +212,15 @@
             </div>
         </section>
 
-        <!-- ==================== TAB 2: USER MANAGEMENT ==================== -->
+        <!-- ==================== TAB 2: USER MANAGEMENT (UPDATED) ==================== -->
         <section id="tab-users" class="tab-content hidden space-y-4">
             <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow flex flex-col sm:flex-row justify-between gap-3 items-center">
                 <h3 class="font-bold text-yellow-400 text-sm">Registered Users List</h3>
-                <input type="text" id="userSearchInput" onkeyup="filterUsersTable()" placeholder="Search by name, email, phone..." class="w-full sm:w-64 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                <input type="text" id="userSearchInput" onkeyup="filterUsersTable()" placeholder="Search by name, email, phone..." class="w-full sm:w-64 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 transition-colors">
             </div>
 
             <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll shadow">
-                <table class="w-full text-left text-xs">
+                <table class="w-full text-left text-xs min-w-[600px]">
                     <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
                         <tr>
                             <th class="p-3">User Details</th>
@@ -432,41 +432,61 @@
 
     </main>
 
-    <!-- MODAL: EDIT USER ACCOUNT & OVERRIDES -->
+    <!-- MODAL: EDIT USER ACCOUNT & OVERRIDES (UPDATED WITH HOURS/MINS & QUICK 1-MIN FIX) -->
     <div id="userModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl relative">
-            <button onclick="closeModal('userModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl">&times;</button>
-            <h3 class="text-sm font-bold text-yellow-400 mb-3 border-b border-slate-800 pb-2">Manage User Account & Overrides</h3>
+            <button onclick="closeModal('userModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+            <h3 class="text-sm font-bold text-yellow-400 mb-4 border-b border-slate-800 pb-2">Manage User Account & Overrides</h3>
+            
             <form id="editUserForm" class="space-y-3 text-xs">
                 <input type="hidden" id="modalUid">
                 <div>
                     <label class="block text-slate-400 mb-1">User Name</label>
-                    <input type="text" id="modalUserName" disabled class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-slate-400">
+                    <input type="text" id="modalUserName" disabled class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-400 opacity-70">
                 </div>
                 <div>
                     <label class="block text-slate-400 mb-1">Password</label>
-                    <input type="text" id="modalUserPassword" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-red-400 font-mono">
+                    <input type="text" id="modalUserPassword" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-red-400 font-mono focus:border-red-500 outline-none transition-colors">
                 </div>
-                <div>
-                    <label class="block text-slate-400 mb-1">Available Eggs Balance</label>
-                    <input type="number" id="modalUserEggs" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-yellow-400 font-mono">
-                </div>
-                <div>
-                    <label class="block text-slate-400 mb-1">Gift Eggs Balance</label>
-                    <input type="number" id="modalUserGift" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-yellow-400 font-mono">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Available Eggs</label>
+                        <input type="number" id="modalUserEggs" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-yellow-400 font-mono focus:border-yellow-500 outline-none transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Gift Eggs</label>
+                        <input type="number" id="modalUserGift" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-yellow-400 font-mono focus:border-yellow-500 outline-none transition-colors">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-slate-400 mb-1">Total Hens Count</label>
-                    <input type="number" id="modalUserHens" required class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-emerald-400 font-mono">
+                    <input type="number" id="modalUserHens" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-emerald-400 font-mono focus:border-emerald-500 outline-none transition-colors">
                 </div>
-                <div>
-                    <label class="block text-slate-400 mb-1">Egg Timer Override (Remaining Hours)</label>
-                    <input type="number" id="modalUserEggTimer" step="0.1" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-pink-300 font-mono focus:border-pink-400 outline-none" placeholder="e.g. 0 for ready now, 5 for 5 hrs left">
-                    <p class="text-[9px] text-slate-500 mt-1">Leave blank to keep current timer. Enter '0' to allow instant egg collection.</p>
+                
+                <!-- TIMER OVERRIDE SECTION -->
+                <div class="border border-slate-700 p-3 rounded-lg bg-slate-950/50 mt-4">
+                    <h4 class="text-yellow-400 font-bold mb-3 flex items-center space-x-2">
+                        <span>⚙️</span> <span>Egg Timer Override</span>
+                    </h4>
+                    <div class="flex space-x-3 mb-3">
+                        <div class="w-1/2">
+                            <label class="block text-slate-400 mb-1 text-[10px] uppercase">Hours Left</label>
+                            <input type="number" id="overrideHours" min="0" max="23" placeholder="Hrs" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-pink-300 font-mono focus:border-pink-500 outline-none">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-slate-400 mb-1 text-[10px] uppercase">Minutes Left</label>
+                            <input type="number" id="overrideMins" min="0" max="59" placeholder="Mins" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-pink-300 font-mono focus:border-pink-500 outline-none">
+                        </div>
+                    </div>
+                    <p class="text-[9px] text-slate-500 mb-3">Leave blank to keep current timer. Enter 0 in both for instant collection.</p>
+                    <button type="button" onclick="setOneMinute()" class="w-full bg-red-900/40 hover:bg-red-800/80 border border-red-800/60 text-red-300 py-1.5 rounded-lg font-bold uppercase text-[10px] tracking-wide transition-colors flex justify-center items-center space-x-2">
+                        <span>⚡</span> <span>Quick Set: 1 Minute Left</span>
+                    </button>
                 </div>
-                <div class="pt-2 flex space-x-2">
-                    <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded font-bold uppercase text-xs">Save Account Updates</button>
-                    <button type="button" onclick="closeModal('userModal')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded font-bold uppercase text-xs">Cancel</button>
+
+                <div class="pt-4 flex space-x-3">
+                    <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-lg font-bold uppercase text-xs tracking-wide shadow-lg transition-colors">Save Updates</button>
+                    <button type="button" onclick="closeModal('userModal')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-lg font-bold uppercase text-xs tracking-wide transition-colors">Cancel</button>
                 </div>
             </form>
         </div>
@@ -486,7 +506,7 @@
 
     <!-- SCRIPT LOGIC -->
     <script>
-        // --- FIREBASE CONFIGURATION (From OldAdmin) ---
+        // --- FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
             authDomain: "own-live-steam-web-default.firebaseapp.com",
@@ -618,22 +638,22 @@
                 tr.innerHTML = `
                     <td class="p-3">
                         <div class="font-bold text-slate-200">${u.name || 'Anonymous User'}</div>
-                        <div class="text-[10px] text-slate-500 font-mono">${uid.substring(0,10)}...</div>
+                        <div class="text-[10px] text-slate-500 font-mono mt-0.5">${uid.substring(0,10)}...</div>
                     </td>
                     <td class="p-3 text-slate-300">
-                        <div>${u.email || 'N/A'}</div>
-                        <div class="text-[10px] text-slate-500 font-mono">${u.mobile || ''}</div>
+                        <div class="truncate max-w-[120px] sm:max-w-full">${u.email || 'N/A'}</div>
+                        <div class="text-[10px] text-slate-500 font-mono mt-0.5">${u.mobile || ''}</div>
                     </td>
                     <td class="p-3 text-yellow-400 font-bold">${u.totalHens || 0} Hens</td>
                     <td class="p-3 text-emerald-400 font-bold">${totalUserEggs} Eggs</td>
                     <td class="p-3">
-                        <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${isBlocked ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
+                        <span class="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${isBlocked ? 'bg-red-950/80 text-red-400 border border-red-800/50' : 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/50'}">
                             ${isBlocked ? 'Blocked' : 'Active'}
                         </span>
                     </td>
-                    <td class="p-3 text-right space-x-1">
-                        <button onclick="openEditUserModal('${uid}')" class="bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-2 py-1 rounded text-[10px] font-bold uppercase border border-blue-800">Manage</button>
-                        <button onclick="toggleBlockUser('${uid}', '${u.status}')" class="${isBlocked ? 'bg-emerald-900/50 text-emerald-300 border-emerald-800' : 'bg-amber-900/50 text-amber-300 border-amber-800'} hover:opacity-80 px-2 py-1 rounded text-[10px] font-bold uppercase border">
+                    <td class="p-3 text-right space-x-1 whitespace-nowrap">
+                        <button onclick="openEditUserModal('${uid}')" class="bg-blue-900/40 hover:bg-blue-800/80 text-blue-300 px-3 py-1.5 rounded text-[10px] font-bold uppercase border border-blue-800/60 transition-colors">Manage</button>
+                        <button onclick="toggleBlockUser('${uid}', '${u.status}')" class="${isBlocked ? 'bg-emerald-900/40 text-emerald-300 border-emerald-800/60 hover:bg-emerald-800/80' : 'bg-amber-900/40 text-amber-300 border-amber-800/60 hover:bg-amber-800/80'} px-3 py-1.5 rounded text-[10px] font-bold uppercase border transition-colors">
                             ${isBlocked ? 'Unblock' : 'Block'}
                         </button>
                     </td>
@@ -697,13 +717,13 @@
                                 ${isExpired ? '0 Days (Expired)' : daysRemaining + ' Days Remaining'}
                             </td>
                             <td class="p-3 text-right space-x-1">
-    <button onclick="editBatchDays('${uid}', '${batchKey}', ${daysRemaining})" class="bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-2 py-1 rounded text-[10px] font-bold uppercase border border-blue-800">
-        Edit Days
-    </button>
-    <button onclick="deleteBatch('${uid}', '${batchKey}', ${batch.qty})" class="bg-red-900/50 hover:bg-red-800 text-red-300 px-2 py-1 rounded text-[10px] font-bold uppercase border border-red-800">
-        Remove
-    </button>
-</td>
+                                <button onclick="editBatchDays('${uid}', '${batchKey}', ${daysRemaining})" class="bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-2 py-1 rounded text-[10px] font-bold uppercase border border-blue-800">
+                                    Edit Days
+                                </button>
+                                <button onclick="deleteBatch('${uid}', '${batchKey}', ${batch.qty})" class="bg-red-900/50 hover:bg-red-800 text-red-300 px-2 py-1 rounded text-[10px] font-bold uppercase border border-red-800">
+                                    Remove
+                                </button>
+                            </td>
                         `;
                         tbody.appendChild(tr);
                     }
@@ -726,25 +746,25 @@
             }
         }
 
-function editBatchDays(uid, batchKey, currentDays) {
-    let newDays = prompt("Enter new Remaining Days for this Hen Batch:", currentDays);
-    
-    if (newDays !== null && !isNaN(newDays) && newDays.trim() !== "") {
-        newDays = parseInt(newDays);
-        
-        let daysPassed = 120 - newDays;
-        let newBoughtAt = Date.now() - (daysPassed * 24 * 60 * 60 * 1000);
+        function editBatchDays(uid, batchKey, currentDays) {
+            let newDays = prompt("Enter new Remaining Days for this Hen Batch:", currentDays);
+            
+            if (newDays !== null && !isNaN(newDays) && newDays.trim() !== "") {
+                newDays = parseInt(newDays);
+                
+                let daysPassed = 120 - newDays;
+                let newBoughtAt = Date.now() - (daysPassed * 24 * 60 * 60 * 1000);
 
-        db.ref(`users/${uid}/hen_batches/${batchKey}`).update({
-            boughtAt: newBoughtAt,
-            purchasedAt: newBoughtAt
-        }).then(() => {
-            alert(`Batch days successfully updated to ${newDays} days!`);
-        }).catch(err => {
-            alert("Error updating days: " + err.message);
-        });
-    }
-}
+                db.ref(`users/${uid}/hen_batches/${batchKey}`).update({
+                    boughtAt: newBoughtAt,
+                    purchasedAt: newBoughtAt
+                }).then(() => {
+                    alert(`Batch days successfully updated to ${newDays} days!`);
+                }).catch(err => {
+                    alert("Error updating days: " + err.message);
+                });
+            }
+        }
 
         function runGlobalBatchCleanup() {
             let now = Date.now();
@@ -960,7 +980,7 @@ function editBatchDays(uid, batchKey, currentDays) {
             }
         }
 
-        // --- 6. EDIT USER MODAL & OVERRIDES ---
+        // --- 6. EDIT USER MODAL & ADVANCED OVERRIDES (HOURS, MINS & QUICK 1-MIN) ---
         function openEditUserModal(uid) {
             let u = allUsersData[uid] || {};
             document.getElementById('modalUid').value = uid;
@@ -969,11 +989,20 @@ function editBatchDays(uid, batchKey, currentDays) {
             document.getElementById('modalUserEggs').value = u.availableEggs || 0;
             document.getElementById('modalUserGift').value = u.giftEggs || 0;
             document.getElementById('modalUserHens').value = u.totalHens || 0;
-            document.getElementById('modalUserEggTimer').value = ''; // Reset on open
+            
+            // Clear timer inputs on modal open
+            document.getElementById('overrideHours').value = ''; 
+            document.getElementById('overrideMins').value = ''; 
 
             const modal = document.getElementById('userModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+        }
+
+        // Quick 1 Minute Set Function
+        function setOneMinute() {
+            document.getElementById('overrideHours').value = 0;
+            document.getElementById('overrideMins').value = 1;
         }
 
         document.getElementById('editUserForm').addEventListener('submit', function(e) {
@@ -983,7 +1012,9 @@ function editBatchDays(uid, batchKey, currentDays) {
             const newEggs = parseInt(document.getElementById('modalUserEggs').value) || 0;
             const newGift = parseInt(document.getElementById('modalUserGift').value) || 0;
             const newHens = parseInt(document.getElementById('modalUserHens').value) || 0;
-            const timerVal = document.getElementById('modalUserEggTimer').value;
+            
+            const hVal = document.getElementById('overrideHours').value;
+            const mVal = document.getElementById('overrideMins').value;
 
             let updates = {
                 password: newPass,
@@ -992,21 +1023,34 @@ function editBatchDays(uid, batchKey, currentDays) {
                 totalHens: newHens
             };
 
-            // Calculate and set new egg collection timestamp if admin entered a value
-            if (timerVal !== "") {
-                let hoursRemaining = parseFloat(timerVal);
-                let msRemaining = hoursRemaining * 60 * 60 * 1000;
+            // Calculate new timer if inputs are provided
+            if (hVal !== "" || mVal !== "") {
+                let h = parseInt(hVal) || 0;
+                let m = parseInt(mVal) || 0;
                 
-                // Assuming a standard 24-hour cycle logic for egg collection
+                // Convert remaining time to milliseconds
+                let msRemaining = (h * 60 * 60 * 1000) + (m * 60 * 1000);
+                
+                // Formula to reverse engineer lastCollectedAt based on 24hr cycle
                 let newLastCollected = Date.now() - (24 * 60 * 60 * 1000) + msRemaining;
                 
                 updates.lastCollectedAt = newLastCollected;
-                updates.nextEggTime = Date.now() + msRemaining; // Pushing both common keys to be safe
+                updates.nextEggTime = Date.now() + msRemaining; 
+
+                // FIX: Update nested 'hen_batches' taake farm.html sahi time uthaye
+                let userData = allUsersData[uid];
+                if (userData && userData.hen_batches) {
+                    for (let batchKey in userData.hen_batches) {
+                        updates[`hen_batches/${batchKey}/lastCollectedAt`] = newLastCollected;
+                    }
+                }
             }
 
             db.ref(`users/${uid}`).update(updates).then(() => {
                 alert('User account & timer updated successfully!');
                 closeModal('userModal');
+            }).catch(error => {
+                alert('Error updating user: ' + error.message);
             });
         });
 
