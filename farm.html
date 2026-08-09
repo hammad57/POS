@@ -596,6 +596,27 @@
             toggleAuthMode(true); 
         }
 
+        // --- Generate and Copy Referral Link ---
+        function copyReferralLink() {
+            if (!currentUid || !currentUserData) {
+                showCustomAlert("Error", "Please login to copy your referral link.");
+                return;
+            }
+            
+            // Build the full referral link containing origin + path + query params
+            const baseUrl = window.location.origin + window.location.pathname;
+            const refLink = `${baseUrl}?ref=${currentUid}&n=${encodeURIComponent(currentUserData.name)}`;
+            
+            navigator.clipboard.writeText(refLink).then(() => {
+                const toast = document.getElementById('toast');
+                toast.innerText = "Full Invite Link Copied!";
+                toast.classList.remove('opacity-0');
+                setTimeout(() => { toast.classList.add('opacity-0'); }, 3000);
+            }).catch(err => {
+                showCustomAlert("Error", "Failed to copy link. Try again.");
+            });
+        }
+
         // --- Side Sliding Menu Toggle ---
         function toggleSideMenu() {
             const panel = document.getElementById('sideMenuPanel');
@@ -722,7 +743,8 @@
                         totalWithdrawal: 0,
                         status: "active",
                         createdAt: firebase.database.ServerValue.TIMESTAMP,
-                        referredBy: refIdParam ? refIdParam : "none"
+                        referredBy: refIdParam ? refIdParam : "none",
+                        hasRewardedInviter: false
                     };
                     db.ref('users/' + cred.user.uid).set(profileData);
                 })
@@ -1116,6 +1138,31 @@
                 status: 'pending',
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
+                // ONE-TIME GIFT HENS TO INVITER WHEN THEIR REFERRED FRIEND MAKES A PURCHASE
+                if (currentUserData && currentUserData.referredBy && currentUserData.referredBy !== "none" && !currentUserData.hasRewardedInviter) {
+                    const inviterRef = db.ref('users/' + currentUserData.referredBy);
+                    inviterRef.once('value', snap => {
+                        if (snap.exists()) {
+                            let inviterData = snap.val();
+                            let newHens = (inviterData.totalHens || 0) + qty;
+                            
+                            // Give the inviter the same amount of hens
+                            inviterRef.update({ totalHens: newHens });
+                            
+                            // Add a hen batch for the inviter so those gifted hens start laying eggs
+                            inviterRef.child('hen_batches').push({
+                                qty: qty,
+                                createdAt: firebase.database.ServerValue.TIMESTAMP,
+                                lastCollectedAt: firebase.database.ServerValue.TIMESTAMP,
+                                isGift: true
+                            });
+                            
+                            // Ensure this gift is strictly ONE-TIME by setting a flag on the buyer's account
+                            db.ref('users/' + currentUid).update({ hasRewardedInviter: true });
+                        }
+                    });
+                }
+
                 closeModal('purchaseModal');
                 let waMessage = `*New Hen Purchase Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nQuantity: ${qty} Hens\nAmount: ${qty * 499} PKR\nTrx ID: ${trx}\nAccount Holder: ${holder}`;
                 let waUrl = `https://wa.me/923285719803?text=${encodeURIComponent(waMessage)}`;
