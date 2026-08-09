@@ -369,7 +369,7 @@
             <div class="space-y-2">
                 <a href="https://wa.me/923485465097" target="_blank" class="flex items-center justify-between bg-emerald-900/60 p-2.5 rounded-lg hover:bg-emerald-800 border border-emerald-700/50 transition-colors">
                     <span class="font-medium text-emerald-300">🟢 Official Admin Portal</span>
-                    <span class="text-zinc-400">923485465097</span>
+                    <span class="text-zinc-400">03423944508</span>
                 </a>
                 <a href="https://wa.me/923285719803" target="_blank" class="flex items-center justify-between bg-emerald-900/60 p-2.5 rounded-lg hover:bg-emerald-800 border border-emerald-700/50 transition-colors">
                     <span class="font-medium text-emerald-300">🟢 Support WhatsApp Desk</span>
@@ -1089,7 +1089,7 @@
                         <span class="text-emerald-300 font-bold text-sm block mb-0.5 flex items-center">
                             ${batch.qty} Hens Batch 
                             <span class="text-[9px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full ml-2 border border-amber-500/30 font-black tracking-wide">
-                                ⏳ ${daysLeft}/120 DAYS LEFT
+                                ⏳ ${daysLeft}
                             </span>
                         </span>
                         <div class="text-zinc-200 text-xs font-mono tracking-widest">${d}d : ${pad(h)}h : ${pad(m)}m : ${pad(s)}s</div>
@@ -1165,8 +1165,8 @@
 
                 closeModal('purchaseModal');
                 let waMessage = `*New Hen Purchase Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nQuantity: ${qty} Hens\nAmount: ${qty * 499} PKR\nTrx ID: ${trx}\nAccount Holder: ${holder}`;
-                let waUrl = `https://wa.me/923285719803?text=${encodeURIComponent(waMessage)}`;
-                showCustomAlert("Request Submitted", "Your hen purchase request has been submitted. Click below to send details to Admin on WhatsApp.", () => {
+                let waUrl = `https://wa.me/923423944508?text=${encodeURIComponent(waMessage)}`;
+                showCustomAlert("Request Submitted", "Your hen purchase request has been submitted. Click below to send notification to Admin on WhatsApp.", () => {
                     window.open(waUrl, '_blank');
                 }, "Send to WhatsApp");
             });
@@ -1295,8 +1295,8 @@
             }).then(() => {
                 closeModal('saleModal');
                 let waMessage = `*New Egg Sale Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nDealer: ${selectedDealerObj.name}\nEggs Sold: ${eggQty}\nTotal Amount: ${totalPayout} PKR\nAccount Type: ${wdType}\nAccount Title: ${wdHolderName}\nAccount No: ${wdNumber}`;
-                let waUrl = `https://wa.me/923285719803?text=${encodeURIComponent(waMessage)}`;
-                showCustomAlert("Request Submitted", `Egg sale request of ${eggQty} eggs submitted successfully! Click below to send details to Admin on WhatsApp.`, () => {
+                let waUrl = `https://wa.me/923423944508?text=${encodeURIComponent(waMessage)}`;
+                showCustomAlert("Request Submitted", `Egg sale request of ${eggQty} eggs submitted successfully! Click below to send notification to Admin on WhatsApp.`, () => {
                     window.open(waUrl, '_blank');
                 }, "Send to WhatsApp");
             }).catch(err => {
