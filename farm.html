@@ -250,10 +250,12 @@
         </div>
 
         <div class="grid grid-cols-2 gap-4 mb-4">
-            <button onclick="openPurchaseModal()" class="bg-emerald-950 hover:bg-emerald-900 border border-emerald-700/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md transition-transform active:scale-95">
-                <span class="text-3xl mb-2">🐔</span>
-                <span class="font-bold text-sm text-yellow-400">Purchase Hen</span>
-                <span class="text-[10px] text-zinc-300 mt-1">Rs. 499 per Hen</span>
+            <!-- AZADI OFFER BUTTON (MODIFIED) -->
+            <button onclick="openPurchaseModal()" class="relative overflow-hidden border border-emerald-500/80 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-lg transition-transform active:scale-95" style="background: linear-gradient(90deg, #ffffff 25%, #01411C 25%);">
+                <span class="text-3xl mb-2 relative z-10 drop-shadow-lg">🐔 🇵🇰</span>
+                <span class="font-extrabold text-sm text-white relative z-10 drop-shadow-md">Purchase Hen Azadi Offer</span>
+                <span class="text-[10px] text-emerald-100 mt-1 relative z-10 drop-shadow-md">Rs. 499 per Hen</span>
+                <div class="absolute inset-0 bg-black/10 opacity-0 hover:opacity-100 transition-opacity"></div>
             </button>
 
             <button onclick="openSaleModal()" class="bg-emerald-950 hover:bg-emerald-900 border border-amber-700/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md transition-transform active:scale-95">
