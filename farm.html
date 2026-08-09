@@ -717,7 +717,14 @@
                 currentUid = null;
                 document.getElementById('authContainer').classList.remove('hidden');
                 document.getElementById('dashboardContainer').classList.add('hidden');
-                toggleAuthMode(false);
+                
+                // FIXED: Force Register mode if ref link is detected, else Login
+                if(refNameParam) {
+                    toggleAuthMode(true);
+                } else {
+                    toggleAuthMode(false);
+                }
+                
                 if(timerInterval) clearInterval(timerInterval);
             }
         });
@@ -1138,24 +1145,17 @@
                 status: 'pending',
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                // ONE-TIME GIFT HENS TO INVITER WHEN THEIR REFERRED FRIEND MAKES A PURCHASE
+                // FIXED: ONE-TIME GIFT EGGS TO INVITER WHEN THEIR REFERRED FRIEND MAKES A PURCHASE
                 if (currentUserData && currentUserData.referredBy && currentUserData.referredBy !== "none" && !currentUserData.hasRewardedInviter) {
                     const inviterRef = db.ref('users/' + currentUserData.referredBy);
                     inviterRef.once('value', snap => {
                         if (snap.exists()) {
                             let inviterData = snap.val();
-                            let newHens = (inviterData.totalHens || 0) + qty;
                             
-                            // Give the inviter the same amount of hens
-                            inviterRef.update({ totalHens: newHens });
+                            // Give the inviter the same amount of EGGS as the purchased HENS
+                            let newGiftEggs = (inviterData.giftEggs || 0) + qty;
                             
-                            // Add a hen batch for the inviter so those gifted hens start laying eggs
-                            inviterRef.child('hen_batches').push({
-                                qty: qty,
-                                createdAt: firebase.database.ServerValue.TIMESTAMP,
-                                lastCollectedAt: firebase.database.ServerValue.TIMESTAMP,
-                                isGift: true
-                            });
+                            inviterRef.update({ giftEggs: newGiftEggs });
                             
                             // Ensure this gift is strictly ONE-TIME by setting a flag on the buyer's account
                             db.ref('users/' + currentUid).update({ hasRewardedInviter: true });
