@@ -571,6 +571,8 @@
         let currentUserData = null;
         let timerInterval = null;
         
+        let processingBatches = {}; // RACE CONDITION FIX: Prevent multiple triggers
+        
         let activeDealers = {};
         let selectedDealerObj = null;
         let selectedDealerKey = null;
@@ -667,7 +669,7 @@
             if (user) {
                 currentUid = user.uid;
                 
-                db.ref('users/' + currentUid).once('value').then(snapshot => {
+                db.ref('users/' + currentUid).on('value', snapshot => {
                     const val = snapshot.val();
                     if(val && val.status === 'blocked') {
                         showCustomAlert("Account Suspended", "Your account has been temporarily blocked. Please contact the administrator.");
@@ -677,7 +679,7 @@
                     
                     document.getElementById('authContainer').classList.add('hidden');
                     document.getElementById('dashboardContainer').classList.remove('hidden');
-                    syncFarmDashboardData();
+                    syncFarmDashboardData(val); // PASS DATA INSTEAD OF FETCHING AGAIN
                     fetchTeamStats();
                     fetchDealersMarketplace();
                     fetchPurchasesAndWithdrawalsHistory();
@@ -788,25 +790,20 @@
             document.getElementById('announcementsModal').classList.add('flex');
         }
 
-        function syncFarmDashboardData() {
-            if (!currentUid) return;
+        function syncFarmDashboardData(data) {
+            if (!data) return;
+            currentUserData = data;
 
-            db.ref('users/' + currentUid).on('value', snapshot => {
-                const data = snapshot.val();
-                if (!data) return;
-                currentUserData = data;
-
-                document.getElementById('lblUserName').innerText = data.name || "User";
-                document.getElementById('lblEggBalance').innerText = (data.availableEggs || 0) + (data.giftEggs || 0);
-                document.getElementById('lblHenBalance').innerText = data.totalHens || 0;
-                document.getElementById('lblGiftBalance').innerText = data.giftEggs || 0;
-                document.getElementById('lblTotalExpense').innerText = (data.totalExpense || 0) + " PKR";
-                document.getElementById('lblTotalWithdrawal').innerText = (data.totalWithdrawal || 0) + " PKR";
-                
-                document.getElementById('settingTotalHens').innerText = data.totalHens || 0;
-                
-                updateBatchesTimers(); 
-            });
+            document.getElementById('lblUserName').innerText = data.name || "User";
+            document.getElementById('lblEggBalance').innerText = (data.availableEggs || 0) + (data.giftEggs || 0);
+            document.getElementById('lblHenBalance').innerText = data.totalHens || 0;
+            document.getElementById('lblGiftBalance').innerText = data.giftEggs || 0;
+            document.getElementById('lblTotalExpense').innerText = (data.totalExpense || 0) + " PKR";
+            document.getElementById('lblTotalWithdrawal').innerText = (data.totalWithdrawal || 0) + " PKR";
+            
+            document.getElementById('settingTotalHens').innerText = data.totalHens || 0;
+            
+            updateBatchesTimers(); 
 
             db.ref('purchase_requests').orderByChild('uid').equalTo(currentUid).on('value', snap => {
                 let pendingCount = 0;
@@ -814,7 +811,6 @@
                 document.getElementById('lblPendingPurchase').innerText = pendingCount + " requests";
             });
 
-            // FIXED PATH TO withdraw_requests FOR LIVE ADMIN SYNC
             db.ref('withdraw_requests').orderByChild('uid').equalTo(currentUid).on('value', snap => {
                 let pendingWdCount = 0;
                 snap.forEach(child => { if (child.val().status === 'pending') pendingWdCount++; });
@@ -860,7 +856,6 @@
                 }
             });
 
-            // FIXED PATH TO withdraw_requests
             db.ref('withdraw_requests').orderByChild('uid').equalTo(currentUid).on('value', snapshot => {
                 const wContainer = document.getElementById('withdrawalsAccordionContent');
                 wContainer.innerHTML = '';
@@ -1015,20 +1010,37 @@
                 let daysLeft = Math.ceil((totalLifespanMs - elapsedTotal) / dayMs);
 
                 let elapsed = now - batch.lastCollectedAt;
-                if(elapsed >= dayMs) {
+                
+                // BUG FIX: Added !processingBatches[key] to prevent infinite loop triggers
+                if(elapsed >= dayMs && !processingBatches[key]) {
+                    processingBatches[key] = true; // Lock the batch 
+                    
                     let cycles = Math.floor(elapsed / dayMs);
                     let eggsEarned = cycles * batch.qty;
                     let newLastCollected = batch.lastCollectedAt + (cycles * dayMs);
                     
+                    // Optimistic update locally to prevent UI lag
                     batch.lastCollectedAt = newLastCollected;
                     
-                    db.ref(`users/${currentUid}/availableEggs`).transaction(current => (current || 0) + eggsEarned);
-                    db.ref(`users/${currentUid}/hen_batches/${key}/lastCollectedAt`).set(newLastCollected);
+                    // Safe Server Transaction
+                    db.ref(`users/${currentUid}/availableEggs`).transaction(current => {
+                        return (current || 0) + eggsEarned;
+                    }, (error, committed) => {
+                        if (committed) {
+                            db.ref(`users/${currentUid}/hen_batches/${key}/lastCollectedAt`).set(newLastCollected).finally(() => {
+                                // Unlock after a safe delay to avoid duplicate firing
+                                setTimeout(() => { processingBatches[key] = false; }, 1500); 
+                            });
+                        } else {
+                            processingBatches[key] = false; // Unlock if failed
+                        }
+                    });
                     
                     elapsed = now - newLastCollected;
                 }
                 
-                let timeLeft = dayMs - elapsed;
+                // FIXED TIMER PROBLEM HERE: Prevent negative time and limit progress max to 100%
+                let timeLeft = Math.max(0, dayMs - elapsed);
                 
                 let d = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
                 let h = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -1036,11 +1048,10 @@
                 let s = Math.floor((timeLeft % (1000 * 60)) / 1000);
                 
                 let pad = (num) => num.toString().padStart(2, '0');
-                let progress = (elapsed / dayMs) * 100;
+                let progress = Math.min(100, (elapsed / dayMs) * 100);
                 let circumference = 113; 
                 let dashOffset = circumference - (circumference * progress / 100);
                 
-                // ADDED REMAINING DAYS TAG IN HTML
                 html += `
                 <div class="bg-emerald-900/60 p-3 rounded-xl flex justify-between items-center border border-emerald-700/60">
                     <div>
@@ -1252,74 +1263,6 @@
         function closeModal(id) {
             document.getElementById(id).classList.remove('flex');
             document.getElementById(id).classList.add('hidden');
-        }
-
-        document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            let newPass = document.getElementById('newPasswordInput').value;
-            
-            if(!auth.currentUser) return;
-            
-            auth.currentUser.updatePassword(newPass).then(() => {
-                return db.ref('users/' + currentUid + '/password').set(newPass);
-            }).then(() => {
-                showCustomAlert("Password Updated", "Your password has been changed successfully.");
-                document.getElementById('newPasswordInput').value = '';
-            }).catch(err => handleAuthError(err));
-        });
-
-        function copyReferralLink() {
-            if(!currentUid) return;
-            let nameEncoded = currentUserData ? encodeURIComponent(currentUserData.name || '') : '';
-            let link = window.location.origin + window.location.pathname + '?ref=' + currentUid + '&n=' + nameEncoded;
-            
-            navigator.clipboard.writeText(link).then(() => {
-                const toast = document.getElementById('toast');
-                toast.classList.remove('opacity-0', 'pointer-events-none');
-                toast.classList.add('opacity-100');
-                setTimeout(() => {
-                    toast.classList.remove('opacity-100');
-                    toast.classList.add('opacity-0', 'pointer-events-none');
-                }, 2000);
-            });
-        }
-
-        function downloadPDFReport(type) {
-            const pdfContainer = document.getElementById('pdfExportContainer');
-            pdfContainer.innerHTML = '';
-            
-            let html = `<h2 style="font-size:16px; font-weight:bold; margin-bottom:10px;">Green Land Poultry Farm - ${type === 'purchases' ? 'Purchasing Ledger' : 'Withdrawals Ledger'}</h2>`;
-            html += `<p style="margin-bottom:15px;">User: ${currentUserData ? currentUserData.name : ''} (${currentUserData ? currentUserData.email : ''})</p>`;
-            
-            let list = type === 'purchases' ? cachedPurchases : cachedWithdrawals;
-            
-            if(list.length === 0) {
-                html += '<p>No records found.</p>';
-            } else {
-                html += '<table style="width:100%; border-collapse:collapse; font-size:10px;" border="1" cellpadding="5">';
-                html += '<tr style="background:#f2f2f2;"><th>Date</th><th>Detail</th><th>Amount</th><th>Status</th></tr>';
-                
-                list.forEach(item => {
-                    let dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A';
-                    let detail = type === 'purchases' ? `${item.quantity} Hens (Trx: ${item.transactionId || 'N/A'})` : `${item.eggsSold || item.eggsDeductedCount || 0} Eggs (${item.dealerName || 'Dealer'})`;
-                    let amt = type === 'purchases' ? `${item.amount} PKR` : `${item.amount || item.totalPayout || 0} PKR`;
-                    
-                    html += `<tr><td>${dateStr}</td><td>${detail}</td><td>${amt}</td><td>${item.status || 'pending'}</td></tr>`;
-                });
-                html += '</table>';
-            }
-
-            pdfContainer.innerHTML = html;
-            
-            const opt = {
-                margin:       0.5,
-                filename:     `GL_Poultry_${type}_Report.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-            
-            html2pdf().set(opt).from(pdfContainer).save();
         }
     </script>
 </body>
