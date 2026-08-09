@@ -855,7 +855,27 @@
                 snapshot.forEach(child => {
                     hasRecords = true;
                     let p = child.val();
+                    let pKey = child.key;
                     cachedPurchases.push(p);
+
+                    // --- NEW LOGIC: Reward Eggs upon Admin Approval ---
+                    if (p.status === 'approved' && !p.eggsRewarded) {
+                        let qty = p.quantity || 0;
+                        
+                        // 1. Reward the purchasing user with eggs immediately equal to hens purchased
+                        db.ref(`users/${currentUid}/availableEggs`).transaction(current => (current || 0) + qty);
+                        
+                        // 2. One-time gift eggs to the inviter
+                        if (currentUserData && currentUserData.referredBy && currentUserData.referredBy !== "none" && !currentUserData.hasRewardedInviter) {
+                            db.ref(`users/${currentUserData.referredBy}/giftEggs`).transaction(current => (current || 0) + qty);
+                            db.ref(`users/${currentUid}/hasRewardedInviter`).set(true);
+                            currentUserData.hasRewardedInviter = true;
+                        }
+                        
+                        // Mark as rewarded to avoid duplicates
+                        db.ref(`purchase_requests/${pKey}/eggsRewarded`).set(true);
+                    }
+                    // --------------------------------------------------
 
                     let dateStr = p.timestamp ? new Date(p.timestamp).toLocaleString() : 'N/A';
                     let statusColor = p.status === 'approved' ? 'text-green-400' : (p.status === 'rejected' ? 'text-red-400' : 'text-amber-400');
@@ -1138,31 +1158,6 @@
                 status: 'pending',
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                // ONE-TIME GIFT HENS TO INVITER WHEN THEIR REFERRED FRIEND MAKES A PURCHASE
-                if (currentUserData && currentUserData.referredBy && currentUserData.referredBy !== "none" && !currentUserData.hasRewardedInviter) {
-                    const inviterRef = db.ref('users/' + currentUserData.referredBy);
-                    inviterRef.once('value', snap => {
-                        if (snap.exists()) {
-                            let inviterData = snap.val();
-                            let newHens = (inviterData.totalHens || 0) + qty;
-                            
-                            // Give the inviter the same amount of hens
-                            inviterRef.update({ totalHens: newHens });
-                            
-                            // Add a hen batch for the inviter so those gifted hens start laying eggs
-                            inviterRef.child('hen_batches').push({
-                                qty: qty,
-                                createdAt: firebase.database.ServerValue.TIMESTAMP,
-                                lastCollectedAt: firebase.database.ServerValue.TIMESTAMP,
-                                isGift: true
-                            });
-                            
-                            // Ensure this gift is strictly ONE-TIME by setting a flag on the buyer's account
-                            db.ref('users/' + currentUid).update({ hasRewardedInviter: true });
-                        }
-                    });
-                }
-
                 closeModal('purchaseModal');
                 let waMessage = `*New Hen Purchase Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nQuantity: ${qty} Hens\nAmount: ${qty * 499} PKR\nTrx ID: ${trx}\nAccount Holder: ${holder}`;
                 let waUrl = `https://wa.me/923285719803?text=${encodeURIComponent(waMessage)}`;
