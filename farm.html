@@ -117,7 +117,7 @@
 
         <!-- WHATSAPP SUPPORT BUTTON AT BOTTOM OF MENU -->
         <div class="border-t border-emerald-800/80 pt-4">
-            <a href="https://wa.me/923423944508" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl flex items-center justify-center space-x-2 shadow-lg transition-colors text-xs">
+            <a id="waSidebarLink" href="https://wa.me/923423944508" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl flex items-center justify-center space-x-2 shadow-lg transition-colors text-xs">
                 <span class="text-base">💬</span> <span>Need Help? WhatsApp Admin</span>
             </a>
         </div>
@@ -367,9 +367,9 @@
         <div class="bg-emerald-950 p-4 rounded-xl border border-emerald-800/80 mb-6 text-xs shadow-md">
             <h3 class="font-bold text-yellow-400 mb-3">Help & Support Desk</h3>
             <div class="space-y-2">
-                <a href="https://wa.me/923485465097" target="_blank" class="flex items-center justify-between bg-emerald-900/60 p-2.5 rounded-lg hover:bg-emerald-800 border border-emerald-700/50 transition-colors">
+                <a id="waHelpDeskLink" href="https://wa.me/923423944508" target="_blank" class="flex items-center justify-between bg-emerald-900/60 p-2.5 rounded-lg hover:bg-emerald-800 border border-emerald-700/50 transition-colors">
                     <span class="font-medium text-emerald-300">🟢 Official Admin Portal</span>
-                    <span class="text-zinc-400">03423944508</span>
+                    <span id="waHelpDeskText" class="text-zinc-400">03423944508</span>
                 </a>
                 <a href="https://wa.me/923285719803" target="_blank" class="flex items-center justify-between bg-emerald-900/60 p-2.5 rounded-lg hover:bg-emerald-800 border border-emerald-700/50 transition-colors">
                     <span class="font-medium text-emerald-300">🟢 Support WhatsApp Desk</span>
@@ -468,7 +468,7 @@
                 
                 <div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-xl my-3 text-center">
                     <p class="text-xs font-bold text-yellow-400 leading-relaxed">
-                        Please send the payment only to the Admin <span class="underline font-black text-sm text-white">"Muluk Hussain"</span> via <span class="underline font-black text-sm text-white">"Easypaisa account number 03423944508"</span>.
+                        Please send the payment only to the Admin <span class="underline font-black text-sm text-white">"Muluk Hussain"</span> via <span class="underline font-black text-sm text-white">"Easypaisa account number <span id="waEasypaisaText">03423944508</span>"</span>.
                     </p>
                 </div>
 
@@ -585,6 +585,31 @@
 
         let cachedPurchases = [];
         let cachedWithdrawals = [];
+        
+        // --- WHATSAPP DYNAMIC VARIABLE ---
+        let adminWhatsApp = "923423944508"; // Default
+
+        // Listen for Admin WhatsApp number changes
+        db.ref('settings/adminWhatsapp').on('value', snap => {
+            if (snap.exists()) {
+                adminWhatsApp = snap.val();
+                
+                // Update Side Menu WhatsApp Link
+                const waSidebarLink = document.getElementById('waSidebarLink');
+                if(waSidebarLink) waSidebarLink.href = `https://wa.me/${adminWhatsApp}`;
+                
+                // Update Help Desk Link & Text
+                const waHelpDeskLink = document.getElementById('waHelpDeskLink');
+                if(waHelpDeskLink) waHelpDeskLink.href = `https://wa.me/${adminWhatsApp}`;
+                
+                const waHelpDeskText = document.getElementById('waHelpDeskText');
+                if(waHelpDeskText) waHelpDeskText.innerText = adminWhatsApp;
+                
+                // Update Easypaisa Text just in case it is requested
+                const waEasypaisaText = document.getElementById('waEasypaisaText');
+                if(waEasypaisaText) waEasypaisaText.innerText = adminWhatsApp;
+            }
+        });
 
         const urlParams = new URLSearchParams(window.location.search);
         const refIdParam = urlParams.get('ref');
@@ -1165,7 +1190,7 @@
 
                 closeModal('purchaseModal');
                 let waMessage = `*New Hen Purchase Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nQuantity: ${qty} Hens\nAmount: ${qty * 499} PKR\nTrx ID: ${trx}\nAccount Holder: ${holder}`;
-                let waUrl = `https://wa.me/923423944508?text=${encodeURIComponent(waMessage)}`;
+                let waUrl = `https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(waMessage)}`;
                 showCustomAlert("Request Submitted", "Your hen purchase request has been submitted. Click below to send notification to Admin on WhatsApp.", () => {
                     window.open(waUrl, '_blank');
                 }, "Send to WhatsApp");
@@ -1295,7 +1320,7 @@
             }).then(() => {
                 closeModal('saleModal');
                 let waMessage = `*New Egg Sale Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nDealer: ${selectedDealerObj.name}\nEggs Sold: ${eggQty}\nTotal Amount: ${totalPayout} PKR\nAccount Type: ${wdType}\nAccount Title: ${wdHolderName}\nAccount No: ${wdNumber}`;
-                let waUrl = `https://wa.me/923423944508?text=${encodeURIComponent(waMessage)}`;
+                let waUrl = `https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(waMessage)}`;
                 showCustomAlert("Request Submitted", `Egg sale request of ${eggQty} eggs submitted successfully! Click below to send notification to Admin on WhatsApp.`, () => {
                     window.open(waUrl, '_blank');
                 }, "Send to WhatsApp");
