@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Land Poultry Farm - WhatsApp Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <style>
+        body { 
+            background: linear-gradient(180deg, #0a331d 0%, #051a0f 100%); 
+            color: #f3f4f6; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        .neon-border { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+        .neon-text { text-shadow: 0 0 10px rgba(234, 179, 8, 0.6); }
+    </style>
+</head>
+<body class="p-4 max-w-md mx-auto min-h-screen flex items-center justify-center relative">
+
+    <div class="bg-emerald-950/90 border border-emerald-800/80 w-full rounded-3xl p-6 shadow-2xl relative z-10 neon-border">
+        <div class="text-center mb-6">
+            <span class="inline-block bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-2">⚙️ Admin Panel</span>
+            <h2 class="text-2xl font-bold text-yellow-400 font-serif neon-text">WhatsApp Settings</h2>
+            <p class="text-xs text-zinc-300 mt-2">Update the WhatsApp number for User Dashboard.</p>
+        </div>
+
+        <div class="bg-emerald-900/60 p-4 rounded-xl border border-emerald-700/50 mb-6 text-center">
+            <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-widest mb-1">Active WhatsApp Number</h3>
+            <p id="activeNumberDisplay" class="text-xl font-black text-white">Loading...</p>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-emerald-300 mb-1">Enter New Mobile Number (e.g. 923423944508)</label>
+                <input type="text" id="waInput" placeholder="923xxxxxxxxx" class="w-full bg-emerald-900/80 border border-emerald-700 rounded-xl px-4 py-3 text-sm text-yellow-400 font-bold focus:outline-none focus:border-yellow-400">
+            </div>
+            
+            <button onclick="updateWhatsAppNumber()" class="w-full bg-gradient-to-r from-amber-600 via-yellow-500 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-zinc-950 font-bold py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 text-sm">
+                <span>🔄</span> <span>Update Number</span>
+            </button>
+        </div>
+        
+        <p id="statusMsg" class="text-xs font-bold text-center mt-4 hidden"></p>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
+            authDomain: "own-live-steam-web-default.firebaseapp.com",
+            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
+            projectId: "own-live-steam-web-default",
+            storageBucket: "own-live-steam-web-default.appspot.com",
+            messagingSenderId: "xxxxxxxxxxx",
+            appId: "xxxxxxxxxxx"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Listen for current active WhatsApp Number
+        db.ref('settings/adminWhatsapp').on('value', snap => {
+            const currentNum = snap.val();
+            if (currentNum) {
+                document.getElementById('activeNumberDisplay').innerText = currentNum;
+                document.getElementById('waInput').value = currentNum;
+            } else {
+                document.getElementById('activeNumberDisplay').innerText = "923423944508 (Default)";
+                document.getElementById('waInput').value = "923423944508";
+            }
+        });
+
+        function updateWhatsAppNumber() {
+            const num = document.getElementById('waInput').value.trim();
+            const statusMsg = document.getElementById('statusMsg');
+            
+            if(num === "") {
+                statusMsg.innerText = "Please enter a valid number!";
+                statusMsg.className = "text-xs font-bold text-center mt-4 text-red-400 block";
+                return;
+            }
+
+            db.ref('settings/adminWhatsapp').set(num).then(() => {
+                statusMsg.innerText = "Number Successfully Updated!";
+                statusMsg.className = "text-xs font-bold text-center mt-4 text-green-400 block";
+                setTimeout(() => { statusMsg.classList.add("hidden"); }, 3000);
+            }).catch(err => {
+                statusMsg.innerText = "Error: " + err.message;
+                statusMsg.className = "text-xs font-bold text-center mt-4 text-red-400 block";
+            });
+        }
+    </script>
+</body>
+</html>
