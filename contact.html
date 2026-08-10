@@ -17,33 +17,68 @@
         .neon-text { text-shadow: 0 0 10px rgba(234, 179, 8, 0.6); }
     </style>
 </head>
-<body class="p-4 max-w-md mx-auto min-h-screen flex items-center justify-center relative">
+<body class="p-4 max-w-md mx-auto min-h-screen flex items-center justify-center relative py-10">
 
-    <div class="bg-emerald-950/90 border border-emerald-800/80 w-full rounded-3xl p-6 shadow-2xl relative z-10 neon-border">
-        <div class="text-center mb-6">
+    <div class="bg-emerald-950/90 border border-emerald-800/80 w-full rounded-3xl p-6 shadow-2xl relative z-10 neon-border space-y-6">
+        
+        <!-- Header -->
+        <div class="text-center">
             <span class="inline-block bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-2">⚙️ Admin Panel</span>
-            <h2 class="text-2xl font-bold text-yellow-400 font-serif neon-text">WhatsApp Settings</h2>
-            <p class="text-xs text-zinc-300 mt-2">Update the WhatsApp number for User Dashboard.</p>
+            <h2 class="text-2xl font-bold text-yellow-400 font-serif neon-text">WhatsApp Manager</h2>
+            <p class="text-[11px] text-zinc-300 mt-2">Manage automated scheduling & manual overrides.</p>
         </div>
 
-        <div class="bg-emerald-900/60 p-4 rounded-xl border border-emerald-700/50 mb-6 text-center">
-            <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-widest mb-1">Active WhatsApp Number</h3>
-            <p id="activeNumberDisplay" class="text-xl font-black text-white">Loading...</p>
+        <!-- Live Status Panel -->
+        <div class="bg-emerald-900/60 p-4 rounded-xl border border-emerald-700/50 text-center">
+            <h3 class="text-[10px] font-bold text-emerald-300 uppercase tracking-widest mb-1">Live Active Number</h3>
+            <p id="activeNumberDisplay" class="text-2xl font-black text-white">Loading...</p>
+            <p id="activeModeDisplay" class="text-[10px] text-yellow-400 font-bold mt-1 tracking-wide"></p>
         </div>
 
-        <div class="space-y-4">
+        <!-- Section 1: Add New Number to List -->
+        <div class="border-t border-emerald-800/80 pt-4">
+            <h3 class="text-sm font-bold text-yellow-400 mb-3">1. Add Number to List</h3>
+            <div class="flex space-x-2">
+                <input type="text" id="newNumberInput" placeholder="e.g. 923xxxxxxxxx" class="w-full bg-emerald-900/80 border border-emerald-700 rounded-lg px-3 py-2 text-sm text-yellow-400 font-bold focus:outline-none">
+                <button onclick="addNumberToList()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-lg text-xs shadow-md transition-all">Save</button>
+            </div>
+            <p id="saveMsg" class="text-[10px] font-bold mt-2 hidden"></p>
+        </div>
+
+        <!-- Section 2: Manual Override -->
+        <div class="border-t border-emerald-800/80 pt-4 space-y-3">
+            <h3 class="text-sm font-bold text-yellow-400 mb-1">2. Set Manual Override</h3>
+            <p class="text-[10px] text-zinc-400 leading-tight mb-2">Select a number from the list and set an expiry time. The system will revert to the automated schedule after this time.</p>
+            
             <div>
-                <label class="block text-xs font-semibold text-emerald-300 mb-1">Enter New Mobile Number (e.g. 923423944508)</label>
-                <input type="text" id="waInput" placeholder="923xxxxxxxxx" class="w-full bg-emerald-900/80 border border-emerald-700 rounded-xl px-4 py-3 text-sm text-yellow-400 font-bold focus:outline-none focus:border-yellow-400">
+                <label class="block text-[11px] font-semibold text-emerald-300 mb-1">Select Number</label>
+                <select id="numberDropdown" class="w-full bg-emerald-900/80 border border-emerald-700 rounded-lg px-3 py-2 text-sm text-yellow-400 focus:outline-none">
+                    <option value="">Loading list...</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-semibold text-emerald-300 mb-1">Active Until (Expiry Time)</label>
+                <input type="datetime-local" id="overrideTime" class="w-full bg-emerald-900/80 border border-emerald-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none color-scheme-dark">
             </div>
             
-            <button onclick="updateWhatsAppNumber()" class="w-full bg-gradient-to-r from-amber-600 via-yellow-500 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-zinc-950 font-bold py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 text-sm">
-                <span>🔄</span> <span>Update Number</span>
+            <button onclick="setManualOverride()" class="w-full bg-gradient-to-r from-amber-600 via-yellow-500 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-zinc-950 font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 text-sm mt-2">
+                <span>⏱️</span> <span>Activate Override</span>
             </button>
+            
+            <button onclick="clearOverride()" class="w-full bg-red-900/40 border border-red-700 hover:bg-red-800 text-red-300 font-bold py-2 rounded-xl transition-all text-xs mt-2">
+                Clear Override (Return to Schedule)
+            </button>
+            
+            <p id="overrideMsg" class="text-[10px] font-bold text-center mt-2 hidden"></p>
         </div>
         
-        <p id="statusMsg" class="text-xs font-bold text-center mt-4 hidden"></p>
     </div>
+
+    <style>
+        /* Force dark mode for datetime picker if supported */
+        .color-scheme-dark { color-scheme: dark; }
+    </style>
 
     <script>
         const firebaseConfig = {
@@ -58,38 +93,131 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        let configData = {};
 
-        // Listen for current active WhatsApp Number
-        db.ref('settings/adminWhatsapp').on('value', snap => {
-            const currentNum = snap.val();
-            if (currentNum) {
-                document.getElementById('activeNumberDisplay').innerText = currentNum;
-                document.getElementById('waInput').value = currentNum;
-            } else {
-                document.getElementById('activeNumberDisplay').innerText = "923423944508 (Default)";
-                document.getElementById('waInput').value = "923423944508";
+        // Default numbers that should always exist
+        const defaultNumbers = { "923423944508": true, "923485465097": true };
+
+        // Real-time listener for the config
+        db.ref('settings/whatsappConfig').on('value', snap => {
+            configData = snap.val() || {};
+            
+            // Populate Dropdown List
+            let savedNumbers = configData.savedNumbers || defaultNumbers;
+            const dropdown = document.getElementById('numberDropdown');
+            dropdown.innerHTML = '';
+            
+            for (let num in savedNumbers) {
+                let option = document.createElement('option');
+                option.value = num;
+                option.innerText = num;
+                dropdown.appendChild(option);
             }
         });
 
-        function updateWhatsAppNumber() {
-            const num = document.getElementById('waInput').value.trim();
-            const statusMsg = document.getElementById('statusMsg');
+        // Add a new number to the Firebase list
+        function addNumberToList() {
+            const num = document.getElementById('newNumberInput').value.trim();
+            const msgEl = document.getElementById('saveMsg');
             
             if(num === "") {
-                statusMsg.innerText = "Please enter a valid number!";
-                statusMsg.className = "text-xs font-bold text-center mt-4 text-red-400 block";
+                showMessage(msgEl, "Please enter a valid number!", "text-red-400");
                 return;
             }
 
-            db.ref('settings/adminWhatsapp').set(num).then(() => {
-                statusMsg.innerText = "Number Successfully Updated!";
-                statusMsg.className = "text-xs font-bold text-center mt-4 text-green-400 block";
-                setTimeout(() => { statusMsg.classList.add("hidden"); }, 3000);
+            db.ref('settings/whatsappConfig/savedNumbers/' + num).set(true)
+            .then(() => {
+                showMessage(msgEl, "Number Added to List Successfully!", "text-green-400");
+                document.getElementById('newNumberInput').value = "";
             }).catch(err => {
-                statusMsg.innerText = "Error: " + err.message;
-                statusMsg.className = "text-xs font-bold text-center mt-4 text-red-400 block";
+                showMessage(msgEl, "Error: " + err.message, "text-red-400");
             });
         }
+
+        // Set Manual Override
+        function setManualOverride() {
+            const selectedNumber = document.getElementById('numberDropdown').value;
+            const timeInput = document.getElementById('overrideTime').value;
+            const msgEl = document.getElementById('overrideMsg');
+
+            if (!selectedNumber) {
+                showMessage(msgEl, "Please select a number from the list.", "text-red-400");
+                return;
+            }
+            if (!timeInput) {
+                showMessage(msgEl, "Please select an expiry date and time.", "text-red-400");
+                return;
+            }
+
+            const expireTimestamp = new Date(timeInput).getTime();
+            if (expireTimestamp <= Date.now()) {
+                showMessage(msgEl, "Expiry time must be in the future!", "text-red-400");
+                return;
+            }
+
+            const overrideData = {
+                number: selectedNumber,
+                expireTime: expireTimestamp
+            };
+
+            db.ref('settings/whatsappConfig/manualOverride').set(overrideData)
+            .then(() => {
+                showMessage(msgEl, "Override Activated Successfully!", "text-yellow-400");
+            }).catch(err => {
+                showMessage(msgEl, "Error: " + err.message, "text-red-400");
+            });
+        }
+
+        // Clear override to return to auto schedule
+        function clearOverride() {
+            db.ref('settings/whatsappConfig/manualOverride').remove()
+            .then(() => {
+                showMessage(document.getElementById('overrideMsg'), "Override Cleared. Auto Schedule Active.", "text-emerald-400");
+                document.getElementById('overrideTime').value = "";
+            });
+        }
+
+        function showMessage(element, text, colorClass) {
+            element.innerText = text;
+            element.className = `text-[10px] font-bold text-center mt-2 block ${colorClass}`;
+            setTimeout(() => { element.classList.add("hidden"); }, 4000);
+        }
+
+        // Compute Live Active Number (Runs every second to update Admin UI)
+        function calculateActiveNumber() {
+            let now = new Date();
+            let override = configData.manualOverride;
+            
+            // Check if valid override exists
+            if (override && override.expireTime > now.getTime()) {
+                return { number: override.number, mode: "MANUAL OVERRIDE ACTIVE" };
+            }
+            
+            // Auto Schedule Logic (Mon to Fri, 07:00 to 19:59)
+            let day = now.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+            let hours = now.getHours();
+            
+            if (day >= 1 && day <= 5) {
+                if (hours >= 7 && hours < 20) {
+                    return { number: "923423944508", mode: "AUTO SCHEDULE (MONDAY-FRIDAY, 7AM-8PM)" };
+                }
+            }
+            return { number: "923485465097", mode: "AUTO SCHEDULE (NIGHT / WEEKEND)" };
+        }
+
+        // Update the display every second
+        setInterval(() => {
+            let active = calculateActiveNumber();
+            document.getElementById('activeNumberDisplay').innerText = active.number;
+            document.getElementById('activeModeDisplay').innerText = active.mode;
+            
+            if (active.mode.includes("OVERRIDE")) {
+                document.getElementById('activeModeDisplay').className = "text-[10px] text-red-400 font-bold mt-1 tracking-wide animate-pulse";
+            } else {
+                document.getElementById('activeModeDisplay').className = "text-[10px] text-emerald-400 font-bold mt-1 tracking-wide";
+            }
+        }, 1000);
+
     </script>
 </body>
 </html>
