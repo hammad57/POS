@@ -586,30 +586,81 @@
         let cachedPurchases = [];
         let cachedWithdrawals = [];
         
-        // --- WHATSAPP DYNAMIC VARIABLE ---
-        let adminWhatsApp = "923423944508"; // Default
+        // --- DYNAMIC WHATSAPP NUMBER SYSTEM (Matching contact.html schedule & overrides) ---
+        let globalActiveWaNumber = "923423944508";
 
-        // Listen for Admin WhatsApp number changes
-        db.ref('settings/adminWhatsapp').on('value', snap => {
-            if (snap.exists()) {
-                adminWhatsApp = snap.val();
+        db.ref('settings/whatsappConfig').on('value', snap => {
+            let config = snap.val() || {};
+            
+            function getLiveWaNumber() {
+                let now = new Date();
+                let override = config.manualOverride;
                 
-                // Update Side Menu WhatsApp Link
+                // Check if valid manual override exists and active
+                if (override && override.expireTime > now.getTime()) {
+                    return override.number;
+                }
+                
+                // Automated Schedule (Mon to Fri, 07:00 to 19:59)
+                let day = now.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+                let hours = now.getHours();
+                
+                if (day >= 1 && day <= 5) {
+                    if (hours >= 7 && hours < 20) {
+                        return "923423944508";
+                    }
+                }
+                return "923485465097";
+            }
+
+            globalActiveWaNumber = getLiveWaNumber();
+            
+            // Update UI elements
+            const waSidebarLink = document.getElementById('waSidebarLink');
+            if(waSidebarLink) waSidebarLink.href = `https://wa.me/${globalActiveWaNumber}`;
+            
+            const waHelpDeskLink = document.getElementById('waHelpDeskLink');
+            if(waHelpDeskLink) waHelpDeskLink.href = `https://wa.me/${globalActiveWaNumber}`;
+            
+            const waHelpDeskText = document.getElementById('waHelpDeskText');
+            if(waHelpDeskText) waHelpDeskText.innerText = globalActiveWaNumber;
+            
+            const waEasypaisaText = document.getElementById('waEasypaisaText');
+            if(waEasypaisaText) waEasypaisaText.innerText = globalActiveWaNumber;
+        });
+
+        // Minute interval to ensure automated schedule updates on hour/day changes
+        setInterval(() => {
+            db.ref('settings/whatsappConfig').once('value', snap => {
+                let config = snap.val() || {};
+                let now = new Date();
+                let override = config.manualOverride;
+                
+                if (override && override.expireTime > now.getTime()) {
+                    globalActiveWaNumber = override.number;
+                } else {
+                    let day = now.getDay();
+                    let hours = now.getHours();
+                    if (day >= 1 && day <= 5 && hours >= 7 && hours < 20) {
+                        globalActiveWaNumber = "923423944508";
+                    } else {
+                        globalActiveWaNumber = "923485465097";
+                    }
+                }
+                
                 const waSidebarLink = document.getElementById('waSidebarLink');
-                if(waSidebarLink) waSidebarLink.href = `https://wa.me/${adminWhatsApp}`;
+                if(waSidebarLink) waSidebarLink.href = `https://wa.me/${globalActiveWaNumber}`;
                 
-                // Update Help Desk Link & Text
                 const waHelpDeskLink = document.getElementById('waHelpDeskLink');
-                if(waHelpDeskLink) waHelpDeskLink.href = `https://wa.me/${adminWhatsApp}`;
+                if(waHelpDeskLink) waHelpDeskLink.href = `https://wa.me/${globalActiveWaNumber}`;
                 
                 const waHelpDeskText = document.getElementById('waHelpDeskText');
-                if(waHelpDeskText) waHelpDeskText.innerText = adminWhatsApp;
+                if(waHelpDeskText) waHelpDeskText.innerText = globalActiveWaNumber;
                 
-                // Update Easypaisa Text just in case it is requested
                 const waEasypaisaText = document.getElementById('waEasypaisaText');
-                if(waEasypaisaText) waEasypaisaText.innerText = adminWhatsApp;
-            }
-        });
+                if(waEasypaisaText) waEasypaisaText.innerText = globalActiveWaNumber;
+            });
+        }, 60000);
 
         const urlParams = new URLSearchParams(window.location.search);
         const refIdParam = urlParams.get('ref');
@@ -1190,7 +1241,7 @@
 
                 closeModal('purchaseModal');
                 let waMessage = `*New Hen Purchase Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nQuantity: ${qty} Hens\nAmount: ${qty * 499} PKR\nTrx ID: ${trx}\nAccount Holder: ${holder}`;
-                let waUrl = `https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(waMessage)}`;
+                let waUrl = `https://wa.me/${globalActiveWaNumber}?text=${encodeURIComponent(waMessage)}`;
                 showCustomAlert("Request Submitted", "Your hen purchase request has been submitted. Click below to send notification to Admin on WhatsApp.", () => {
                     window.open(waUrl, '_blank');
                 }, "Send to WhatsApp");
@@ -1320,7 +1371,7 @@
             }).then(() => {
                 closeModal('saleModal');
                 let waMessage = `*New Egg Sale Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nDealer: ${selectedDealerObj.name}\nEggs Sold: ${eggQty}\nTotal Amount: ${totalPayout} PKR\nAccount Type: ${wdType}\nAccount Title: ${wdHolderName}\nAccount No: ${wdNumber}`;
-                let waUrl = `https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(waMessage)}`;
+                let waUrl = `https://wa.me/${globalActiveWaNumber}?text=${encodeURIComponent(waMessage)}`;
                 showCustomAlert("Request Submitted", `Egg sale request of ${eggQty} eggs submitted successfully! Click below to send notification to Admin on WhatsApp.`, () => {
                     window.open(waUrl, '_blank');
                 }, "Send to WhatsApp");
