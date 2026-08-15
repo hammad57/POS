@@ -554,6 +554,34 @@
         </div>
     </div>
 
+    <!-- WITHDRAWAL PLAN LOCK MODAL (NEW FEATURE) -->
+    <div id="planLockModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-[9998]">
+        <div class="bg-gradient-to-b from-emerald-900 via-emerald-950 to-zinc-950 border border-amber-500/40 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative text-center">
+            <button onclick="closeModal('planLockModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
+            <div class="w-16 h-16 bg-amber-500/10 border border-amber-400/40 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg text-3xl">
+                🔒
+            </div>
+            <span id="lblPlanBadge" class="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-3 py-1 rounded-full border border-amber-500/30 uppercase tracking-widest">Plan-1</span>
+            <h3 class="text-xl font-extrabold text-yellow-400 mt-2 mb-2">Withdrawal Temporarily Locked</h3>
+            <p id="lblPlanMessage" class="text-zinc-200 text-xs leading-relaxed mb-4">
+                Aap apni current withdrawal plan requirement poori nahi kar chuke. Naya withdrawal lene ke liye referral se hens purchase karwayen.
+            </p>
+            <div class="bg-emerald-900/60 border border-emerald-700/50 rounded-xl p-3 mb-4 text-xs text-left space-y-1.5">
+                <div class="flex justify-between"><span class="text-zinc-300">Required Referral Hens:</span> <span id="lblPlanRequired" class="font-bold text-yellow-400">0</span></div>
+                <div class="flex justify-between"><span class="text-zinc-300">You Currently Have:</span> <span id="lblPlanHave" class="font-bold text-emerald-400">0</span></div>
+                <div class="flex justify-between"><span class="text-zinc-300">Still Needed:</span> <span id="lblPlanNeeded" class="font-bold text-red-400">0</span></div>
+            </div>
+            <div class="space-y-2">
+                <button onclick="closeModal('planLockModal'); copyReferralLink();" class="w-full bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-zinc-950 font-bold py-3 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider">
+                    🔗 Copy My Referral Link
+                </button>
+                <button onclick="closeModal('planLockModal')" class="w-full bg-emerald-900/60 hover:bg-emerald-800/60 text-zinc-300 font-medium py-2.5 rounded-xl border border-emerald-700/50 transition-all text-xs">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
@@ -1254,7 +1282,62 @@
             });
         }
 
+        // ==================== WITHDRAWAL PLAN FEATURE (NEW) ====================
+        // Plan-1: 300 PKR total approved withdrawal ke baad, 4 referral hens (cumulative) zaroori
+        // Plan-2: 1200 PKR total approved withdrawal ke baad, 8 referral hens (cumulative) zaroori
+        // Plan-3: 2200 PKR total approved withdrawal ke baad, 12 referral hens (cumulative) zaroori
+        const withdrawalPlanTiers = [
+            { planNum: 1, threshold: 300, required: 4 },
+            { planNum: 2, threshold: 1200, required: 8 },
+            { planNum: 3, threshold: 2200, required: 12 }
+        ];
+
+        function getWithdrawalPlanStatus() {
+            let totalWithdrawal = currentUserData ? (Number(currentUserData.totalWithdrawal) || 0) : 0;
+            let referralHensPurchased = currentUserData ? (Number(currentUserData.referralHensPurchased) || 0) : 0;
+
+            let activeTier = null;
+            for (let i = withdrawalPlanTiers.length - 1; i >= 0; i--) {
+                if (totalWithdrawal >= withdrawalPlanTiers[i].threshold) {
+                    activeTier = withdrawalPlanTiers[i];
+                    break;
+                }
+            }
+
+            if (!activeTier) {
+                return { locked: false };
+            }
+
+            let remaining = Math.max(0, activeTier.required - referralHensPurchased);
+            return {
+                locked: remaining > 0,
+                planNum: activeTier.planNum,
+                required: activeTier.required,
+                have: referralHensPurchased,
+                remaining: remaining
+            };
+        }
+
+        function showPlanLockModal(status) {
+            document.getElementById('lblPlanBadge').innerText = 'Plan-' + status.planNum;
+            document.getElementById('lblPlanMessage').innerText = `Aap ne Plan-${status.planNum} ki withdrawal limit tak pohanch liya hai. Agla withdrawal lene ke liye pehle apne referral link se new ya old referrals se total ${status.required} hens purchase karwana zaroori hai (kisi ek referral se ya sab ko mila kar).`;
+            document.getElementById('lblPlanRequired').innerText = status.required;
+            document.getElementById('lblPlanHave').innerText = status.have;
+            document.getElementById('lblPlanNeeded').innerText = status.remaining;
+
+            document.getElementById('planLockModal').classList.remove('hidden');
+            document.getElementById('planLockModal').classList.add('flex');
+        }
+        // ================== END WITHDRAWAL PLAN FEATURE (NEW) ==================
+
         function openSaleModal() {
+            // WITHDRAWAL PLAN CHECK (NEW): Agar plan lock hai to marketplace ki bajaye Plan page dikhao
+            let planStatus = getWithdrawalPlanStatus();
+            if (planStatus.locked) {
+                showPlanLockModal(planStatus);
+                return;
+            }
+
             const container = document.getElementById('dealersContainer');
             container.innerHTML = '';
             
@@ -1306,6 +1389,14 @@
         document.getElementById('withdrawalForm').addEventListener('submit', function(e) {
             e.preventDefault();
             if(!selectedDealerObj) return;
+
+            // WITHDRAWAL PLAN CHECK (NEW): Safety re-check before final submission
+            let planStatusCheck = getWithdrawalPlanStatus();
+            if (planStatusCheck.locked) {
+                closeModal('saleModal');
+                showPlanLockModal(planStatusCheck);
+                return;
+            }
 
             let eggQty = parseInt(document.getElementById('wdEggQty').value) || 0;
             let currentAvail = currentUserData ? (currentUserData.availableEggs || 0) : 0;
