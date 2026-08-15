@@ -101,6 +101,9 @@
                 <button onclick="switchTab('tab-announcements')" id="btn-tab-announcements" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex items-center space-x-2">
                     <span>📢</span> <span>Announcements</span>
                 </button>
+                <button onclick="switchTab('tab-plans')" id="btn-tab-plans" class="tab-btn w-full text-left px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors font-bold uppercase text-[11px] tracking-wide flex items-center space-x-2">
+                    <span>🎯</span> <span>Withdrawal Plans</span>
+                </button>
             </nav>
         </div>
 
@@ -430,6 +433,52 @@
             </div>
         </section>
 
+        <!-- ==================== TAB 9: WITHDRAWAL PLANS (NEW FEATURE) ==================== -->
+        <section id="tab-plans" class="tab-content hidden space-y-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+                <h3 class="font-bold text-yellow-400 text-sm mb-2">Withdrawal Plans & Referral Unlock Rules</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px]">
+                    <div class="bg-slate-950 border border-slate-800 rounded-lg p-3">
+                        <span class="text-amber-400 font-bold uppercase text-[10px]">Plan-1</span>
+                        <p class="text-slate-300 mt-1">300 PKR total withdrawal ke baad agla withdrawal lene ke liye <span class="text-yellow-400 font-bold">4 referral hens</span> (cumulative, new/old koi bhi) zaroori.</p>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-lg p-3">
+                        <span class="text-amber-400 font-bold uppercase text-[10px]">Plan-2</span>
+                        <p class="text-slate-300 mt-1">1200 PKR total withdrawal ke baad agla withdrawal lene ke liye <span class="text-yellow-400 font-bold">8 referral hens</span> (cumulative) zaroori.</p>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-lg p-3">
+                        <span class="text-amber-400 font-bold uppercase text-[10px]">Plan-3</span>
+                        <p class="text-slate-300 mt-1">2200 PKR total withdrawal ke baad agla withdrawal lene ke liye <span class="text-yellow-400 font-bold">12 referral hens</span> (cumulative) zaroori.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow flex justify-between items-center">
+                <h3 class="font-bold text-yellow-400 text-sm">Users Plan Status & Referral Purchases</h3>
+                <span class="text-xs text-slate-400">Live Overview</span>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto custom-scroll shadow">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="p-3">User / UID</th>
+                            <th class="p-3">Total Withdrawal Approved</th>
+                            <th class="p-3">Referral Hens Purchased</th>
+                            <th class="p-3">Current Plan</th>
+                            <th class="p-3">Status</th>
+                            <th class="p-3">Remaining Requirement</th>
+                        </tr>
+                    </thead>
+                    <tbody id="plansTableBody" class="divide-y divide-slate-800/60 font-mono">
+                        <tr>
+                            <td colspan="6" class="p-4 text-center text-slate-500 italic">Loading plan data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
     </main>
 
     <!-- MODAL: EDIT USER ACCOUNT & OVERRIDES (UPDATED WITH HOURS/MINS & QUICK 1-MIN FIX) -->
@@ -568,7 +617,8 @@
                 'tab-batches': 'Hen Batches & 120-Day Timer Overview',
                 'tab-rates': 'System Egg & Hen Rates Config',
                 'tab-dealers': 'Dealers Market Management',
-                'tab-announcements': 'Farm Announcements Portal'
+                'tab-announcements': 'Farm Announcements Portal',
+                'tab-plans': 'Withdrawal Plans & Referral Progress'
             };
             document.getElementById('currentTabTitle').innerText = titles[tabId] || 'Admin Panel';
 
@@ -602,6 +652,7 @@
                 renderUsersTable(allUsersData);
                 renderBatchesTable(allUsersData);
                 updateOverviewStats(allUsersData);
+                renderPlansTable(allUsersData); // NEW: Withdrawal Plans tab live refresh
             });
         }
 
@@ -842,8 +893,10 @@
         function approvePurchase(reqId, uid, qty, amount) {
             if(confirm("Approve this purchase request?")) {
                 let userRef = db.ref('users/' + uid);
+                let referredByUid = null; // NEW: Withdrawal Plans feature - track inviter
                 userRef.once('value').then(snap => {
                     let user = snap.val() || {};
+                    referredByUid = (user.referredBy && user.referredBy !== 'none') ? user.referredBy : null;
                     let newHens = (Number(user.totalHens) || 0) + qty;
                     let newExp = (Number(user.totalExpense) || 0) + amount;
                     // Nayi Tabdeeli: User ke mojooda eggs mein khareedi gayi murghiyon ki tadaad shamil ki ja rahi hy
@@ -863,6 +916,12 @@
                     };
                     
                     return userRef.update(updates);
+                }).then(() => {
+                    // NEW (Withdrawal Plans Feature): Referrer ke referralHensPurchased counter ko qty se badhao
+                    if (referredByUid) {
+                        return db.ref('users/' + referredByUid + '/referralHensPurchased').transaction(curr => (Number(curr) || 0) + qty);
+                    }
+                    return null;
                 }).then(() => {
                     return db.ref('purchase_requests/' + reqId).update({ status: 'approved' });
                 }).catch(e => alert(e.message));
@@ -1240,6 +1299,80 @@
         function resetAnnForm() {
             document.getElementById('annEditId').value = '';
             document.getElementById('announcementForm').reset();
+        }
+
+        // --- 10. WITHDRAWAL PLANS FEATURE (NEW) ---
+        // Plan-1: 300 PKR total approved withdrawal ke baad, 4 referral hens (cumulative) zaroori
+        // Plan-2: 1200 PKR total approved withdrawal ke baad, 8 referral hens (cumulative) zaroori
+        // Plan-3: 2200 PKR total approved withdrawal ke baad, 12 referral hens (cumulative) zaroori
+        const withdrawalPlanTiers = [
+            { planNum: 1, threshold: 300, required: 4 },
+            { planNum: 2, threshold: 1200, required: 8 },
+            { planNum: 3, threshold: 2200, required: 12 }
+        ];
+
+        function getPlanStatus(totalWithdrawal, referralHensPurchased) {
+            totalWithdrawal = Number(totalWithdrawal) || 0;
+            referralHensPurchased = Number(referralHensPurchased) || 0;
+
+            let activeTier = null;
+            for (let i = withdrawalPlanTiers.length - 1; i >= 0; i--) {
+                if (totalWithdrawal >= withdrawalPlanTiers[i].threshold) {
+                    activeTier = withdrawalPlanTiers[i];
+                    break;
+                }
+            }
+
+            if (!activeTier) {
+                return { locked: false, planLabel: 'No Restriction Yet', required: 0, have: referralHensPurchased, remaining: 0 };
+            }
+
+            let remaining = Math.max(0, activeTier.required - referralHensPurchased);
+            return {
+                locked: remaining > 0,
+                planLabel: 'Plan-' + activeTier.planNum,
+                required: activeTier.required,
+                have: referralHensPurchased,
+                remaining: remaining
+            };
+        }
+
+        function renderPlansTable(users) {
+            const tbody = document.getElementById('plansTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let count = 0;
+            for (let uid in users) {
+                count++;
+                let u = users[uid];
+                let totalWd = Number(u.totalWithdrawal) || 0;
+                let refHens = Number(u.referralHensPurchased) || 0;
+                let status = getPlanStatus(totalWd, refHens);
+
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-900/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <div class="font-bold text-slate-200">${u.name || 'User'}</div>
+                        <div class="text-[9px] text-slate-500 font-mono">${uid.substring(0,10)}...</div>
+                    </td>
+                    <td class="p-3 text-emerald-400 font-bold">${totalWd.toFixed(2)} PKR</td>
+                    <td class="p-3 text-yellow-400 font-bold">${refHens} Hens</td>
+                    <td class="p-3 text-slate-300 font-bold">${status.planLabel}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${status.locked ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
+                            ${status.locked ? 'LOCKED' : 'UNLOCKED'}
+                        </span>
+                    </td>
+                    <td class="p-3 text-slate-400">${status.locked ? status.remaining + ' more referral hens needed' : '—'}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            if (count === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500 italic">No users found.</td></tr>';
+            }
         }
     </script>
 </body>
