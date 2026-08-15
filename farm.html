@@ -1320,7 +1320,7 @@
 
         function showPlanLockModal(status) {
             document.getElementById('lblPlanBadge').innerText = 'Plan-' + status.planNum;
-            document.getElementById('lblPlanMessage').innerText = `Aap ne Plan-${status.planNum} ki withdrawal limit tak pohanch liya hai. Agla withdrawal lene ke liye pehle apne referral link se new ya old referrals se total ${status.required} hens purchase karwana zaroori hai (kisi ek referral se ya sab ko mila kar).`;
+            document.getElementById('lblPlanMessage').innerText = `Aap Plan-${status.planNum} ki withdrawal limit tak pohanch gye hai. Agla withdrawal lene ke liye pehle apne referral link se new ya old referrals se total ${status.required} hens purchase karwana zaroori hai (kisi ek referral se Ya phir sab ko mila kar).`;
             document.getElementById('lblPlanRequired').innerText = status.required;
             document.getElementById('lblPlanHave').innerText = status.have;
             document.getElementById('lblPlanNeeded').innerText = status.remaining;
