@@ -29,8 +29,9 @@
         #closeAppBtn.active { transform: translateX(-50%) translateY(0); }
         
         .notify-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: 800; border: 2px solid #1e293b; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+        .req-badge { position: absolute; top: -4px; right: -4px; background: #eab308; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: 800; border: 2px solid #1e293b; box-shadow: 0 0 10px rgba(234, 179, 8, 0.4); }
         
-        #notifDropdown { 
+        #notifDropdown, #requestsDropdown { 
             display: none; 
             position: absolute; 
             right: 0; 
@@ -42,7 +43,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             transform-origin: top right;
         }
-        #notifDropdown.active { display: block; animation: scaleIn 0.2s ease-out forwards; }
+        #notifDropdown.active, #requestsDropdown.active { display: block; animation: scaleIn 0.2s ease-out forwards; }
         
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.95) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
@@ -99,6 +100,25 @@
         </div>
         
         <div class="flex items-center gap-3">
+            <!-- New: Live Pending Requests (Egg Sale / Purchase) -->
+            <div class="relative">
+                <button class="w-11 h-11 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center transition-colors border border-white/5" onclick="toggleRequests()">
+                    <i class="fas fa-clipboard-list text-emerald-400"></i>
+                    <span id="requestsBadge" class="req-badge" style="display: none;">0</span>
+                </button>
+                
+                <div id="requestsDropdown" class="glass rounded-3xl overflow-hidden shadow-2xl">
+                    <div class="p-4 border-b border-white/10 bg-slate-800/80 flex justify-between items-center backdrop-blur-md">
+                        <span class="font-bold text-sm text-white flex items-center gap-2"><i class="fas fa-clipboard-check text-emerald-400"></i> Pending Requests</span>
+                        <button onclick="toggleRequests()" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center hover:bg-slate-600"><i class="fas fa-times text-slate-300 text-xs"></i></button>
+                    </div>
+                    <div id="requestsList" class="max-h-[60vh] overflow-y-auto p-3 space-y-2 bg-slate-900/95">
+                        <!-- Pending requests will load here automatically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing: General Notifications -->
             <div class="relative">
                 <button class="w-11 h-11 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center transition-colors border border-white/5" onclick="toggleNotif()">
                     <i class="fas fa-bell text-slate-300"></i>
@@ -115,6 +135,7 @@
                     </div>
                 </div>
             </div>
+            
             <button onclick="toggleModal('addAppModal')" class="bg-blue-600 hover:bg-blue-500 w-11 h-11 rounded-2xl shadow-lg shadow-blue-600/30 flex items-center justify-center transition-all active:scale-95">
                 <i class="fas fa-plus text-white"></i>
             </button>
@@ -231,6 +252,7 @@
         };
         
         window.toggleNotif = () => document.getElementById('notifDropdown').classList.toggle('active');
+        window.toggleRequests = () => document.getElementById('requestsDropdown').classList.toggle('active');
 
         // Delete Function
         window.deleteApp = (e, key) => {
@@ -242,10 +264,16 @@
 
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('notifDropdown');
+            const notifDropdown = document.getElementById('notifDropdown');
             const notifBtn = e.target.closest('button[onclick="toggleNotif()"]');
-            if (dropdown.classList.contains('active') && !dropdown.contains(e.target) && !notifBtn) {
-                dropdown.classList.remove('active');
+            if (notifDropdown && notifDropdown.classList.contains('active') && !notifDropdown.contains(e.target) && !notifBtn) {
+                notifDropdown.classList.remove('active');
+            }
+            
+            const reqDropdown = document.getElementById('requestsDropdown');
+            const reqBtn = e.target.closest('button[onclick="toggleRequests()"]');
+            if (reqDropdown && reqDropdown.classList.contains('active') && !reqDropdown.contains(e.target) && !reqBtn) {
+                reqDropdown.classList.remove('active');
             }
         });
 
@@ -265,6 +293,8 @@
         };
 
         // --- Data Handling ---
+        
+        // 1. Regular Notifications listener
         onValue(ref(db, 'notifications'), snap => {
             const list = document.getElementById('notifList');
             const badge = document.getElementById('notifBadge');
@@ -290,6 +320,99 @@
             }
         });
 
+        // 2. Pending Admin Requests logic (Egg Sale / Egg Purchase)
+        let usersData = {};
+        let pendingPurchases = {};
+        let pendingWithdrawals = {};
+
+        onValue(ref(db, 'users'), snap => {
+            usersData = snap.val() || {};
+            renderRequests();
+        });
+
+        onValue(ref(db, 'purchase_requests'), snap => {
+            pendingPurchases = snap.val() || {};
+            renderRequests();
+        });
+
+        onValue(ref(db, 'withdraw_requests'), snap => {
+            pendingWithdrawals = snap.val() || {};
+            renderRequests();
+        });
+
+        function renderRequests() {
+            const list = document.getElementById('requestsList');
+            const badge = document.getElementById('requestsBadge');
+            if(!list || !badge) return;
+            
+            list.innerHTML = '';
+            let pendingItems = [];
+
+            // Check Hen/Egg Purchases
+            for (let key in pendingPurchases) {
+                let req = pendingPurchases[key];
+                if (req.status === 'pending') {
+                    let uName = usersData[req.uid]?.name || 'Unknown User';
+                    pendingItems.push({
+                        type: 'purchase',
+                        title: 'Egg Purchase Request',
+                        desc: `${uName} wants to purchase ${req.quantity} Hens`,
+                        time: req.timestamp || 0
+                    });
+                }
+            }
+
+            // Check Egg Sales / Withdrawals
+            for (let key in pendingWithdrawals) {
+                let req = pendingWithdrawals[key];
+                if (req.status === 'pending') {
+                    let uName = usersData[req.uid]?.name || 'Unknown User';
+                    let amt = req.amount || req.totalPayout || 0;
+                    let eggs = req.eggsSold || req.eggsDeductedCount || 0;
+                    pendingItems.push({
+                        type: 'sale',
+                        title: 'Egg Sale Request',
+                        desc: `${uName} wants to sell ${eggs} eggs (Rs. ${amt})`,
+                        time: req.timestamp || 0
+                    });
+                }
+            }
+
+            // Sort newest first
+            pendingItems.sort((a, b) => b.time - a.time);
+
+            if (pendingItems.length > 0) {
+                badge.innerText = pendingItems.length > 99 ? '99+' : pendingItems.length;
+                badge.style.display = 'block';
+                
+                pendingItems.forEach(item => {
+                    let icon = item.type === 'purchase' ? '<i class="fas fa-shopping-bag text-emerald-400 text-lg"></i>' : '<i class="fas fa-hand-holding-dollar text-yellow-400 text-lg"></i>';
+                    let dateStr = item.time ? new Date(item.time).toLocaleString() : 'N/A';
+                    
+                    // Clicking element directly opens admin file
+                    list.innerHTML += `<div class="p-3 bg-slate-800/80 border border-slate-700 rounded-xl mb-2 shadow-md cursor-pointer hover:bg-slate-700 transition" onclick="openApp('admin.html')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center shrink-0 shadow-inner border border-white/5">
+                                ${icon}
+                            </div>
+                            <div>
+                                <p class="text-slate-200 font-bold text-xs">${item.title}</p>
+                                <p class="text-blue-300 text-[11px] mt-0.5">${item.desc}</p>
+                                <p class="text-slate-500 text-[9px] mt-1 font-mono">${dateStr}</p>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            } else {
+                badge.style.display = 'none';
+                list.innerHTML = `<div class="py-12 text-center flex flex-col items-center justify-center opacity-40">
+                    <i class="fas fa-check-circle text-3xl mb-3 text-emerald-500"></i>
+                    <span class="italic text-xs">No pending requests</span>
+                </div>`;
+            }
+        }
+
+        // 3. Main Bank Balance listener
         onValue(ref(db, 'bank_accounts'), snapBanks => {
             onValue(ref(db, 'bank_transactions'), snapTrans => {
                 let total = 0;
