@@ -3,134 +3,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Premium IPTV</title>
-    
-    <!-- Tailwind CSS (Aap ki user.html ki tarah) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Firebase Libraries (user.html wali same versions) -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    
-    <!-- HLS.js Library: IPTV streams (m3u8) play karne ke liye -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
+    <title>Professional IPTV Player</title>
+    <!-- Video.js CSS -->
+    <link href="https://vjs.zencdn.net/8.3.0/video-js.css" rel="stylesheet" />
     <style>
-        body { 
-            background-color: #0f172a; /* Dark theme TV ke liye best hai */
-            color: #f8fafc;
-            margin: 0;
-            overflow: hidden; /* TV par body scroll rokne ke liye */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --primary: #3b82f6;
+            --text-light: #f8fafc;
+            --danger: #ef4444;
         }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); }
         
-        /* Android TV Remote (D-Pad) Focus Navigation Styling */
-        .focusable:focus, .focusable:hover {
-            outline: 3px solid #10b981; /* Emerald outline jaise user.html mein thi */
-            background-color: #1e293b;
-            transform: scale(1.02);
-            transition: all 0.2s ease;
-            cursor: pointer;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
-        }
-
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
+        /* Login Screen */
+        #login-screen { display: flex; height: 100vh; justify-content: center; align-items: center; }
+        .login-box { background-color: var(--bg-panel); padding: 2rem; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .login-box h2 { margin-bottom: 1.5rem; text-align: center; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .input-group input { width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; }
+        .btn { width: 100%; padding: 0.8rem; border: none; border-radius: 6px; background-color: var(--primary); color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn:hover { background-color: #2563eb; }
+        .btn-danger { background-color: var(--danger); width: auto; padding: 0.5rem 1rem; }
+        
+        /* Main App Screen */
+        #app-screen { display: none; height: 100vh; flex-direction: column; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--bg-panel); border-bottom: 1px solid #334155; }
+        .main-content { display: flex; flex: 1; overflow: hidden; }
+        
+        /* Sidebar (Channels) */
+        .sidebar { width: 300px; background-color: var(--bg-panel); overflow-y: auto; border-right: 1px solid #334155; }
+        .channel-item { padding: 1rem; border-bottom: 1px solid #334155; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+        .channel-item:hover { background-color: #334155; }
+        .channel-icon { width: 40px; height: 40px; background: #0f172a; border-radius: 4px; object-fit: contain; }
+        
+        /* Video Area */
+        .player-area { flex: 1; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .video-container { width: 100%; max-width: 900px; aspect-ratio: 16/9; background: black; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .video-js { width: 100%; height: 100%; }
+        #status-msg { margin-top: 1rem; color: #94a3b8; }
     </style>
 </head>
-<body class="flex flex-col h-screen">
+<body>
 
-    <!-- Header Section -->
-    <header class="bg-slate-900 p-4 border-b border-slate-800 flex justify-between items-center shadow-lg">
-        <h1 class="text-2xl font-bold text-emerald-400">📺 Live Streams Portal</h1>
-        <button id="authBtn" class="focusable text-sm bg-emerald-700 hover:bg-emerald-600 px-4 py-2 rounded font-bold transition" tabindex="1">
-            Login
-        </button>
-    </header>
-
-    <!-- Main App Layout -->
-    <div class="flex flex-1 overflow-hidden flex-col md:flex-row">
-        
-        <!-- Channels List Section (Mobile pe pehle, TV/Desktop pe left side) -->
-        <div class="w-full md:w-80 bg-slate-900 border-r border-slate-800 flex flex-col h-1/2 md:h-auto order-2 md:order-1">
-            <div class="p-4 border-b border-slate-800">
-                <input type="text" id="searchInput" class="focusable w-full bg-slate-800 text-white rounded px-3 py-2 text-sm focus:outline-none placeholder-slate-400 border border-slate-700" placeholder="Search channels..." tabindex="2">
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>IPTV Portal</h2>
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="username" value="hammad" />
             </div>
-            
-            <!-- Channels List Container -->
-            <div id="channelList" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-2">
-                <!-- Ye channels Firebase Database se aayenge -->
-                <p class="text-slate-400 text-center mt-4 text-xs italic">Connecting to Firebase...</p>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" value="hammad789" />
             </div>
+            <div class="input-group">
+                <label>Server URL</label>
+                <input type="text" id="server" value="http://myott.to:8080" />
+            </div>
+            <button class="btn" onclick="login()">Login</button>
+            <p id="login-error" style="color: var(--danger); margin-top: 10px; text-align: center; display: none;">Login Failed. Check credentials or CORS.</p>
         </div>
-
-        <!-- Video Player Section (TV/Desktop pe right side) -->
-        <div class="flex-1 bg-black flex flex-col items-center justify-center p-0 md:p-4 order-1 md:order-2 relative">
-            <div class="w-full h-full bg-slate-950 md:rounded-xl overflow-hidden shadow-2xl relative border border-slate-800 flex items-center justify-center">
-                
-                <video id="videoPlayer" class="focusable w-full h-full object-contain z-10" controls tabindex="3"></video>
-                
-                <!-- Player Placeholder (Jab koi channel select na ho) -->
-                <div id="playerPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 z-0">
-                    <span class="text-6xl mb-2">🎬</span>
-                    <p class="text-sm">Select a channel from the list to play</p>
-                </div>
-            </div>
-        </div>
-
     </div>
 
-    <script>
-        // 1. Firebase Configuration (user.html wali same config)
-        const firebaseConfig = {
-            apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
-            authDomain: "own-live-steam-web-default.firebaseapp.com",
-            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
-            projectId: "own-live-steam-web-default",
-            storageBucket: "own-live-steam-web-default.appspot.com",
-            messagingSenderId: "xxxxxxxxxxx",
-            appId: "xxxxxxxxxxx"
-        };
-
-        // 2. Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
-
-        // 3. Video Player Setup (HLS.js)
-        const video = document.getElementById('videoPlayer');
-        const placeholder = document.getElementById('playerPlaceholder');
-        let hls; // Global variable taa ke purani stream destroy ki ja sake
-
-        function playChannel(streamUrl) {
-            placeholder.style.display = 'none'; // Placeholder chupayen
+    <!-- Main App Screen -->
+    <div id="app-screen">
+        <header>
+            <h2>My IPTV Dashboard</h2>
+            <div>
+                <span id="user-info" style="margin-right: 20px; font-weight: bold;"></span>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="sidebar" id="channel-list">
+                <!-- Channels will load here -->
+                <div style="padding: 20px; text-align: center; color: #94a3b8;">Loading channels...</div>
+            </div>
             
-            if (hls) {
-                hls.destroy(); // Agar pehle se koi channel chal raha hai to usay band karein
-            }
+            <div class="player-area">
+                <div class="video-container">
+                    <video id="iptv-player" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto"></video>
+                </div>
+                <h3 id="current-channel-name" style="margin-top: 1.5rem;">Select a channel to play</h3>
+                <p id="status-msg"></p>
+            </div>
+        </div>
+    </div>
 
-            if (Hls.isSupported()) {
-                hls = new Hls();
-                hls.loadSource(streamUrl);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    video.play();
-                });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                // For native HLS support (jaise Apple devices Safari mein)
-                video.src = streamUrl;
-                video.addEventListener('loadedmetadata', function() {
-                    video.play();
-                });
-            } else {
-                alert("Your device doesn't support this IPTV stream format.");
+    <!-- Video.js and HLS Scripts -->
+    <script src="https://vjs.zencdn.net/8.3.0/video.min.js"></script>
+    
+    <script>
+        let player;
+        
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            player = videojs('iptv-player');
+            checkLoginState();
+        });
+
+        function checkLoginState() {
+            const storedUser = localStorage.getItem('iptv_user');
+            if (storedUser) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-screen').style.display = 'flex';
+                document.getElementById('user-info').innerText = `Welcome, ${localStorage.getItem('iptv_username')}`;
+                fetchChannels();
             }
         }
 
-        // Demo Channel Test function
-        // playChannel("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8");
+        async function login() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            let url = document.getElementById('server').value;
+            
+            // Remove trailing slash if present
+            if(url.endsWith('/')) url = url.slice(0, -1);
+
+            const authUrl = `${url}/player_api.php?username=${user}&password=${pass}`;
+
+            try {
+                // Testing credentials with Xtream API
+                const response = await fetch(authUrl);
+                const data = await response.json();
+
+                if (data && data.user_info && data.user_info.auth === 1) {
+                    // Save to local storage
+                    localStorage.setItem('iptv_user', 'true');
+                    localStorage.setItem('iptv_username', user);
+                    localStorage.setItem('iptv_password', pass);
+                    localStorage.setItem('iptv_server', url);
+                    
+                    document.getElementById('login-error').style.display = 'none';
+                    checkLoginState();
+                } else {
+                    showError("Invalid Credentials");
+                }
+            } catch (error) {
+                console.error("Login Error:", error);
+                showError("Network Error. CORS might be blocking the request on HTTP.");
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            if(player) player.pause();
+            document.getElementById('app-screen').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('channel-list').innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">Loading channels...</div>';
+        }
+
+        function showError(msg) {
+            const err = document.getElementById('login-error');
+            err.innerText = msg;
+            err.style.display = 'block';
+        }
+
+        async function fetchChannels() {
+            const user = localStorage.getItem('iptv_username');
+            const pass = localStorage.getItem('iptv_password');
+            const server = localStorage.getItem('iptv_server');
+            
+            // Fetching a few live streams for demo
+            const apiUrl = `${server}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`;
+            
+            try {
+                const response = await fetch(apiUrl);
+                const channels = await response.json();
+                
+                const sidebar = document.getElementById('channel-list');
+                sidebar.innerHTML = ''; // Clear loading text
+
+                // Show only first 50 channels to keep UI fast
+                const displayChannels = channels.slice(0, 50);
+
+                if(displayChannels.length === 0) {
+                    sidebar.innerHTML = '<div style="padding: 20px;">No channels found.</div>';
+                    return;
+                }
+
+                displayChannels.forEach(channel => {
+                    const div = document.createElement('div');
+                    div.className = 'channel-item';
+                    
+                    // Xtream standard stream URL format
+                    const streamUrl = `${server}/live/${user}/${pass}/${channel.stream_id}.m3u8`;
+                    
+                    div.onclick = () => playStream(streamUrl, channel.name);
+                    
+                    const iconUrl = channel.stream_icon ? channel.stream_icon : 'https://via.placeholder.com/40x40?text=TV';
+                    
+                    div.innerHTML = `
+                        <img src="${iconUrl}" class="channel-icon" onerror="this.src='https://via.placeholder.com/40x40?text=TV'">
+                        <div>
+                            <div style="font-weight: bold; font-size: 0.95rem;">${channel.name}</div>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">ID: ${channel.stream_id}</div>
+                        </div>
+                    `;
+                    sidebar.appendChild(div);
+                });
+                
+            } catch (error) {
+                console.error("Error fetching channels:", error);
+                document.getElementById('channel-list').innerHTML = '<div style="padding: 20px; color: var(--danger);">Failed to load channels.</div>';
+            }
+        }
+
+        function playStream(url, name) {
+            document.getElementById('current-channel-name').innerText = `Playing: ${name}`;
+            document.getElementById('status-msg').innerText = "Buffering...";
+            
+            player.src({
+                src: url,
+                type: 'application/x-mpegURL'
+            });
+            
+            player.play().then(() => {
+                document.getElementById('status-msg').innerText = "Live";
+                document.getElementById('status-msg').style.color = "#22c55e"; // Green color
+            }).catch(e => {
+                console.error("Playback error:", e);
+                document.getElementById('status-msg').innerText = "Error playing stream. Format might not be supported or CORS issue.";
+                document.getElementById('status-msg').style.color = "var(--danger)";
+            });
+        }
     </script>
 </body>
 </html>
