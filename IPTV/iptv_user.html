@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Professional IPTV Player</title>
-    <!-- Video.js CSS -->
-    <link href="https://vjs.zencdn.net/8.3.0/video-js.css" rel="stylesheet" />
+    <!-- Clappr Player Script -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
     <style>
         :root {
             --bg-dark: #0f172a;
@@ -42,8 +42,7 @@
         /* Video Area */
         .player-area { flex: 1; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .video-container { width: 100%; max-width: 900px; aspect-ratio: 16/9; background: black; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .video-js { width: 100%; height: 100%; }
-        #status-msg { margin-top: 1rem; color: #94a3b8; }
+        #status-msg { margin-top: 1rem; color: #94a3b8; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -65,7 +64,7 @@
                 <input type="text" id="server" value="http://myott.to:8080" />
             </div>
             <button class="btn" onclick="login()">Login</button>
-            <p id="login-error" style="color: var(--danger); margin-top: 10px; text-align: center; display: none;">Login Failed. Check credentials or CORS.</p>
+            <p id="login-error" style="color: var(--danger); margin-top: 10px; text-align: center; display: none;">Login Failed.</p>
         </div>
     </div>
 
@@ -81,29 +80,23 @@
         
         <div class="main-content">
             <div class="sidebar" id="channel-list">
-                <!-- Channels will load here -->
                 <div style="padding: 20px; text-align: center; color: #94a3b8;">Loading channels...</div>
             </div>
             
             <div class="player-area">
-                <div class="video-container">
-                    <video id="iptv-player" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto"></video>
-                </div>
+                <!-- Clappr Player Div -->
+                <div class="video-container" id="player-wrapper"></div>
+                
                 <h3 id="current-channel-name" style="margin-top: 1.5rem;">Select a channel to play</h3>
                 <p id="status-msg"></p>
             </div>
         </div>
     </div>
 
-    <!-- Video.js and HLS Scripts -->
-    <script src="https://vjs.zencdn.net/8.3.0/video.min.js"></script>
-    
     <script>
-        let player;
+        let player = null;
         
-        // Initialize App
         document.addEventListener('DOMContentLoaded', () => {
-            player = videojs('iptv-player');
             checkLoginState();
         });
 
@@ -122,18 +115,14 @@
             const pass = document.getElementById('password').value;
             let url = document.getElementById('server').value;
             
-            // Remove trailing slash if present
             if(url.endsWith('/')) url = url.slice(0, -1);
-
             const authUrl = `${url}/player_api.php?username=${user}&password=${pass}`;
 
             try {
-                // Testing credentials with Xtream API
                 const response = await fetch(authUrl);
                 const data = await response.json();
 
                 if (data && data.user_info && data.user_info.auth === 1) {
-                    // Save to local storage
                     localStorage.setItem('iptv_user', 'true');
                     localStorage.setItem('iptv_username', user);
                     localStorage.setItem('iptv_password', pass);
@@ -145,17 +134,21 @@
                     showError("Invalid Credentials");
                 }
             } catch (error) {
-                console.error("Login Error:", error);
-                showError("Network Error. CORS might be blocking the request on HTTP.");
+                showError("Network Error. CORS might be blocking the request.");
             }
         }
 
         function logout() {
             localStorage.clear();
-            if(player) player.pause();
+            if(player) {
+                player.destroy();
+                player = null;
+            }
             document.getElementById('app-screen').style.display = 'none';
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('channel-list').innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">Loading channels...</div>';
+            document.getElementById('current-channel-name').innerText = "Select a channel to play";
+            document.getElementById('status-msg').innerText = "";
         }
 
         function showError(msg) {
@@ -169,7 +162,6 @@
             const pass = localStorage.getItem('iptv_password');
             const server = localStorage.getItem('iptv_server');
             
-            // Fetching a few live streams for demo
             const apiUrl = `${server}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`;
             
             try {
@@ -177,10 +169,9 @@
                 const channels = await response.json();
                 
                 const sidebar = document.getElementById('channel-list');
-                sidebar.innerHTML = ''; // Clear loading text
+                sidebar.innerHTML = ''; 
 
-                // Show only first 50 channels to keep UI fast
-                const displayChannels = channels.slice(0, 50);
+                const displayChannels = channels.slice(0, 100); 
 
                 if(displayChannels.length === 0) {
                     sidebar.innerHTML = '<div style="padding: 20px;">No channels found.</div>';
@@ -191,7 +182,7 @@
                     const div = document.createElement('div');
                     div.className = 'channel-item';
                     
-                    // Xtream standard stream URL format
+                    // Standard Xtream HLS Format
                     const streamUrl = `${server}/live/${user}/${pass}/${channel.stream_id}.m3u8`;
                     
                     div.onclick = () => playStream(streamUrl, channel.name);
@@ -209,27 +200,39 @@
                 });
                 
             } catch (error) {
-                console.error("Error fetching channels:", error);
                 document.getElementById('channel-list').innerHTML = '<div style="padding: 20px; color: var(--danger);">Failed to load channels.</div>';
             }
         }
 
         function playStream(url, name) {
             document.getElementById('current-channel-name').innerText = `Playing: ${name}`;
-            document.getElementById('status-msg').innerText = "Buffering...";
-            
-            player.src({
-                src: url,
-                type: 'application/x-mpegURL'
-            });
-            
-            player.play().then(() => {
-                document.getElementById('status-msg').innerText = "Live";
-                document.getElementById('status-msg').style.color = "#22c55e"; // Green color
-            }).catch(e => {
-                console.error("Playback error:", e);
-                document.getElementById('status-msg').innerText = "Error playing stream. Format might not be supported or CORS issue.";
-                document.getElementById('status-msg').style.color = "var(--danger)";
+            document.getElementById('status-msg').innerText = "Connecting...";
+            document.getElementById('status-msg').style.color = "#facc15";
+
+            // Purana player remove karein agar chal raha ho
+            if (player) {
+                player.destroy();
+            }
+
+            // Naya Clappr instance banayein
+            player = new Clappr.Player({
+                source: url,
+                parentId: "#player-wrapper",
+                width: '100%',
+                height: '100%',
+                autoPlay: true,
+                mute: false,
+                events: {
+                    onPlay: function() {
+                        document.getElementById('status-msg').innerText = "Live";
+                        document.getElementById('status-msg').style.color = "#22c55e"; 
+                    },
+                    onError: function(e) {
+                        console.error("Playback error:", e);
+                        document.getElementById('status-msg').innerText = "Error: CORS Block ya Channel Offline hy.";
+                        document.getElementById('status-msg').style.color = "var(--danger)";
+                    }
+                }
             });
         }
     </script>
