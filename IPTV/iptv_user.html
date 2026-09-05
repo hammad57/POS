@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional IPTV Player</title>
-    <!-- Clappr Player Script -->
+    <title>Professional IPTV Player - Offline Sync</title>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
     <style>
         :root {
             --bg-dark: #0f172a;
             --bg-panel: #1e293b;
             --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --success-hover: #059669;
             --text-light: #f8fafc;
             --danger: #ef4444;
+            --border: #334155;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-light); }
+        body { background-color: var(--bg-dark); color: var(--text-light); overflow: hidden; }
         
         /* Login Screen */
         #login-screen { display: flex; height: 100vh; justify-content: center; align-items: center; }
@@ -23,29 +26,67 @@
         .login-box h2 { margin-bottom: 1.5rem; text-align: center; }
         .input-group { margin-bottom: 1rem; }
         .input-group label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; }
-        .input-group input { width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; }
+        .input-group input { width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--border); background: #0f172a; color: white; }
         .btn { width: 100%; padding: 0.8rem; border: none; border-radius: 6px; background-color: var(--primary); color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn:hover { background-color: #2563eb; }
+        .btn:hover { background-color: var(--primary-hover); }
         .btn-danger { background-color: var(--danger); width: auto; padding: 0.5rem 1rem; }
+        .btn-success { background-color: var(--success); width: auto; padding: 0.5rem 1rem; margin-right: 10px;}
+        .btn-success:hover { background-color: var(--success-hover); }
         
+        /* Sync Overlay Screen */
+        #sync-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(15, 23, 42, 0.95); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #sync-status { font-size: 1.2rem; margin-top: 10px; color: #cbd5e1; }
+        #sync-counts { margin-top: 20px; font-size: 1rem; color: #94a3b8; text-align: left; background: var(--bg-panel); padding: 20px; border-radius: 8px; border: 1px solid var(--border); }
+        .count-item { margin-bottom: 8px; }
+
         /* Main App Screen */
         #app-screen { display: none; height: 100vh; flex-direction: column; }
-        header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--bg-panel); border-bottom: 1px solid #334155; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--bg-panel); border-bottom: 1px solid var(--border); z-index: 10; }
         .main-content { display: flex; flex: 1; overflow: hidden; }
         
-        /* Sidebar (Channels) */
-        .sidebar { width: 300px; background-color: var(--bg-panel); overflow-y: auto; border-right: 1px solid #334155; }
-        .channel-item { padding: 1rem; border-bottom: 1px solid #334155; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+        /* Sidebar */
+        .sidebar { width: 350px; background-color: var(--bg-panel); display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        .sidebar-header { padding: 10px; border-bottom: 1px solid var(--border); background: #182235; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 10px; }
+        .tab-btn { flex: 1; padding: 8px 5px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
+        .tab-btn.active { background: var(--primary); border-color: var(--primary); font-weight: bold; }
+        .search-box { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: #0f172a; color: white; outline: none; }
+        .search-box:focus { border-color: var(--primary); }
+
+        /* Channel List */
+        #channel-list { flex: 1; overflow-y: auto; }
+        .channel-item { padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
         .channel-item:hover { background-color: #334155; }
-        .channel-icon { width: 40px; height: 40px; background: #0f172a; border-radius: 4px; object-fit: contain; }
+        .channel-icon { width: 50px; height: 50px; background: #0f172a; border-radius: 6px; object-fit: contain; }
+        .channel-info { flex: 1; overflow: hidden; }
+        .channel-name { font-weight: bold; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .channel-id { font-size: 0.8rem; color: #94a3b8; margin-top: 4px; }
         
         /* Video Area */
-        .player-area { flex: 1; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .video-container { width: 100%; max-width: 900px; aspect-ratio: 16/9; background: black; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .player-area { flex: 1; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0b1121; }
+        .video-container { width: 100%; max-width: 900px; aspect-ratio: 16/9; background: black; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
         #status-msg { margin-top: 1rem; color: #94a3b8; font-weight: bold; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-panel); }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
     </style>
 </head>
 <body>
+
+    <!-- Syncing/Fetching Overlay -->
+    <div id="sync-overlay">
+        <div class="spinner"></div>
+        <h2>Syncing Data with Server</h2>
+        <div id="sync-status">Starting fetch process...</div>
+        <div id="sync-counts">
+            <div class="count-item" id="count-live">📺 Live Channels: Waiting...</div>
+            <div class="count-item" id="count-movie">🎬 Movies (VOD): Waiting...</div>
+            <div class="count-item" id="count-series">📺 Shows (Series): Waiting...</div>
+        </div>
+    </div>
 
     <!-- Login Screen -->
     <div id="login-screen">
@@ -74,19 +115,28 @@
             <h2>My IPTV Dashboard</h2>
             <div>
                 <span id="user-info" style="margin-right: 20px; font-weight: bold;"></span>
+                <button class="btn btn-success" onclick="startFullSync()">Update Data</button>
                 <button class="btn btn-danger" onclick="logout()">Logout</button>
             </div>
         </header>
         
         <div class="main-content">
-            <div class="sidebar" id="channel-list">
-                <div style="padding: 20px; text-align: center; color: #94a3b8;">Loading channels...</div>
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <div class="tabs">
+                        <button class="tab-btn active" id="tab-live" onclick="switchTab('live')">Live TV</button>
+                        <button class="tab-btn" id="tab-movie" onclick="switchTab('movie')">Movies</button>
+                        <button class="tab-btn" id="tab-series" onclick="switchTab('series')">Shows</button>
+                    </div>
+                    <input type="text" id="searchInput" class="search-box" placeholder="Search anything..." onkeyup="filterList()" />
+                </div>
+                <div id="channel-list">
+                    <div style="padding: 20px; text-align: center; color: #94a3b8;">Loading data...</div>
+                </div>
             </div>
             
             <div class="player-area">
-                <!-- Clappr Player Div -->
                 <div class="video-container" id="player-wrapper"></div>
-                
                 <h3 id="current-channel-name" style="margin-top: 1.5rem;">Select a channel to play</h3>
                 <p id="status-msg"></p>
             </div>
@@ -95,19 +145,64 @@
 
     <script>
         let player = null;
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            checkLoginState();
+        let currentDataList = [];
+        let activeTab = 'live';
+        let db = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initDB();
+            if (localStorage.getItem('iptv_user')) {
+                showApp();
+                await checkAndLoadData();
+            }
         });
 
-        function checkLoginState() {
-            const storedUser = localStorage.getItem('iptv_user');
-            if (storedUser) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-screen').style.display = 'flex';
-                document.getElementById('user-info').innerText = `Welcome, ${localStorage.getItem('iptv_username')}`;
-                fetchChannels();
-            }
+        // ================= IndexedDB (Offline Storage) =================
+        function initDB() {
+            return new Promise((resolve) => {
+                const request = indexedDB.open("IPTV_OfflineDB", 1);
+                request.onupgradeneeded = (e) => {
+                    let database = e.target.result;
+                    if (!database.objectStoreNames.contains("iptv_data")) {
+                        database.createObjectStore("iptv_data");
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve();
+                };
+            });
+        }
+
+        function saveToDB(key, dataArray) {
+            return new Promise((resolve) => {
+                const tx = db.transaction("iptv_data", "readwrite");
+                tx.objectStore("iptv_data").put(dataArray, key);
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        function getFromDB(key) {
+            return new Promise((resolve) => {
+                const tx = db.transaction("iptv_data", "readonly");
+                const request = tx.objectStore("iptv_data").get(key);
+                request.onsuccess = () => resolve(request.result || []);
+            });
+        }
+
+        function clearDB() {
+            return new Promise((resolve) => {
+                const tx = db.transaction("iptv_data", "readwrite");
+                tx.objectStore("iptv_data").clear();
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        // ================= Core Logic =================
+        function showApp() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-screen').style.display = 'flex';
+            document.getElementById('user-info').innerText = `Welcome, ${localStorage.getItem('iptv_username')}`;
         }
 
         async function login() {
@@ -129,26 +224,23 @@
                     localStorage.setItem('iptv_server', url);
                     
                     document.getElementById('login-error').style.display = 'none';
-                    checkLoginState();
+                    showApp();
+                    await checkAndLoadData();
                 } else {
                     showError("Invalid Credentials");
                 }
             } catch (error) {
-                showError("Network Error. CORS might be blocking the request.");
+                showError("Network Error. Cannot connect to server.");
             }
         }
 
-        function logout() {
+        async function logout() {
             localStorage.clear();
-            if(player) {
-                player.destroy();
-                player = null;
-            }
+            await clearDB();
+            if(player) { player.destroy(); player = null; }
             document.getElementById('app-screen').style.display = 'none';
             document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('channel-list').innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">Loading channels...</div>';
-            document.getElementById('current-channel-name').innerText = "Select a channel to play";
-            document.getElementById('status-msg').innerText = "";
+            document.getElementById('channel-list').innerHTML = '';
         }
 
         function showError(msg) {
@@ -157,50 +249,185 @@
             err.style.display = 'block';
         }
 
-        async function fetchChannels() {
+        // ================= Fetching & Syncing Data =================
+        async function fetchAPI(action, extraParams = '') {
+            const user = localStorage.getItem('iptv_username');
+            const pass = localStorage.getItem('iptv_password');
+            const server = localStorage.getItem('iptv_server');
+            const url = `${server}/player_api.php?username=${user}&password=${pass}&action=${action}${extraParams}`;
+            
+            const response = await fetch(url);
+            return await response.json();
+        }
+
+        async function checkAndLoadData() {
+            const liveData = await getFromDB('live');
+            if (liveData.length === 0) {
+                // Pehli dafa login kiya hy, data fetch karo
+                await startFullSync();
+            } else {
+                // Purana data mojud hy, foran chalao
+                switchTab('live');
+            }
+        }
+
+        async function startFullSync() {
+            document.getElementById('sync-overlay').style.display = 'flex';
+            const status = document.getElementById('sync-status');
+            
+            // Reset text
+            document.getElementById('count-live').innerText = "📺 Live Channels: Fetching...";
+            document.getElementById('count-movie').innerText = "🎬 Movies (VOD): Waiting...";
+            document.getElementById('count-series').innerText = "📺 Shows (Series): Waiting...";
+
+            try {
+                // 1. Live TV
+                status.innerText = "Downloading Live TV Channels...";
+                const liveData = await fetchAPI('get_live_streams');
+                document.getElementById('count-live').innerText = `📺 Live Channels: ${liveData.length} Fetched ✅`;
+                await saveToDB('live', liveData);
+
+                // 2. Movies
+                status.innerText = "Downloading Movies (VOD)...";
+                document.getElementById('count-movie').innerText = "🎬 Movies (VOD): Fetching...";
+                const movieData = await fetchAPI('get_vod_streams');
+                document.getElementById('count-movie').innerText = `🎬 Movies (VOD): ${movieData.length} Fetched ✅`;
+                await saveToDB('movie', movieData);
+
+                // 3. Series / Shows
+                status.innerText = "Downloading Shows (Series)...";
+                document.getElementById('count-series').innerText = "📺 Shows (Series): Fetching...";
+                const seriesData = await fetchAPI('get_series');
+                document.getElementById('count-series').innerText = `📺 Shows (Series): ${seriesData.length} Fetched ✅`;
+                await saveToDB('series', seriesData);
+
+                status.innerText = "All Data Saved Successfully!";
+                status.style.color = "var(--success)";
+                
+                setTimeout(() => {
+                    document.getElementById('sync-overlay').style.display = 'none';
+                    status.style.color = "#cbd5e1";
+                    switchTab('live'); // Sync mukammal hone ke baad Live TV open karo
+                }, 2000);
+
+            } catch (error) {
+                status.innerText = "Error Fetching Data. Check Internet Connection.";
+                status.style.color = "var(--danger)";
+                setTimeout(() => { document.getElementById('sync-overlay').style.display = 'none'; }, 4000);
+            }
+        }
+
+        // ================= Tab Switching (Uses Offline Data) =================
+        async function switchTab(tabName) {
+            activeTab = tabName;
+            document.getElementById('searchInput').value = ''; 
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            if(document.getElementById(`tab-${tabName}`)) {
+                document.getElementById(`tab-${tabName}`).classList.add('active');
+            }
+
+            document.getElementById('channel-list').innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">Loading from storage...</div>';
+
+            // Sirf local storage (DB) se read karo, fetch mat karo (bohat fast)
+            if (tabName === 'live' || tabName === 'movie' || tabName === 'series') {
+                currentDataList = await getFromDB(tabName);
+                renderSidebar(currentDataList);
+            }
+        }
+
+        function filterList() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            if (!currentDataList) return;
+            
+            const filtered = currentDataList.filter(item => {
+                const title = (item.name || item.title || '').toLowerCase();
+                return title.includes(query);
+            });
+            renderSidebar(filtered);
+        }
+
+        function renderSidebar(dataArray) {
+            const sidebar = document.getElementById('channel-list');
+            sidebar.innerHTML = ''; 
+
+            if (!dataArray || dataArray.length === 0) {
+                sidebar.innerHTML = '<div style="padding: 20px; text-align: center;">No items found. Click Update Data.</div>';
+                return;
+            }
+
+            // Sirf top 200 item screen par dikhao taake browser hang na ho
+            const displayData = dataArray.slice(0, 200); 
+
+            displayData.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'channel-item';
+                
+                const title = item.name || item.title || 'Unknown';
+                const id = item.stream_id || item.series_id || item.id;
+                const icon = item.stream_icon || item.cover || 'https://via.placeholder.com/50x50?text=TV';
+                
+                div.onclick = () => handleItemClick(item);
+                
+                div.innerHTML = `
+                    <img src="${icon}" class="channel-icon" onerror="this.src='https://via.placeholder.com/50x50?text=TV'">
+                    <div class="channel-info">
+                        <div class="channel-name">${title}</div>
+                        <div class="channel-id">ID: ${id}</div>
+                    </div>
+                `;
+                sidebar.appendChild(div);
+            });
+            
+            if (dataArray.length > 200) {
+                const msg = document.createElement('div');
+                msg.style = "padding: 15px; text-align: center; color: #94a3b8; font-size: 0.8rem;";
+                msg.innerText = `Showing 200 of ${dataArray.length}. Use search to find more.`;
+                sidebar.appendChild(msg);
+            }
+        }
+
+        // ================= Playback & Episodes Logic =================
+        async function handleItemClick(item) {
             const user = localStorage.getItem('iptv_username');
             const pass = localStorage.getItem('iptv_password');
             const server = localStorage.getItem('iptv_server');
             
-            const apiUrl = `${server}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`;
-            
-            try {
-                const response = await fetch(apiUrl);
-                const channels = await response.json();
+            let streamUrl = "";
+            let title = item.name || item.title;
+
+            if (activeTab === 'live') {
+                streamUrl = `${server}/live/${user}/${pass}/${item.stream_id}.m3u8`;
+                playStream(streamUrl, title);
                 
-                const sidebar = document.getElementById('channel-list');
-                sidebar.innerHTML = ''; 
-
-                const displayChannels = channels.slice(0, 100); 
-
-                if(displayChannels.length === 0) {
-                    sidebar.innerHTML = '<div style="padding: 20px;">No channels found.</div>';
-                    return;
+            } else if (activeTab === 'movie') {
+                const ext = item.container_extension || 'mp4';
+                streamUrl = `${server}/movie/${user}/${pass}/${item.stream_id}.${ext}`;
+                playStream(streamUrl, title);
+                
+            } else if (activeTab === 'series') {
+                // Episodes lazmi dynamically fetch karni parti hain. 
+                // Sari series ki episodes ikhatti mangwane se server block kar deta hy.
+                document.getElementById('channel-list').innerHTML = '<div style="padding: 20px; text-align: center;">Fetching Episodes...</div>';
+                
+                const seriesData = await fetchAPI('get_series_info', `&series_id=${item.series_id}`);
+                if (seriesData && seriesData.episodes) {
+                    let epList = [];
+                    for (const season in seriesData.episodes) {
+                        epList = epList.concat(seriesData.episodes[season]);
+                    }
+                    currentDataList = epList;
+                    activeTab = 'episodes';
+                    document.getElementById('searchInput').value = '';
+                    renderSidebar(epList);
+                } else {
+                    document.getElementById('channel-list').innerHTML = '<div style="padding: 20px; text-align: center;">No episodes found.</div>';
                 }
-
-                displayChannels.forEach(channel => {
-                    const div = document.createElement('div');
-                    div.className = 'channel-item';
-                    
-                    // Standard Xtream HLS Format
-                    const streamUrl = `${server}/live/${user}/${pass}/${channel.stream_id}.m3u8`;
-                    
-                    div.onclick = () => playStream(streamUrl, channel.name);
-                    
-                    const iconUrl = channel.stream_icon ? channel.stream_icon : 'https://via.placeholder.com/40x40?text=TV';
-                    
-                    div.innerHTML = `
-                        <img src="${iconUrl}" class="channel-icon" onerror="this.src='https://via.placeholder.com/40x40?text=TV'">
-                        <div>
-                            <div style="font-weight: bold; font-size: 0.95rem;">${channel.name}</div>
-                            <div style="font-size: 0.8rem; color: #94a3b8;">ID: ${channel.stream_id}</div>
-                        </div>
-                    `;
-                    sidebar.appendChild(div);
-                });
                 
-            } catch (error) {
-                document.getElementById('channel-list').innerHTML = '<div style="padding: 20px; color: var(--danger);">Failed to load channels.</div>';
+            } else if (activeTab === 'episodes') {
+                const ext = item.container_extension || 'mp4';
+                streamUrl = `${server}/series/${user}/${pass}/${item.id}.${ext}`;
+                playStream(streamUrl, title);
             }
         }
 
@@ -209,12 +436,10 @@
             document.getElementById('status-msg').innerText = "Connecting...";
             document.getElementById('status-msg').style.color = "#facc15";
 
-            // Purana player remove karein agar chal raha ho
             if (player) {
                 player.destroy();
             }
 
-            // Naya Clappr instance banayein
             player = new Clappr.Player({
                 source: url,
                 parentId: "#player-wrapper",
@@ -224,12 +449,12 @@
                 mute: false,
                 events: {
                     onPlay: function() {
-                        document.getElementById('status-msg').innerText = "Live";
+                        document.getElementById('status-msg').innerText = "Live / Playing";
                         document.getElementById('status-msg').style.color = "#22c55e"; 
                     },
                     onError: function(e) {
                         console.error("Playback error:", e);
-                        document.getElementById('status-msg').innerText = "Error: CORS Block ya Channel Offline hy.";
+                        document.getElementById('status-msg').innerText = "Video Error: Stream is offline, or format not supported.";
                         document.getElementById('status-msg').style.color = "var(--danger)";
                     }
                 }
