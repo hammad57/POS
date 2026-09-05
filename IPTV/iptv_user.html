@@ -3,586 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Green Land Poultry Farm - User Dashboard</title>
+    <title>ProStream IPTV | Premium Portal</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- HLS.js for Streaming -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <!-- PDF Generation Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <style>
-        body { 
-            background: linear-gradient(180deg, #0a331d 0%, #051a0f 100%); 
-            background-attachment: fixed;
-            color: #f3f4f6; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-        }
-        .neon-border { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
-        .neon-text { text-shadow: 0 0 10px rgba(234, 179, 8, 0.6); }
-        *, *::before, *::after { box-sizing: border-box; }
-        
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #062314; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
 
-        @keyframes rotateBox {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
+    <style>
+        :root {
+            --primary: #10b981;
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
         }
-        .rotating-bg-box {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 340px;
-            height: 340px;
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(234, 179, 8, 0.15) 100%);
-            border-radius: 48px;
-            animation: rotateBox 18s linear infinite;
-            z-index: 0;
-            pointer-events: none;
-            box-shadow: 0 0 50px rgba(16, 185, 129, 0.2);
+
+        body {
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            user-select: none;
         }
+
+        /* Android TV D-Pad Focus */
+        .focusable:focus, .focusable:hover {
+            outline: 3px solid var(--primary);
+            background-color: var(--bg-panel);
+            transform: translateY(-2px) scale(1.01);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+            z-index: 50;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Loader */
+        .spinner {
+            width: 50px; height: 50px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        /* Toast Notification */
+        #toast {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            background: #1e293b; color: white; padding: 12px 24px; border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 9999; border-left: 4px solid var(--primary);
+        }
+        #toast.show { bottom: 30px; }
     </style>
 </head>
-<body class="p-4 max-w-md mx-auto min-h-screen pb-24 relative overflow-x-hidden">
+<body class="h-screen w-screen flex flex-col">
 
-    <!-- TOAST NOTIFICATION -->
-    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold transition-opacity duration-300 opacity-0 pointer-events-none z-[10000]">
-        Copied to clipboard!
-    </div>
-
-    <!-- CUSTOM GLOBAL ALERT MODAL -->
-    <div id="customAlertModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-[9999]">
-        <div class="bg-emerald-950/90 border border-emerald-700/60 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative text-center">
-            <h3 id="customAlertTitle" class="text-xl font-bold text-yellow-400 mb-2 neon-text">Notification</h3>
-            <p id="customAlertMessage" class="text-zinc-200 text-sm mb-6 leading-relaxed"></p>
-            <button id="customAlertBtn" onclick="closeCustomAlert()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-zinc-950 font-bold py-3 rounded-xl shadow-lg transition-all">OK</button>
+    <!-- 1. GOOGLE LOGIN SCREEN -->
+    <div id="googleAuthScreen" class="absolute inset-0 z-[100] flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1593784991095-a205069470b6?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md"></div>
+        <div class="glass p-10 rounded-3xl shadow-2xl w-full max-w-md z-10 text-center slide-up">
+            <div class="mb-8">
+                <i class="fa-solid fa-tv text-6xl text-emerald-500 mb-4 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]"></i>
+                <h1 class="text-4xl font-extrabold text-white tracking-tight">ProStream</h1>
+                <p class="text-slate-400 mt-2 text-sm font-medium">Your Premium IPTV Experience</p>
+            </div>
+            <button id="googleSignInBtn" class="focusable w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center space-x-3 shadow-lg" onclick="signInWithGoogle()" tabindex="1">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6" alt="Google">
+                <span>Continue with Google</span>
+            </button>
         </div>
     </div>
 
-    <!-- PROFESSIONAL DAILY ANNOUNCEMENT MODAL -->
-    <div id="dailyNoticeModal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-[9999]">
-        <div class="bg-gradient-to-b from-emerald-900 via-emerald-950 to-zinc-950 border border-emerald-500/40 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative text-center">
-            <div class="w-16 h-16 bg-emerald-800/50 border border-yellow-400/40 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg text-3xl">
-                🐔
+    <!-- 2. PROFILES / CONNECTIONS SCREEN -->
+    <div id="profilesScreen" class="hidden absolute inset-0 z-50 bg-slate-950 overflow-y-auto custom-scroll p-8">
+        <div class="max-w-6xl mx-auto mt-10 fade-in">
+            <div class="flex justify-between items-end mb-10 border-b border-slate-800 pb-6">
+                <div>
+                    <h2 class="text-3xl font-bold text-white">Select Connection</h2>
+                    <p class="text-slate-400 mt-2">Choose an IPTV profile to start streaming</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="showAddConnectionModal()" class="focusable bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center shadow-lg shadow-emerald-900/50 transition-colors" tabindex="2">
+                        <i class="fa-solid fa-plus mr-2"></i> Add Connection
+                    </button>
+                    <button onclick="signOutGoogle()" class="focusable bg-slate-800 hover:bg-red-500/20 hover:text-red-400 text-slate-300 px-5 py-2.5 rounded-lg font-semibold transition-colors border border-slate-700" tabindex="3">
+                        Logout
+                    </button>
+                </div>
             </div>
-            <span class="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-3 py-1 rounded-full border border-emerald-500/30 uppercase tracking-widest">Daily Farm Notice</span>
-            <h3 class="text-xl font-extrabold text-yellow-400 mt-2 mb-2">Maximize Your Egg Yield!</h3>
-            <p class="text-zinc-200 text-xs leading-relaxed mb-6">
-                Welcome back to <strong>Green Land Poultry Farm</strong>! Every hen generates 1 egg per 24 hours automatically. Expand your farm coop today to increase your daily earnings.
-            </p>
-            <div class="space-y-2">
-                <button onclick="closeModal('dailyNoticeModal'); openPurchaseModal();" class="w-full bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-zinc-950 font-bold py-3 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider">
-                    🛒 Purchase Hen Asset Now
-                </button>
-                <button onclick="closeModal('dailyNoticeModal')" class="w-full bg-emerald-900/60 hover:bg-emerald-800/60 text-zinc-300 font-medium py-2.5 rounded-xl border border-emerald-700/50 transition-all text-xs">
-                    Dismiss Notice
-                </button>
+
+            <!-- Profiles Grid -->
+            <div id="profilesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Profile Cards Injected Here -->
             </div>
         </div>
     </div>
 
-    <!-- SIDE SLIDING MENU PANEL -->
-    <div id="sideMenuOverlay" onclick="toggleSideMenu()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9000] hidden transition-opacity"></div>
-    <div id="sideMenuPanel" class="fixed top-0 left-0 w-72 h-full bg-emerald-950 border-r border-emerald-800/80 shadow-2xl z-[9001] transform -translate-x-full transition-transform duration-300 ease-in-out p-5 flex flex-col justify-between">
-        <div>
-            <div class="flex justify-between items-center border-b border-emerald-800 pb-3 mb-4">
-                <h3 class="font-bold text-yellow-400 text-lg flex items-center space-x-2">
-                    <span>🐔</span> <span>Navigation Menu</span>
-                </h3>
-                <button onclick="toggleSideMenu()" class="text-zinc-400 hover:text-white text-2xl font-bold">&times;</button>
+    <!-- ADD CONNECTION MODAL -->
+    <div id="addConnectionModal" class="hidden absolute inset-0 z-[60] flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="hideAddConnectionModal()"></div>
+        <div class="glass p-8 rounded-2xl shadow-2xl w-full max-w-lg z-10 relative border border-slate-700 slide-up">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-white">New IPTV Connection</h3>
+                <button onclick="hideAddConnectionModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-            
-            <div class="space-y-2 text-xs">
-                <button onclick="toggleSideMenu(); window.scrollTo({top:0, behavior:'smooth'});" class="w-full bg-emerald-900/50 hover:bg-emerald-800/70 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
-                    <span class="text-lg">🏠</span> <span class="font-semibold text-zinc-200">Dashboard Home</span>
-                </button>
-                <button onclick="toggleSideMenu(); openPurchaseModal();" class="w-full bg-emerald-900/50 hover:bg-emerald-800/70 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
-                    <span class="text-lg">🐔</span> <span class="font-semibold text-yellow-400">Purchase Hen Asset</span>
-                </button>
-                <button onclick="toggleSideMenu(); openSaleModal();" class="w-full bg-emerald-900/50 hover:bg-emerald-800/70 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
-                    <span class="text-lg">💰</span> <span class="font-semibold text-emerald-400">Sale Out Eggs</span>
-                </button>
-                <button onclick="toggleSideMenu(); openUserSettingsModal();" class="w-full bg-emerald-900/50 hover:bg-emerald-800/70 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
-                    <span class="text-lg">⚙️</span> <span class="font-semibold text-zinc-200">Account Settings</span>
-                </button>
-                <button onclick="toggleSideMenu(); openTeamListModal();" class="w-full bg-emerald-900/50 hover:bg-emerald-800/70 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
-                    <span class="text-lg">👥</span> <span class="font-semibold text-zinc-200">My Team Network</span>
-                </button>
-                <button onclick="toggleSideMenu(); copyReferralLink();" class="w-full bg-emerald-900/50 hover:bg-emerald-800/70 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
-                    <span class="text-lg">🔗</span> <span class="font-semibold text-zinc-200">Copy Invite Link</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- WHATSAPP SUPPORT BUTTON AT BOTTOM OF MENU -->
-        <div class="border-t border-emerald-800/80 pt-4">
-            <a id="waSidebarLink" href="https://wa.me/923423944508" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl flex items-center justify-center space-x-2 shadow-lg transition-colors text-xs">
-                <span class="text-base">💬</span> <span>Need Help? WhatsApp Admin</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- AUTHENTICATION CONTAINER -->
-    <div id="authContainer" class="block min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-8 px-4">
-        <div class="rotating-bg-box"></div>
-
-        <!-- Top Header & Logo -->
-        <div class="text-center z-10 mb-5">
-            <div class="inline-flex items-center justify-center w-14 h-14 bg-emerald-950 border border-yellow-500/50 rounded-2xl shadow-lg mb-2.5 neon-border">
-                <span class="text-2xl">🛡️</span>
-            </div>
-            <h1 class="text-2xl font-bold text-yellow-400 font-serif tracking-wide neon-text">Green Land Poultry Farm</h1>
-            <p class="text-[10px] tracking-widest text-emerald-300 uppercase mt-0.5">WELCOME BACK</p>
-        </div>
-
-        <!-- Authentication Card -->
-        <div class="bg-emerald-950/90 backdrop-blur-md border border-emerald-800/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative z-10 neon-border">
-            <div class="text-center mb-5">
-                <span class="inline-block bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-2">🔒 SECURE ACCESS</span>
-                <h2 id="authTitle" class="text-2xl font-bold text-yellow-400 font-serif">Sign In</h2>
-                <p id="authSubtitle" class="text-xs text-zinc-300 mt-1">Enter your credentials to access your dashboard.</p>
-            </div>
-            
-            <div id="refInfoBanner" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-700/50 rounded-lg text-xs text-center text-emerald-300">
-                Invited by: <span id="refNameDisplay" class="font-bold text-yellow-400">...</span>
-            </div>
-
-            <!-- LOGIN FORM (DEFAULT VISIBLE) -->
-            <form id="loginForm" class="space-y-4">
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-emerald-400">@</div>
-                    <input type="email" id="loginEmail" placeholder="Email Address" required class="w-full bg-emerald-900/60 border border-emerald-700/70 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400 transition-colors">
-                </div>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-emerald-400">🔒</div>
-                    <input type="password" id="loginPassword" placeholder="Password" required class="w-full bg-emerald-900/60 border border-emerald-700/70 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400 transition-colors">
-                </div>
-                <button type="submit" class="w-full bg-gradient-to-r from-amber-600 via-yellow-500 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-zinc-950 font-bold py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 text-sm">
-                    <span>→</span> <span>Login Now</span>
-                </button>
-
-                <div class="flex items-center justify-center space-x-3 text-[10px] text-emerald-400/80 pt-2 border-t border-emerald-800/80">
-                    <span>🛡️ ENCRYPTED</span>
-                    <span>🔒 PRIVATE</span>
-                    <span>🛡️ SAFE</span>
-                </div>
-
-                <p class="text-xs text-center text-zinc-300 pt-1">Now here? <span onclick="toggleAuthMode(true)" class="text-yellow-400 cursor-pointer font-bold hover:underline">Create Account</span></p>
-            </form>
-
-            <!-- REGISTRATION FORM (HIDDEN BY DEFAULT) -->
-            <form id="registerForm" class="space-y-3.5 hidden">
+            <form id="connectionForm" onsubmit="event.preventDefault(); saveConnection();" class="space-y-4">
                 <div>
-                    <input type="text" id="regName" placeholder="Full Name" required class="w-full bg-emerald-900/60 border border-emerald-700/70 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Profile Name</label>
+                    <input type="text" id="profName" placeholder="e.g., Premium Server 1" class="focusable w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-emerald-500 focus:outline-none" required>
                 </div>
                 <div>
-                    <input type="tel" id="regMobile" placeholder="Mobile Number" required class="w-full bg-emerald-900/60 border border-emerald-700/70 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Server URL</label>
+                    <input type="url" id="profUrl" placeholder="http://example.com:8080" class="focusable w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-emerald-500 focus:outline-none" required>
                 </div>
-                <div>
-                    <input type="email" id="regEmail" placeholder="Email Address" required class="w-full bg-emerald-900/60 border border-emerald-700/70 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Username</label>
+                        <input type="text" id="profUser" class="focusable w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-emerald-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Password</label>
+                        <input type="password" id="profPass" class="focusable w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-emerald-500 focus:outline-none" required>
+                    </div>
                 </div>
-                <div>
-                    <input type="password" id="regPassword" placeholder="Password (min 6 chars)" required class="w-full bg-emerald-900/60 border border-emerald-700/70 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400">
-                </div>
-                <button type="submit" class="w-full bg-gradient-to-r from-amber-600 via-yellow-500 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-zinc-950 font-bold py-3.5 rounded-xl shadow-lg transition-all text-sm">Sign Up Account</button>
-                <p class="text-xs text-center text-zinc-300 pt-2">Already have an account? <span onclick="toggleAuthMode(false)" class="text-yellow-400 cursor-pointer font-bold hover:underline">Sign In</span></p>
+                <button type="submit" class="focusable w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-lg transition-colors mt-6">
+                    Save Connection
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- DASHBOARD CONTAINER -->
-    <div id="dashboardContainer" class="hidden">
-        <!-- HEADER WITH MENU ON LEFT & SETTINGS ON RIGHT -->
-        <div class="flex justify-between items-center mb-6 bg-emerald-950/80 p-4 rounded-xl border border-emerald-800/80 shadow-md">
-            <div class="flex items-center space-x-3">
-                <button onclick="toggleSideMenu()" class="bg-emerald-900/60 border border-emerald-700/60 hover:bg-emerald-800/60 text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1">
-                    <span>☰ Menu</span>
-                </button>
-                <div>
-                    <p class="text-xs text-emerald-300">Welcome 👋</p>
-                    <h1 id="lblUserName" class="text-lg font-bold text-yellow-400 neon-text">Loading...</h1>
+    <!-- 3. MAIN DASHBOARD -->
+    <div id="dashboardScreen" class="hidden flex-1 flex flex-col h-full bg-slate-950 fade-in">
+        <!-- Top Navigation -->
+        <header class="bg-slate-900 border-b border-slate-800 h-16 flex items-center justify-between px-6 shrink-0 relative z-40">
+            <div class="flex items-center space-x-8">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="goToProfiles()">
+                    <i class="fa-solid fa-tv text-emerald-500 text-2xl"></i>
+                    <h2 class="text-xl font-bold text-white tracking-wide hidden sm:block">ProStream</h2>
+                </div>
+                
+                <div class="flex space-x-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                    <button onclick="loadContent('live')" id="tabLive" class="focusable px-6 py-1.5 rounded-md text-sm font-semibold transition bg-emerald-600/20 text-emerald-400"><i class="fa-solid fa-broadcast-tower mr-2"></i>Live TV</button>
+                    <button onclick="loadContent('vod')" id="tabVod" class="focusable px-6 py-1.5 rounded-md text-sm font-semibold transition text-slate-400 hover:text-white"><i class="fa-solid fa-film mr-2"></i>Movies</button>
+                    <button onclick="loadContent('series')" id="tabSeries" class="focusable px-6 py-1.5 rounded-md text-sm font-semibold transition text-slate-400 hover:text-white"><i class="fa-solid fa-video mr-2"></i>Series</button>
                 </div>
             </div>
-            
-            <div class="flex items-center space-x-2">
-                <!-- NEW BELL ICON WITH NOTIFICATION BADGE -->
-                <button onclick="openAnnouncementsModal()" title="Announcements" class="relative p-2 bg-emerald-900/80 hover:bg-emerald-800 text-yellow-400 rounded-xl border border-emerald-700 transition-colors active:scale-95 text-xl">
-                    🔔
-                    <span id="announcementBadge" class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border border-emerald-950 hidden"></span>
-                </button>
 
-                <button onclick="openUserSettingsModal()" title="Account Settings" class="p-2 bg-emerald-900/80 hover:bg-emerald-800 text-yellow-400 rounded-xl border border-emerald-700 transition-colors active:scale-95 text-xl">
-                    ⚙️
-                </button>
-                <button onclick="logout()" class="text-xs bg-red-900/40 border border-red-700 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded-lg transition-colors">Sign Out</button>
+            <div class="flex items-center space-x-6">
+                <div class="text-right hidden md:block">
+                    <p class="text-xs text-slate-400">Active Connection</p>
+                    <p id="activeConnectionName" class="text-sm font-bold text-emerald-400">Loading...</p>
+                </div>
+                <div class="h-8 w-px bg-slate-700"></div>
+                <div class="flex items-center space-x-3 group cursor-pointer" onclick="goToProfiles()">
+                    <img id="userAvatar" src="https://ui-avatars.com/api/?name=Muluk+Hussain&background=10b981&color=fff" class="w-9 h-9 rounded-full border-2 border-slate-700 group-hover:border-emerald-500 transition" alt="Avatar">
+                    <div class="hidden sm:block">
+                        <span id="userNameDisplay" class="text-sm font-medium text-slate-200 block">User</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest">Switch Profile</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Sidebar: Categories -->
+            <div class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
+                <div class="p-4 border-b border-slate-800 bg-slate-900/95 backdrop-blur z-10 shadow-sm">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-sm"></i>
+                        <input type="text" id="catSearch" placeholder="Search categories..." class="focusable w-full bg-slate-950 rounded-lg pl-9 pr-3 py-2 text-sm text-white border border-slate-700 focus:border-emerald-500 focus:outline-none transition-colors" onkeyup="filterCategories()">
+                    </div>
+                </div>
+                <div id="categoryList" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-0.5">
+                    <!-- Categories injected here -->
+                </div>
+            </div>
+
+            <!-- Main Grid: Streams -->
+            <div class="flex-1 bg-slate-950 flex flex-col relative overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-900/50 bg-slate-950/80 backdrop-blur sticky top-0 z-10 flex justify-between items-center shadow-sm">
+                    <h2 id="currentCategoryName" class="text-2xl font-bold text-white tracking-tight">Select a Category</h2>
+                    <div class="relative">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-slate-500 text-sm"></i>
+                        <input type="text" id="streamSearch" placeholder="Search content..." class="focusable w-64 bg-slate-900 rounded-full pl-9 pr-4 py-2 text-sm text-white border border-slate-700 focus:border-emerald-500 focus:outline-none hidden transition-all focus:w-80" onkeyup="filterStreams()">
+                    </div>
+                </div>
+                
+                <div id="mainLoader" class="hidden absolute inset-0 flex flex-col items-center justify-center z-20 bg-slate-950/90 backdrop-blur-sm">
+                    <div class="spinner mb-4"></div>
+                    <p class="text-emerald-500 font-medium tracking-widest uppercase text-sm animate-pulse">Loading Content...</p>
+                </div>
+
+                <div id="streamGrid" class="flex-1 overflow-y-auto custom-scroll p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 content-start pb-24">
+                    <!-- Streams injected here -->
+                    <div class="col-span-full flex flex-col items-center justify-center text-slate-600 mt-32">
+                        <i class="fa-solid fa-layer-group text-6xl mb-6 opacity-50"></i>
+                        <p class="text-lg">Please select a category from the sidebar to begin.</p>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
 
-        <div class="bg-gradient-to-br from-emerald-900 via-emerald-950 to-zinc-950 border border-emerald-700/60 rounded-2xl p-5 mb-6 shadow-xl relative overflow-hidden">
-            <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl font-bold">🥚</div>
-            <p class="text-xs text-emerald-300 font-bold tracking-wider uppercase">Available Eggs Balance</p>
-            <div class="flex items-baseline space-x-2 mt-2">
-                <h2 id="lblEggBalance" class="text-5xl font-black text-yellow-400">0</h2>
-                <span class="text-sm text-zinc-300">Eggs</span>
+    <!-- VIDEO PLAYER MODAL -->
+    <div id="playerModal" class="hidden fixed inset-0 bg-black z-[200] flex flex-col">
+        <div class="absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/90 to-transparent z-10 flex justify-between items-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+            <div>
+                <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded uppercase tracking-widest mr-3" id="badgeType">LIVE</span>
+                <h2 id="nowPlayingTitle" class="text-white text-2xl font-bold drop-shadow-lg inline-block align-middle">Channel Name</h2>
             </div>
-            <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-emerald-800/50 text-xs">
-                <div>
-                    <span class="text-zinc-300">Hens In Coop:</span>
-                    <p id="lblHenBalance" class="text-yellow-400 font-bold text-sm">0 Hens</p>
-                </div>
-                <div>
-                    <span class="text-zinc-300">Gift Eggs:</span>
-                    <p id="lblGiftBalance" class="text-yellow-400 font-bold text-sm">0 Eggs</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="mb-6">
-            <h3 class="text-xs font-bold text-yellow-400 uppercase tracking-widest mb-3 flex items-center space-x-2">
-                <span>⏱️</span> <span>Live Egg Production</span>
-            </h3>
-            <div id="batchesContainer" class="space-y-2 max-h-48 overflow-y-auto custom-scroll pr-1">
-                <div class="bg-emerald-950/80 p-4 rounded-xl border border-emerald-800/80 text-center text-xs text-emerald-400">
-                    Buy hens to start production timers.
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4 mb-4">
-            <!-- AZADI OFFER BUTTON (MODIFIED) -->
-            <button onclick="openPurchaseModal()" class="relative overflow-hidden border border-emerald-500/80 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-lg transition-transform active:scale-95" style="background: linear-gradient(90deg, #ffffff 25%, #01411C 25%);">
-                <span class="text-3xl mb-2 relative z-10 drop-shadow-lg">🐔 🇵🇰</span>
-                <span class="font-extrabold text-sm text-white relative z-10 drop-shadow-md">Purchase Hen </span>
-                <span class="text-[10px] text-emerald-100 mt-1 relative z-10 drop-shadow-md">Rs. 499 per Hen</span>
-                <div class="absolute inset-0 bg-black/10 opacity-0 hover:opacity-100 transition-opacity"></div>
+            <button onclick="closePlayer()" class="focusable bg-white/10 hover:bg-red-600 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all backdrop-blur-md border border-white/20">
+                <i class="fa-solid fa-xmark text-2xl"></i>
             </button>
-
-            <button onclick="openSaleModal()" class="bg-emerald-950 hover:bg-emerald-900 border border-amber-700/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md transition-transform active:scale-95">
-                <span class="text-3xl mb-2">💰</span>
-                <span class="font-bold text-sm text-yellow-400">Sale Out Eggs</span>
-                <span class="text-[10px] text-zinc-300 mt-1">Instant Cashout</span>
-            </button>
         </div>
-
-        <!-- NEW EXPANDABLE TABS FOR HISTORY & STATUS -->
-        <div class="space-y-3 mb-6">
-            <!-- PURCHASING HISTORY ACCORDION TAB -->
-            <div class="bg-emerald-950 border border-emerald-800/80 rounded-xl overflow-hidden shadow-md">
-                <button onclick="toggleAccordion('purchasesAccordionContent')" class="w-full p-3 flex justify-between items-center text-left bg-emerald-950 hover:bg-emerald-900/80 transition-colors">
-                    <span class="font-bold text-xs text-yellow-400 flex items-center space-x-2">
-                        <span>📜</span> <span>Purchasing History</span>
-                    </span>
-                    <span id="purchasesAccordionArrow" class="text-xs text-zinc-400 transition-transform">▼</span>
-                </button>
-                <div id="purchasesAccordionContent" class="hidden p-3 border-t border-emerald-800/60 bg-emerald-950/90 text-xs space-y-2 max-h-56 overflow-y-auto custom-scroll">
-                    <p class="text-zinc-400 italic text-center py-2">Loading purchases...</p>
-                </div>
-            </div>
-
-            <!-- WITHDRAW STATUS & HISTORY ACCORDION TAB -->
-            <div class="bg-emerald-950 border border-emerald-800/80 rounded-xl overflow-hidden shadow-md">
-                <button onclick="toggleAccordion('withdrawalsAccordionContent')" class="w-full p-3 flex justify-between items-center text-left bg-emerald-950 hover:bg-emerald-900/80 transition-colors">
-                    <span class="font-bold text-xs text-yellow-400 flex items-center space-x-2">
-                        <span>💸</span> <span>Withdraw Status & History</span>
-                    </span>
-                    <span id="withdrawalsAccordionArrow" class="text-xs text-zinc-400 transition-transform">▼</span>
-                </button>
-                <div id="withdrawalsAccordionContent" class="hidden p-3 border-t border-emerald-800/60 bg-emerald-950/90 text-xs space-y-2 max-h-56 overflow-y-auto custom-scroll">
-                    <p class="text-zinc-400 italic text-center py-2">Loading withdrawal history...</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-emerald-950 rounded-xl border border-emerald-800/60 mb-6 overflow-hidden">
-            <div class="bg-gradient-to-r from-emerald-900/80 to-emerald-950 p-4 text-center border-b border-emerald-800/80">
-                <h3 class="font-bold text-yellow-400 text-sm">Referral & Team Network</h3>
-                <p class="text-zinc-300 mt-1 text-[11px]">Invite friends via your link to build your team!</p>
-                <button onclick="copyReferralLink()" class="mt-3 w-full bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold py-3 rounded-lg shadow transition-colors flex items-center justify-center space-x-2">
-                    <span>🔗</span> <span>Copy My Shareable Link</span>
-                </button>
-            </div>
-            <div class="grid grid-cols-3 divide-x divide-emerald-800/80 text-center p-3 text-xs bg-emerald-950/50">
-                <div class="px-1 cursor-pointer hover:bg-emerald-900/50 transition-colors py-1 rounded" onclick="openTeamListModal()">
-                    <span class="block text-emerald-300 mb-1 underline decoration-dotted text-[10px]">Joined (Click)</span>
-                    <span id="statTeamJoined" class="font-bold text-emerald-400 text-sm">0</span>
-                </div>
-                <div class="px-1 py-1">
-                    <span class="block text-emerald-300 mb-1 text-[10px]">Team Hens</span>
-                    <span id="statTeamHens" class="font-bold text-yellow-400 text-sm">0</span>
-                </div>
-                <div class="px-1 py-1">
-                    <span class="block text-emerald-300 mb-1 text-[10px]">Team Eggs</span>
-                    <span id="statTeamEggs" class="font-bold text-yellow-400 text-sm">0</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 mb-6 text-xs">
-            <div class="bg-emerald-950 p-3 rounded-xl border border-emerald-800/80">
-                <span class="text-emerald-300 block mb-1">Pending Hens Request</span>
-                <span id="lblPendingPurchase" class="font-bold text-amber-400">0 requests</span>
-            </div>
-            <div class="bg-emerald-950 p-3 rounded-xl border border-emerald-800/80">
-                <span class="text-emerald-300 block mb-1">Pending Withdrawals</span>
-                <span id="lblPendingWithdraw" class="font-bold text-amber-400">0 requests</span>
-            </div>
-        </div>
-
-        <div class="bg-emerald-950 rounded-xl p-4 border border-emerald-800/80 mb-6 space-y-3 text-xs shadow-md">
-            <h3 class="font-bold text-yellow-400 border-b border-emerald-800/80 pb-2">Financial Records Ledger</h3>
-            <div class="flex justify-between">
-                <span class="text-zinc-300">Total Expense Record:</span>
-                <span id="lblTotalExpense" class="font-bold text-red-400">0 PKR</span>
-            </div>
-            <div class="flex justify-between">
-                <span class="text-zinc-300">Total Approved Withdrawal:</span>
-                <span id="lblTotalWithdrawal" class="font-bold text-green-400">0 PKR</span>
-            </div>
-        </div>
-
-        <!-- REFERRAL DETAILS OVERVIEW -->
-        <div class="bg-emerald-950 rounded-xl border border-emerald-800/80 p-4 mb-6 shadow-md">
-            <h3 class="font-bold text-yellow-400 mb-3 border-b border-emerald-800/80 pb-2">Referral Details Overview</h3>
-            <div class="grid grid-cols-4 gap-2 text-center">
-                <div class="bg-emerald-900/60 p-2 rounded-lg border border-emerald-700/50 cursor-pointer hover:bg-emerald-800 transition-colors" onclick="openTeamListModal()">
-                    <span class="text-xl block mb-1">👥</span>
-                    <span class="text-[10px] font-bold text-emerald-300">My Team</span>
-                </div>
-                <div class="bg-emerald-900/60 p-2 rounded-lg border border-emerald-700/50 cursor-pointer hover:bg-emerald-800 transition-colors" onclick="showTeamInvestAlert()">
-                    <span class="text-xl block mb-1">💰</span>
-                    <span class="text-[10px] font-bold text-yellow-400">Team Invest</span>
-                </div>
-                <div class="bg-emerald-900/60 p-2 rounded-lg border border-emerald-700/50 cursor-pointer hover:bg-emerald-800 transition-colors" onclick="showTeamWithdrawAlert()">
-                    <span class="text-xl block mb-1">🏦</span>
-                    <span class="text-[10px] font-bold text-amber-400">Team Withdraw</span>
-                </div>
-                <div class="bg-emerald-900/60 p-2 rounded-lg border border-emerald-700/50 cursor-pointer hover:bg-emerald-800 transition-colors" onclick="showTeamEggsAlert()">
-                    <span class="text-xl block mb-1">🥚</span>
-                    <span class="text-[10px] font-bold text-white">Team Eggs</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-emerald-950 p-4 rounded-xl border border-emerald-800/80 mb-6 text-xs shadow-md">
-            <h3 class="font-bold text-yellow-400 mb-3">Help & Support Desk</h3>
-            <div class="space-y-2">
-                <a id="waHelpDeskLink" href="https://wa.me/923423944508" target="_blank" class="flex items-center justify-between bg-emerald-900/60 p-2.5 rounded-lg hover:bg-emerald-800 border border-emerald-700/50 transition-colors">
-                    <span class="font-medium text-emerald-300">🟢 Official Admin Portal</span>
-                    <span id="waHelpDeskText" class="text-zinc-400">03423944508</span>
-                </a>
-                <a href="https://wa.me/923285719803" target="_blank" class="flex items-center justify-between bg-emerald-900/60 p-2.5 rounded-lg hover:bg-emerald-800 border border-emerald-700/50 transition-colors">
-                    <span class="font-medium text-emerald-300">🟢 Support WhatsApp Desk</span>
-                    <span class="text-zinc-400">03285719803</span>
-                </a>
-            </div>
-        </div>
+        <video id="videoPlayer" class="w-full h-full object-contain bg-black" controls autoplay></video>
     </div>
 
-    <!-- ANNOUNCEMENTS MODAL -->
-    <div id="announcementsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-[9999]">
-        <div class="bg-emerald-950 border border-emerald-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto custom-scroll">
-            <button onclick="closeModal('announcementsModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-            <h3 class="text-base font-bold text-yellow-400 border-b border-emerald-800 pb-2 flex items-center space-x-2 mb-3">
-                <span>🔔</span> <span>System Announcements</span>
-            </h3>
-            <div id="announcementsContainer" class="space-y-3">
-                <p class="text-zinc-400 italic text-center text-xs py-4">Loading announcements...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- USER SETTINGS & PROFILE MODAL -->
-    <div id="userSettingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-emerald-950 border border-emerald-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto custom-scroll space-y-4">
-            <button onclick="closeModal('userSettingsModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-            <h3 class="text-base font-bold text-yellow-400 border-b border-emerald-800 pb-2 flex items-center space-x-2">
-                <span>⚙️</span> <span>User Account & Security Settings</span>
-            </h3>
-
-            <!-- Password Reset Section -->
-            <div class="bg-emerald-900/60 p-3 rounded-xl border border-emerald-700/50 space-y-3">
-                <h4 class="text-xs font-bold text-emerald-300">Change Security Password</h4>
-                <form id="changePasswordForm" class="space-y-2 text-xs">
-                    <input type="password" id="newPasswordInput" placeholder="Enter New Password (min 6 chars)" required class="w-full bg-emerald-950 border border-emerald-700 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none">
-                    <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-zinc-950 font-bold py-2 rounded-lg transition-all">Update Password</button>
-                </form>
-            </div>
-
-            <!-- Active Package Plan Section -->
-            <div class="bg-emerald-900/60 p-3 rounded-xl border border-emerald-700/50 space-y-1.5 text-xs">
-                <h4 class="font-bold text-emerald-300 border-b border-emerald-700/40 pb-1">Active Assets & Package Plan</h4>
-                <div class="flex justify-between"><span class="text-zinc-300">Current Plan Status:</span> <span class="text-green-400 font-bold">Standard Poultry Investor</span></div>
-                <div class="flex justify-between"><span class="text-zinc-300">Total Hens Owned:</span> <span id="settingTotalHens" class="text-yellow-400 font-bold">0</span></div>
-                <div class="flex justify-between"><span class="text-zinc-300">Rate per Egg Yield:</span> <span class="text-zinc-200">1 Egg / 24 hrs per Hen</span></div>
-            </div>
-
-            <!-- Detailed Eggs & Production Timer Breakdown -->
-            <div class="bg-emerald-900/60 p-3 rounded-xl border border-emerald-700/50 space-y-2 text-xs">
-                <h4 class="font-bold text-emerald-300 border-b border-emerald-700/40 pb-1">Eggs & Remaining Expiry Detail</h4>
-                <div id="settingsEggsBreakdown" class="space-y-1 max-h-32 overflow-y-auto custom-scroll pr-1 text-[11px]">
-                    <!-- Dynamically Injected -->
-                </div>
-            </div>
-
-            <!-- PDF Export Buttons -->
-            <div class="bg-emerald-900/60 p-3 rounded-xl border border-emerald-700/50 space-y-2 text-xs">
-                <h4 class="font-bold text-emerald-300 border-b border-emerald-700/40 pb-1">Download PDF Ledger Reports</h4>
-                <button onclick="downloadPDFReport('purchases')" class="w-full bg-emerald-800 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg transition-all flex items-center justify-center space-x-2">
-                    <span>📄</span> <span>Download Purchasing History PDF</span>
-                </button>
-                <button onclick="downloadPDFReport('withdrawals')" class="w-full bg-amber-800 hover:bg-amber-700 text-white font-bold py-2 rounded-lg transition-all flex items-center justify-center space-x-2">
-                    <span>📄</span> <span>Download Withdrawals History PDF</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- HIDDEN CONTAINER FOR PDF GENERATION -->
-    <div id="pdfExportContainer" class="hidden p-6 bg-white text-black font-sans text-xs">
-        <!-- Rendered dynamically during download -->
-    </div>
-
-    <!-- Purchase Modal Wrapper -->
-    <div id="purchaseModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-emerald-950 border border-emerald-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative">
-            <button onclick="closeModal('purchaseModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-            
-            <div id="purchaseStep1" class="block">
-                <h3 class="text-lg font-bold text-yellow-400 mb-4">Purchase New Hen Asset</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-emerald-300 mb-1">Enter Hen Quantity</label>
-                        <input type="number" id="purchaseQty" min="1" value="1" oninput="updateHenPriceValue(this.value)" class="w-full bg-emerald-900/80 border border-emerald-700 rounded-xl px-4 py-3 text-sm text-yellow-400 font-bold focus:outline-none">
-                    </div>
-                    <div class="bg-emerald-900/50 p-3 rounded-xl border border-emerald-700/50 flex justify-between items-center text-xs">
-                        <span class="text-zinc-300">Total Calculated Cost:</span>
-                        <span id="purchaseTotalCost" class="text-base font-black text-emerald-400">499 PKR</span>
-                    </div>
-                    <button onclick="proceedToPaymentProof()" class="w-full bg-yellow-500 text-zinc-950 font-bold py-3 rounded-xl shadow-md">Next: Submit Payment</button>
-                </div>
-            </div>
-
-            <div id="purchaseStep2" class="hidden">
-                <h3 class="text-lg font-bold text-yellow-400 mb-2">Send Payment Proof</h3>
-                
-                <div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-xl my-3 text-center">
-                    <p class="text-xs font-bold text-yellow-400 leading-relaxed">
-                        Please send payment "Muluk Hussain" on Easypaisa account number 03423944508 </span>.
-                    </p>
-                </div>
-
-                <p class="text-[11px] text-zinc-300 mb-4 leading-relaxed">Kindly send the calculated amount to the admin account and drop transaction details below.</p>
-                <form id="paymentProofForm" class="space-y-3 text-xs">
-                    <div>
-                        <label class="block font-semibold text-emerald-300 mb-1">Transaction ID (Trx ID)</label>
-                        <input type="text" id="proofTrxId" required class="w-full bg-emerald-900/80 border border-emerald-700 rounded-lg px-3 py-2.5 focus:outline-none text-zinc-200">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-emerald-300 mb-1">Account Holder Name</label>
-                        <input type="text" id="proofHolderName" required class="w-full bg-emerald-900/80 border border-emerald-700 rounded-lg px-3 py-2.5 focus:outline-none text-zinc-200">
-                    </div>
-                    
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-all shadow-md mt-2">Submit Request Data</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sale Modal Wrapper -->
-    <div id="saleModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-emerald-950 border border-emerald-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
-            <button onclick="closeModal('saleModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-            
-            <div id="saleStep1Marketplace" class="block">
-                <div class="text-center mb-4">
-                    <span class="bg-emerald-900/80 text-emerald-300 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">Marketplace</span>
-                    <h3 class="text-xl font-black text-white mt-2">Egg Market</h3>
-                    <p class="text-[11px] text-zinc-300">Find the best shops to sell your eggs</p>
-                </div>
-                
-                <div id="dealersContainer" class="space-y-3">
-                    <p class="text-center text-xs text-zinc-400 italic py-4">Fetching active dealers...</p>
-                </div>
-            </div>
-
-            <div id="saleStep2Withdrawal" class="hidden">
-                <button onclick="backToMarketplace()" class="text-xs text-zinc-400 hover:text-white mb-3 flex items-center space-x-1">
-                    <span>←</span> <span>Back to Market</span>
-                </button>
-                <h3 class="text-lg font-bold text-yellow-400 mb-1">Cashout to <span id="lblSelectedDealerName" class="text-white"></span></h3>
-                <p class="text-[11px] text-emerald-300 font-bold mb-4 bg-emerald-900/40 p-2 rounded border border-emerald-800/80">
-                    Agreed Rate: <span id="lblSelectedDealerRate"></span> PKR / egg <br>
-                    <span class="text-zinc-300 text-[10px] font-normal" id="lblSelectedDealerLimit"></span>
-                </p>
-                
-                <form id="withdrawalForm" class="space-y-3 text-xs">
-                    <div>
-                        <label class="block font-semibold text-emerald-300 mb-1">Select Account Type</label>
-                        <select id="wdType" class="w-full bg-emerald-900/80 border border-emerald-700 rounded-lg px-3 py-2.5 focus:outline-none text-zinc-200">
-                            <option value="Easypaisa">Easypaisa</option>
-                            <option value="Jazz Cash">Jazz Cash</option>
-                            <option value="Bank Account">Bank Account Routing</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-emerald-300 mb-1">Account Number</label>
-                        <input type="text" id="wdNumber" required class="w-full bg-emerald-900/80 border border-emerald-700 rounded-lg px-3 py-2.5 focus:outline-none text-zinc-200">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-emerald-300 mb-1">Account Holder Name</label>
-                        <input type="text" id="wdHolderName" required class="w-full bg-emerald-900/80 border border-emerald-700 rounded-lg px-3 py-2.5 focus:outline-none text-zinc-200">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-emerald-300 mb-1">Eggs Quantity to Liquidate</label>
-                        <input type="number" id="wdEggQty" required class="w-full bg-emerald-900/80 border border-emerald-700 rounded-lg px-3 py-2.5 focus:outline-none text-yellow-400 font-bold">
-                    </div>
-                    <button type="submit" class="w-full bg-yellow-500 text-zinc-950 font-bold py-3 rounded-xl shadow-md mt-2">Submit Request to Dealer</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Referral Team List View Modal -->
-    <div id="teamModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-emerald-950 border border-emerald-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[80vh] overflow-y-auto custom-scroll">
-            <button onclick="closeModal('teamModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-            <h3 class="text-base font-bold text-yellow-400 mb-3 border-b border-emerald-800 pb-2">Your Referred Team Network</h3>
-            <div id="teamListContainer" class="space-y-2 text-xs divide-y divide-emerald-800/50">
-                <!-- User names injected automatically -->
-            </div>
-        </div>
-    </div>
-
-    <!-- WITHDRAWAL PLAN LOCK MODAL (NEW FEATURE) -->
-    <div id="planLockModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-[9998]">
-        <div class="bg-gradient-to-b from-emerald-900 via-emerald-950 to-zinc-950 border border-amber-500/40 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative text-center">
-            <button onclick="closeModal('planLockModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-            <div class="w-16 h-16 bg-amber-500/10 border border-amber-400/40 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg text-3xl">
-                🔒
-            </div>
-            <span id="lblPlanBadge" class="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-3 py-1 rounded-full border border-amber-500/30 uppercase tracking-widest">Plan-1</span>
-            <h3 class="text-xl font-extrabold text-yellow-400 mt-2 mb-2">Withdrawal Temporarily Locked</h3>
-            <p id="lblPlanMessage" class="text-zinc-200 text-xs leading-relaxed mb-4">
-                Aap apni current withdrawal plan requirement poori nahi kar chuke. Naya withdrawal lene ke liye referral se hens purchase karwayen.
-            </p>
-            <div class="bg-emerald-900/60 border border-emerald-700/50 rounded-xl p-3 mb-4 text-xs text-left space-y-1.5">
-                <div class="flex justify-between"><span class="text-zinc-300">Required Referral Hens:</span> <span id="lblPlanRequired" class="font-bold text-yellow-400">0</span></div>
-                <div class="flex justify-between"><span class="text-zinc-300">You Currently Have:</span> <span id="lblPlanHave" class="font-bold text-emerald-400">0</span></div>
-                <div class="flex justify-between"><span class="text-zinc-300">Still Needed:</span> <span id="lblPlanNeeded" class="font-bold text-red-400">0</span></div>
-            </div>
-            <div class="space-y-2">
-                <button onclick="closeModal('planLockModal'); copyReferralLink();" class="w-full bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-zinc-950 font-bold py-3 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider">
-                    🔗 Copy My Referral Link
-                </button>
-                <button onclick="closeModal('planLockModal')" class="w-full bg-emerald-900/60 hover:bg-emerald-800/60 text-zinc-300 font-medium py-2.5 rounded-xl border border-emerald-700/50 transition-all text-xs">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Toast Component -->
+    <div id="toast">Notification Message</div>
 
     <script>
+        // --- 1. FIREBASE SETUP ---
+        // (Aap apne purane Firebase Config yahan replace karein)
         const firebaseConfig = {
             apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
             authDomain: "own-live-steam-web-default.firebaseapp.com",
@@ -592,893 +264,298 @@
             messagingSenderId: "xxxxxxxxxxx",
             appId: "xxxxxxxxxxx"
         };
-
+        
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.database();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-        let currentUid = null;
-        let currentUserData = null;
-        let timerInterval = null;
-        
-        let processingBatches = {}; // RACE CONDITION FIX: Prevent multiple triggers
-        
-        let activeDealers = {};
-        let selectedDealerObj = null;
-        let selectedDealerKey = null;
+        // --- GLOBAL VARIABLES ---
+        let currentUser = null;
+        let connections = JSON.parse(localStorage.getItem('iptv_connections')) || [];
+        let activeConnection = null;
+        let currentType = 'live'; // live, vod, series
+        let allCategories = [];
+        let allStreams = [];
+        let hlsPlayer = null;
 
-        let globalTeamInvest = 0;
-        let globalTeamWithdraw = 0;
-        let globalTeamEggs = 0;
-
-        let cachedPurchases = [];
-        let cachedWithdrawals = [];
-        
-        // --- DYNAMIC WHATSAPP NUMBER SYSTEM (Matching contact.html schedule & overrides) ---
-        let globalActiveWaNumber = "923423944508";
-
-        db.ref('settings/whatsappConfig').on('value', snap => {
-            let config = snap.val() || {};
-            
-            function getLiveWaNumber() {
-                let now = new Date();
-                let override = config.manualOverride;
-                
-                // Check if valid manual override exists and active
-                if (override && override.expireTime > now.getTime()) {
-                    return override.number;
-                }
-                
-                // Automated Schedule (Mon to Fri, 07:00 to 19:59)
-                let day = now.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
-                let hours = now.getHours();
-                
-                if (day >= 1 && day <= 5) {
-                    if (hours >= 7 && hours < 20) {
-                        return "923423944508";
-                    }
-                }
-                return "923485465097";
+        // --- DOM ELEMENTS ---
+        const ui = {
+            screens: {
+                auth: document.getElementById('googleAuthScreen'),
+                profiles: document.getElementById('profilesScreen'),
+                dashboard: document.getElementById('dashboardScreen')
+            },
+            modals: { addConnection: document.getElementById('addConnectionModal'), player: document.getElementById('playerModal') },
+            elements: {
+                userAvatar: document.getElementById('userAvatar'),
+                userNameDisplay: document.getElementById('userNameDisplay'),
+                profilesGrid: document.getElementById('profilesGrid'),
+                activeConnectionName: document.getElementById('activeConnectionName'),
+                categoryList: document.getElementById('categoryList'),
+                streamGrid: document.getElementById('streamGrid'),
+                currentCategoryName: document.getElementById('currentCategoryName'),
+                loader: document.getElementById('mainLoader'),
+                videoPlayer: document.getElementById('videoPlayer'),
+                nowPlayingTitle: document.getElementById('nowPlayingTitle'),
+                badgeType: document.getElementById('badgeType')
             }
+        };
 
-            globalActiveWaNumber = getLiveWaNumber();
-            
-            // Update UI elements
-            const waSidebarLink = document.getElementById('waSidebarLink');
-            if(waSidebarLink) waSidebarLink.href = `https://wa.me/${globalActiveWaNumber}`;
-            
-            const waHelpDeskLink = document.getElementById('waHelpDeskLink');
-            if(waHelpDeskLink) waHelpDeskLink.href = `https://wa.me/${globalActiveWaNumber}`;
-            
-            const waHelpDeskText = document.getElementById('waHelpDeskText');
-            if(waHelpDeskText) waHelpDeskText.innerText = globalActiveWaNumber;
-            
-            const waEasypaisaText = document.getElementById('waEasypaisaText');
-            if(waEasypaisaText) waEasypaisaText.innerText = globalActiveWaNumber;
-        });
-
-        // Minute interval to ensure automated schedule updates on hour/day changes
-        setInterval(() => {
-            db.ref('settings/whatsappConfig').once('value', snap => {
-                let config = snap.val() || {};
-                let now = new Date();
-                let override = config.manualOverride;
-                
-                if (override && override.expireTime > now.getTime()) {
-                    globalActiveWaNumber = override.number;
-                } else {
-                    let day = now.getDay();
-                    let hours = now.getHours();
-                    if (day >= 1 && day <= 5 && hours >= 7 && hours < 20) {
-                        globalActiveWaNumber = "923423944508";
-                    } else {
-                        globalActiveWaNumber = "923485465097";
-                    }
-                }
-                
-                const waSidebarLink = document.getElementById('waSidebarLink');
-                if(waSidebarLink) waSidebarLink.href = `https://wa.me/${globalActiveWaNumber}`;
-                
-                const waHelpDeskLink = document.getElementById('waHelpDeskLink');
-                if(waHelpDeskLink) waHelpDeskLink.href = `https://wa.me/${globalActiveWaNumber}`;
-                
-                const waHelpDeskText = document.getElementById('waHelpDeskText');
-                if(waHelpDeskText) waHelpDeskText.innerText = globalActiveWaNumber;
-                
-                const waEasypaisaText = document.getElementById('waEasypaisaText');
-                if(waEasypaisaText) waEasypaisaText.innerText = globalActiveWaNumber;
-            });
-        }, 60000);
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const refIdParam = urlParams.get('ref');
-        const refNameParam = urlParams.get('n');
-
-        if(refNameParam) {
-            document.getElementById('refInfoBanner').classList.remove('hidden');
-            document.getElementById('refNameDisplay').innerText = decodeURIComponent(refNameParam);
-            toggleAuthMode(true); 
+        // --- UTILS ---
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.borderLeftColor = isError ? '#ef4444' : '#10b981';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // --- Generate and Copy Referral Link ---
-        function copyReferralLink() {
-            if (!currentUid || !currentUserData) {
-                showCustomAlert("Error", "Please login to copy your referral link.");
-                return;
-            }
-            
-            // Build the full referral link containing origin + path + query params
-            const baseUrl = window.location.origin + window.location.pathname;
-            const refLink = `${baseUrl}?ref=${currentUid}&n=${encodeURIComponent(currentUserData.name)}`;
-            
-            navigator.clipboard.writeText(refLink).then(() => {
-                const toast = document.getElementById('toast');
-                toast.innerText = "Full Invite Link Copied!";
-                toast.classList.remove('opacity-0');
-                setTimeout(() => { toast.classList.add('opacity-0'); }, 3000);
-            }).catch(err => {
-                showCustomAlert("Error", "Failed to copy link. Try again.");
-            });
+        function switchScreen(screenName) {
+            Object.values(ui.screens).forEach(s => s.classList.add('hidden'));
+            ui.screens[screenName].classList.remove('hidden');
         }
 
-        // --- Side Sliding Menu Toggle ---
-        function toggleSideMenu() {
-            const panel = document.getElementById('sideMenuPanel');
-            const overlay = document.getElementById('sideMenuOverlay');
-            if (panel.classList.contains('-translate-x-full')) {
-                panel.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                panel.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        // --- Custom Alert System Modified for Dynamic Button Text ---
-        function showCustomAlert(title, message, callback = null, btnText = "OK") {
-            document.getElementById('customAlertTitle').innerText = title;
-            document.getElementById('customAlertMessage').innerText = message;
-            
-            const btn = document.getElementById('customAlertBtn');
-            btn.innerText = btnText;
-            btn.onclick = function() {
-                closeCustomAlert();
-                if(callback) callback();
-                setTimeout(() => { btn.innerText = "OK"; }, 300);
-            };
-            
-            document.getElementById('customAlertModal').classList.remove('hidden');
-            document.getElementById('customAlertModal').classList.add('flex');
-        }
-
-        function closeCustomAlert() {
-            document.getElementById('customAlertModal').classList.remove('flex');
-            document.getElementById('customAlertModal').classList.add('hidden');
-        }
-
-        function handleAuthError(err) {
-            let msg = "System error occurred. Please try again later.";
-            if (err.code === "auth/weak-password") {
-                msg = "Password must be at least 6 characters long.";
-            } else if (err.code === "auth/email-already-in-use") {
-                msg = "This email address is already registered. Try a different one.";
-            } else if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
-                msg = "Invalid email address or password.";
-            } else if (err.code === "auth/invalid-email") {
-                msg = "Please enter a valid email address.";
-            } else if (err.code === "auth/requires-recent-login") {
-                msg = "Security requirement: Please sign out and sign in again before changing your password.";
-            }
-            showCustomAlert("Authentication Error", msg);
-        }
-
-        function toggleAuthMode(isRegister) {
-            document.getElementById('authTitle').innerText = isRegister ? "Create Account" : "Sign In";
-            document.getElementById('authSubtitle').innerText = isRegister ? "Register your new account to start earning" : "Enter your credentials to access your dashboard. For Help: Admin whatsapp 03285719803";
-            document.getElementById('registerForm').classList.toggle('hidden', !isRegister);
-            document.getElementById('loginForm').classList.toggle('hidden', isRegister);
-        }
-
-        // SHOW DAILY PROFESSIONAL NOTIFICATION (ONCE EVERY 24 HOURS)
-        function checkAndShowHenPopup() {
-            if (!currentUid) return;
-            const lastPopupTime = localStorage.getItem('lastHenPopup_' + currentUid);
-            const now = Date.now();
-            
-            if (!lastPopupTime || (now - parseInt(lastPopupTime)) > 86400000) {
-                document.getElementById('dailyNoticeModal').classList.remove('hidden');
-                document.getElementById('dailyNoticeModal').classList.add('flex');
-                localStorage.setItem('lastHenPopup_' + currentUid, now.toString());
-            }
-        }
-
+        // --- AUTHENTICATION ---
         auth.onAuthStateChanged(user => {
             if (user) {
-                currentUid = user.uid;
-                
-                db.ref('users/' + currentUid).on('value', snapshot => {
-                    const val = snapshot.val();
-                    if(val && val.status === 'blocked') {
-                        showCustomAlert("Account Suspended", "Your account has been temporarily blocked. Please contact the administrator.");
-                        auth.signOut();
-                        return;
-                    }
-                    
-                    document.getElementById('authContainer').classList.add('hidden');
-                    document.getElementById('dashboardContainer').classList.remove('hidden');
-                    syncFarmDashboardData(val); // PASS DATA INSTEAD OF FETCHING AGAIN
-                    fetchTeamStats();
-                    fetchDealersMarketplace();
-                    fetchPurchasesAndWithdrawalsHistory();
-                    fetchUserAnnouncements(); // FETCH ANNOUNCEMENTS FOR BELL ICON
-
-                    if(timerInterval) clearInterval(timerInterval);
-                    timerInterval = setInterval(updateBatchesTimers, 1000);
-
-                    setTimeout(checkAndShowHenPopup, 1500);
-                });
+                currentUser = user;
+                ui.elements.userAvatar.src = user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=10b981&color=fff`;
+                ui.elements.userNameDisplay.innerText = user.displayName;
+                renderProfiles();
+                switchScreen('profiles');
             } else {
-                currentUid = null;
-                document.getElementById('authContainer').classList.remove('hidden');
-                document.getElementById('dashboardContainer').classList.add('hidden');
-                
-                // FIXED: Force Register mode if ref link is detected, else Login
-                if(refNameParam) {
-                    toggleAuthMode(true);
-                } else {
-                    toggleAuthMode(false);
-                }
-                
-                if(timerInterval) clearInterval(timerInterval);
+                currentUser = null;
+                switchScreen('auth');
             }
         });
 
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const name = document.getElementById('regName').value;
-            const mobile = document.getElementById('regMobile').value;
-            const email = document.getElementById('regEmail').value;
-            const password = document.getElementById('regPassword').value;
+        function signInWithGoogle() {
+            auth.signInWithPopup(googleProvider).catch(error => showToast(error.message, true));
+        }
 
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(cred => {
-                    const profileData = {
-                        name: name,
-                        mobile: mobile,
-                        email: email,
-                        password: password, 
-                        totalHens: 0,
-                        availableEggs: 0,
-                        giftEggs: 0,
-                        totalExpense: 0,
-                        totalWithdrawal: 0,
-                        status: "active",
-                        createdAt: firebase.database.ServerValue.TIMESTAMP,
-                        referredBy: refIdParam ? refIdParam : "none",
-                        hasRewardedInviter: false
-                    };
-                    db.ref('users/' + cred.user.uid).set(profileData);
-                })
-                .catch(err => handleAuthError(err));
-        });
-
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            auth.signInWithEmailAndPassword(email, password)
-                .then(cred => {
-                    db.ref('users/' + cred.user.uid + '/password').set(password);
-                })
-                .catch(err => handleAuthError(err));
-        });
-
-        function logout() { 
+        function signOutGoogle() {
             auth.signOut().then(() => {
-                toggleAuthMode(false);
-            }); 
-        }
-
-        // NEW FUNCTION: FETCH LIVE ANNOUNCEMENTS
-        function fetchUserAnnouncements() {
-            db.ref('announcements').on('value', snap => {
-                const container = document.getElementById('announcementsContainer');
-                if(!container) return;
-                container.innerHTML = '';
-                let count = 0;
-                
-                snap.forEach(child => {
-                    count++;
-                    let ann = child.val();
-                    let dateStr = ann.timestamp ? new Date(ann.timestamp).toLocaleDateString() : 'New';
-                    
-                    let div = document.createElement('div');
-                    div.className = "bg-emerald-900/60 p-3 rounded-xl border border-emerald-700/50 space-y-1 mb-2";
-                    div.innerHTML = `
-                        <div class="flex justify-between items-center border-b border-emerald-800/60 pb-1">
-                            <h4 class="text-yellow-400 font-bold text-xs">📢 ${ann.title}</h4>
-                            <span class="text-[9px] text-zinc-400">${dateStr}</span>
-                        </div>
-                        <p class="text-zinc-200 text-[11px] leading-relaxed pt-1 whitespace-pre-wrap">${ann.message}</p>
-                    `;
-                    container.prepend(div);
-                });
-
-                const badge = document.getElementById('announcementBadge');
-                if (badge) {
-                    if (count > 0) {
-                        badge.classList.remove('hidden');
-                    } else {
-                        badge.classList.add('hidden');
-                    }
-                }
-
-                if(count === 0) {
-                    container.innerHTML = '<p class="text-zinc-400 italic text-center text-xs py-4">No new announcements at this time.</p>';
-                }
+                activeConnection = null;
+                allCategories = [];
+                allStreams = [];
+                showToast("Logged out successfully");
             });
         }
 
-        function openAnnouncementsModal() {
-            document.getElementById('announcementsModal').classList.remove('hidden');
-            document.getElementById('announcementsModal').classList.add('flex');
-        }
+        // --- PROFILES / CONNECTIONS MANAGEMENT ---
+        function showAddConnectionModal() { ui.modals.addConnection.classList.remove('hidden'); }
+        function hideAddConnectionModal() { ui.modals.addConnection.classList.add('hidden'); document.getElementById('connectionForm').reset(); }
 
-        function syncFarmDashboardData(data) {
-            if (!data) return;
-            currentUserData = data;
+        function saveConnection() {
+            const name = document.getElementById('profName').value;
+            const url = document.getElementById('profUrl').value.replace(/\/$/, "");
+            const user = document.getElementById('profUser').value;
+            const pass = document.getElementById('profPass').value;
 
-            document.getElementById('lblUserName').innerText = data.name || "User";
-            document.getElementById('lblEggBalance').innerText = (data.availableEggs || 0) + (data.giftEggs || 0);
-            document.getElementById('lblHenBalance').innerText = data.totalHens || 0;
-            document.getElementById('lblGiftBalance').innerText = data.giftEggs || 0;
-            document.getElementById('lblTotalExpense').innerText = (data.totalExpense || 0) + " PKR";
-            document.getElementById('lblTotalWithdrawal').innerText = (data.totalWithdrawal || 0) + " PKR";
+            const newConn = { id: Date.now().toString(), name, url, user, pass };
+            connections.push(newConn);
+            localStorage.setItem('iptv_connections', JSON.stringify(connections));
             
-            document.getElementById('settingTotalHens').innerText = data.totalHens || 0;
-            
-            updateBatchesTimers(); 
-
-            db.ref('purchase_requests').orderByChild('uid').equalTo(currentUid).on('value', snap => {
-                let pendingCount = 0;
-                snap.forEach(child => { if (child.val().status === 'pending') pendingCount++; });
-                document.getElementById('lblPendingPurchase').innerText = pendingCount + " requests";
-            });
-
-            db.ref('withdraw_requests').orderByChild('uid').equalTo(currentUid).on('value', snap => {
-                let pendingWdCount = 0;
-                snap.forEach(child => { if (child.val().status === 'pending') pendingWdCount++; });
-                document.getElementById('lblPendingWithdraw').innerText = pendingWdCount + " requests";
-            });
+            hideAddConnectionModal();
+            renderProfiles();
+            showToast("Connection Saved!");
         }
 
-        // --- Fetch & Render Purchase / Withdrawal History Tabs ---
-        function fetchPurchasesAndWithdrawalsHistory() {
-            if(!currentUid) return;
-
-            db.ref('purchase_requests').orderByChild('uid').equalTo(currentUid).on('value', snapshot => {
-                const pContainer = document.getElementById('purchasesAccordionContent');
-                pContainer.innerHTML = '';
-                cachedPurchases = [];
-
-                let hasRecords = false;
-                snapshot.forEach(child => {
-                    hasRecords = true;
-                    let p = child.val();
-                    cachedPurchases.push(p);
-
-                    let dateStr = p.timestamp ? new Date(p.timestamp).toLocaleString() : 'N/A';
-                    let statusColor = p.status === 'approved' ? 'text-green-400' : (p.status === 'rejected' ? 'text-red-400' : 'text-amber-400');
-                    
-                    let div = document.createElement('div');
-                    div.className = "p-2.5 bg-emerald-900/60 rounded-lg border border-emerald-800/80 flex justify-between items-center";
-                    div.innerHTML = `
-                        <div>
-                            <span class="font-bold text-yellow-400 text-xs">${p.quantity} Hen(s)</span>
-                            <span class="text-[10px] text-zinc-300 block">Trx: ${p.transactionId || 'N/A'} • ${dateStr}</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="font-bold text-white text-xs block">${p.amount} PKR</span>
-                            <span class="text-[10px] uppercase font-black ${statusColor}">${p.status || 'pending'}</span>
-                        </div>
-                    `;
-                    pContainer.prepend(div);
-                });
-
-                if(!hasRecords) {
-                    pContainer.innerHTML = '<p class="text-zinc-400 italic text-center py-2">No purchasing history available.</p>';
-                }
-            });
-
-            db.ref('withdraw_requests').orderByChild('uid').equalTo(currentUid).on('value', snapshot => {
-                const wContainer = document.getElementById('withdrawalsAccordionContent');
-                wContainer.innerHTML = '';
-                cachedWithdrawals = [];
-
-                let hasRecords = false;
-                snapshot.forEach(child => {
-                    hasRecords = true;
-                    let w = child.val();
-                    cachedWithdrawals.push(w);
-
-                    let dateStr = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
-                    let statusColor = w.status === 'approved' ? 'text-green-400' : (w.status === 'rejected' ? 'text-red-400' : 'text-amber-400');
-                    let eggsCount = w.eggsSold || w.eggsDeductedCount || 0;
-                    let totalAmount = w.amount || w.totalPayout || 0;
-
-                    let div = document.createElement('div');
-                    div.className = "p-2.5 bg-emerald-900/60 rounded-lg border border-emerald-800/80 flex justify-between items-center";
-                    div.innerHTML = `
-                        <div>
-                            <span class="font-bold text-amber-400 text-xs">${eggsCount} Eggs Sold</span>
-                            <span class="text-[10px] text-zinc-300 block">${w.dealerName || 'Dealer'} • ${dateStr}</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="font-bold text-emerald-400 text-xs block">${totalAmount} PKR</span>
-                            <span class="text-[10px] uppercase font-black ${statusColor}">${w.status || 'pending'}</span>
-                        </div>
-                    `;
-                    wContainer.prepend(div);
-                });
-
-                if(!hasRecords) {
-                    wContainer.innerHTML = '<p class="text-zinc-400 italic text-center py-2">No withdrawal status available.</p>';
-                }
-            });
-        }
-
-        function toggleAccordion(id) {
-            const el = document.getElementById(id);
-            const arrow = document.getElementById(id.replace('Content', 'Arrow'));
-            if(el.classList.contains('hidden')) {
-                el.classList.remove('hidden');
-                arrow.style.transform = 'rotate(180deg)';
-            } else {
-                el.classList.add('hidden');
-                arrow.style.transform = 'rotate(0deg)';
+        function deleteConnection(id, event) {
+            event.stopPropagation();
+            if(confirm("Are you sure you want to delete this connection?")) {
+                connections = connections.filter(c => c.id !== id);
+                localStorage.setItem('iptv_connections', JSON.stringify(connections));
+                renderProfiles();
             }
         }
 
-        function fetchTeamStats() {
-            if(!currentUid) return;
-            db.ref('users').orderByChild('referredBy').equalTo(currentUid).on('value', snap => {
-                let count = 0;
-                let hCount = 0;
-                let eCount = 0;
-                let investTotal = 0;
-                let withdrawTotal = 0;
-
-                snap.forEach(child => {
-                    count++;
-                    let uData = child.val();
-                    hCount += (uData.totalHens || 0);
-                    
-                    let userTotalEggs = (uData.availableEggs || 0) + (uData.giftEggs || 0);
-                    eCount += userTotalEggs;
-                    
-                    investTotal += (uData.totalExpense || 0);
-                    withdrawTotal += (uData.totalWithdrawal || 0);
-                });
-
-                document.getElementById('statTeamJoined').innerText = count;
-                document.getElementById('statTeamHens').innerText = hCount;
-                document.getElementById('statTeamEggs').innerText = eCount;
-
-                globalTeamInvest = investTotal;
-                globalTeamWithdraw = withdrawTotal;
-                globalTeamEggs = eCount;
-            });
-        }
-
-        function showTeamInvestAlert() {
-            showCustomAlert("Team Total Invest", `Your referral team has invested a total of ${globalTeamInvest} PKR so far.`);
-        }
-
-        function showTeamWithdrawAlert() {
-            showCustomAlert("Team Total Withdraw", `Your referral team has withdrawn a total of ${globalTeamWithdraw} PKR so far.`);
-        }
-
-        function showTeamEggsAlert() {
-            showCustomAlert("Team Total Eggs", `Your referral team currently has a total of ${globalTeamEggs} eggs.`);
-        }
-
-        function openTeamListModal() {
-            if(!currentUid) return;
-            const container = document.getElementById('teamListContainer');
-            container.innerHTML = '<p class="text-zinc-400 italic p-2">Fetching team data...</p>';
-            
-            db.ref('users').orderByChild('referredBy').equalTo(currentUid).once('value', snap => {
-                container.innerHTML = '';
-                let valid = false;
-                snap.forEach(child => {
-                    valid = true;
-                    const val = child.val();
-                    let div = document.createElement('div');
-                    div.className = "py-2 flex justify-between items-center bg-emerald-900/60 px-2 mt-1 rounded border border-emerald-800/50";
-                    div.innerHTML = `
-                        <span class="font-bold text-yellow-400">${val.name || 'Anonymous Partner'}</span>
-                        <span class="text-zinc-300 font-mono text-[11px]">${val.mobile || 'N/A'}</span>
-                    `;
-                    container.appendChild(div);
-                });
-                if(!valid) {
-                    container.innerHTML = '<p class="text-zinc-400 text-center italic py-4">No members have joined your team yet.</p>';
-                }
-            });
-            document.getElementById('teamModal').classList.remove('hidden');
-            document.getElementById('teamModal').classList.add('flex');
-        }
-
-        function updateBatchesTimers() {
-            const breakdownContainer = document.getElementById('settingsEggsBreakdown');
-            let breakdownHtml = '';
-
-            if(!currentUserData || !currentUserData.hen_batches) {
-                document.getElementById('batchesContainer').innerHTML = '<div class="bg-emerald-950/80 p-4 rounded-xl border border-emerald-800/80 text-center text-xs text-emerald-400">No active egg production. Buy hens to start!</div>';
-                if(breakdownContainer) breakdownContainer.innerHTML = '<p class="text-zinc-400 italic">No active production batches.</p>';
+        function renderProfiles() {
+            if (connections.length === 0) {
+                ui.elements.profilesGrid.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center p-10 glass rounded-xl border-dashed border-2 border-slate-700">
+                        <i class="fa-solid fa-plug-circle-xmark text-4xl text-slate-500 mb-3"></i>
+                        <h3 class="text-white text-lg font-bold">No Connections Found</h3>
+                        <p class="text-slate-400 text-sm">Add your Xtream API details to begin.</p>
+                    </div>`;
                 return;
             }
-            
-            let html = '';
-            let now = Date.now();
-            const dayMs = 24 * 60 * 60 * 1000;
-            const totalLifespanMs = 120 * dayMs; // 120 Days Maximum Lifespan
-            
-            for(let key in currentUserData.hen_batches) {
-                let batch = currentUserData.hen_batches[key];
-                
-                // AUTO DELETE LOGIC FOR 120 DAYS
-                let createdAt = batch.createdAt || batch.lastCollectedAt;
-                let elapsedTotal = now - createdAt;
-                
-                if (elapsedTotal >= totalLifespanMs) {
-                    // Lifespan expired, delete hen batch automatically
-                    let newTotalHens = Math.max(0, (currentUserData.totalHens || 0) - batch.qty);
-                    db.ref(`users/${currentUid}/totalHens`).set(newTotalHens);
-                    db.ref(`users/${currentUid}/hen_batches/${key}`).remove();
-                    delete currentUserData.hen_batches[key];
-                    continue; 
-                }
 
-                // Days Remaining Logic
-                let daysLeft = Math.ceil((totalLifespanMs - elapsedTotal) / dayMs);
-
-                let elapsed = now - batch.lastCollectedAt;
-                
-                // BUG FIX: Added !processingBatches[key] to prevent infinite loop triggers
-                if(elapsed >= dayMs && !processingBatches[key]) {
-                    processingBatches[key] = true; // Lock the batch 
-                    
-                    let cycles = Math.floor(elapsed / dayMs);
-                    let eggsEarned = cycles * batch.qty;
-                    let newLastCollected = batch.lastCollectedAt + (cycles * dayMs);
-                    
-                    // Optimistic update locally to prevent UI lag
-                    batch.lastCollectedAt = newLastCollected;
-                    
-                    // Safe Server Transaction
-                    db.ref(`users/${currentUid}/availableEggs`).transaction(current => {
-                        return (current || 0) + eggsEarned;
-                    }, (error, committed) => {
-                        if (committed) {
-                            db.ref(`users/${currentUid}/hen_batches/${key}/lastCollectedAt`).set(newLastCollected).finally(() => {
-                                // Unlock after a safe delay to avoid duplicate firing
-                                setTimeout(() => { processingBatches[key] = false; }, 1500); 
-                            });
-                        } else {
-                            processingBatches[key] = false; // Unlock if failed
-                        }
-                    });
-                    
-                    elapsed = now - newLastCollected;
-                }
-                
-                // FIXED TIMER PROBLEM HERE: Prevent negative time and limit progress max to 100%
-                let timeLeft = Math.max(0, dayMs - elapsed);
-                
-                let d = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-                let h = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                let m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                let s = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                
-                let pad = (num) => num.toString().padStart(2, '0');
-                let progress = Math.min(100, (elapsed / dayMs) * 100);
-                let circumference = 113; 
-                let dashOffset = circumference - (circumference * progress / 100);
-                
-                html += `
-                <div class="bg-emerald-900/60 p-3 rounded-xl flex justify-between items-center border border-emerald-700/60">
-                    <div>
-                        <span class="text-emerald-300 font-bold text-sm block mb-0.5 flex items-center">
-                            ${batch.qty} Hens Batch 
-                            <span class="text-[9px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full ml-2 border border-amber-500/30 font-black tracking-wide">
-                                ⏳ ${daysLeft}
-                            </span>
-                        </span>
-                        <div class="text-zinc-200 text-xs font-mono tracking-widest">${d}d : ${pad(h)}h : ${pad(m)}m : ${pad(s)}s</div>
+            ui.elements.profilesGrid.innerHTML = connections.map(c => `
+                <div onclick="connectToXtream('${c.id}')" class="focusable glass p-6 rounded-2xl border border-slate-700 hover:border-emerald-500 transition-all cursor-pointer group relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-bl-full -z-10 group-hover:bg-emerald-500/20 transition-colors"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-slate-800 p-3 rounded-xl"><i class="fa-solid fa-server text-emerald-400 text-xl"></i></div>
+                        <button onclick="deleteConnection('${c.id}', event)" class="text-slate-500 hover:text-red-500 p-2"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
-                    <div class="relative w-12 h-12 flex items-center justify-center">
-                        <svg class="w-12 h-12 transform -rotate-90">
-                            <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="4" class="text-emerald-950" fill="transparent" />
-                            <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="4" class="text-yellow-400" fill="transparent" stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}" stroke-linecap="round" />
-                        </svg>
-                        <span class="absolute text-[10px] font-bold text-yellow-400">${Math.floor(progress)}%</span>
+                    <h3 class="text-xl font-bold text-white mb-1 truncate">${c.name}</h3>
+                    <p class="text-sm text-slate-400 truncate"><i class="fa-solid fa-link mr-1"></i> ${c.url}</p>
+                    <div class="mt-4 pt-4 border-t border-slate-700/50 flex justify-between items-center">
+                        <span class="text-xs font-mono text-slate-300 bg-slate-900 px-2 py-1 rounded">${c.user}</span>
+                        <i class="fa-solid fa-arrow-right text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function goToProfiles() {
+            closePlayer();
+            switchScreen('profiles');
+        }
+
+        // --- XTREAM API LOGIC ---
+        async function connectToXtream(connId) {
+            activeConnection = connections.find(c => c.id === connId);
+            ui.elements.activeConnectionName.innerText = activeConnection.name;
+            switchScreen('dashboard');
+            
+            // Default to Live TV
+            loadContent('live');
+        }
+
+        async function loadContent(type) {
+            currentType = type;
+            
+            // UI Tab active states
+            ['Live', 'Vod', 'Series'].forEach(t => {
+                const btn = document.getElementById(`tab${t}`);
+                if (t.toLowerCase() === type) {
+                    btn.classList.replace('text-slate-400', 'text-emerald-400');
+                    btn.classList.add('bg-emerald-600/20');
+                } else {
+                    btn.classList.replace('text-emerald-400', 'text-slate-400');
+                    btn.classList.remove('bg-emerald-600/20');
+                }
+            });
+
+            ui.elements.loader.classList.remove('hidden');
+            ui.elements.categoryList.innerHTML = '';
+            ui.elements.streamGrid.innerHTML = '';
+            ui.elements.currentCategoryName.innerText = "Select a Category";
+            document.getElementById('streamSearch').classList.add('hidden');
+
+            let action = type === 'live' ? 'get_live_categories' : type === 'vod' ? 'get_vod_categories' : 'get_series_categories';
+            const apiUrl = `${activeConnection.url}/player_api.php?username=${activeConnection.user}&password=${activeConnection.pass}&action=${action}`;
+
+            try {
+                const response = await fetch(apiUrl);
+                allCategories = await response.json();
+                renderCategories(allCategories);
+            } catch (error) {
+                console.error(error);
+                showToast("Failed to fetch categories. Check API or CORS.", true);
+            }
+            ui.elements.loader.classList.add('hidden');
+        }
+
+        function renderCategories(categories) {
+            ui.elements.categoryList.innerHTML = categories.map(cat => `
+                <button onclick="loadStreams('${cat.category_id}', '${cat.category_name.replace(/'/g, "\\'")}')" 
+                        class="focusable w-full text-left px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all truncate border-l-2 border-transparent hover:border-emerald-500">
+                    ${cat.category_name}
+                </button>
+            `).join('');
+        }
+
+        function filterCategories() {
+            const query = document.getElementById('catSearch').value.toLowerCase();
+            renderCategories(allCategories.filter(c => c.category_name.toLowerCase().includes(query)));
+        }
+
+        async function loadStreams(categoryId, categoryName) {
+            ui.elements.loader.classList.remove('hidden');
+            ui.elements.currentCategoryName.innerText = categoryName;
+            document.getElementById('streamSearch').classList.remove('hidden');
+            document.getElementById('streamSearch').value = '';
+
+            let action = currentType === 'live' ? 'get_live_streams' : currentType === 'vod' ? 'get_vod_streams' : 'get_series';
+            const apiUrl = `${activeConnection.url}/player_api.php?username=${activeConnection.user}&password=${activeConnection.pass}&action=${action}&category_id=${categoryId}`;
+
+            try {
+                const response = await fetch(apiUrl);
+                allStreams = await response.json();
+                renderStreams(allStreams);
+            } catch (error) {
+                showToast("Failed to load content.", true);
+            }
+            ui.elements.loader.classList.add('hidden');
+        }
+
+        function renderStreams(streams) {
+            if (!streams || streams.length === 0) {
+                ui.elements.streamGrid.innerHTML = '<div class="col-span-full text-center text-slate-500 mt-10">No content available in this category.</div>';
+                return;
+            }
+
+            ui.elements.streamGrid.innerHTML = streams.map(stream => {
+                const title = stream.name || stream.title;
+                const icon = stream.stream_icon || stream.cover || 'https://via.placeholder.com/300x450/1e293b/10b981?text=No+Poster';
+                const id = stream.stream_id || stream.series_id;
+                const ext = stream.container_extension || 'mp4';
+                
+                // Style differences for VOD vs LIVE
+                const imgClass = currentType === 'live' ? 'object-contain p-4' : 'object-cover';
+                const aspect = currentType === 'live' ? 'aspect-video' : 'aspect-[2/3]';
+
+                return `
+                <div onclick="playVideo('${id}', '${ext}', '${title.replace(/'/g, "\\'")}')" 
+                     class="focusable group bg-slate-900 border border-slate-800 rounded-xl overflow-hidden cursor-pointer hover:border-emerald-500 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all flex flex-col relative">
+                    <div class="${aspect} w-full bg-slate-950 relative overflow-hidden">
+                        <img src="${icon}" loading="lazy" class="w-full h-full ${imgClass} transition-transform duration-500 group-hover:scale-110" onerror="this.src='https://via.placeholder.com/300x450/1e293b/ffffff?text=Image+Error'">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
+                        <div class="absolute inset-0 bg-emerald-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                            <div class="bg-emerald-500 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform scale-50 group-hover:scale-100 transition-transform duration-300">
+                                <i class="fa-solid fa-play text-white text-lg ml-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 absolute bottom-0 left-0 right-0">
+                        <h3 class="text-sm font-bold text-white line-clamp-1 drop-shadow-md" title="${title}">${title}</h3>
                     </div>
                 </div>`;
-
-                breakdownHtml += `<div class="flex justify-between py-1 border-b border-emerald-800/40"><span>Batch (${batch.qty} Hens)</span><span class="font-mono text-yellow-400">${pad(h)}h ${pad(m)}m ${pad(s)}s left</span></div>`;
-            }
-
-            document.getElementById('batchesContainer').innerHTML = html;
-            if(breakdownContainer) breakdownContainer.innerHTML = breakdownHtml;
+            }).join('');
         }
 
-        // --- MODAL & ACTION HANDLERS ---
-        function openPurchaseModal() {
-            document.getElementById('purchaseStep1').classList.remove('hidden');
-            document.getElementById('purchaseStep2').classList.add('hidden');
-            document.getElementById('purchaseQty').value = 1;
-            updateHenPriceValue(1);
-            document.getElementById('purchaseModal').classList.remove('hidden');
-            document.getElementById('purchaseModal').classList.add('flex');
+        function filterStreams() {
+            const query = document.getElementById('streamSearch').value.toLowerCase();
+            renderStreams(allStreams.filter(s => (s.name || s.title).toLowerCase().includes(query)));
         }
 
-        function updateHenPriceValue(val) {
-            let q = parseInt(val) || 1;
-            document.getElementById('purchaseTotalCost').innerText = (q * 499) + " PKR";
-        }
-
-        function proceedToPaymentProof() {
-            document.getElementById('purchaseStep1').classList.add('hidden');
-            document.getElementById('purchaseStep2').classList.remove('hidden');
-        }
-
-        document.getElementById('paymentProofForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            let qty = parseInt(document.getElementById('purchaseQty').value) || 1;
-            let trx = document.getElementById('proofTrxId').value;
-            let holder = document.getElementById('proofHolderName').value;
-
-            db.ref('purchase_requests').push({
-                uid: currentUid,
-                quantity: qty,
-                amount: qty * 499,
-                transactionId: trx,
-                accountHolderName: holder,
-                status: 'pending',
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                // FIXED: ONE-TIME GIFT EGGS TO INVITER WHEN THEIR REFERRED FRIEND MAKES A PURCHASE
-                if (currentUserData && currentUserData.referredBy && currentUserData.referredBy !== "none" && !currentUserData.hasRewardedInviter) {
-                    const inviterRef = db.ref('users/' + currentUserData.referredBy);
-                    inviterRef.once('value', snap => {
-                        if (snap.exists()) {
-                            let inviterData = snap.val();
-                            
-                            // Give the inviter the same amount of EGGS as the purchased HENS
-                            let newGiftEggs = (inviterData.giftEggs || 0) + qty;
-                            
-                            inviterRef.update({ giftEggs: newGiftEggs });
-                            
-                            // Ensure this gift is strictly ONE-TIME by setting a flag on the buyer's account
-                            db.ref('users/' + currentUid).update({ hasRewardedInviter: true });
-                        }
-                    });
+        // --- PLAYER LOGIC ---
+        function playVideo(streamId, extension, title) {
+            ui.elements.nowPlayingTitle.innerText = title;
+            ui.elements.badgeType.innerText = currentType.toUpperCase();
+            ui.modals.player.classList.remove('hidden');
+            ui.elements.videoPlayer.focus();
+            
+            let url = '';
+            if (currentType === 'live') {
+                url = `${activeConnection.url}/live/${activeConnection.user}/${activeConnection.pass}/${streamId}.m3u8`;
+                if (Hls.isSupported()) {
+                    if(hlsPlayer) hlsPlayer.destroy();
+                    hlsPlayer = new Hls({ maxBufferLength: 30 });
+                    hlsPlayer.loadSource(url);
+                    hlsPlayer.attachMedia(ui.elements.videoPlayer);
+                    hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => ui.elements.videoPlayer.play());
+                } else if (ui.elements.videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                    ui.elements.videoPlayer.src = url;
                 }
-
-                closeModal('purchaseModal');
-                let waMessage = `*New Hen Purchase Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nQuantity: ${qty} Hens\nAmount: ${qty * 499} PKR\nTrx ID: ${trx}\nAccount Holder: ${holder}`;
-                let waUrl = `https://wa.me/${globalActiveWaNumber}?text=${encodeURIComponent(waMessage)}`;
-                showCustomAlert("Request Submitted", "Your hen purchase request has been submitted. Click below to send notification to Admin on WhatsApp.", () => {
-                    window.open(waUrl, '_blank');
-                }, "Send to WhatsApp");
-            });
-        });
-
-        function fetchDealersMarketplace() {
-            db.ref('dealers').on('value', snap => {
-                activeDealers = snap.val() || {};
-            });
-        }
-
-        // ==================== WITHDRAWAL PLAN FEATURE (NEW) ====================
-        // Plan-1: 230 PKR total approved withdrawal ke baad, 2 referral hens (cumulative) zaroori
-        // Plan-2: 700 PKR total approved withdrawal ke baad, 5 referral hens (cumulative) zaroori
-        // Plan-3: 1500 PKR total approved withdrawal ke baad, 8 referral hens (cumulative) zaroori
-        const withdrawalPlanTiers = [
-            { planNum: 1, threshold: 230, required: 2 },
-            { planNum: 2, threshold: 700, required: 5 },
-            { planNum: 3, threshold: 1500, required: 8 }
-        ];
-
-        function getWithdrawalPlanStatus() {
-            let totalWithdrawal = currentUserData ? (Number(currentUserData.totalWithdrawal) || 0) : 0;
-            let referralHensPurchased = currentUserData ? (Number(currentUserData.referralHensPurchased) || 0) : 0;
-
-            let activeTier = null;
-            for (let i = withdrawalPlanTiers.length - 1; i >= 0; i--) {
-                if (totalWithdrawal >= withdrawalPlanTiers[i].threshold) {
-                    activeTier = withdrawalPlanTiers[i];
-                    break;
-                }
-            }
-
-            if (!activeTier) {
-                return { locked: false };
-            }
-
-            let remaining = Math.max(0, activeTier.required - referralHensPurchased);
-            return {
-                locked: remaining > 0,
-                planNum: activeTier.planNum,
-                required: activeTier.required,
-                have: referralHensPurchased,
-                remaining: remaining
-            };
-        }
-
-        function showPlanLockModal(status) {
-            document.getElementById('lblPlanBadge').innerText = 'Plan-' + status.planNum;
-            document.getElementById('lblPlanMessage').innerText = `Aap Plan-${status.planNum} ki withdrawal limit tak pohanch gye hai. Agla withdrawal lene ke liye pehle apne referral link se new ya old referrals se total ${status.required} hens purchase karwana zaroori hai (kisi ek referral se Ya phir sab ko mila kar).`;
-            document.getElementById('lblPlanRequired').innerText = status.required;
-            document.getElementById('lblPlanHave').innerText = status.have;
-            document.getElementById('lblPlanNeeded').innerText = status.remaining;
-
-            document.getElementById('planLockModal').classList.remove('hidden');
-            document.getElementById('planLockModal').classList.add('flex');
-        }
-        // ================== END WITHDRAWAL PLAN FEATURE (NEW) ==================
-
-        function openSaleModal() {
-            // WITHDRAWAL PLAN CHECK (NEW): Agar plan lock hai to marketplace ki bajaye Plan page dikhao
-            let planStatus = getWithdrawalPlanStatus();
-            if (planStatus.locked) {
-                showPlanLockModal(planStatus);
-                return;
-            }
-
-            const container = document.getElementById('dealersContainer');
-            container.innerHTML = '';
-            
-            let count = 0;
-            for(let key in activeDealers) {
-                count++;
-                let d = activeDealers[key];
-                let div = document.createElement('div');
-                div.className = "bg-emerald-900/60 border border-emerald-700/60 p-3 rounded-xl flex justify-between items-center";
-                div.innerHTML = `
-                    <div>
-                        <h4 class="font-bold text-white text-sm">${d.name}</h4>
-                        <p class="text-[10px] text-zinc-300">Rate: <span class="text-yellow-400 font-bold">${d.rate} PKR</span> / egg</p>
-                        <p class="text-[9px] text-emerald-400">Limits: ${d.minLimit} - ${d.maxLimit} eggs</p>
-                    </div>
-                    <button onclick="selectDealer('${key}')" class="bg-yellow-500 hover:bg-yellow-400 text-zinc-950 px-3 py-2 rounded-lg font-bold text-xs shadow">Sell Eggs</button>
-                `;
-                container.appendChild(div);
-            }
-
-            if(count === 0) {
-                container.innerHTML = '<p class="text-center text-xs text-zinc-400 italic py-4">No active dealers available right now.</p>';
-            }
-
-            document.getElementById('saleStep1Marketplace').classList.remove('hidden');
-            document.getElementById('saleStep2Withdrawal').classList.add('hidden');
-            document.getElementById('saleModal').classList.remove('hidden');
-            document.getElementById('saleModal').classList.add('flex');
-        }
-
-        function selectDealer(key) {
-            selectedDealerKey = key;
-            selectedDealerObj = activeDealers[key];
-            
-            document.getElementById('lblSelectedDealerName').innerText = selectedDealerObj.name;
-            document.getElementById('lblSelectedDealerRate').innerText = selectedDealerObj.rate;
-            document.getElementById('lblSelectedDealerLimit').innerText = `Limit: ${selectedDealerObj.minLimit} to ${selectedDealerObj.maxLimit} Eggs`;
-            
-            document.getElementById('saleStep1Marketplace').classList.add('hidden');
-            document.getElementById('saleStep2Withdrawal').classList.remove('hidden');
-        }
-
-        function backToMarketplace() {
-            document.getElementById('saleStep2Withdrawal').classList.add('hidden');
-            document.getElementById('saleStep1Marketplace').classList.remove('hidden');
-        }
-
-        // FIXED EGG SALE / WITHDRAWAL FORM SUBMISSION TO SYNC WITH ADMIN PANEL
-        document.getElementById('withdrawalForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            if(!selectedDealerObj) return;
-
-            // WITHDRAWAL PLAN CHECK (NEW): Safety re-check before final submission
-            let planStatusCheck = getWithdrawalPlanStatus();
-            if (planStatusCheck.locked) {
-                closeModal('saleModal');
-                showPlanLockModal(planStatusCheck);
-                return;
-            }
-
-            let eggQty = parseInt(document.getElementById('wdEggQty').value) || 0;
-            let currentAvail = currentUserData ? (currentUserData.availableEggs || 0) : 0;
-            let currentGift = currentUserData ? (currentUserData.giftEggs || 0) : 0;
-            let totalUserEggs = currentAvail + currentGift;
-
-            if(eggQty <= 0) {
-                showCustomAlert("Invalid Amount", "Please enter a valid egg quantity.");
-                return;
-            }
-
-            if(eggQty > totalUserEggs) {
-                showCustomAlert("Insufficient Eggs", "You do not have enough eggs in your balance!");
-                return;
-            }
-
-            if(eggQty < selectedDealerObj.minLimit || eggQty > selectedDealerObj.maxLimit) {
-                showCustomAlert("Limit Exceeded", `Dealer accepts between ${selectedDealerObj.minLimit} and ${selectedDealerObj.maxLimit} eggs.`);
-                return;
-            }
-
-            let wdType = document.getElementById('wdType').value;
-            let wdNumber = document.getElementById('wdNumber').value;
-            let wdHolderName = document.getElementById('wdHolderName').value;
-            let totalPayout = eggQty * selectedDealerObj.rate;
-
-            // Deduct Eggs from User Balance
-            let remainingToDeduct = eggQty;
-            let newAvail = currentAvail;
-            let newGift = currentGift;
-
-            if(newAvail >= remainingToDeduct) {
-                newAvail -= remainingToDeduct;
+            } else if (currentType === 'vod') {
+                if(hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
+                url = `${activeConnection.url}/movie/${activeConnection.user}/${activeConnection.pass}/${streamId}.${extension}`;
+                ui.elements.videoPlayer.src = url;
             } else {
-                remainingToDeduct -= newAvail;
-                newAvail = 0;
-                newGift = Math.max(0, newGift - remainingToDeduct);
+                showToast("Series playback requires episode selection implementation.", true);
+                closePlayer();
             }
-
-            // Write to withdraw_requests node so Admin Panel receives it instantly
-            const requestData = {
-                uid: currentUid,
-                dealerId: selectedDealerKey,
-                dealerName: selectedDealerObj.name,
-                accountTitle: wdHolderName,
-                accountHolderName: wdHolderName,
-                accountNumber: wdNumber,
-                bankName: wdType,
-                accountType: wdType,
-                amount: totalPayout,
-                totalPayout: totalPayout,
-                eggsSold: eggQty,
-                eggsDeductedCount: eggQty,
-                status: 'pending',
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            };
-
-            db.ref('withdraw_requests').push(requestData).then(() => {
-                return db.ref('users/' + currentUid).update({
-                    availableEggs: newAvail,
-                    giftEggs: newGift
-                });
-            }).then(() => {
-                closeModal('saleModal');
-                let waMessage = `*New Egg Sale Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nDealer: ${selectedDealerObj.name}\nEggs Sold: ${eggQty}\nTotal Amount: ${totalPayout} PKR\nAccount Type: ${wdType}\nAccount Title: ${wdHolderName}\nAccount No: ${wdNumber}`;
-                let waUrl = `https://wa.me/${globalActiveWaNumber}?text=${encodeURIComponent(waMessage)}`;
-                showCustomAlert("Request Submitted", `Egg sale request of ${eggQty} eggs submitted successfully! Click below to send notification to Admin on WhatsApp.`, () => {
-                    window.open(waUrl, '_blank');
-                }, "Send to WhatsApp");
-            }).catch(err => {
-                showCustomAlert("Error", err.message);
-            });
-        });
-
-        function openUserSettingsModal() {
-            document.getElementById('userSettingsModal').classList.remove('hidden');
-            document.getElementById('userSettingsModal').classList.add('flex');
         }
 
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('flex');
-            document.getElementById(id).classList.add('hidden');
+        function closePlayer() {
+            ui.modals.player.classList.add('hidden');
+            ui.elements.videoPlayer.pause();
+            ui.elements.videoPlayer.removeAttribute('src');
+            ui.elements.videoPlayer.load();
+            if(hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
         }
     </script>
 </body>
