@@ -86,7 +86,7 @@
 </head>
 <body class="h-screen w-screen flex flex-col">
 
-    <!-- 1. GOOGLE LOGIN SCREEN -->
+    <!-- 1. AUTHENTICATION SCREEN -->
     <div id="googleAuthScreen" class="absolute inset-0 z-[100] flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1593784991095-a205069470b6?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center">
         <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md"></div>
         <div class="glass p-10 rounded-3xl shadow-2xl w-full max-w-md z-10 text-center slide-up">
@@ -95,10 +95,27 @@
                 <h1 class="text-4xl font-extrabold text-white tracking-tight">ProStream</h1>
                 <p class="text-slate-400 mt-2 text-sm font-medium">Your Premium IPTV Experience</p>
             </div>
-            <button id="googleSignInBtn" class="focusable w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center space-x-3 shadow-lg" onclick="signInWithGoogle()" tabindex="1">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6" alt="Google">
-                <span>Continue with Google</span>
-            </button>
+            
+            <div class="space-y-4">
+                <!-- Google Login Button -->
+                <button id="googleSignInBtn" class="focusable w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center space-x-3 shadow-lg" onclick="signInWithGoogle()" tabindex="1">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6" alt="Google">
+                    <span>Continue with Google</span>
+                </button>
+
+                <!-- Divider -->
+                <div class="flex items-center space-x-4 my-2">
+                    <div class="flex-1 h-px bg-slate-700"></div>
+                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">OR</span>
+                    <div class="flex-1 h-px bg-slate-700"></div>
+                </div>
+
+                <!-- Guest Login Button -->
+                <button id="guestSignInBtn" class="focusable w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center space-x-3 shadow-lg" onclick="continueAsGuest()" tabindex="2">
+                    <i class="fa-solid fa-user-secret text-lg"></i>
+                    <span>Use Without Login</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -111,10 +128,10 @@
                     <p class="text-slate-400 mt-2">Choose an IPTV profile to start streaming</p>
                 </div>
                 <div class="flex space-x-4">
-                    <button onclick="showAddConnectionModal()" class="focusable bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center shadow-lg shadow-emerald-900/50 transition-colors" tabindex="2">
+                    <button onclick="showAddConnectionModal()" class="focusable bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center shadow-lg shadow-emerald-900/50 transition-colors" tabindex="3">
                         <i class="fa-solid fa-plus mr-2"></i> Add Connection
                     </button>
-                    <button onclick="signOutGoogle()" class="focusable bg-slate-800 hover:bg-red-500/20 hover:text-red-400 text-slate-300 px-5 py-2.5 rounded-lg font-semibold transition-colors border border-slate-700" tabindex="3">
+                    <button onclick="signOut()" class="focusable bg-slate-800 hover:bg-red-500/20 hover:text-red-400 text-slate-300 px-5 py-2.5 rounded-lg font-semibold transition-colors border border-slate-700" tabindex="4">
                         Logout
                     </button>
                 </div>
@@ -185,7 +202,7 @@
                 </div>
                 <div class="h-8 w-px bg-slate-700"></div>
                 <div class="flex items-center space-x-3 group cursor-pointer" onclick="goToProfiles()">
-                    <img id="userAvatar" src="https://ui-avatars.com/api/?name=Muluk+Hussain&background=10b981&color=fff" class="w-9 h-9 rounded-full border-2 border-slate-700 group-hover:border-emerald-500 transition" alt="Avatar">
+                    <img id="userAvatar" src="" class="w-9 h-9 rounded-full border-2 border-slate-700 group-hover:border-emerald-500 transition" alt="Avatar">
                     <div class="hidden sm:block">
                         <span id="userNameDisplay" class="text-sm font-medium text-slate-200 block">User</span>
                         <span class="text-[10px] text-slate-500 uppercase tracking-widest">Switch Profile</span>
@@ -254,7 +271,7 @@
 
     <script>
         // --- 1. FIREBASE SETUP ---
-        // (Aap apne purane Firebase Config yahan replace karein)
+        // Apna Firebase Config yahan replace karein
         const firebaseConfig = {
             apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
             authDomain: "own-live-steam-web-default.firebaseapp.com",
@@ -271,6 +288,7 @@
 
         // --- GLOBAL VARIABLES ---
         let currentUser = null;
+        let isGuestUser = false;
         let connections = JSON.parse(localStorage.getItem('iptv_connections')) || [];
         let activeConnection = null;
         let currentType = 'live'; // live, vod, series
@@ -318,14 +336,18 @@
         // --- AUTHENTICATION ---
         auth.onAuthStateChanged(user => {
             if (user) {
+                isGuestUser = false;
                 currentUser = user;
-                ui.elements.userAvatar.src = user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=10b981&color=fff`;
+                ui.elements.userAvatar.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=10b981&color=fff`;
                 ui.elements.userNameDisplay.innerText = user.displayName;
                 renderProfiles();
                 switchScreen('profiles');
             } else {
-                currentUser = null;
-                switchScreen('auth');
+                // Agar guest login nahi hai, to login screen dikhayein
+                if (!isGuestUser) {
+                    currentUser = null;
+                    switchScreen('auth');
+                }
             }
         });
 
@@ -333,13 +355,36 @@
             auth.signInWithPopup(googleProvider).catch(error => showToast(error.message, true));
         }
 
-        function signOutGoogle() {
-            auth.signOut().then(() => {
+        function continueAsGuest() {
+            isGuestUser = true;
+            currentUser = { displayName: "Guest User" };
+            ui.elements.userAvatar.src = `https://ui-avatars.com/api/?name=Guest+User&background=64748b&color=fff`;
+            ui.elements.userNameDisplay.innerText = currentUser.displayName;
+            renderProfiles();
+            switchScreen('profiles');
+            showToast("Logged in as Guest");
+        }
+
+        function signOut() {
+            if (isGuestUser) {
+                // Handle Guest Logout
+                isGuestUser = false;
+                currentUser = null;
                 activeConnection = null;
                 allCategories = [];
                 allStreams = [];
+                switchScreen('auth');
                 showToast("Logged out successfully");
-            });
+            } else {
+                // Handle Google Logout
+                auth.signOut().then(() => {
+                    isGuestUser = false;
+                    activeConnection = null;
+                    allCategories = [];
+                    allStreams = [];
+                    showToast("Logged out successfully");
+                });
+            }
         }
 
         // --- PROFILES / CONNECTIONS MANAGEMENT ---
