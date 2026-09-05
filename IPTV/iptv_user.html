@@ -3,366 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium IPTV Portal</title>
+    <title>My Premium IPTV</title>
     
-    <!-- Tailwind CSS for Professional UI -->
+    <!-- Tailwind CSS (Aap ki user.html ki tarah) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- HLS.js for Live TV Streaming -->
+    
+    <!-- Firebase Libraries (user.html wali same versions) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    
+    <!-- HLS.js Library: IPTV streams (m3u8) play karne ke liye -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
-        body {
-            background-color: #0f172a;
-            color: #e2e8f0;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            overflow: hidden; /* Prevent body scroll for app-like feel */
+        body { 
+            background-color: #0f172a; /* Dark theme TV ke liye best hai */
+            color: #f8fafc;
+            margin: 0;
+            overflow: hidden; /* TV par body scroll rokne ke liye */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        /* TV Remote Navigation Styling */
+        
+        /* Android TV Remote (D-Pad) Focus Navigation Styling */
         .focusable:focus, .focusable:hover {
-            outline: 3px solid #10b981;
+            outline: 3px solid #10b981; /* Emerald outline jaise user.html mein thi */
             background-color: #1e293b;
             transform: scale(1.02);
             transition: all 0.2s ease;
             cursor: pointer;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-            z-index: 10;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
         }
 
-        .custom-scroll::-webkit-scrollbar { width: 8px; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #10b981; }
-
-        /* Loader */
-        .loader {
-            border: 4px solid #1e293b;
-            border-top: 4px solid #10b981;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col">
+<body class="flex flex-col h-screen">
 
-    <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="absolute inset-0 flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1593784991095-a205069470b6?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center z-50">
-        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
-        <div class="glass-panel p-8 rounded-2xl shadow-2xl w-full max-w-md z-10 relative">
-            <div class="text-center mb-8">
-                <i class="fa-solid fa-tv text-5xl text-emerald-500 mb-4"></i>
-                <h1 class="text-3xl font-bold text-white">IPTV Login</h1>
-                <p class="text-slate-400 mt-2 text-sm">Enter your Xtream API credentials</p>
+    <!-- Header Section -->
+    <header class="bg-slate-900 p-4 border-b border-slate-800 flex justify-between items-center shadow-lg">
+        <h1 class="text-2xl font-bold text-emerald-400">📺 Live Streams Portal</h1>
+        <button id="authBtn" class="focusable text-sm bg-emerald-700 hover:bg-emerald-600 px-4 py-2 rounded font-bold transition" tabindex="1">
+            Login
+        </button>
+    </header>
+
+    <!-- Main App Layout -->
+    <div class="flex flex-1 overflow-hidden flex-col md:flex-row">
+        
+        <!-- Channels List Section (Mobile pe pehle, TV/Desktop pe left side) -->
+        <div class="w-full md:w-80 bg-slate-900 border-r border-slate-800 flex flex-col h-1/2 md:h-auto order-2 md:order-1">
+            <div class="p-4 border-b border-slate-800">
+                <input type="text" id="searchInput" class="focusable w-full bg-slate-800 text-white rounded px-3 py-2 text-sm focus:outline-none placeholder-slate-400 border border-slate-700" placeholder="Search channels..." tabindex="2">
             </div>
             
-            <form id="loginForm" class="space-y-5" onsubmit="event.preventDefault(); handleLogin();">
-                <div>
-                    <label class="block text-sm text-slate-300 mb-1">Server URL (e.g., http://server.com:8080)</label>
-                    <input type="url" id="serverUrl" class="focusable w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none" required tabindex="1">
-                </div>
-                <div>
-                    <label class="block text-sm text-slate-300 mb-1">Username</label>
-                    <input type="text" id="username" class="focusable w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none" required tabindex="2">
-                </div>
-                <div>
-                    <label class="block text-sm text-slate-300 mb-1">Password</label>
-                    <input type="password" id="password" class="focusable w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none" required tabindex="3">
-                </div>
-                <button type="submit" id="loginBtn" class="focusable w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg transition-colors mt-4" tabindex="4">
-                    Connect
-                </button>
-                <div id="loginError" class="hidden text-red-400 text-sm text-center mt-2 bg-red-900/30 p-2 rounded"></div>
-            </form>
+            <!-- Channels List Container -->
+            <div id="channelList" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-2">
+                <!-- Ye channels Firebase Database se aayenge -->
+                <p class="text-slate-400 text-center mt-4 text-xs italic">Connecting to Firebase...</p>
+            </div>
         </div>
-    </div>
 
-    <!-- MAIN DASHBOARD -->
-    <div id="dashboard" class="hidden flex-1 flex flex-col h-full">
-        <!-- Top Navigation -->
-        <header class="bg-slate-900 border-b border-slate-800 h-16 flex items-center justify-between px-6 shadow-md shrink-0">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-tv text-emerald-500 text-2xl"></i>
-                <h2 class="text-xl font-bold text-white tracking-wide">ProStream <span class="text-emerald-500">IPTV</span></h2>
-            </div>
-            
-            <div class="flex space-x-2">
-                <button onclick="loadCategories('live')" class="focusable bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm font-semibold transition" tabindex="5"><i class="fa-solid fa-broadcast-tower mr-2"></i>Live TV</button>
-                <button onclick="loadCategories('vod')" class="focusable bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm font-semibold transition" tabindex="6"><i class="fa-solid fa-film mr-2"></i>Movies</button>
-            </div>
-
-            <div class="flex items-center space-x-4">
-                <div class="flex items-center space-x-3 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
-                    <div class="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-sm">MH</div>
-                    <span class="text-sm font-medium pr-2 text-slate-200">Muluk Hussain</span>
-                </div>
-                <button onclick="logout()" class="focusable text-slate-400 hover:text-red-400 transition" tabindex="7"><i class="fa-solid fa-power-off text-xl"></i></button>
-            </div>
-        </header>
-
-        <!-- Content Area -->
-        <div class="flex flex-1 overflow-hidden">
-            <!-- Sidebar: Categories -->
-            <div class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
-                <div class="p-4 border-b border-slate-800 bg-slate-900 sticky top-0">
-                    <h3 id="categoryTitle" class="text-emerald-400 font-bold text-sm uppercase tracking-wider mb-2">Categories</h3>
-                    <input type="text" id="catSearch" placeholder="Search categories..." class="focusable w-full bg-slate-800 rounded px-3 py-2 text-sm text-white border border-slate-700 focus:outline-none" tabindex="8" onkeyup="filterCategories()">
-                </div>
-                <div id="categoryList" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1">
-                    <!-- Categories injected here -->
-                </div>
-            </div>
-
-            <!-- Main Grid: Streams/Movies -->
-            <div class="flex-1 bg-slate-950 flex flex-col relative">
-                <div class="p-4 border-b border-slate-900 bg-slate-900/50 backdrop-blur sticky top-0 z-10 flex justify-between items-center">
-                    <h2 id="currentCategoryName" class="text-xl font-bold text-white">Select a Category</h2>
-                    <input type="text" id="streamSearch" placeholder="Search content..." class="focusable w-64 bg-slate-800 rounded px-3 py-2 text-sm text-white border border-slate-700 focus:outline-none hidden" onkeyup="filterStreams()">
-                </div>
+        <!-- Video Player Section (TV/Desktop pe right side) -->
+        <div class="flex-1 bg-black flex flex-col items-center justify-center p-0 md:p-4 order-1 md:order-2 relative">
+            <div class="w-full h-full bg-slate-950 md:rounded-xl overflow-hidden shadow-2xl relative border border-slate-800 flex items-center justify-center">
                 
-                <div id="loadingIndicator" class="hidden absolute inset-0 flex items-center justify-center z-20 bg-slate-950/80">
-                    <div class="loader"></div>
-                </div>
-
-                <div id="streamGrid" class="flex-1 overflow-y-auto custom-scroll p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 content-start">
-                    <!-- Streams injected here -->
-                    <div class="col-span-full flex flex-col items-center justify-center text-slate-600 mt-20">
-                        <i class="fa-solid fa-arrow-left text-4xl mb-4"></i>
-                        <p>Select a category from the left menu</p>
-                    </div>
+                <video id="videoPlayer" class="focusable w-full h-full object-contain z-10" controls tabindex="3"></video>
+                
+                <!-- Player Placeholder (Jab koi channel select na ho) -->
+                <div id="playerPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 z-0">
+                    <span class="text-6xl mb-2">🎬</span>
+                    <p class="text-sm">Select a channel from the list to play</p>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- VIDEO PLAYER MODAL -->
-    <div id="playerModal" class="hidden absolute inset-0 bg-black z-[100] flex flex-col">
-        <div class="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent z-10 flex justify-between items-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-            <h2 id="nowPlayingTitle" class="text-white text-xl font-bold drop-shadow-md">Channel Name</h2>
-            <button onclick="closePlayer()" class="focusable bg-red-600/80 hover:bg-red-500 text-white w-10 h-10 rounded-full flex items-center justify-center transition">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-        </div>
-        <video id="videoPlayer" class="w-full h-full object-contain" controls autoplay></video>
     </div>
 
     <script>
-        let apiData = { url: '', user: '', pass: '' };
-        let currentType = 'live'; // 'live' or 'vod'
-        let allCategories = [];
-        let allStreams = [];
-        let hlsPlayer = null;
-
-        const ui = {
-            loginScreen: document.getElementById('loginScreen'),
-            dashboard: document.getElementById('dashboard'),
-            catSearch: document.getElementById('catSearch'),
-            streamSearch: document.getElementById('streamSearch'),
-            categoryList: document.getElementById('categoryList'),
-            streamGrid: document.getElementById('streamGrid'),
-            loader: document.getElementById('loadingIndicator'),
-            currentCategoryName: document.getElementById('currentCategoryName'),
-            playerModal: document.getElementById('playerModal'),
-            videoPlayer: document.getElementById('videoPlayer'),
-            nowPlayingTitle: document.getElementById('nowPlayingTitle'),
-            loginError: document.getElementById('loginError'),
-            loginBtn: document.getElementById('loginBtn')
+        // 1. Firebase Configuration (user.html wali same config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
+            authDomain: "own-live-steam-web-default.firebaseapp.com",
+            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
+            projectId: "own-live-steam-web-default",
+            storageBucket: "own-live-steam-web-default.appspot.com",
+            messagingSenderId: "xxxxxxxxxxx",
+            appId: "xxxxxxxxxxx"
         };
 
-        // 1. Authentication & API Connection
-        async function handleLogin() {
-            let server = document.getElementById('serverUrl').value.replace(/\/$/, ""); // Remove trailing slash
-            let user = document.getElementById('username').value;
-            let pass = document.getElementById('password').value;
+        // 2. Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
 
-            ui.loginBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Connecting...';
-            ui.loginBtn.disabled = true;
-            ui.loginError.classList.add('hidden');
+        // 3. Video Player Setup (HLS.js)
+        const video = document.getElementById('videoPlayer');
+        const placeholder = document.getElementById('playerPlaceholder');
+        let hls; // Global variable taa ke purani stream destroy ki ja sake
 
-            try {
-                // Xtream API Auth Endpoint
-                const authUrl = `${server}/player_api.php?username=${user}&password=${pass}`;
-                const response = await fetch(authUrl);
-                const data = await response.json();
-
-                if (data.user_info && data.user_info.auth === 1) {
-                    apiData = { url: server, user: user, pass: pass };
-                    ui.loginScreen.classList.add('hidden');
-                    ui.dashboard.classList.remove('hidden');
-                    loadCategories('live'); // Default load Live TV
-                } else {
-                    showError("Invalid Username or Password.");
-                }
-            } catch (error) {
-                console.error(error);
-                showError("Connection Failed. Make sure URL is correct or check CORS extension in Google Chrome.");
-            } finally {
-                ui.loginBtn.innerHTML = 'Connect';
-                ui.loginBtn.disabled = false;
-            }
-        }
-
-        function showError(msg) {
-            ui.loginError.innerText = msg;
-            ui.loginError.classList.remove('hidden');
-        }
-
-        function logout() {
-            apiData = { url: '', user: '', pass: '' };
-            ui.dashboard.classList.add('hidden');
-            ui.loginScreen.classList.remove('hidden');
-            closePlayer();
-        }
-
-        // 2. Fetch Categories (Live or VOD)
-        async function loadCategories(type) {
-            currentType = type;
-            ui.loader.classList.remove('hidden');
-            ui.categoryList.innerHTML = '';
-            ui.streamGrid.innerHTML = '';
-            ui.streamSearch.classList.add('hidden');
-            ui.catSearch.value = '';
-            document.getElementById('categoryTitle').innerText = type === 'live' ? 'Live TV Categories' : 'Movie Categories';
-            ui.currentCategoryName.innerText = "Select a Category";
-
-            const action = type === 'live' ? 'get_live_categories' : 'get_vod_categories';
-            const apiUrl = `${apiData.url}/player_api.php?username=${apiData.user}&password=${apiData.pass}&action=${action}`;
-
-            try {
-                const response = await fetch(apiUrl);
-                allCategories = await response.json();
-                renderCategories(allCategories);
-            } catch (error) {
-                console.error("Error loading categories", error);
-                ui.categoryList.innerHTML = '<p class="text-red-400 p-2 text-sm">Failed to load. Check API/CORS.</p>';
-            }
-            ui.loader.classList.add('hidden');
-        }
-
-        function renderCategories(categories) {
-            ui.categoryList.innerHTML = categories.map(cat => `
-                <button onclick="loadStreams('${cat.category_id}', '${cat.category_name.replace(/'/g, "\\'")}')" 
-                        class="focusable w-full text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800 rounded transition truncate">
-                    ${cat.category_name}
-                </button>
-            `).join('');
-        }
-
-        function filterCategories() {
-            const query = ui.catSearch.value.toLowerCase();
-            const filtered = allCategories.filter(cat => cat.category_name.toLowerCase().includes(query));
-            renderCategories(filtered);
-        }
-
-        // 3. Fetch Streams/Movies based on Category
-        async function loadStreams(categoryId, categoryName) {
-            ui.loader.classList.remove('hidden');
-            ui.currentCategoryName.innerText = categoryName;
-            ui.streamSearch.classList.remove('hidden');
-            ui.streamSearch.value = '';
-
-            const action = currentType === 'live' ? 'get_live_streams' : 'get_vod_streams';
-            const apiUrl = `${apiData.url}/player_api.php?username=${apiData.user}&password=${apiData.pass}&action=${action}&category_id=${categoryId}`;
-
-            try {
-                const response = await fetch(apiUrl);
-                allStreams = await response.json();
-                renderStreams(allStreams);
-            } catch (error) {
-                console.error("Error loading streams", error);
-                ui.streamGrid.innerHTML = '<p class="text-red-400">Failed to load content.</p>';
-            }
-            ui.loader.classList.add('hidden');
-        }
-
-        function renderStreams(streams) {
-            if (!streams || streams.length === 0) {
-                ui.streamGrid.innerHTML = '<p class="text-slate-500 col-span-full text-center mt-10">No content found in this category.</p>';
-                return;
-            }
-
-            ui.streamGrid.innerHTML = streams.map(stream => {
-                const title = stream.name || stream.title;
-                const icon = stream.stream_icon || (currentType === 'live' ? 'https://via.placeholder.com/150/1e293b/10b981?text=TV' : 'https://via.placeholder.com/150/1e293b/10b981?text=VOD');
-                const streamId = stream.stream_id;
-                const extension = stream.container_extension || 'mp4';
-
-                // Live TV cards are usually landscape logos, VOD cards are portrait posters. 
-                // We use object-contain for live, object-cover for VOD for professional look.
-                const imageStyle = currentType === 'live' ? 'object-contain p-2 bg-slate-800' : 'object-cover';
-
-                return `
-                <div onclick="playStream('${streamId}', '${extension}', '${title.replace(/'/g, "\\'")}')" 
-                     class="focusable group bg-slate-900 border border-slate-800 rounded-xl overflow-hidden cursor-pointer hover:border-emerald-500 transition-all flex flex-col h-full shadow-lg">
-                    <div class="aspect-video w-full bg-slate-950 relative overflow-hidden">
-                        <img src="${icon}" class="w-full h-full ${imageStyle} transition-transform duration-300 group-hover:scale-110" onerror="this.src='https://via.placeholder.com/150/1e293b/ffffff?text=No+Image'">
-                        <div class="absolute inset-0 bg-emerald-500/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                            <i class="fa-solid fa-play text-3xl text-white drop-shadow-lg"></i>
-                        </div>
-                    </div>
-                    <div class="p-3 flex-1 flex flex-col justify-between">
-                        <h3 class="text-sm font-semibold text-white line-clamp-2" title="${title}">${title}</h3>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function filterStreams() {
-            const query = ui.streamSearch.value.toLowerCase();
-            const filtered = allStreams.filter(s => (s.name || s.title).toLowerCase().includes(query));
-            renderStreams(filtered);
-        }
-
-        // 4. Video Player Integration
-        function playStream(streamId, extension, title) {
-            ui.nowPlayingTitle.innerText = title;
-            ui.playerModal.classList.remove('hidden');
-            ui.videoPlayer.focus(); // Focus player for TV remote controls
-
-            let streamUrl = '';
+        function playChannel(streamUrl) {
+            placeholder.style.display = 'none'; // Placeholder chupayen
             
-            if (currentType === 'live') {
-                streamUrl = `${apiData.url}/live/${apiData.user}/${apiData.pass}/${streamId}.m3u8`;
-                
-                // Initialize HLS for Live TV
-                if (Hls.isSupported()) {
-                    if(hlsPlayer) { hlsPlayer.destroy(); }
-                    hlsPlayer = new Hls({ maxBufferLength: 30, liveSyncDuration: 3 });
-                    hlsPlayer.loadSource(streamUrl);
-                    hlsPlayer.attachMedia(ui.videoPlayer);
-                    hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => ui.videoPlayer.play());
-                } else if (ui.videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-                    ui.videoPlayer.src = streamUrl;
-                    ui.videoPlayer.play();
-                }
+            if (hls) {
+                hls.destroy(); // Agar pehle se koi channel chal raha hai to usay band karein
+            }
+
+            if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(streamUrl);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    video.play();
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // For native HLS support (jaise Apple devices Safari mein)
+                video.src = streamUrl;
+                video.addEventListener('loadedmetadata', function() {
+                    video.play();
+                });
             } else {
-                // VOD (Movies/MP4/MKV)
-                if(hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
-                streamUrl = `${apiData.url}/movie/${apiData.user}/${apiData.pass}/${streamId}.${extension}`;
-                ui.videoPlayer.src = streamUrl;
-                ui.videoPlayer.play();
+                alert("Your device doesn't support this IPTV stream format.");
             }
         }
 
-        function closePlayer() {
-            ui.playerModal.classList.add('hidden');
-            ui.videoPlayer.pause();
-            ui.videoPlayer.src = "";
-            if(hlsPlayer) {
-                hlsPlayer.destroy();
-                hlsPlayer = null;
-            }
-        }
+        // Demo Channel Test function
+        // playChannel("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8");
     </script>
 </body>
 </html>
