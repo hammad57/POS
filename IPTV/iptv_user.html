@@ -1,180 +1,571 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0b1020">
-<title>My IPTV — Professional Player</title>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<style>
-:root{
-  --bg:#070b16;--panel:#0f1728;--panel2:#121c31;--soft:#18243b;--line:#24324d;
-  --text:#f8fafc;--muted:#8ea0bb;--primary:#4f8cff;--primary2:#6c5ce7;--green:#21c58b;
-  --danger:#ff5d6c;--warning:#ffbd59;--shadow:0 18px 60px rgba(0,0,0,.35)
-}
-*{box-sizing:border-box;margin:0;padding:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif}
-html,body{height:100%;background:radial-gradient(circle at top right,#121d39 0,#070b16 40%,#050810 100%);color:var(--text)}
-button,input,select{font:inherit}button{cursor:pointer}
-.hidden{display:none!important}
-#login-screen{min-height:100vh;display:grid;place-items:center;padding:20px}
-.login-box{width:min(460px,100%);background:rgba(15,23,40,.9);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:28px;backdrop-filter:blur(14px)}
-.brand{display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:22px}.brand-logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--primary2));display:grid;place-items:center;font-weight:900;font-size:22px;box-shadow:0 10px 28px rgba(79,140,255,.3)}
-.brand h1{font-size:25px}.sub{color:var(--muted);font-size:13px;text-align:center;margin-top:4px}
-.field{margin-top:15px}.field label{display:block;color:#c9d4e6;font-size:12px;margin-bottom:7px}.field input,.field select,.search{width:100%;height:46px;background:#0a1120;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:0 13px;outline:none}.field input:focus,.search:focus{border-color:#567ff4;box-shadow:0 0 0 3px rgba(79,140,255,.12)}
-.btn{border:0;border-radius:12px;min-height:44px;padding:0 15px;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;font-weight:700;transition:.2s;box-shadow:0 8px 24px rgba(79,140,255,.18)}.btn:hover{transform:translateY(-1px)}.btn.secondary{background:#16223a;box-shadow:none;border:1px solid var(--line)}.btn.danger{background:rgba(255,93,108,.12);color:#ff7e8a;border:1px solid rgba(255,93,108,.25);box-shadow:none}.btn.full{width:100%;margin-top:18px}
-.error{color:#ff8090;font-size:13px;margin-top:10px;text-align:center;min-height:16px}.hint{color:var(--muted);font-size:11px;margin-top:10px;line-height:1.5;text-align:center}
-#app-screen{display:none;height:100vh;flex-direction:column;overflow:hidden}.topbar{height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(10,16,30,.82);border-bottom:1px solid var(--line);backdrop-filter:blur(16px);position:relative;z-index:20}.top-left{display:flex;align-items:center;gap:12px}.mini-logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--primary),var(--primary2));display:grid;place-items:center;font-weight:900}.title-wrap small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.top-actions{display:flex;gap:8px;align-items:center}.user-pill{background:#111b30;border:1px solid var(--line);border-radius:999px;padding:9px 12px;color:#cbd6e8;font-size:12px}.icon-btn{height:40px;width:40px;border-radius:11px;border:1px solid var(--line);background:#111b30;color:#dbe6f8}.main{display:grid;grid-template-columns:360px 1fr;min-height:0;flex:1}.sidebar{min-width:0;background:rgba(12,18,32,.9);border-right:1px solid var(--line);display:flex;flex-direction:column}.side-head{padding:14px;border-bottom:1px solid var(--line)}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}.tab{border:1px solid var(--line);background:#0a1120;color:#aebbd0;border-radius:10px;padding:9px 4px;font-size:12px;font-weight:700}.tab.active{background:linear-gradient(135deg,#2a66d4,#5a4bd0);border-color:transparent;color:#fff}.filters{display:grid;grid-template-columns:1fr;gap:8px}.search-wrap{position:relative}.search-wrap span{position:absolute;left:12px;top:13px;color:#71829c;font-size:14px}.search{padding-left:34px}.select{height:42px;width:100%;background:#0a1120;color:#dce7f7;border:1px solid var(--line);border-radius:10px;padding:0 10px}.category-strip{padding:10px 14px 6px;display:flex;gap:7px;overflow:auto;border-bottom:1px solid rgba(36,50,77,.7)}.cat-chip{flex:0 0 auto;border:1px solid var(--line);background:#0c1527;color:#aebbd0;border-radius:999px;padding:7px 11px;font-size:11px}.cat-chip.active{background:#203b72;color:white;border-color:#4f8cff}.list-head{padding:10px 14px;color:#7789a4;font-size:11px;text-transform:uppercase;letter-spacing:.08em;display:flex;justify-content:space-between}.list{overflow:auto;flex:1;padding:0 8px 12px}.item{position:relative;display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:9px;border-radius:13px;border:1px solid transparent;cursor:pointer;transition:.18s}.item:hover{background:#101b30;border-color:#243754}.item.active{background:linear-gradient(90deg,rgba(79,140,255,.16),rgba(108,92,231,.07));border-color:rgba(79,140,255,.25)}.thumb{width:52px;height:52px;object-fit:contain;background:#08101e;border-radius:11px;border:1px solid var(--line)}.meta{min-width:0}.name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.small{font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fav{color:#7e90aa;font-size:16px}.fav.on{color:#ffd15c}.progress{position:absolute;left:8px;right:8px;bottom:3px;height:2px;background:#21314c;border-radius:2px;overflow:hidden}.progress i{display:block;height:100%;background:var(--primary);width:0}.empty{padding:35px 15px;text-align:center;color:var(--muted);font-size:13px}.player-panel{min-width:0;overflow:auto;padding:20px;background:linear-gradient(180deg,#0a1020 0,#070b16 100%)}.player-shell{max-width:1180px;margin:0 auto}.hero{display:flex;justify-content:space-between;align-items:end;gap:15px;margin-bottom:12px}.hero h2{font-size:20px;max-width:75%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.status{color:var(--muted);font-size:12px;margin-top:5px}.quality-box{display:flex;gap:7px;align-items:center}.quality-box label{color:#8799b3;font-size:11px}.quality-select{height:38px;border-radius:10px;background:#111b30;color:white;border:1px solid var(--line);padding:0 9px;min-width:125px}.video-card{position:relative;background:#000;border:1px solid #17233a;border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}.video-stage{aspect-ratio:16/9;position:relative;background:#000}.video-stage video{width:100%;height:100%;display:block;background:#000}.video-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.0) 30%,rgba(0,0,0,.6));pointer-events:none}.play-badge{width:68px;height:68px;border-radius:50%;background:rgba(20,30,55,.82);border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;font-size:28px;opacity:0;transition:.2s}.video-card:hover .play-badge{opacity:1}.video-bottom{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;background:#0c1526;border-top:1px solid #17233a}.now-title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.now-sub{color:var(--muted);font-size:11px;margin-top:3px}.controls{display:flex;gap:7px}.control-btn{height:34px;padding:0 10px;border-radius:9px;background:#111e35;border:1px solid var(--line);color:#dae5f7;font-size:11px}.control-btn:hover{border-color:#45658e}.below{margin-top:18px}.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.section-head h3{font-size:15px}.section-head span{color:var(--muted);font-size:11px}.horizontal-list{display:flex;gap:10px;overflow:auto;padding-bottom:8px}.card{flex:0 0 170px;border:1px solid var(--line);background:#0d1628;border-radius:14px;overflow:hidden;cursor:pointer;transition:.18s}.card:hover{transform:translateY(-2px);border-color:#476a9d}.card img{width:100%;height:95px;object-fit:cover;background:#08101e}.card .ct{padding:9px}.card .ct b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card .ct span{display:block;color:var(--muted);font-size:10px;margin-top:4px}.sync{position:fixed;inset:0;background:rgba(4,8,16,.94);z-index:1000;display:none;place-items:center}.sync-box{width:min(460px,92%);background:#0e1729;border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:var(--shadow)}.spinner{width:44px;height:44px;border:4px solid #24324d;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}@keyframes spin{to{transform:rotate(360deg)}}.sync-box h2{text-align:center;font-size:18px}.sync-box p{text-align:center;color:var(--muted);font-size:12px;margin-top:7px}.sync-stats{margin-top:16px;background:#0a1120;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12px;line-height:1.9;color:#c6d2e4}.toast{position:fixed;right:18px;bottom:18px;z-index:2000;background:#101a2d;border:1px solid #2b3c5b;padding:12px 14px;border-radius:12px;color:#dce7f7;box-shadow:var(--shadow);display:none;max-width:320px;font-size:12px}.modal{position:fixed;inset:0;background:rgba(3,6,12,.75);backdrop-filter:blur(8px);display:none;place-items:center;z-index:1500;padding:20px}.modal-box{width:min(520px,100%);background:#0e1729;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.modal-head h3{font-size:16px}.account{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:12px;background:#0a1120;margin-top:8px}.account .a-main{min-width:0}.account strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.account span{display:block;color:var(--muted);font-size:10px;margin-top:3px}.account button{height:34px;border-radius:9px;border:1px solid var(--line);background:#121f35;color:#dce7f7;padding:0 9px;font-size:11px}.account button.d{color:#ff8590;border-color:rgba(255,93,108,.25)}
-@media(max-width:900px){.main{grid-template-columns:1fr}.sidebar{height:42vh;border-right:0;border-bottom:1px solid var(--line)}.player-panel{height:58vh}.topbar{padding:0 12px}.user-pill{display:none}.title-wrap h3{font-size:14px}.top-actions .btn{min-height:38px;padding:0 10px;font-size:11px}.hero{align-items:start;flex-direction:column}.quality-box{width:100%}.quality-select{flex:1}.player-panel{padding:12px}.video-bottom{align-items:start;flex-direction:column}.controls{width:100%}.control-btn{flex:1}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional IPTV Player - Advanced Sync</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --success-hover: #059669;
+            --warning: #f59e0b;
+            --text-light: #f8fafc;
+            --danger: #ef4444;
+            --border: #334155;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); overflow: hidden; }
+        
+        /* Login Screen */
+        #login-screen { display: flex; height: 100vh; justify-content: center; align-items: center; }
+        .login-box { background-color: var(--bg-panel); padding: 2rem; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .login-box h2 { margin-bottom: 1.5rem; text-align: center; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .input-group input { width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--border); background: #0f172a; color: white; }
+        .btn { width: 100%; padding: 0.8rem; border: none; border-radius: 6px; background-color: var(--primary); color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn:hover { background-color: var(--primary-hover); }
+        .btn-danger { background-color: var(--danger); width: auto; padding: 0.5rem 1rem; }
+        .btn-success { background-color: var(--success); width: auto; padding: 0.5rem 1rem; margin-right: 10px;}
+        .btn-success:hover { background-color: var(--success-hover); }
+        
+        /* Sync Overlay Screen */
+        #sync-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(15, 23, 42, 0.95); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #sync-status { font-size: 1.2rem; margin-top: 10px; color: #cbd5e1; }
+        #sync-counts { margin-top: 20px; font-size: 1rem; color: #94a3b8; text-align: left; background: var(--bg-panel); padding: 20px; border-radius: 8px; border: 1px solid var(--border); }
+        .count-item { margin-bottom: 8px; }
+
+        /* Main App Screen */
+        #app-screen { display: none; height: 100vh; flex-direction: column; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--bg-panel); border-bottom: 1px solid var(--border); z-index: 10; }
+        .main-content { display: flex; flex: 1; overflow: hidden; }
+        
+        /* Sidebar */
+        .sidebar { width: 350px; background-color: var(--bg-panel); display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        .sidebar-header { padding: 10px; border-bottom: 1px solid var(--border); background: #182235; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
+        .tab-btn { flex: 1; padding: 8px 2px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 4px; cursor: pointer; font-size: 0.80rem; transition: 0.2s; text-align: center; }
+        .tab-btn.active { background: var(--primary); border-color: var(--primary); font-weight: bold; }
+        
+        .filters { display: flex; gap: 5px; margin-bottom: 10px; }
+        .search-box { flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: #0f172a; color: white; outline: none; }
+        .category-select { flex: 1; padding: 8px 5px; border-radius: 6px; border: 1px solid var(--border); background: #0f172a; color: white; outline: none; font-size: 0.85rem; }
+        
+        /* Channel List */
+        #channel-list { flex: 1; overflow-y: auto; }
+        .channel-item { padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.2s; position: relative;}
+        .channel-item:hover { background-color: #334155; }
+        .channel-icon { width: 50px; height: 50px; background: #0f172a; border-radius: 6px; object-fit: contain; }
+        .channel-info { flex: 1; overflow: hidden; }
+        .channel-name { font-weight: bold; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .channel-id { font-size: 0.8rem; color: #94a3b8; margin-top: 4px; }
+        .progress-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--warning); border-radius: 0 0 0 6px; }
+
+        /* Video Area */
+        .player-area { flex: 1; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0b1121; }
+        .video-container { width: 100%; max-width: 900px; aspect-ratio: 16/9; background: black; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+        #status-msg { margin-top: 1rem; color: #94a3b8; font-weight: bold; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-panel); }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    </style>
 </head>
 <body>
 
-<div id="login-screen">
-  <div class="login-box">
-    <div class="brand"><div class="brand-logo">▶</div><div><h1>My IPTV</h1><div class="sub">Fast • Smart • Data Friendly</div></div></div>
-    <div class="field"><label>Username</label><input id="username" value="hammad" autocomplete="username"></div>
-    <div class="field"><label>Password</label><input id="password" type="password" value="hammad789" autocomplete="current-password"></div>
-    <div class="field"><label>Server URL</label><input id="server" value="http://myott.to:8080" placeholder="http://server:8080"></div>
-    <div class="field"><label>HTTPS Proxy (GitHub Pages)</label><input id="proxy" value="" placeholder="https://YOUR-WORKER.workers.dev"></div>
-    <button class="btn full" onclick="login()">Sign In & Load Library</button>
-    <button class="btn secondary full" style="margin-top:9px" onclick="openAccounts()">Switch / Manage Users</button>
-    <div id="login-error" class="error"></div>
-    <div class="hint">GitHub Pages runs on HTTPS. For an IPTV server that only provides HTTP, enter your Cloudflare Worker HTTPS proxy above. Leave it blank only when your IPTV server already supports HTTPS + CORS.</div>
-  </div>
-</div>
-
-<div id="app-screen">
-  <header class="topbar">
-    <div class="top-left"><div class="mini-logo">▶</div><div class="title-wrap"><h3>My IPTV</h3><small id="library-status">Ready</small></div></div>
-    <div class="top-actions"><span id="user-info" class="user-pill"></span><button class="btn secondary" onclick="startFullSync()">↻ Update</button><button class="btn secondary" onclick="openAccounts()">Users</button><button class="btn danger" onclick="logout()">Logout</button></div>
-  </header>
-  <div class="main">
-    <aside class="sidebar">
-      <div class="side-head">
-        <div class="tabs">
-          <button class="tab active" id="tab-live" onclick="switchTab('live')">Live</button>
-          <button class="tab" id="tab-movie" onclick="switchTab('movie')">Movies</button>
-          <button class="tab" id="tab-series" onclick="switchTab('series')">Series</button>
-          <button class="tab" id="tab-recent" onclick="switchTab('recent')">Recent</button>
+    <!-- Sync Overlay -->
+    <div id="sync-overlay">
+        <div class="spinner"></div>
+        <h2>Syncing Data with Server</h2>
+        <div id="sync-status">Starting fetch process...</div>
+        <div id="sync-counts">
+            <div class="count-item" id="count-cats">📁 Categories: Waiting...</div>
+            <div class="count-item" id="count-live">📺 Live Channels: Waiting...</div>
+            <div class="count-item" id="count-movie">🎬 Movies (VOD): Waiting...</div>
+            <div class="count-item" id="count-series">📺 Shows (Series): Waiting...</div>
         </div>
-        <div class="filters"><div class="search-wrap"><span>⌕</span><input id="searchInput" class="search" placeholder="Search channels, movies…" oninput="filterList()"></div><select id="categoryFilter" class="select" onchange="filterList()"><option value="all">All Categories</option></select></div>
-      </div>
-      <div id="category-strip" class="category-strip"></div>
-      <div class="list-head"><span id="list-label">Library</span><span id="list-count"></span></div>
-      <div id="channel-list" class="list"></div>
-    </aside>
+    </div>
 
-    <section class="player-panel">
-      <div class="player-shell">
-        <div class="hero"><div><h2 id="current-channel-name">Select a title to start watching</h2><div id="status-msg" class="status">Choose a category, then select a channel or movie.</div></div><div class="quality-box"><label>Quality</label><select id="qualitySelect" class="quality-select" onchange="changeQuality(this.value)"><option value="low">Low • Data Saver</option></select></div></div>
-        <div class="video-card">
-          <div class="video-stage"><video id="video" controls playsinline preload="metadata"></video><div class="video-overlay"><div class="play-badge">▶</div></div></div>
-          <div class="video-bottom"><div style="min-width:0"><div id="now-title" class="now-title">Nothing playing</div><div id="now-sub" class="now-sub">Your selected title will appear here.</div></div><div class="controls"><button class="control-btn" onclick="toggleMute()">🔊 Sound</button><button class="control-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button><button class="control-btn" onclick="playPause()">▶ / ❚❚</button></div></div>
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>IPTV Portal</h2>
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="username" value="hammad" />
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" value="hammad789" />
+            </div>
+            <div class="input-group">
+                <label>Server URL</label>
+                <input type="text" id="server" value="http://myott.to:8080" />
+            </div>
+            <button class="btn" onclick="login()">Login</button>
+            <p id="login-error" style="color: var(--danger); margin-top: 10px; text-align: center; display: none;">Login Failed.</p>
         </div>
+    </div>
 
-        <div class="below"><div class="section-head"><h3 id="below-title">Browse by category</h3><span>Scrollable</span></div><div id="category-videos" class="horizontal-list"></div></div>
-        <div class="below"><div class="section-head"><h3>Continue watching</h3><span>Recent</span></div><div id="recent-cards" class="horizontal-list"></div></div>
-      </div>
-    </section>
-  </div>
-</div>
+    <!-- Main App Screen -->
+    <div id="app-screen">
+        <header>
+            <h2>My IPTV Dashboard</h2>
+            <div>
+                <span id="user-info" style="margin-right: 20px; font-weight: bold;"></span>
+                <button class="btn btn-success" onclick="startFullSync()">Update Data</button>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <div class="tabs">
+                        <button class="tab-btn active" id="tab-live" onclick="switchTab('live')">Live TV</button>
+                        <button class="tab-btn" id="tab-movie" onclick="switchTab('movie')">Movies</button>
+                        <button class="tab-btn" id="tab-series" onclick="switchTab('series')">Shows</button>
+                        <button class="tab-btn" id="tab-recent" onclick="switchTab('recent')">Recent</button>
+                    </div>
+                    <div class="filters" id="filter-container">
+                        <select id="categoryFilter" class="category-select" onchange="filterList()">
+                            <option value="all">All Categories</option>
+                        </select>
+                        <input type="text" id="searchInput" class="search-box" placeholder="Search..." onkeyup="filterList()" />
+                    </div>
+                </div>
+                <div id="channel-list">
+                    <div style="padding: 20px; text-align: center; color: #94a3b8;">Loading data...</div>
+                </div>
+            </div>
+            
+            <div class="player-area">
+                <div class="video-container" id="player-wrapper"></div>
+                <h3 id="current-channel-name" style="margin-top: 1.5rem;">Select a channel to play</h3>
+                <p id="status-msg"></p>
+            </div>
+        </div>
+    </div>
 
-<div id="sync-overlay" class="sync"><div class="sync-box"><div class="spinner"></div><h2>Syncing your library</h2><p id="sync-status">Connecting to server…</p><div class="sync-stats"><div id="count-cats">📁 Categories: —</div><div id="count-live">📺 Live TV: —</div><div id="count-movie">🎬 Movies: —</div><div id="count-series">📺 Series: —</div></div></div></div>
-<div id="toast" class="toast"></div>
-<div id="account-modal" class="modal"><div class="modal-box"><div class="modal-head"><h3>Saved users</h3><button class="icon-btn" onclick="closeAccounts()">✕</button></div><div id="account-list"></div><button class="btn full" onclick="newUser()">＋ Add another user</button></div></div>
+    <script>
+        let player = null;
+        let currentDataList = [];
+        let currentCategories = [];
+        let activeTab = 'live';
+        let db = null;
+        let resumeTimeSeeked = false; // Flag for resume logic
 
-<script>
-let db=null, hls=null, currentDataList=[], currentCategories=[], activeTab='live', currentItem=null, currentType='live', resumeId=null;
-const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initDB();
+            if (localStorage.getItem('iptv_user')) {
+                showApp();
+                await checkAndLoadData();
+            }
+        });
 
-async function initDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('IPTV_OfflineDB_PRO',1);r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('iptv_data'))d.createObjectStore('iptv_data')};r.onsuccess=e=>{db=e.target.result;resolve()};r.onerror=()=>reject(r.error)})}
-function saveToDB(k,v){return new Promise((res,rej)=>{const tx=db.transaction('iptv_data','readwrite');tx.objectStore('iptv_data').put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}
-function getFromDB(k){return new Promise((res,rej)=>{const tx=db.transaction('iptv_data','readonly'),r=tx.objectStore('iptv_data').get(k);r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error)})}
-function clearDB(){return new Promise(res=>{if(!db)return res();const tx=db.transaction('iptv_data','readwrite');tx.objectStore('iptv_data').clear();tx.oncomplete=res})}
-function showApp(){ $('login-screen').style.display='none';$('app-screen').style.display='flex';$('user-info').textContent=localStorage.getItem('iptv_username')||'User'; $('library-status').textContent='Library ready'; renderRecentCards(); }
-function showLogin(){ $('app-screen').style.display='none';$('login-screen').style.display='grid'; }
-function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(window._toast);window._toast=setTimeout(()=>t.style.display='none',2600)}
+        // ================= Database & LocalStorage =================
+        function initDB() {
+            return new Promise((resolve) => {
+                const request = indexedDB.open("IPTV_OfflineDB_V2", 1);
+                request.onupgradeneeded = (e) => {
+                    let database = e.target.result;
+                    if (!database.objectStoreNames.contains("iptv_data")) {
+                        database.createObjectStore("iptv_data");
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve();
+                };
+            });
+        }
 
-function getAccounts(){try{return JSON.parse(localStorage.getItem('iptv_accounts')||'[]')}catch{return[]}}
-function saveAccount(user,pass,server,proxy){let a=getAccounts().filter(x=>!(x.user===user&&x.server===server));a.unshift({user,pass,server,proxy:proxy||'',last:Date.now()});localStorage.setItem('iptv_accounts',JSON.stringify(a.slice(0,12)))}
-function renderAccounts(){const a=getAccounts(),c=$('account-list');c.innerHTML=a.length?'':'<div class="empty">No saved users yet.</div>';a.forEach((x,i)=>{const d=document.createElement('div');d.className='account';d.innerHTML=`<div class="a-main"><strong>${esc(x.user)}</strong><span>${esc(x.server)}</span></div><button onclick="useAccount(${i})">Use</button><button class="d" onclick="deleteAccount(${i})">Delete</button>`;c.appendChild(d)})}
-function openAccounts(){renderAccounts();$('account-modal').style.display='grid'} function closeAccounts(){$('account-modal').style.display='none'}
-function newUser(){closeAccounts();$('username').value='';$('password').value='';$('server').value='http://myott.to:8080';$('proxy').value=localStorage.getItem('iptv_proxy')||'';$('username').focus()}
-function useAccount(i){const a=getAccounts()[i];if(!a)return;$('username').value=a.user;$('password').value=a.pass;$('server').value=a.server;$('proxy').value=a.proxy||localStorage.getItem('iptv_proxy')||'';closeAccounts();login()}
-function deleteAccount(i){let a=getAccounts();a.splice(i,1);localStorage.setItem('iptv_accounts',JSON.stringify(a));renderAccounts()}
+        function saveToDB(key, data) {
+            return new Promise((resolve) => {
+                const tx = db.transaction("iptv_data", "readwrite");
+                tx.objectStore("iptv_data").put(data, key);
+                tx.oncomplete = () => resolve();
+            });
+        }
 
-function getProxy(){return (localStorage.getItem('iptv_proxy')||'').replace(/\/$/,'')}
-function proxify(url){const proxy=getProxy();if(!proxy)return url;return proxy+'/?url='+encodeURIComponent(url)}
-function isHttpsPage(){return location.protocol==='https:'}
+        function getFromDB(key) {
+            return new Promise((resolve) => {
+                const tx = db.transaction("iptv_data", "readonly");
+                const request = tx.objectStore("iptv_data").get(key);
+                request.onsuccess = () => resolve(request.result || []);
+            });
+        }
 
-async function login(){
-  let user=$('username').value.trim(),pass=$('password').value.trim(),server=$('server').value.trim().replace(/\/$/,''),proxy=$('proxy').value.trim().replace(/\/$/,'');
-  if(!user||!pass||!server){$('login-error').textContent='Please fill all fields.';return}
-  localStorage.setItem('iptv_proxy',proxy);
-  $('login-error').textContent='Connecting…';
-  try{
-    const target=`${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
-    const r=await fetch(proxify(target),{headers:{'Accept':'application/json'}});
-    if(!r.ok)throw new Error(`HTTP ${r.status}`);
-    const d=await r.json();
-    if(!(d&&d.user_info&&Number(d.user_info.auth)===1))throw new Error('Invalid credentials');
-    localStorage.setItem('iptv_user','true');localStorage.setItem('iptv_username',user);localStorage.setItem('iptv_password',pass);localStorage.setItem('iptv_server',server);saveAccount(user,pass,server,proxy);$('login-error').textContent='';showApp();await checkAndLoadData();
-  }catch(e){
-    const m=String(e?.message||'');
-    if(isHttpsPage() && server.startsWith('http://') && !proxy) $('login-error').textContent='GitHub HTTPS cannot directly call this HTTP IPTV server. Add your HTTPS Worker proxy.';
-    else if(m==='Invalid credentials') $('login-error').textContent='Invalid username/password.';
-    else $('login-error').textContent=`Connection failed: ${m||'Network/CORS error'}`;
-  }
-}
-async function logout(){stopPlayer();localStorage.removeItem('iptv_user');localStorage.removeItem('iptv_username');localStorage.removeItem('iptv_password');localStorage.removeItem('iptv_server');await clearDB();showLogin();toast('Logged out. Saved users are still available from Switch / Manage Users.')}
-async function fetchAPI(action,extra=''){const u=localStorage.getItem('iptv_username'),p=localStorage.getItem('iptv_password'),s=localStorage.getItem('iptv_server');const target=`${s}/player_api.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&action=${action}${extra}`;const r=await fetch(proxify(target),{headers:{'Accept':'application/json'}});if(!r.ok)throw new Error(`API HTTP ${r.status}`);return r.json()}
-async function checkAndLoadData(){const live=await getFromDB('live');if(!live.length)await startFullSync();else await switchTab('live')}
-async function startFullSync(){
- $('sync-overlay').style.display='grid';try{
-  $('sync-status').textContent='Downloading categories…';$('count-cats').textContent='📁 Categories: downloading…';$('count-live').textContent='📺 Live TV: waiting…';$('count-movie').textContent='🎬 Movies: waiting…';$('count-series').textContent='📺 Series: waiting…';
-  const [lc,mc,sc]=await Promise.all([fetchAPI('get_live_categories'),fetchAPI('get_vod_categories'),fetchAPI('get_series_categories')]);await Promise.all([saveToDB('live_cat',lc),saveToDB('movie_cat',mc),saveToDB('series_cat',sc)]);$('count-cats').textContent=`📁 Categories: ${lc.length+mc.length+sc.length} loaded`;
-  $('sync-status').textContent='Downloading Live TV…';const live=await fetchAPI('get_live_streams');await saveToDB('live',live);$('count-live').textContent=`📺 Live TV: ${live.length}`;
-  $('sync-status').textContent='Downloading Movies…';const movie=await fetchAPI('get_vod_streams');await saveToDB('movie',movie);$('count-movie').textContent=`🎬 Movies: ${movie.length}`;
-  $('sync-status').textContent='Downloading Series…';const series=await fetchAPI('get_series');await saveToDB('series',series);$('count-series').textContent=`📺 Series: ${series.length}`;
-  $('sync-status').textContent='Done — your library is ready.';$('library-status').textContent=`Updated ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;await new Promise(r=>setTimeout(r,650));$('sync-overlay').style.display='none';await switchTab('live');toast('Library updated successfully');
- }catch(e){$('sync-status').textContent='Sync failed. Check server/internet and try again.';setTimeout(()=>$('sync-overlay').style.display='none',2200);toast('Update failed')}
-}
+        function clearDB() {
+            return new Promise((resolve) => {
+                const tx = db.transaction("iptv_data", "readwrite");
+                tx.objectStore("iptv_data").clear();
+                tx.oncomplete = () => resolve();
+            });
+        }
 
-async function switchTab(tab){activeTab=tab;$('searchInput').value='';document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));const bt=$(`tab-${tab}`);if(bt)bt.classList.add('active');
- if(tab==='recent'){currentDataList=JSON.parse(localStorage.getItem('iptv_recent')||'[]');currentCategories=[];$('categoryFilter').classList.add('hidden');$('category-strip').innerHTML='';$('list-label').textContent='Recently watched';renderSidebar(currentDataList);renderCategoryVideos(currentDataList,'Continue watching');return}
- $('categoryFilter').classList.remove('hidden');currentCategories=await getFromDB(`${tab}_cat`);currentDataList=await getFromDB(tab);populateCategories();filterList();renderCategoryVideos(currentDataList,tab==='live'?'Popular channels':'Browse titles')}
-function populateCategories(){const sel=$('categoryFilter');sel.innerHTML='<option value="all">All Categories</option>';currentCategories.forEach(c=>{const o=document.createElement('option');o.value=c.category_id;o.textContent=c.category_name;sel.appendChild(o)});if(activeTab==='live'){const pk=currentCategories.find(c=>/pakistan|\bpk\b/i.test(c.category_name));if(pk)sel.value=pk.category_id}renderCategoryChips()}
-function renderCategoryChips(){const strip=$('category-strip');strip.innerHTML='';const all=document.createElement('button');all.className='cat-chip '+($('categoryFilter').value==='all'?'active':'');all.textContent='All';all.onclick=()=>{$('categoryFilter').value='all';filterList()};strip.appendChild(all);currentCategories.slice(0,18).forEach(c=>{const b=document.createElement('button');b.className='cat-chip '+($('categoryFilter').value==c.category_id?'active':'');b.textContent=c.category_name;b.onclick=()=>{$('categoryFilter').value=c.category_id;filterList()};strip.appendChild(b)})}
-function filterList(){const cat=$('categoryFilter').value,q=$('searchInput').value.toLowerCase().trim();let f=currentDataList||[];if(cat!=='all')f=f.filter(x=>String(x.category_id)===String(cat));if(q)f=f.filter(x=>(x.name||x.title||'').toLowerCase().includes(q));renderSidebar(f);renderCategoryChips();renderCategoryVideos(f,cat==='all'? (activeTab==='live'?'Browse channels':'Browse titles') : ($('categoryFilter').selectedOptions[0]?.textContent||'Category'))}
-function renderSidebar(arr){const list=$('channel-list');list.innerHTML='';$('list-count').textContent=arr.length; if(!arr.length){list.innerHTML='<div class="empty">No items found.<br>Try another category or search.</div>';return}arr.slice(0,500).forEach(item=>{const id=item.stream_id||item.series_id||item.id,title=item.name||item.title||'Untitled',icon=item.stream_icon||item.cover||'https://via.placeholder.com/100x100?text=TV';const d=document.createElement('div');d.className='item';d.dataset.id=id;d.onclick=()=>handleItemClick(item,activeTab);const fav=isFav(id);const saved=localStorage.getItem(`resume_${id}`),dur=localStorage.getItem(`duration_${id}`),pct=saved&&dur?Math.min(100,(saved/dur)*100):0;d.innerHTML=`<img class="thumb" src="${esc(icon)}" onerror="this.src='https://via.placeholder.com/100x100?text=TV'"><div class="meta"><div class="name">${esc(title)}</div><div class="small">${activeTab==='live'?'Live TV':activeTab==='movie'?'Movie':'Series'} • ID ${esc(id)}</div></div><div class="fav ${fav?'on':''}" title="Favorite" onclick="event.stopPropagation();toggleFav('${String(id).replace(/'/g,"\\'")}');filterList()">${fav?'★':'☆'}</div>${pct>0?`<div class="progress"><i style="width:${pct}%"></i></div>`:''}`;list.appendChild(d)})}
-function renderCategoryVideos(arr,label){$('below-title').textContent=label||'Browse';const c=$('category-videos');c.innerHTML='';(arr||[]).slice(0,25).forEach(item=>{const id=item.stream_id||item.series_id||item.id,title=item.name||item.title||'Untitled',icon=item.stream_icon||item.cover||'https://via.placeholder.com/300x170?text=IPTV';const d=document.createElement('div');d.className='card';d.onclick=()=>handleItemClick(item,activeTab==='recent'?item.type:activeTab);d.innerHTML=`<img src="${esc(icon)}" onerror="this.src='https://via.placeholder.com/300x170?text=IPTV'"><div class="ct"><b>${esc(title)}</b><span>${activeTab==='live'?'Live':activeTab==='movie'?'Movie':'Series'}</span></div>`;c.appendChild(d)})}
-function isFav(id){try{return JSON.parse(localStorage.getItem('iptv_favorites')||'[]').includes(String(id))}catch{return false}}
-function toggleFav(id){let a=[];try{a=JSON.parse(localStorage.getItem('iptv_favorites')||'[]')}catch{};id=String(id);a=a.includes(id)?a.filter(x=>x!==id):[id,...a];localStorage.setItem('iptv_favorites',JSON.stringify(a));toast(a.includes(id)?'Added to favorites':'Removed from favorites')}
+        // ================= Core Logic =================
+        function showApp() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-screen').style.display = 'flex';
+            document.getElementById('user-info').innerText = `Welcome, ${localStorage.getItem('iptv_username')}`;
+        }
 
-async function handleItemClick(item,type){
- const user=localStorage.getItem('iptv_username'),pass=localStorage.getItem('iptv_password'),server=localStorage.getItem('iptv_server');let title=item.name||item.title||'Untitled',id=item.stream_id||item.id;
- if(item.is_recent){playStream(item.url,title,id,item.type,item);return}
- if(type==='series'){ $('list-label').textContent=title+' — Episodes'; $('channel-list').innerHTML='<div class="empty">Loading episodes…</div>';try{const data=await fetchAPI('get_series_info',`&series_id=${encodeURIComponent(item.series_id)}`);let eps=[];for(const season in (data.episodes||{}))eps=eps.concat(data.episodes[season]);currentDataList=eps;activeTab='episodes';renderEpisodes(eps,title)}catch{toast('Could not load episodes')}return}
- let url='';if(type==='live')url=`${server}/live/${user}/${pass}/${id}.m3u8`;else if(type==='movie')url=`${server}/movie/${user}/${pass}/${id}.${item.container_extension||'mp4'}`;else if(type==='episodes')url=`${server}/series/${user}/${pass}/${id}.${item.container_extension||'mp4'}`;else if(type==='recent'){url=item.url;type=item.type}
- url=proxify(url);saveToRecent(item,url,type);playStream(url,title,id,type,item)
-}
-function renderEpisodes(eps,parent){$('searchInput').value='';$('categoryFilter').classList.add('hidden');$('category-strip').innerHTML='';$('list-count').textContent=eps.length;$('list-label').textContent=parent+' • Episodes';const list=$('channel-list');list.innerHTML='';eps.forEach(ep=>{const id=ep.id,title=ep.title||`Episode ${ep.episode_num||''}`,d=document.createElement('div');d.className='item';d.onclick=()=>handleItemClick(ep,'episodes');d.innerHTML=`<div class="thumb" style="display:grid;place-items:center;color:#7fa8ff;font-weight:900">EP</div><div class="meta"><div class="name">${esc(title)}</div><div class="small">Season ${esc(ep.season||'')} • Episode ${esc(ep.episode_num||'')}</div></div><div class="fav">›</div>`;list.appendChild(d)})}
-function saveToRecent(item,url,type){let r=[];try{r=JSON.parse(localStorage.getItem('iptv_recent')||'[]')}catch{};const id=item.stream_id||item.id;r=r.filter(x=>String(x.id)!==String(id));r.unshift({is_recent:true,id,name:item.name||item.title,stream_icon:item.stream_icon||item.cover,url,type});localStorage.setItem('iptv_recent',JSON.stringify(r.slice(0,20)));renderRecentCards()}
-function renderRecentCards(){const c=$('recent-cards');let r=[];try{r=JSON.parse(localStorage.getItem('iptv_recent')||'[]')}catch{};c.innerHTML='';if(!r.length){c.innerHTML='<div class="empty" style="padding:20px">Your recently watched titles will appear here.</div>';return}r.slice(0,12).forEach(x=>{const d=document.createElement('div');d.className='card';d.onclick=()=>handleItemClick(x,'recent');d.innerHTML=`<img src="${esc(x.stream_icon||'https://via.placeholder.com/300x170?text=IPTV')}" onerror="this.src='https://via.placeholder.com/300x170?text=IPTV'"><div class="ct"><b>${esc(x.name)}</b><span>Resume playback</span></div>`;c.appendChild(d)})}
+        async function login() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            let url = document.getElementById('server').value;
+            
+            if(url.endsWith('/')) url = url.slice(0, -1);
+            const authUrl = `${url}/player_api.php?username=${user}&password=${pass}`;
 
-function updateQualityOptions(){const s=$('qualitySelect');s.innerHTML='';if(hls&&hls.levels?.length){hls.levels.forEach((l,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(l.height?l.height+'p':'Level '+(i+1))+(l.bitrate?` • ${Math.round(l.bitrate/1000)}k`:'');s.appendChild(o)});s.value='0';hls.currentLevel=0;hls.autoLevelCapping=0}else{s.innerHTML='<option value="na">Stream default</option>'}}
-function changeQuality(v){if(!hls||v==='na')return;const n=Number(v);if(Number.isFinite(n)){hls.autoLevelCapping=n;hls.currentLevel=n}}
-function stopPlayer(){if(hls){hls.destroy();hls=null}const v=$('video');v.pause();v.removeAttribute('src');v.load();resumeId=null}
-function playStream(url,name,id,type,item){stopPlayer();currentItem=item;currentType=type;resumeId=id;$('current-channel-name').textContent=name;$('now-title').textContent=name;$('now-sub').textContent=type==='live'?'Live TV':'Resume is enabled for on-demand content';$('status-msg').textContent='Connecting…';$('status-msg').style.color='#ffcf68';$('qualitySelect').innerHTML='<option value="na">Detecting quality…</option>';
- const v=$('video');v.muted=false;const saved=Number(localStorage.getItem(`resume_${id}`)||0);let lastSave=0;
- v.onloadedmetadata=()=>{if(type!=='live'&&saved>10&&saved<v.duration-5){try{v.currentTime=saved}catch{}}};v.ontimeupdate=()=>{if(type!=='live'&&resumeId===id&&v.currentTime-lastSave>4){localStorage.setItem(`resume_${id}`,v.currentTime);if(v.duration) localStorage.setItem(`duration_${id}`,v.duration);lastSave=v.currentTime}};v.onplaying=()=>{$('status-msg').textContent=type==='live'?'● Live TV':'● Playing';$('status-msg').style.color='var(--green)'};v.onerror=()=>{$('status-msg').textContent='Playback error — stream may be offline or unsupported.';$('status-msg').style.color='var(--danger)'};
- if(url.includes('.m3u8')&&Hls.isSupported()){hls=new Hls({startLevel:0,autoStartLoad:true,capLevelToPlayerSize:false,maxBufferLength:8,maxMaxBufferLength:16});hls.on(Hls.Events.MANIFEST_PARSED,()=>{updateQualityOptions();v.play().catch(()=>{})});hls.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){$('status-msg').textContent='Stream error — trying to recover…';if(d.type===Hls.ErrorTypes.NETWORK_ERROR)hls.startLoad();else if(d.type===Hls.ErrorTypes.MEDIA_ERROR)hls.recoverMediaError()}});hls.loadSource(url);hls.attachMedia(v)}else{v.src=url;v.play().catch(()=>{})}}
-function playPause(){const v=$('video');if(v.paused)v.play().catch(()=>{});else v.pause()}
-function toggleMute(){const v=$('video');v.muted=!v.muted;toast(v.muted?'Sound muted':'Sound on')}
-function toggleFullscreen(){const e=document.querySelector('.video-card');if(document.fullscreenElement)document.exitFullscreen();else e.requestFullscreen?.()}
+            try {
+                const response = await fetch(authUrl);
+                const data = await response.json();
 
-window.addEventListener('DOMContentLoaded',async()=>{$('proxy').value=localStorage.getItem('iptv_proxy')||'';await initDB();if(localStorage.getItem('iptv_user')){showApp();await checkAndLoadData()}else{$('channel-list').innerHTML='<div class="empty">Sign in to load your IPTV library.</div>'}});
-</script>
+                if (data && data.user_info && data.user_info.auth === 1) {
+                    localStorage.setItem('iptv_user', 'true');
+                    localStorage.setItem('iptv_username', user);
+                    localStorage.setItem('iptv_password', pass);
+                    localStorage.setItem('iptv_server', url);
+                    
+                    document.getElementById('login-error').style.display = 'none';
+                    showApp();
+                    await checkAndLoadData();
+                } else {
+                    showError("Invalid Credentials");
+                }
+            } catch (error) {
+                showError("Network Error. Cannot connect to server.");
+            }
+        }
+
+        async function logout() {
+            localStorage.clear();
+            await clearDB();
+            if(player) { player.destroy(); player = null; }
+            document.getElementById('app-screen').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('channel-list').innerHTML = '';
+        }
+
+        function showError(msg) {
+            const err = document.getElementById('login-error');
+            err.innerText = msg;
+            err.style.display = 'block';
+        }
+
+        // ================= Fetching & Syncing Data =================
+        async function fetchAPI(action, extraParams = '') {
+            const user = localStorage.getItem('iptv_username');
+            const pass = localStorage.getItem('iptv_password');
+            const server = localStorage.getItem('iptv_server');
+            const url = `${server}/player_api.php?username=${user}&password=${pass}&action=${action}${extraParams}`;
+            
+            const response = await fetch(url);
+            return await response.json();
+        }
+
+        async function checkAndLoadData() {
+            const liveData = await getFromDB('live');
+            if (liveData.length === 0) {
+                await startFullSync();
+            } else {
+                switchTab('live');
+            }
+        }
+
+        async function startFullSync() {
+            document.getElementById('sync-overlay').style.display = 'flex';
+            const status = document.getElementById('sync-status');
+            
+            document.getElementById('count-cats').innerText = "📁 Categories: Fetching...";
+            document.getElementById('count-live').innerText = "📺 Live Channels: Waiting...";
+            document.getElementById('count-movie').innerText = "🎬 Movies (VOD): Waiting...";
+            document.getElementById('count-series').innerText = "📺 Shows (Series): Waiting...";
+
+            try {
+                // Fetch Categories
+                status.innerText = "Downloading Categories...";
+                const [liveCat, vodCat, seriesCat] = await Promise.all([
+                    fetchAPI('get_live_categories'),
+                    fetchAPI('get_vod_categories'),
+                    fetchAPI('get_series_categories')
+                ]);
+                await saveToDB('live_cat', liveCat);
+                await saveToDB('movie_cat', vodCat);
+                await saveToDB('series_cat', seriesCat);
+                document.getElementById('count-cats').innerText = `📁 Categories: Fetched ✅`;
+
+                // Fetch Streams
+                status.innerText = "Downloading Live TV Channels...";
+                document.getElementById('count-live').innerText = "📺 Live Channels: Fetching...";
+                const liveData = await fetchAPI('get_live_streams');
+                await saveToDB('live', liveData);
+                document.getElementById('count-live').innerText = `📺 Live Channels: ${liveData.length} Fetched ✅`;
+
+                status.innerText = "Downloading Movies (VOD)...";
+                document.getElementById('count-movie').innerText = "🎬 Movies (VOD): Fetching...";
+                const movieData = await fetchAPI('get_vod_streams');
+                await saveToDB('movie', movieData);
+                document.getElementById('count-movie').innerText = `🎬 Movies (VOD): ${movieData.length} Fetched ✅`;
+
+                status.innerText = "Downloading Shows (Series)...";
+                document.getElementById('count-series').innerText = "📺 Shows (Series): Fetching...";
+                const seriesData = await fetchAPI('get_series');
+                await saveToDB('series', seriesData);
+                document.getElementById('count-series').innerText = `📺 Shows (Series): ${seriesData.length} Fetched ✅`;
+
+                status.innerText = "All Data Saved Successfully!";
+                status.style.color = "var(--success)";
+                
+                setTimeout(() => {
+                    document.getElementById('sync-overlay').style.display = 'none';
+                    status.style.color = "#cbd5e1";
+                    switchTab('live'); 
+                }, 2000);
+
+            } catch (error) {
+                status.innerText = "Error Fetching Data. Check Internet Connection.";
+                status.style.color = "var(--danger)";
+                setTimeout(() => { document.getElementById('sync-overlay').style.display = 'none'; }, 4000);
+            }
+        }
+
+        // ================= Tab & UI Switching =================
+        async function switchTab(tabName) {
+            activeTab = tabName;
+            document.getElementById('searchInput').value = ''; 
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            if(document.getElementById(`tab-${tabName}`)) {
+                document.getElementById(`tab-${tabName}`).classList.add('active');
+            }
+
+            const filterContainer = document.getElementById('filter-container');
+            const catFilter = document.getElementById('categoryFilter');
+            
+            if (tabName === 'recent') {
+                filterContainer.style.display = 'none'; // Hide filters for recent
+                currentDataList = JSON.parse(localStorage.getItem('iptv_recent') || '[]');
+                renderSidebar(currentDataList);
+            } else {
+                filterContainer.style.display = 'flex';
+                document.getElementById('channel-list').innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">Loading...</div>';
+
+                currentCategories = await getFromDB(`${tabName}_cat`) || [];
+                currentDataList = await getFromDB(tabName) || [];
+                
+                // Populate Categories Dropdown
+                catFilter.innerHTML = '<option value="all">All Categories</option>';
+                let pakCategoryId = null;
+
+                currentCategories.forEach(c => {
+                    catFilter.innerHTML += `<option value="${c.category_id}">${c.category_name}</option>`;
+                    // Pakistan ko by default dhondne ki logic
+                    if (tabName === 'live' && (c.category_name.toLowerCase().includes('pakistan') || c.category_name.toLowerCase() === 'pk')) {
+                        pakCategoryId = c.category_id;
+                    }
+                });
+
+                if (pakCategoryId) {
+                    catFilter.value = pakCategoryId; // Auto-select Pakistan
+                } else {
+                    catFilter.value = 'all';
+                }
+
+                filterList();
+            }
+        }
+
+        function filterList() {
+            const catId = document.getElementById('categoryFilter').value;
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (!currentDataList) return;
+            
+            let filtered = currentDataList;
+
+            if (catId !== 'all') {
+                filtered = filtered.filter(item => item.category_id == catId);
+            }
+            if (query) {
+                filtered = filtered.filter(item => {
+                    const title = (item.name || item.title || '').toLowerCase();
+                    return title.includes(query);
+                });
+            }
+            
+            renderSidebar(filtered);
+        }
+
+        function renderSidebar(dataArray) {
+            const sidebar = document.getElementById('channel-list');
+            sidebar.innerHTML = ''; 
+
+            if (!dataArray || dataArray.length === 0) {
+                sidebar.innerHTML = '<div style="padding: 20px; text-align: center;">No items found.</div>';
+                return;
+            }
+
+            const displayData = dataArray.slice(0, 300); 
+
+            displayData.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'channel-item';
+                
+                const title = item.name || item.title || 'Unknown';
+                const id = item.stream_id || item.series_id || item.id;
+                const icon = item.stream_icon || item.cover || 'https://via.placeholder.com/50x50?text=TV';
+                
+                div.onclick = () => handleItemClick(item, activeTab);
+                
+                // Show progress bar if there's a saved resume time (for VOD/Series)
+                let progressHTML = '';
+                const savedTime = localStorage.getItem(`resume_${id}`);
+                const duration = localStorage.getItem(`duration_${id}`);
+                if (savedTime && duration && duration > 0) {
+                    const percentage = Math.min((savedTime / duration) * 100, 100);
+                    progressHTML = `<div class="progress-bar" style="width: ${percentage}%"></div>`;
+                }
+                
+                div.innerHTML = `
+                    <img src="${icon}" class="channel-icon" onerror="this.src='https://via.placeholder.com/50x50?text=TV'">
+                    <div class="channel-info">
+                        <div class="channel-name">${title}</div>
+                        <div class="channel-id">ID: ${id}</div>
+                    </div>
+                    ${progressHTML}
+                `;
+                sidebar.appendChild(div);
+            });
+        }
+
+        // ================= Playback, Recent & Resume Logic =================
+        async function handleItemClick(item, type) {
+            const user = localStorage.getItem('iptv_username');
+            const pass = localStorage.getItem('iptv_password');
+            const server = localStorage.getItem('iptv_server');
+            
+            let streamUrl = "";
+            let title = item.name || item.title;
+            let streamId = item.stream_id || item.id;
+            let mediaType = type; // 'live', 'movie', 'episodes', or derived from 'recent'
+
+            // If clicked from Recent Tab
+            if (item.is_recent) {
+                streamUrl = item.url;
+                mediaType = item.type;
+                playStream(streamUrl, title, streamId, mediaType);
+                return;
+            }
+
+            if (type === 'live') {
+                streamUrl = `${server}/live/${user}/${pass}/${streamId}.m3u8`;
+                saveToRecent(item, streamUrl, 'live');
+                playStream(streamUrl, title, streamId, 'live');
+                
+            } else if (type === 'movie') {
+                const ext = item.container_extension || 'mp4';
+                streamUrl = `${server}/movie/${user}/${pass}/${streamId}.${ext}`;
+                saveToRecent(item, streamUrl, 'movie');
+                playStream(streamUrl, title, streamId, 'movie');
+                
+            } else if (type === 'series') {
+                document.getElementById('channel-list').innerHTML = '<div style="padding: 20px; text-align: center;">Fetching Episodes...</div>';
+                
+                const seriesData = await fetchAPI('get_series_info', `&series_id=${item.series_id}`);
+                if (seriesData && seriesData.episodes) {
+                    let epList = [];
+                    for (const season in seriesData.episodes) {
+                        epList = epList.concat(seriesData.episodes[season]);
+                    }
+                    currentDataList = epList;
+                    activeTab = 'episodes';
+                    document.getElementById('searchInput').value = '';
+                    renderSidebar(epList);
+                }
+                
+            } else if (type === 'episodes') {
+                const ext = item.container_extension || 'mp4';
+                streamUrl = `${server}/series/${user}/${pass}/${streamId}.${ext}`;
+                saveToRecent(item, streamUrl, 'episodes');
+                playStream(streamUrl, title, streamId, 'episodes');
+            }
+        }
+
+        function saveToRecent(item, url, type) {
+            let recents = JSON.parse(localStorage.getItem('iptv_recent') || '[]');
+            const streamId = item.stream_id || item.id;
+            
+            // Remove if already exists to push it to the top
+            recents = recents.filter(r => r.id !== streamId);
+            
+            recents.unshift({
+                is_recent: true,
+                id: streamId,
+                name: item.name || item.title,
+                stream_icon: item.stream_icon || item.cover,
+                url: url,
+                type: type
+            });
+            
+            if (recents.length > 20) recents.pop(); // Max 20 items
+            localStorage.setItem('iptv_recent', JSON.stringify(recents));
+        }
+
+        function playStream(url, name, id, type) {
+            document.getElementById('current-channel-name').innerText = `Playing: ${name}`;
+            document.getElementById('status-msg').innerText = "Connecting...";
+            document.getElementById('status-msg').style.color = "#facc15";
+
+            if (player) {
+                player.destroy();
+            }
+
+            resumeTimeSeeked = false; // Reset resume flag
+            const savedTime = localStorage.getItem(`resume_${id}`);
+
+            player = new Clappr.Player({
+                source: url,
+                parentId: "#player-wrapper",
+                width: '100%',
+                height: '100%',
+                autoPlay: true,
+                mute: false,
+                events: {
+                    onPlay: function() {
+                        document.getElementById('status-msg').innerText = type === 'live' ? "Live TV" : "Playing";
+                        document.getElementById('status-msg').style.color = "#22c55e"; 
+                        
+                        // Resume logic for VOD/Series
+                        if (type !== 'live' && savedTime && savedTime > 10 && !resumeTimeSeeked) {
+                            player.seek(savedTime);
+                            resumeTimeSeeked = true; 
+                        }
+                    },
+                    onTimeUpdate: function(e) {
+                        // Save progress every few seconds for VOD/Series
+                        if (type !== 'live' && e.current > 0) {
+                            localStorage.setItem(`resume_${id}`, e.current);
+                            localStorage.setItem(`duration_${id}`, e.total);
+                        }
+                    },
+                    onError: function(e) {
+                        console.error("Playback error:", e);
+                        document.getElementById('status-msg').innerText = "Video Error: Stream is offline or unsupported format.";
+                        document.getElementById('status-msg').style.color = "var(--danger)";
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
