@@ -475,7 +475,7 @@
                 
                 <div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-xl my-3 text-center">
                     <p class="text-xs font-bold text-yellow-400 leading-relaxed">
-                        Please send payment "Muluk Hussain" on Easypaisa account number 03423944508 </span>.
+                        Please send payment "Muluk Hussain" on Easypaisa account number 03423944508.
                     </p>
                 </div>
 
@@ -561,7 +561,7 @@
         </div>
     </div>
 
-    <!-- WITHDRAWAL PLAN LOCK MODAL (NEW FEATURE) -->
+    <!-- WITHDRAWAL PLAN LOCK MODAL (UPDATED WITH OPTION TO PURCHASE OWN HENS) -->
     <div id="planLockModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-[9998]">
         <div class="bg-gradient-to-b from-emerald-900 via-emerald-950 to-zinc-950 border border-amber-500/40 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative text-center">
             <button onclick="closeModal('planLockModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
@@ -571,14 +571,17 @@
             <span id="lblPlanBadge" class="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-3 py-1 rounded-full border border-amber-500/30 uppercase tracking-widest">Plan-1</span>
             <h3 class="text-xl font-extrabold text-yellow-400 mt-2 mb-2">Withdrawal Temporarily Locked</h3>
             <p id="lblPlanMessage" class="text-zinc-200 text-xs leading-relaxed mb-4">
-                Aap apni current withdrawal plan requirement poori nahi kar chuke. Naya withdrawal lene ke liye referral se hens purchase karwayen.
+                Aap apni current withdrawal plan requirement poori nahi kar chuke. Naya withdrawal lene ke liye referral se hens purchase karwayen ya khud new Hens purchase karein.
             </p>
             <div class="bg-emerald-900/60 border border-emerald-700/50 rounded-xl p-3 mb-4 text-xs text-left space-y-1.5">
-                <div class="flex justify-between"><span class="text-zinc-300">Required Referral Hens:</span> <span id="lblPlanRequired" class="font-bold text-yellow-400">0</span></div>
+                <div class="flex justify-between"><span class="text-zinc-300">Required Hens (Referrals / Own):</span> <span id="lblPlanRequired" class="font-bold text-yellow-400">0</span></div>
                 <div class="flex justify-between"><span class="text-zinc-300">You Currently Have:</span> <span id="lblPlanHave" class="font-bold text-emerald-400">0</span></div>
                 <div class="flex justify-between"><span class="text-zinc-300">Still Needed:</span> <span id="lblPlanNeeded" class="font-bold text-red-400">0</span></div>
             </div>
             <div class="space-y-2">
+                <button onclick="closeModal('planLockModal'); openPurchaseModal();" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold py-3 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider">
+                    🛒 Purchase Hen Asset Now
+                </button>
                 <button onclick="closeModal('planLockModal'); copyReferralLink();" class="w-full bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-zinc-950 font-bold py-3 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider">
                     🔗 Copy My Referral Link
                 </button>
@@ -1289,10 +1292,10 @@
             });
         }
 
-        // ==================== WITHDRAWAL PLAN FEATURE (NEW) ====================
-        // Plan-1: 230 PKR total approved withdrawal ke baad, 2 referral hens (cumulative) zaroori
-        // Plan-2: 700 PKR total approved withdrawal ke baad, 5 referral hens (cumulative) zaroori
-        // Plan-3: 1500 PKR total approved withdrawal ke baad, 8 referral hens (cumulative) zaroori
+        // ==================== WITHDRAWAL PLAN FEATURE (UPDATED) ====================
+        // Plan-1: 230 PKR total approved withdrawal ke baad, 2 referral / own hens (cumulative) zaroori
+        // Plan-2: 700 PKR total approved withdrawal ke baad, 5 referral / own hens (cumulative) zaroori
+        // Plan-3: 1500 PKR total approved withdrawal ke baad, 8 referral / own hens (cumulative) zaroori
         const withdrawalPlanTiers = [
             { planNum: 1, threshold: 230, required: 2 },
             { planNum: 2, threshold: 700, required: 5 },
@@ -1301,7 +1304,15 @@
 
         function getWithdrawalPlanStatus() {
             let totalWithdrawal = currentUserData ? (Number(currentUserData.totalWithdrawal) || 0) : 0;
+            
+            // Referral se khareedi gayi Hens
             let referralHensPurchased = currentUserData ? (Number(currentUserData.referralHensPurchased) || 0) : 0;
+            
+            // Khud apni ID par khareedi gayi Hens (own purchased hens)
+            let selfPurchasedHens = currentUserData ? (Number(currentUserData.selfPurchasedHens) || Number(currentUserData.ownHensPurchased) || Number(currentUserData.totalHens) || 0) : 0;
+
+            // Total Progress = Referrals dwara + Khud dwara khareedi gayi Hens
+            let totalEffectiveHens = referralHensPurchased + selfPurchasedHens;
 
             let activeTier = null;
             for (let i = withdrawalPlanTiers.length - 1; i >= 0; i--) {
@@ -1315,19 +1326,19 @@
                 return { locked: false };
             }
 
-            let remaining = Math.max(0, activeTier.required - referralHensPurchased);
+            let remaining = Math.max(0, activeTier.required - totalEffectiveHens);
             return {
                 locked: remaining > 0,
                 planNum: activeTier.planNum,
                 required: activeTier.required,
-                have: referralHensPurchased,
+                have: totalEffectiveHens,
                 remaining: remaining
             };
         }
 
         function showPlanLockModal(status) {
             document.getElementById('lblPlanBadge').innerText = 'Plan-' + status.planNum;
-            document.getElementById('lblPlanMessage').innerText = `Aap Plan-${status.planNum} ki withdrawal limit tak pohanch gye hai. Agla withdrawal lene ke liye pehle apne referral link se new ya old referrals se total ${status.required} hens purchase karwana zaroori hai (kisi ek referral se Ya phir sab ko mila kar).`;
+            document.getElementById('lblPlanMessage').innerText = `Aap Plan-${status.planNum} ki withdrawal limit tak pohanch gye hai. Agla withdrawal lene ke liye pehle apne referral link se new ya old referrals se total ${status.required} hens purchase karwayen YA khud apni ID par ${status.required} hens purchase karein (dono ko mila kar bhi ${status.required} hens poori kar sakty hain).`;
             document.getElementById('lblPlanRequired').innerText = status.required;
             document.getElementById('lblPlanHave').innerText = status.have;
             document.getElementById('lblPlanNeeded').innerText = status.remaining;
@@ -1335,10 +1346,10 @@
             document.getElementById('planLockModal').classList.remove('hidden');
             document.getElementById('planLockModal').classList.add('flex');
         }
-        // ================== END WITHDRAWAL PLAN FEATURE (NEW) ==================
+        // ================== END WITHDRAWAL PLAN FEATURE ==================
 
         function openSaleModal() {
-            // WITHDRAWAL PLAN CHECK (NEW): Agar plan lock hai to marketplace ki bajaye Plan page dikhao
+            // WITHDRAWAL PLAN CHECK: Agar plan lock hai to marketplace ki bajaye Plan page dikhao
             let planStatus = getWithdrawalPlanStatus();
             if (planStatus.locked) {
                 showPlanLockModal(planStatus);
@@ -1397,7 +1408,7 @@
             e.preventDefault();
             if(!selectedDealerObj) return;
 
-            // WITHDRAWAL PLAN CHECK (NEW): Safety re-check before final submission
+            // WITHDRAWAL PLAN CHECK: Safety re-check before final submission
             let planStatusCheck = getWithdrawalPlanStatus();
             if (planStatusCheck.locked) {
                 closeModal('saleModal');
