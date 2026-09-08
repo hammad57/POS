@@ -239,6 +239,7 @@ th,td{border-bottom:1px solid #1e293b}
    <label class="text-xs">Total Expense<input id="editExpense" class="input mt-1" type="number" step="0.01"></label>
    <label class="text-xs">Total Withdrawal<input id="editWithdrawal" class="input mt-1" type="number" step="0.01"></label>
    <label class="text-xs">Referred By<input id="editReferredBy" class="input mt-1"></label>
+   <label class="text-xs text-amber-400 font-bold">Invite Restriction<select id="editInviteBypass" class="select mt-1 border-amber-700 text-amber-400"><option value="false">Active (Needs Invites)</option><option value="true">Bypassed (No Invites)</option></select></label>
   </div>
   <div class="mt-4 p-3 rounded-xl bg-slate-950 border border-slate-800"><div class="text-xs font-bold text-emerald-400 mb-2">Timer override</div><div class="grid grid-cols-3 gap-2"><input id="timerHours" class="input" type="number" min="0" placeholder="Hours"><input id="timerMins" class="input" type="number" min="0" placeholder="Minutes"><button class="btn bg-amber-700 text-white" onclick="setOneMinute()">Set 1 Minute</button></div><p class="text-[10px] text-slate-500 mt-2">Applies to the user's top-level timer fields and every existing hen batch's lastCollectedAt.</p></div>
   <div class="mt-4 flex flex-wrap gap-2">
@@ -412,7 +413,7 @@ function openUser(uid){
   $("editStatus").value=u.status||"active";$("editAvailableEggs").value=num(u.availableEggs);
   $("editGiftEggs").value=num(u.giftEggs);$("editTotalHens").value=num(u.totalHens);
   $("editExpense").value=num(u.totalExpense);$("editWithdrawal").value=num(u.totalWithdrawal);
-  $("editReferredBy").value=u.referredBy||"";$("timerHours").value="";$("timerMins").value="";
+  $("editReferredBy").value=u.referredBy||"";$("editInviteBypass").value=u.inviteBypass===true?"true":"false";$("timerHours").value="";$("timerMins").value="";
   $("rawUserEditor").value=JSON.stringify(u,null,2);openModal("userModal");
 }
 window.openUser=openUser;
@@ -425,7 +426,8 @@ async function saveUser(){
  const uid=$("editUid").value,u=users[uid]||{};
  const updates={name:$("editName").value.trim(),email:$("editEmail").value.trim(),mobile:$("editMobile").value.trim(),status:$("editStatus").value,
  availableEggs:num($("editAvailableEggs").value),giftEggs:num($("editGiftEggs").value),totalHens:num($("editTotalHens").value),
- totalExpense:num($("editExpense").value),totalWithdrawal:num($("editWithdrawal").value),referredBy:$("editReferredBy").value.trim()};
+ totalExpense:num($("editExpense").value),totalWithdrawal:num($("editWithdrawal").value),referredBy:$("editReferredBy").value.trim(),
+ inviteBypass:$("editInviteBypass").value==="true"};
  const h=$("timerHours").value,m=$("timerMins").value;
  if(h!==""||m!==""){
    const remaining=num(h)*3600000+num(m)*60000, last=Date.now()-DAY+remaining;
