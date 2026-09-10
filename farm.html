@@ -255,8 +255,9 @@
                 <h2 id="lblEggBalancePKR_Main" class="text-[2.75rem] font-black neon-gold-text leading-none transition-all duration-300">0.00</h2>
             </div>
             
-            <div class="text-xs text-zinc-400 mb-4 font-medium">
-                Active Farm Coop: <span id="lblHenBalance" class="text-emerald-400 font-bold ml-1">0 Hens</span>
+            <div class="flex justify-between items-center text-xs text-zinc-400 mb-4 font-medium">
+                <div>Active Farm Coop: <span id="lblHenBalance" class="text-emerald-400 font-bold ml-1">0 Hens</span></div>
+                <div>Total Eggs: <span id="lblTotalEggs_Main" class="text-yellow-400 font-bold ml-1">0</span></div>
             </div>
 
             <!-- CRYPTO STYLE LIVE TICKER -->
@@ -652,10 +653,18 @@
                     <span>←</span> <span>Back to Market</span>
                 </button>
                 <h3 class="text-lg font-bold text-yellow-400 mb-1">Cashout to <span id="lblSelectedDealerName" class="text-white"></span></h3>
-                <p class="text-[11px] text-emerald-300 font-bold mb-4 bg-emerald-900/40 p-2 rounded border border-emerald-800/80">
-                    Locked Live Rate: <span id="lblSelectedDealerRate" class="text-yellow-400 text-sm"></span> PKR / egg <br>
-                    <span class="text-zinc-400 text-[9px] font-normal" id="lblSelectedDealerLimit"></span>
-                </p>
+                
+                <!-- UPDATED SALE LOCK RATE BOX WITH CURRENT EGGS -->
+                <div class="flex justify-between items-center bg-emerald-900/40 p-2 rounded border border-emerald-800/80 mb-4">
+                    <div class="text-[11px] text-emerald-300 font-bold">
+                        Locked Live Rate: <span id="lblSelectedDealerRate" class="text-yellow-400 text-sm"></span> PKR / egg <br>
+                        <span class="text-zinc-400 text-[9px] font-normal" id="lblSelectedDealerLimit"></span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[9px] text-zinc-400 block mb-0.5 uppercase tracking-wider">My Current Eggs</span>
+                        <span id="lblSaleCurrentEggs" class="text-yellow-400 font-black text-sm bg-emerald-950 px-2 py-0.5 rounded border border-emerald-700/50 inline-block shadow-inner">0</span>
+                    </div>
+                </div>
                 
                 <form id="withdrawalForm" class="space-y-3 text-xs">
                     <div>
@@ -799,6 +808,11 @@
             let pkrLabel = document.getElementById('lblEggBalancePKR_Main');
             if (pkrLabel) {
                 pkrLabel.innerText = totalPKR.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+            // NEW: UPDATE TOTAL EGGS
+            let eggsLabel = document.getElementById('lblTotalEggs_Main');
+            if (eggsLabel) {
+                eggsLabel.innerText = totalEggs;
             }
         }
 
@@ -1680,6 +1694,16 @@
             document.getElementById('lblSelectedDealerName').innerText = name;
             document.getElementById('lblSelectedDealerRate').innerText = lockedEggPrice; // Exact live locked rate
             document.getElementById('lblSelectedDealerLimit').innerText = `Limit: ${min} to ${max} Eggs`;
+            
+            // NEW: Fetch and display Current Eggs
+            let currentAvail = currentUserData ? (currentUserData.availableEggs || 0) : 0;
+            let currentGift = currentUserData ? (currentUserData.giftEggs || 0) : 0;
+            let totalUserEggs = currentAvail + currentGift;
+            
+            let saleEggsLabel = document.getElementById('lblSaleCurrentEggs');
+            if(saleEggsLabel) {
+                saleEggsLabel.innerText = totalUserEggs + " Eggs";
+            }
             
             // Set max min limit on input for better form validation
             document.getElementById('wdEggQty').setAttribute('min', min);
