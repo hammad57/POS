@@ -1386,26 +1386,58 @@
             db.ref(`users/${uid}/status`).set(newStatus);
         }
 
-        // --- 7. EGG RATES LOGIC ---
+        // --- 7. EGG RATES LOGIC (WITH LIVE FLUCTUATION ENGINE) ---
+        let liveMarketEngine = null;
+        let currentRateFrom = 1;
+        let currentRateTo = 1.7;
+
         function fetchRates() {
             db.ref('rates').on('value', snap => {
                 const r = snap.val() || {};
-                document.getElementById('rateEggPriceFrom').value = r.eggPriceFrom || r.eggPrice || 10;
-                document.getElementById('rateEggPriceTo').value = r.eggPriceTo || r.eggPrice || 15;
-                document.getElementById('rateHenPrice').value = r.henPrice || 500;
-                document.getElementById('rateEggPerHen').value = r.eggPerHen || 1;
+                
+                currentRateFrom = parseFloat(r.eggPriceFrom) || 1;
+                currentRateTo = parseFloat(r.eggPriceTo) || 1.7;
+
+                // Update input values only if they are not being edited by the admin right now
+                if (document.activeElement.id !== 'rateEggPriceFrom') {
+                    document.getElementById('rateEggPriceFrom').value = currentRateFrom;
+                }
+                if (document.activeElement.id !== 'rateEggPriceTo') {
+                    document.getElementById('rateEggPriceTo').value = currentRateTo;
+                }
+                if (document.activeElement.id !== 'rateHenPrice') {
+                    document.getElementById('rateHenPrice').value = r.henPrice || 500;
+                }
+                if (document.activeElement.id !== 'rateEggPerHen') {
+                    document.getElementById('rateEggPerHen').value = r.eggPerHen || 1;
+                }
             });
+
+            // Start Live Random Price Engine
+            // This constantly generates a random rate based on limits and updates 'eggPrice' in Firebase
+            if (!liveMarketEngine) {
+                liveMarketEngine = setInterval(() => {
+                    if (currentRateFrom > 0 && currentRateTo >= currentRateFrom) {
+                        let randomPrice = (Math.random() * (currentRateTo - currentRateFrom)) + currentRateFrom;
+                        // Push updated single live value to firebase so farm.html reads it instantly
+                        db.ref('rates/eggPrice').set(parseFloat(randomPrice.toFixed(2)));
+                    }
+                }, 3000); // Live update every 3 seconds
+            }
         }
 
         document.getElementById('ratesForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            const newFrom = parseFloat(document.getElementById('rateEggPriceFrom').value);
+            const newTo = parseFloat(document.getElementById('rateEggPriceTo').value);
+            
             db.ref('rates').update({
-                eggPriceFrom: parseFloat(document.getElementById('rateEggPriceFrom').value),
-                eggPriceTo: parseFloat(document.getElementById('rateEggPriceTo').value),
+                eggPriceFrom: newFrom,
+                eggPriceTo: newTo,
                 henPrice: parseFloat(document.getElementById('rateHenPrice').value),
                 eggPerHen: parseFloat(document.getElementById('rateEggPerHen').value)
             }).then(() => {
-                alert('Rates updated successfully!');
+                alert(`Rates updated successfully! Live market will now randomly fluctuate between ${newFrom} and ${newTo} PKR.`);
             });
         });
 
