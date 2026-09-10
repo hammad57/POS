@@ -19,6 +19,22 @@
         }
         .neon-border { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
         .neon-text { text-shadow: 0 0 10px rgba(234, 179, 8, 0.6); }
+        
+        /* Premium Golden Text Effect */
+        .neon-gold-text { 
+            background: linear-gradient(to right, #fbbf24, #f59e0b, #d97706, #fbbf24);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0px 0px 15px rgba(245, 158, 11, 0.6);
+            background-size: 200% auto;
+            animation: shine 3s linear infinite;
+        }
+
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
         *, *::before, *::after { box-sizing: border-box; }
         
         .custom-scroll::-webkit-scrollbar { width: 4px; }
@@ -67,8 +83,8 @@
                 🐔
             </div>
             <span class="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-3 py-1 rounded-full border border-emerald-500/30 uppercase tracking-widest">Daily Farm Notice</span>
-            <h3 class="text-xl font-extrabold text-yellow-400 mt-2 mb-2">Maximize Your Egg Yield!</h3>
-            <p class="text-zinc-200 text-xs leading-relaxed mb-6">
+            <h3 id="dailyNoticeTitle" class="text-xl font-extrabold text-yellow-400 mt-2 mb-2">Maximize Your Egg Yield!</h3>
+            <p id="dailyNoticeMessage" class="text-zinc-200 text-xs leading-relaxed mb-6">
                 Welcome back to <strong>Green Land Poultry Farm</strong>! Every hen generates 1 egg per 24 hours automatically. Expand your farm coop today to increase your daily earnings.
             </p>
             <div class="space-y-2">
@@ -98,7 +114,10 @@
                     <span class="text-lg">🏠</span> <span class="font-semibold text-zinc-200">Dashboard Home</span>
                 </button>
                 <button onclick="toggleSideMenu(); openPurchaseModal();" class="w-full bg-emerald-900/50 hover:bg-emerald-800/70 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
-                    <span class="text-lg">🐔</span> <span class="font-semibold text-yellow-400">Purchase Hen Asset</span>
+                    <span class="text-lg">🎯</span> <span class="font-semibold text-yellow-400">Hen Purchasing Plans</span>
+                </button>
+                <button onclick="toggleSideMenu(); openPurchaseModal();" class="w-full bg-emerald-900/50 hover:bg-emerald-800/70 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
+                    <span class="text-lg">🐔</span> <span class="font-semibold text-zinc-200">Purchase Hen Asset</span>
                 </button>
                 <button onclick="toggleSideMenu(); openSaleModal();" class="w-full bg-emerald-900/50 hover:bg-emerald-800/70 p-3 rounded-xl flex items-center space-x-3 text-left transition-colors">
                     <span class="text-lg">💰</span> <span class="font-semibold text-emerald-400">Sale Out Eggs</span>
@@ -158,6 +177,12 @@
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-emerald-400">🔒</div>
                     <input type="password" id="loginPassword" placeholder="Password" required class="w-full bg-emerald-900/60 border border-emerald-700/70 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-yellow-400 transition-colors">
                 </div>
+                
+                <div class="flex justify-between items-center px-1">
+                    <p class="text-xs text-zinc-300">New here? <span onclick="toggleAuthMode(true)" class="text-yellow-400 cursor-pointer font-bold hover:underline">Create Account</span></p>
+                    <a href="#" onclick="forgotPassword()" class="text-xs text-emerald-400 hover:text-emerald-300 font-bold hover:underline">Forgot Password?</a>
+                </div>
+
                 <button type="submit" class="w-full bg-gradient-to-r from-amber-600 via-yellow-500 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-zinc-950 font-bold py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 text-sm">
                     <span>→</span> <span>Login Now</span>
                 </button>
@@ -167,8 +192,6 @@
                     <span>🔒 PRIVATE</span>
                     <span>🛡️ SAFE</span>
                 </div>
-
-                <p class="text-xs text-center text-zinc-300 pt-1">Now here? <span onclick="toggleAuthMode(true)" class="text-yellow-400 cursor-pointer font-bold hover:underline">Create Account</span></p>
             </form>
 
             <!-- REGISTRATION FORM (HIDDEN BY DEFAULT) -->
@@ -206,10 +229,13 @@
             </div>
             
             <div class="flex items-center space-x-2">
-                <!-- NEW BELL ICON WITH NOTIFICATION BADGE -->
-                <button onclick="openAnnouncementsModal()" title="Announcements" class="relative p-2 bg-emerald-900/80 hover:bg-emerald-800 text-yellow-400 rounded-xl border border-emerald-700 transition-colors active:scale-95 text-xl">
+                <!-- MODIFIED BELL ICON WITH "NEW" BADGE AND PERMANENT DOT -->
+                <button onclick="openAnnouncementsModal()" title="Announcements" class="relative p-2 bg-emerald-900/80 hover:bg-emerald-800 text-yellow-400 rounded-xl border border-emerald-700 transition-colors active:scale-95 text-xl flex items-center justify-center">
                     🔔
-                    <span id="announcementBadge" class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border border-emerald-950 hidden"></span>
+                    <!-- Permanent Dot to maintain aesthetic -->
+                    <span class="absolute bottom-1 right-1 w-2 h-2 bg-yellow-500 rounded-full border border-emerald-950"></span>
+                    <!-- NEW Updates Badge -->
+                    <span id="announcementBadge" class="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-emerald-950 shadow-md hidden animate-pulse">NEW</span>
                 </button>
 
                 <button onclick="openUserSettingsModal()" title="Account Settings" class="p-2 bg-emerald-900/80 hover:bg-emerald-800 text-yellow-400 rounded-xl border border-emerald-700 transition-colors active:scale-95 text-xl">
@@ -219,23 +245,54 @@
             </div>
         </div>
 
-        <div class="bg-gradient-to-br from-emerald-900 via-emerald-950 to-zinc-950 border border-emerald-700/60 rounded-2xl p-5 mb-6 shadow-xl relative overflow-hidden">
-            <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl font-bold">🥚</div>
-            <p class="text-xs text-emerald-300 font-bold tracking-wider uppercase">Available Eggs Balance</p>
-            <div class="flex items-baseline space-x-2 mt-2">
-                <h2 id="lblEggBalance" class="text-5xl font-black text-yellow-400">0</h2>
-                <span class="text-sm text-zinc-300">Eggs</span>
+        <!-- ADVANCED CRYPTO-STYLE BALANCE SECTION -->
+        <div class="bg-gradient-to-br from-emerald-900 via-emerald-950 to-zinc-950 border border-emerald-700/60 rounded-2xl p-5 mb-6 shadow-2xl relative overflow-hidden">
+            <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl font-bold">💰</div>
+            
+            <p class="text-[11px] text-emerald-300 font-bold tracking-wider uppercase mb-1">Total Current Balance</p>
+            <div class="flex items-end space-x-2 mb-2">
+                <span class="text-xl text-yellow-500 font-bold mb-1">PKR</span>
+                <h2 id="lblEggBalancePKR_Main" class="text-[2.75rem] font-black neon-gold-text leading-none transition-all duration-300">0.00</h2>
             </div>
-            <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-emerald-800/50 text-xs">
-                <div>
-                    <span class="text-zinc-300">Hens In Coop:</span>
-                    <p id="lblHenBalance" class="text-yellow-400 font-bold text-sm">0 Hens</p>
+            
+            <div class="text-xs text-zinc-400 mb-4 font-medium">
+                Active Farm Coop: <span id="lblHenBalance" class="text-emerald-400 font-bold ml-1">0 Hens</span>
+            </div>
+
+            <!-- CRYPTO STYLE LIVE TICKER -->
+            <div class="bg-black/40 border border-emerald-800/50 rounded-xl p-3 flex flex-col justify-between mb-4 shadow-inner">
+                <div class="flex items-center justify-between border-b border-emerald-800/40 pb-2 mb-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="relative flex h-2.5 w-2.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                        </span>
+                        <span class="text-zinc-400 text-[10px] uppercase font-bold tracking-widest">Live Market Rates</span>
+                    </div>
                 </div>
-                <div>
-                    <span class="text-zinc-300">Gift Eggs:</span>
-                    <p id="lblGiftBalance" class="text-yellow-400 font-bold text-sm">0 Eggs</p>
+                
+                <div class="flex justify-between items-center text-xs font-mono">
+                    <div class="flex flex-col">
+                        <span class="text-slate-500 text-[9px] uppercase mb-0.5">1 Egg Value</span>
+                        <div class="flex items-center space-x-1.5">
+                            <span id="liveEggRate" class="font-bold text-white text-sm transition-colors duration-300">0 PKR</span>
+                            <span id="liveEggArrow" class="text-emerald-400 text-[10px]">▲</span>
+                        </div>
+                    </div>
+                    <div class="h-6 w-px bg-emerald-800/50 mx-2"></div>
+                    <div class="flex flex-col text-right">
+                        <span class="text-slate-500 text-[9px] uppercase mb-0.5">Hen Base Rate</span>
+                        <span class="font-bold text-yellow-400 text-sm">Plans Applied</span>
+                    </div>
                 </div>
             </div>
+
+            <!-- INSTANT PROFESSIONAL PURCHASE BUTTON -->
+            <button onclick="openInstantBalancePurchase()" class="w-full relative overflow-hidden bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-600 hover:from-yellow-400 hover:to-amber-400 text-zinc-950 font-extrabold py-3.5 rounded-xl shadow-[0_0_15px_rgba(234,179,8,0.3)] transition-all active:scale-95 flex items-center justify-center space-x-2 text-sm uppercase tracking-wider border border-yellow-400/50">
+                <span class="text-lg relative z-10">⚡</span> 
+                <span class="relative z-10">Instantly Purchase Hen</span>
+                <div class="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity"></div>
+            </button>
         </div>
 
         <div class="mb-6">
@@ -249,7 +306,7 @@
             </div>
         </div>
 
-        <!-- NEW HOW TO PURCHASE VIDEO BUTTON -->
+        <!-- HOW TO PURCHASE VIDEO BUTTON -->
         <div class="mb-4">
             <button onclick="window.open('https://www.youtube.com/shorts/RNz_KOfJe7Y?si=amXdr6gHSOtypi2I', '_blank')" class="w-full bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-sm border border-red-500/50">
                 <span class="text-xl">▶️</span> <span>مرغی خریدنے کا طریقہ</span>
@@ -260,8 +317,8 @@
             <!-- AZADI OFFER BUTTON (MODIFIED) -->
             <button onclick="openPurchaseModal()" class="relative overflow-hidden border border-emerald-500/80 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-lg transition-transform active:scale-95" style="background: linear-gradient(90deg, #ffffff 25%, #01411C 25%);">
                 <span class="text-3xl mb-2 relative z-10 drop-shadow-lg">🐔 🇵🇰</span>
-                <span class="font-extrabold text-sm text-white relative z-10 drop-shadow-md">Purchase Hen </span>
-                <span class="text-[10px] text-emerald-100 mt-1 relative z-10 drop-shadow-md">Rs. 499 per Hen</span>
+                <span class="font-extrabold text-sm text-white relative z-10 drop-shadow-md">Buy via Bank </span>
+                <span class="text-[10px] text-emerald-100 mt-1 relative z-10 drop-shadow-md">Manual Pay</span>
                 <div class="absolute inset-0 bg-black/10 opacity-0 hover:opacity-100 transition-opacity"></div>
             </button>
 
@@ -450,27 +507,104 @@
         <!-- Rendered dynamically during download -->
     </div>
 
-    <!-- Purchase Modal Wrapper -->
+
+    <!-- INSTANT BALANCE PURCHASE MODAL (NEW) -->
+    <div id="instantBalanceModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9999]">
+        <div class="bg-gradient-to-b from-emerald-900 via-emerald-950 to-zinc-950 border border-yellow-500/40 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="closeModal('instantBalanceModal')" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl">&times;</button>
+            
+            <div class="text-center mb-5">
+                <div class="w-14 h-14 bg-yellow-500/10 border border-yellow-400/30 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+                    ⚡
+                </div>
+                <h3 class="text-xl font-black text-yellow-400 tracking-wide uppercase">Instantly Buy Hen</h3>
+                <p class="text-[10px] text-emerald-300 mt-1 uppercase tracking-widest" id="instBalRate">Locked Rate: -- PKR / Egg</p>
+            </div>
+
+            <div class="bg-black/40 border border-emerald-800/60 p-4 rounded-xl mb-5 text-center">
+                <p class="text-[10px] text-zinc-400 uppercase tracking-widest mb-1">Your Locked Balance Capacity</p>
+                <h4 id="instBalPKR" class="text-2xl font-black text-white neon-text">0.00 PKR</h4>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-300 mb-1">How many Hens do you want?</label>
+                    <input type="number" id="instPurchaseQty" min="1" value="1" oninput="updateInstHenPriceValue(this.value)" class="w-full bg-emerald-900/80 border border-emerald-700/80 rounded-xl px-4 py-3 text-lg text-center text-yellow-400 font-black focus:outline-none focus:border-yellow-400 transition-colors shadow-inner">
+                </div>
+                
+                <div class="bg-emerald-900/40 p-3 rounded-xl border border-emerald-700/40 flex justify-between items-center text-xs">
+                    <div>
+                        <span class="text-zinc-400 block mb-0.5">Calculated Bill:</span>
+                        <span id="instActivePlanBadge" class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-emerald-500/30">Plan 1</span>
+                    </div>
+                    <span id="instPurchaseTotalCost" class="text-lg font-black text-red-400">499 PKR</span>
+                </div>
+                
+                <button onclick="processInstantPurchase()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all text-sm uppercase tracking-wider border border-emerald-400/50 mt-2">
+                    Pay & Acquire Hen Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Modal Wrapper (MANUAL PURCHASE) -->
     <div id="purchaseModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-emerald-950 border border-emerald-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative">
+        <div class="bg-emerald-950 border border-emerald-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
             <button onclick="closeModal('purchaseModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
             
             <div id="purchaseStep1" class="block">
-                <h3 class="text-lg font-bold text-yellow-400 mb-4">Purchase New Hen Asset</h3>
+                <h3 class="text-lg font-bold text-yellow-400 mb-4">Select Purchasing Plan</h3>
+                
+                <!-- NEW: Visual representation of plans -->
+                <div class="grid grid-cols-2 gap-2 mb-5">
+                    <div class="bg-emerald-900/60 p-3 rounded-xl border border-emerald-700/50 text-center shadow">
+                        <div class="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">Plan 1</div>
+                        <div class="text-xs text-white my-1">1 - 5 Hens</div>
+                        <div class="text-xs font-black text-yellow-400">Rs. 499 / Hen</div>
+                    </div>
+                    <div class="bg-emerald-900/60 p-3 rounded-xl border border-emerald-700/50 text-center shadow">
+                        <div class="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">Plan 2</div>
+                        <div class="text-xs text-white my-1">6 - 10 Hens</div>
+                        <div class="text-xs font-black text-yellow-400">Rs. 450 / Hen</div>
+                    </div>
+                    <div class="bg-emerald-900/60 p-3 rounded-xl border border-emerald-700/50 text-center shadow">
+                        <div class="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">Plan 3</div>
+                        <div class="text-xs text-white my-1">11 - 50 Hens</div>
+                        <div class="text-xs font-black text-yellow-400">Rs. 399 / Hen</div>
+                    </div>
+                    <div class="bg-emerald-900/60 p-3 rounded-xl border border-emerald-700/50 text-center shadow">
+                        <div class="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">Plan 4</div>
+                        <div class="text-xs text-white my-1">51+ Hens</div>
+                        <div class="text-xs font-black text-yellow-400">Rs. 250 / Hen</div>
+                    </div>
+                </div>
+
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-emerald-300 mb-1">Enter Hen Quantity</label>
+                        <label class="block text-xs font-semibold text-emerald-300 mb-1">Enter Hen Quantity to Subscribe</label>
                         <input type="number" id="purchaseQty" min="1" value="1" oninput="updateHenPriceValue(this.value)" class="w-full bg-emerald-900/80 border border-emerald-700 rounded-xl px-4 py-3 text-sm text-yellow-400 font-bold focus:outline-none">
                     </div>
                     <div class="bg-emerald-900/50 p-3 rounded-xl border border-emerald-700/50 flex justify-between items-center text-xs">
-                        <span class="text-zinc-300">Total Calculated Cost:</span>
+                        <div>
+                            <span class="text-zinc-300 block mb-0.5">Total Calculated Cost:</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <span id="activePlanBadge" class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-amber-500/30">Plan 1 Applied</span>
+                                <!-- Yeh new savings badge hai -->
+                                <span id="savingsBadge" class="hidden text-red-400 font-bold text-[10px] animate-pulse"></span>
+                            </div>
+                        </div>
                         <span id="purchaseTotalCost" class="text-base font-black text-emerald-400">499 PKR</span>
                     </div>
-                    <button onclick="proceedToPaymentProof()" class="w-full bg-yellow-500 text-zinc-950 font-bold py-3 rounded-xl shadow-md">Next: Submit Payment</button>
+                    
+                    <button onclick="proceedToPaymentProof()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-zinc-950 font-bold py-3 rounded-xl shadow-md transition-colors mb-2">Next: Submit Bank/Easypaisa Payment</button>
+                    
                 </div>
             </div>
 
             <div id="purchaseStep2" class="hidden">
+                <button onclick="document.getElementById('purchaseStep2').classList.add('hidden'); document.getElementById('purchaseStep1').classList.remove('hidden');" class="text-xs text-zinc-400 hover:text-white mb-3 flex items-center space-x-1">
+                    <span>←</span> <span>Back</span>
+                </button>
                 <h3 class="text-lg font-bold text-yellow-400 mb-2">Send Payment Proof</h3>
                 
                 <div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-xl my-3 text-center">
@@ -504,8 +638,8 @@
             <div id="saleStep1Marketplace" class="block">
                 <div class="text-center mb-4">
                     <span class="bg-emerald-900/80 text-emerald-300 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">Marketplace</span>
-                    <h3 class="text-xl font-black text-white mt-2">Egg Market</h3>
-                    <p class="text-[11px] text-zinc-300">Find the best shops to sell your eggs</p>
+                    <h3 class="text-xl font-black text-white mt-2">Egg Market (Live Locked Rate)</h3>
+                    <p class="text-[11px] text-zinc-300">Rate is locked to live market for this session.</p>
                 </div>
                 
                 <div id="dealersContainer" class="space-y-3">
@@ -519,8 +653,8 @@
                 </button>
                 <h3 class="text-lg font-bold text-yellow-400 mb-1">Cashout to <span id="lblSelectedDealerName" class="text-white"></span></h3>
                 <p class="text-[11px] text-emerald-300 font-bold mb-4 bg-emerald-900/40 p-2 rounded border border-emerald-800/80">
-                    Agreed Rate: <span id="lblSelectedDealerRate"></span> PKR / egg <br>
-                    <span class="text-zinc-300 text-[10px] font-normal" id="lblSelectedDealerLimit"></span>
+                    Locked Live Rate: <span id="lblSelectedDealerRate" class="text-yellow-400 text-sm"></span> PKR / egg <br>
+                    <span class="text-zinc-400 text-[9px] font-normal" id="lblSelectedDealerLimit"></span>
                 </p>
                 
                 <form id="withdrawalForm" class="space-y-3 text-xs">
@@ -561,7 +695,7 @@
         </div>
     </div>
 
-    <!-- WITHDRAWAL PLAN LOCK MODAL (UPDATED WITH OPTION TO PURCHASE OWN HENS) -->
+    <!-- WITHDRAWAL PLAN LOCK MODAL -->
     <div id="planLockModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-[9998]">
         <div class="bg-gradient-to-b from-emerald-900 via-emerald-950 to-zinc-950 border border-amber-500/40 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative text-center">
             <button onclick="closeModal('planLockModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
@@ -611,7 +745,7 @@
         let currentUserData = null;
         let timerInterval = null;
         
-        let processingBatches = {}; // RACE CONDITION FIX: Prevent multiple triggers
+        let processingBatches = {}; // RACE CONDITION FIX
         
         let activeDealers = {};
         let selectedDealerObj = null;
@@ -620,11 +754,55 @@
         let globalTeamInvest = 0;
         let globalTeamWithdraw = 0;
         let globalTeamEggs = 0;
+        let globalEggPrice = 12; // Default Egg Price
+
+        // --- CRYPTO TICKER & FLUCTUATION VARIABLES ---
+        let currentLiveEggPrice = 12;
+        let lastLiveEggPrice = 12;
+        let lockedEggPrice = 12; // Used when user clicks instant buy or sale
 
         let cachedPurchases = [];
         let cachedWithdrawals = [];
         
-        // --- DYNAMIC WHATSAPP NUMBER SYSTEM (Matching contact.html schedule & overrides) ---
+        // --- 1. LIVE RATE TICKER LOGIC ---
+        setInterval(() => {
+            if(!currentUserData) return;
+            // -2 se +5 tak fluctuate
+            let diff = Math.floor(Math.random() * 8) - 2; 
+            currentLiveEggPrice = globalEggPrice + diff;
+            if(currentLiveEggPrice < 1) currentLiveEggPrice = 1; 
+
+            const rateEl = document.getElementById('liveEggRate');
+            const arrowEl = document.getElementById('liveEggArrow');
+            
+            if(rateEl && arrowEl) {
+                rateEl.innerText = currentLiveEggPrice.toFixed(2) + ' PKR';
+                if(currentLiveEggPrice > lastLiveEggPrice) {
+                    rateEl.className = 'font-bold text-green-400 text-sm transition-colors duration-300';
+                    arrowEl.innerText = '▲'; arrowEl.className = 'text-green-400 text-[10px]';
+                } else if(currentLiveEggPrice < lastLiveEggPrice) {
+                    rateEl.className = 'font-bold text-red-400 text-sm transition-colors duration-300';
+                    arrowEl.innerText = '▼'; arrowEl.className = 'text-red-400 text-[10px]';
+                } else {
+                    rateEl.className = 'font-bold text-white text-sm transition-colors duration-300';
+                    arrowEl.innerText = '−'; arrowEl.className = 'text-zinc-400 text-[10px]';
+                }
+            }
+            lastLiveEggPrice = currentLiveEggPrice;
+            updateMainBalanceDisplay();
+        }, 2000);
+
+        function updateMainBalanceDisplay() {
+            if(!currentUserData) return;
+            let totalEggs = (Number(currentUserData.availableEggs) || 0) + (Number(currentUserData.giftEggs) || 0);
+            let totalPKR = totalEggs * currentLiveEggPrice; // Fluctuate based on live market
+            let pkrLabel = document.getElementById('lblEggBalancePKR_Main');
+            if (pkrLabel) {
+                pkrLabel.innerText = totalPKR.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+        }
+
+        // --- DYNAMIC WHATSAPP NUMBER SYSTEM ---
         let globalActiveWaNumber = "923423944508";
 
         db.ref('settings/whatsappConfig').on('value', snap => {
@@ -634,13 +812,11 @@
                 let now = new Date();
                 let override = config.manualOverride;
                 
-                // Check if valid manual override exists and active
                 if (override && override.expireTime > now.getTime()) {
                     return override.number;
                 }
                 
-                // Automated Schedule (Mon to Fri, 07:00 to 19:59)
-                let day = now.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+                let day = now.getDay();
                 let hours = now.getHours();
                 
                 if (day >= 1 && day <= 5) {
@@ -653,7 +829,6 @@
 
             globalActiveWaNumber = getLiveWaNumber();
             
-            // Update UI elements
             const waSidebarLink = document.getElementById('waSidebarLink');
             if(waSidebarLink) waSidebarLink.href = `https://wa.me/${globalActiveWaNumber}`;
             
@@ -667,7 +842,35 @@
             if(waEasypaisaText) waEasypaisaText.innerText = globalActiveWaNumber;
         });
 
-        // Minute interval to ensure automated schedule updates on hour/day changes
+        // --- NEW: FETCH GLOBAL EGG PRICE ---
+        db.ref('rates').on('value', snap => {
+            if(snap.exists()) {
+                globalEggPrice = parseFloat(snap.val().eggPrice) || 12;
+            }
+        });
+
+        // --- NEW: DYNAMIC DAILY NOTICE LISTENER ---
+        db.ref('settings/dailyNotice').on('value', snap => {
+            if(snap.exists()) {
+                let data = snap.val();
+                document.getElementById('dailyNoticeTitle').innerText = data.title || "Maximize Your Egg Yield!";
+                document.getElementById('dailyNoticeMessage').innerHTML = data.message || "Welcome back to Green Land Poultry Farm! Every hen generates 1 egg per 24 hours automatically. Expand your farm coop today to increase your daily earnings.";
+            }
+        });
+
+        // --- NEW: DYNAMIC WITHDRAWAL PLANS LISTENER ---
+        let withdrawalPlanTiers = [
+            { planNum: 1, threshold: 230, required: 2 },
+            { planNum: 2, threshold: 700, required: 5 },
+            { planNum: 3, threshold: 1500, required: 8 }
+        ];
+
+        db.ref('settings/withdrawalPlans').on('value', snap => {
+            if(snap.exists()) {
+                withdrawalPlanTiers = snap.val();
+            }
+        });
+
         setInterval(() => {
             db.ref('settings/whatsappConfig').once('value', snap => {
                 let config = snap.val() || {};
@@ -710,14 +913,12 @@
             toggleAuthMode(true); 
         }
 
-        // --- Generate and Copy Referral Link ---
         function copyReferralLink() {
             if (!currentUid || !currentUserData) {
                 showCustomAlert("Error", "Please login to copy your referral link.");
                 return;
             }
             
-            // Build the full referral link containing origin + path + query params
             const baseUrl = window.location.origin + window.location.pathname;
             const refLink = `${baseUrl}?ref=${currentUid}&n=${encodeURIComponent(currentUserData.name)}`;
             
@@ -731,7 +932,6 @@
             });
         }
 
-        // --- Side Sliding Menu Toggle ---
         function toggleSideMenu() {
             const panel = document.getElementById('sideMenuPanel');
             const overlay = document.getElementById('sideMenuOverlay');
@@ -744,7 +944,6 @@
             }
         }
 
-        // --- Custom Alert System Modified for Dynamic Button Text ---
         function showCustomAlert(title, message, callback = null, btnText = "OK") {
             document.getElementById('customAlertTitle').innerText = title;
             document.getElementById('customAlertMessage').innerText = message;
@@ -764,6 +963,14 @@
         function closeCustomAlert() {
             document.getElementById('customAlertModal').classList.remove('flex');
             document.getElementById('customAlertModal').classList.add('hidden');
+        }
+
+        // --- NEW: FORGOT PASSWORD FUNCTION ---
+        function forgotPassword() {
+            let email = document.getElementById('loginEmail').value;
+            let text = `Hello Admin, I forgot my password for Green Land Poultry Farm account. My email is: ${email || '[Please Insert Your Email here]'}. Please help me reset it.`;
+            let waUrl = `https://wa.me/${globalActiveWaNumber}?text=${encodeURIComponent(text)}`;
+            window.open(waUrl, '_blank');
         }
 
         function handleAuthError(err) {
@@ -789,7 +996,6 @@
             document.getElementById('loginForm').classList.toggle('hidden', isRegister);
         }
 
-        // SHOW DAILY PROFESSIONAL NOTIFICATION (ONCE EVERY 24 HOURS)
         function checkAndShowHenPopup() {
             if (!currentUid) return;
             const lastPopupTime = localStorage.getItem('lastHenPopup_' + currentUid);
@@ -816,11 +1022,11 @@
                     
                     document.getElementById('authContainer').classList.add('hidden');
                     document.getElementById('dashboardContainer').classList.remove('hidden');
-                    syncFarmDashboardData(val); // PASS DATA INSTEAD OF FETCHING AGAIN
+                    syncFarmDashboardData(val); 
                     fetchTeamStats();
                     fetchDealersMarketplace();
                     fetchPurchasesAndWithdrawalsHistory();
-                    fetchUserAnnouncements(); // FETCH ANNOUNCEMENTS FOR BELL ICON
+                    fetchUserAnnouncements(); 
 
                     if(timerInterval) clearInterval(timerInterval);
                     timerInterval = setInterval(updateBatchesTimers, 1000);
@@ -832,7 +1038,6 @@
                 document.getElementById('authContainer').classList.remove('hidden');
                 document.getElementById('dashboardContainer').classList.add('hidden');
                 
-                // FIXED: Force Register mode if ref link is detected, else Login
                 if(refNameParam) {
                     toggleAuthMode(true);
                 } else {
@@ -890,17 +1095,23 @@
             }); 
         }
 
-        // NEW FUNCTION: FETCH LIVE ANNOUNCEMENTS
+        // --- NEW: UPDATED ANNOUNCEMENT LISTENER FOR "NEW" BADGE ---
+        let lastSeenAnnTime = localStorage.getItem('lastSeenAnnTime') || 0;
+
         function fetchUserAnnouncements() {
             db.ref('announcements').on('value', snap => {
                 const container = document.getElementById('announcementsContainer');
                 if(!container) return;
                 container.innerHTML = '';
                 let count = 0;
+                let hasNew = false;
                 
                 snap.forEach(child => {
                     count++;
                     let ann = child.val();
+                    let annTimestamp = ann.timestamp || 0;
+                    if(annTimestamp > lastSeenAnnTime) hasNew = true;
+
                     let dateStr = ann.timestamp ? new Date(ann.timestamp).toLocaleDateString() : 'New';
                     
                     let div = document.createElement('div');
@@ -917,7 +1128,7 @@
 
                 const badge = document.getElementById('announcementBadge');
                 if (badge) {
-                    if (count > 0) {
+                    if (hasNew && count > 0) {
                         badge.classList.remove('hidden');
                     } else {
                         badge.classList.add('hidden');
@@ -933,6 +1144,11 @@
         function openAnnouncementsModal() {
             document.getElementById('announcementsModal').classList.remove('hidden');
             document.getElementById('announcementsModal').classList.add('flex');
+            
+            // Mark all as read
+            localStorage.setItem('lastSeenAnnTime', Date.now());
+            const badge = document.getElementById('announcementBadge');
+            if (badge) badge.classList.add('hidden');
         }
 
         function syncFarmDashboardData(data) {
@@ -940,14 +1156,13 @@
             currentUserData = data;
 
             document.getElementById('lblUserName').innerText = data.name || "User";
-            document.getElementById('lblEggBalance').innerText = (data.availableEggs || 0) + (data.giftEggs || 0);
-            document.getElementById('lblHenBalance').innerText = data.totalHens || 0;
-            document.getElementById('lblGiftBalance').innerText = data.giftEggs || 0;
+            document.getElementById('lblHenBalance').innerText = (data.totalHens || 0) + " Hens";
             document.getElementById('lblTotalExpense').innerText = (data.totalExpense || 0) + " PKR";
             document.getElementById('lblTotalWithdrawal').innerText = (data.totalWithdrawal || 0) + " PKR";
             
             document.getElementById('settingTotalHens').innerText = data.totalHens || 0;
             
+            updateMainBalanceDisplay();
             updateBatchesTimers(); 
 
             db.ref('purchase_requests').orderByChild('uid').equalTo(currentUid).on('value', snap => {
@@ -963,7 +1178,7 @@
             });
         }
 
-        // --- Fetch & Render Purchase / Withdrawal History Tabs ---
+        // --- Fetch & Render Purchase / Withdrawal History Tabs (UPDATED WITH PLAN INFO & BALANCE HISTORY) ---
         function fetchPurchasesAndWithdrawalsHistory() {
             if(!currentUid) return;
 
@@ -981,15 +1196,20 @@
                     let dateStr = p.timestamp ? new Date(p.timestamp).toLocaleString() : 'N/A';
                     let statusColor = p.status === 'approved' ? 'text-green-400' : (p.status === 'rejected' ? 'text-red-400' : 'text-amber-400');
                     
+                    let isBalance = p.transactionId === 'BALANCE-PURCHASE';
+                    let methodBadge = isBalance ? `<span class="bg-emerald-900 text-emerald-300 px-1 py-0.5 rounded text-[8px] ml-1">Via Eggs Balance</span>` : '';
+                    
                     let div = document.createElement('div');
                     div.className = "p-2.5 bg-emerald-900/60 rounded-lg border border-emerald-800/80 flex justify-between items-center";
                     div.innerHTML = `
                         <div>
-                            <span class="font-bold text-yellow-400 text-xs">${p.quantity} Hen(s)</span>
-                            <span class="text-[10px] text-zinc-300 block">Trx: ${p.transactionId || 'N/A'} • ${dateStr}</span>
+                            <span class="font-bold text-yellow-400 text-xs">${p.quantity} Hen(s) - <span class="text-emerald-400">${p.planName || 'Plan 1'}</span></span>
+                            <span class="text-[10px] text-zinc-300 block mt-0.5">Trx: ${p.transactionId || 'N/A'} ${methodBadge}</span>
+                            <span class="text-[9px] text-zinc-400 block">${dateStr}</span>
                         </div>
                         <div class="text-right">
                             <span class="font-bold text-white text-xs block">${p.amount} PKR</span>
+                            ${isBalance && p.deductedEggs ? `<span class="text-[9px] text-amber-400 block">(-${p.deductedEggs} Eggs)</span>` : ''}
                             <span class="text-[10px] uppercase font-black ${statusColor}">${p.status || 'pending'}</span>
                         </div>
                     `;
@@ -1133,17 +1353,15 @@
             let html = '';
             let now = Date.now();
             const dayMs = 24 * 60 * 60 * 1000;
-            const totalLifespanMs = 120 * dayMs; // 120 Days Maximum Lifespan
+            const totalLifespanMs = 120 * dayMs; 
             
             for(let key in currentUserData.hen_batches) {
                 let batch = currentUserData.hen_batches[key];
                 
-                // AUTO DELETE LOGIC FOR 120 DAYS
                 let createdAt = batch.createdAt || batch.lastCollectedAt;
                 let elapsedTotal = now - createdAt;
                 
                 if (elapsedTotal >= totalLifespanMs) {
-                    // Lifespan expired, delete hen batch automatically
                     let newTotalHens = Math.max(0, (currentUserData.totalHens || 0) - batch.qty);
                     db.ref(`users/${currentUid}/totalHens`).set(newTotalHens);
                     db.ref(`users/${currentUid}/hen_batches/${key}`).remove();
@@ -1151,40 +1369,34 @@
                     continue; 
                 }
 
-                // Days Remaining Logic
                 let daysLeft = Math.ceil((totalLifespanMs - elapsedTotal) / dayMs);
 
                 let elapsed = now - batch.lastCollectedAt;
                 
-                // BUG FIX: Added !processingBatches[key] to prevent infinite loop triggers
                 if(elapsed >= dayMs && !processingBatches[key]) {
-                    processingBatches[key] = true; // Lock the batch 
+                    processingBatches[key] = true; 
                     
                     let cycles = Math.floor(elapsed / dayMs);
                     let eggsEarned = cycles * batch.qty;
                     let newLastCollected = batch.lastCollectedAt + (cycles * dayMs);
                     
-                    // Optimistic update locally to prevent UI lag
                     batch.lastCollectedAt = newLastCollected;
                     
-                    // Safe Server Transaction
                     db.ref(`users/${currentUid}/availableEggs`).transaction(current => {
                         return (current || 0) + eggsEarned;
                     }, (error, committed) => {
                         if (committed) {
                             db.ref(`users/${currentUid}/hen_batches/${key}/lastCollectedAt`).set(newLastCollected).finally(() => {
-                                // Unlock after a safe delay to avoid duplicate firing
                                 setTimeout(() => { processingBatches[key] = false; }, 1500); 
                             });
                         } else {
-                            processingBatches[key] = false; // Unlock if failed
+                            processingBatches[key] = false; 
                         }
                     });
                     
                     elapsed = now - newLastCollected;
                 }
                 
-                // FIXED TIMER PROBLEM HERE: Prevent negative time and limit progress max to 100%
                 let timeLeft = Math.max(0, dayMs - elapsed);
                 
                 let d = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
@@ -1224,7 +1436,98 @@
             if(breakdownContainer) breakdownContainer.innerHTML = breakdownHtml;
         }
 
-        // --- MODAL & ACTION HANDLERS ---
+        // --- 2. INSTANT PURCHASE WITH BALANCE LOGIC ---
+        function getHenCostByPlan(qty) {
+            let price = 499; let plan = "Plan 1";
+            if (qty >= 1 && qty <= 5) { price = 499; plan = "Plan 1"; }
+            else if (qty >= 6 && qty <= 10) { price = 450; plan = "Plan 2"; }
+            else if (qty >= 11 && qty <= 50) { price = 399; plan = "Plan 3"; }
+            else if (qty >= 51) { price = 250; plan = "Plan 4"; }
+            return { pricePerHen: price, planName: plan, totalCost: qty * price };
+        }
+
+        function openInstantBalancePurchase() {
+            lockedEggPrice = currentLiveEggPrice; // Lock The Exact Live Rate!
+            let totalEggs = (Number(currentUserData.availableEggs) || 0) + (Number(currentUserData.giftEggs) || 0);
+            let lockedBalancePKR = totalEggs * lockedEggPrice;
+            
+            document.getElementById('instBalPKR').innerText = lockedBalancePKR.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' PKR';
+            document.getElementById('instBalRate').innerText = `Locked Market Rate: ${lockedEggPrice} PKR / Egg`;
+            
+            document.getElementById('instPurchaseQty').value = 1;
+            updateInstHenPriceValue(1);
+            
+            document.getElementById('instantBalanceModal').classList.remove('hidden');
+            document.getElementById('instantBalanceModal').classList.add('flex');
+        }
+
+        function updateInstHenPriceValue(val) {
+            let qty = parseInt(val) || 1;
+            let planData = getHenCostByPlan(qty);
+            document.getElementById('instPurchaseTotalCost').innerText = planData.totalCost + " PKR";
+            document.getElementById('instActivePlanBadge').innerText = planData.planName;
+        }
+
+        function processInstantPurchase() {
+            let qty = parseInt(document.getElementById('instPurchaseQty').value) || 1;
+            let planData = getHenCostByPlan(qty);
+            let totalCost = planData.totalCost;
+            
+            // Back convert PKR cost to Eggs using Locked Rate
+            let requiredEggs = Math.ceil(totalCost / lockedEggPrice);
+            
+            let currentAvail = currentUserData ? (Number(currentUserData.availableEggs) || 0) : 0;
+            let currentGift = currentUserData ? (Number(currentUserData.giftEggs) || 0) : 0;
+            let totalUserEggs = currentAvail + currentGift;
+
+            if (totalUserEggs < requiredEggs) {
+                showCustomAlert("Insufficient Balance", `Aapko ${qty} Hen khareedne ke liye ${totalCost} PKR darkaar hain, jiski kimat locked rate (${lockedEggPrice} PKR/Egg) ke hisaab se ${requiredEggs} eggs banti hai. Aapka balance kam hai.`);
+                return;
+            }
+
+            if(confirm(`Market Locked Rate: ${lockedEggPrice} PKR\nCost: ${totalCost} PKR\nDeducting: ${requiredEggs} Eggs\nConfirm Purchase?`)) {
+                let remainingToDeduct = requiredEggs;
+                let newAvail = currentAvail;
+                let newGift = currentGift;
+
+                if(newAvail >= remainingToDeduct) {
+                    newAvail -= remainingToDeduct;
+                } else {
+                    remainingToDeduct -= newAvail;
+                    newAvail = 0;
+                    newGift = Math.max(0, newGift - remainingToDeduct);
+                }
+                
+                let userRef = db.ref('users/' + currentUid);
+                let batchKey = userRef.child('hen_batches').push().key;
+
+                let updates = {
+                    availableEggs: newAvail,
+                    giftEggs: newGift,
+                    totalHens: (Number(currentUserData.totalHens) || 0) + qty,
+                    totalExpense: (Number(currentUserData.totalExpense) || 0) + totalCost,
+                    [`hen_batches/${batchKey}`]: {
+                        qty: qty,
+                        boughtAt: firebase.database.ServerValue.TIMESTAMP,
+                        lastCollectedAt: firebase.database.ServerValue.TIMESTAMP
+                    }
+                };
+
+                userRef.update(updates).then(() => {
+                    return db.ref('purchase_requests').push({
+                        uid: currentUid, quantity: qty, amount: totalCost, planName: planData.planName,
+                        transactionId: 'BALANCE-PURCHASE',
+                        accountHolderName: `Auto Deduct (${requiredEggs} Eggs @ ${lockedEggPrice} Rs)`,
+                        status: 'approved', timestamp: firebase.database.ServerValue.TIMESTAMP, deductedEggs: requiredEggs
+                    });
+                }).then(() => {
+                    closeModal('instantBalanceModal');
+                    showCustomAlert("Purchase Successful! ⚡", `Aap ne kamyabi se ${qty} Hen(s) khareed li hain. ${requiredEggs} eggs (${totalCost} PKR) deduct ho chuke hain.`);
+                });
+            }
+        }
+
+        // --- OLD MANUAL PURCHASING PLANS LOGIC ---
         function openPurchaseModal() {
             document.getElementById('purchaseStep1').classList.remove('hidden');
             document.getElementById('purchaseStep2').classList.add('hidden');
@@ -1236,7 +1539,10 @@
 
         function updateHenPriceValue(val) {
             let q = parseInt(val) || 1;
-            document.getElementById('purchaseTotalCost').innerText = (q * 499) + " PKR";
+            let planData = getHenCostByPlan(q);
+            
+            document.getElementById('purchaseTotalCost').innerText = planData.totalCost + " PKR";
+            document.getElementById('activePlanBadge').innerText = planData.planName + " Applied";
         }
 
         function proceedToPaymentProof() {
@@ -1247,40 +1553,37 @@
         document.getElementById('paymentProofForm').addEventListener('submit', function(e) {
             e.preventDefault();
             let qty = parseInt(document.getElementById('purchaseQty').value) || 1;
+            let planData = getHenCostByPlan(qty);
+
             let trx = document.getElementById('proofTrxId').value;
             let holder = document.getElementById('proofHolderName').value;
 
             db.ref('purchase_requests').push({
                 uid: currentUid,
                 quantity: qty,
-                amount: qty * 499,
+                amount: planData.totalCost,
+                planName: planData.planName, // Saved for history view
                 transactionId: trx,
                 accountHolderName: holder,
                 status: 'pending',
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                // FIXED: ONE-TIME GIFT EGGS TO INVITER WHEN THEIR REFERRED FRIEND MAKES A PURCHASE
                 if (currentUserData && currentUserData.referredBy && currentUserData.referredBy !== "none" && !currentUserData.hasRewardedInviter) {
                     const inviterRef = db.ref('users/' + currentUserData.referredBy);
                     inviterRef.once('value', snap => {
                         if (snap.exists()) {
                             let inviterData = snap.val();
-                            
-                            // Give the inviter the same amount of EGGS as the purchased HENS
                             let newGiftEggs = (inviterData.giftEggs || 0) + qty;
-                            
                             inviterRef.update({ giftEggs: newGiftEggs });
-                            
-                            // Ensure this gift is strictly ONE-TIME by setting a flag on the buyer's account
                             db.ref('users/' + currentUid).update({ hasRewardedInviter: true });
                         }
                     });
                 }
 
                 closeModal('purchaseModal');
-                let waMessage = `*New Hen Purchase Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nQuantity: ${qty} Hens\nAmount: ${qty * 499} PKR\nTrx ID: ${trx}\nAccount Holder: ${holder}`;
+                let waMessage = `*New Plan Subscribe Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nSelected Plan: ${planData.planName}\nQuantity: ${qty} Hens\nAmount: ${planData.totalCost} PKR\nTrx ID: ${trx}\nAccount Holder: ${holder}`;
                 let waUrl = `https://wa.me/${globalActiveWaNumber}?text=${encodeURIComponent(waMessage)}`;
-                showCustomAlert("Request Submitted", "Your hen purchase request has been submitted. Click below to send notification to Admin on WhatsApp.", () => {
+                showCustomAlert("Request Submitted", "Your plan subscription request has been submitted. Click below to send notification to Admin on WhatsApp.", () => {
                     window.open(waUrl, '_blank');
                 }, "Send to WhatsApp");
             });
@@ -1292,26 +1595,11 @@
             });
         }
 
-        // ==================== WITHDRAWAL PLAN FEATURE (UPDATED) ====================
-        // Plan-1: 230 PKR total approved withdrawal ke baad, 2 referral / own hens (cumulative) zaroori
-        // Plan-2: 700 PKR total approved withdrawal ke baad, 5 referral / own hens (cumulative) zaroori
-        // Plan-3: 1500 PKR total approved withdrawal ke baad, 8 referral / own hens (cumulative) zaroori
-        const withdrawalPlanTiers = [
-            { planNum: 1, threshold: 230, required: 2 },
-            { planNum: 2, threshold: 700, required: 5 },
-            { planNum: 3, threshold: 1500, required: 8 }
-        ];
-
+        // ==================== WITHDRAWAL PLAN FEATURE (DYNAMIC) ====================
         function getWithdrawalPlanStatus() {
             let totalWithdrawal = currentUserData ? (Number(currentUserData.totalWithdrawal) || 0) : 0;
-            
-            // Referral se khareedi gayi Hens
             let referralHensPurchased = currentUserData ? (Number(currentUserData.referralHensPurchased) || 0) : 0;
-            
-            // Khud apni ID par khareedi gayi Hens (own purchased hens)
             let selfPurchasedHens = currentUserData ? (Number(currentUserData.selfPurchasedHens) || Number(currentUserData.ownHensPurchased) || Number(currentUserData.totalHens) || 0) : 0;
-
-            // Total Progress = Referrals dwara + Khud dwara khareedi gayi Hens
             let totalEffectiveHens = referralHensPurchased + selfPurchasedHens;
 
             let activeTier = null;
@@ -1346,15 +1634,16 @@
             document.getElementById('planLockModal').classList.remove('hidden');
             document.getElementById('planLockModal').classList.add('flex');
         }
-        // ================== END WITHDRAWAL PLAN FEATURE ==================
 
+        // --- 3. SALE OUT EGGS (WITH LOCKED RATE) ---
         function openSaleModal() {
-            // WITHDRAWAL PLAN CHECK: Agar plan lock hai to marketplace ki bajaye Plan page dikhao
             let planStatus = getWithdrawalPlanStatus();
             if (planStatus.locked) {
                 showPlanLockModal(planStatus);
                 return;
             }
+            
+            lockedEggPrice = currentLiveEggPrice; // Market rate locked for withdrawal session
 
             const container = document.getElementById('dealersContainer');
             container.innerHTML = '';
@@ -1368,10 +1657,10 @@
                 div.innerHTML = `
                     <div>
                         <h4 class="font-bold text-white text-sm">${d.name}</h4>
-                        <p class="text-[10px] text-zinc-300">Rate: <span class="text-yellow-400 font-bold">${d.rate} PKR</span> / egg</p>
+                        <p class="text-[10px] text-zinc-300">Live Lock Rate: <span class="text-yellow-400 font-bold">${lockedEggPrice} PKR</span> / egg</p>
                         <p class="text-[9px] text-emerald-400">Limits: ${d.minLimit} - ${d.maxLimit} eggs</p>
                     </div>
-                    <button onclick="selectDealer('${key}')" class="bg-yellow-500 hover:bg-yellow-400 text-zinc-950 px-3 py-2 rounded-lg font-bold text-xs shadow">Sell Eggs</button>
+                    <button onclick="selectDealer('${key}', '${d.name}', ${d.minLimit}, ${d.maxLimit})" class="bg-yellow-500 hover:bg-yellow-400 text-zinc-950 px-3 py-2 rounded-lg font-bold text-xs shadow">Sell @ ${lockedEggPrice}</button>
                 `;
                 container.appendChild(div);
             }
@@ -1386,13 +1675,15 @@
             document.getElementById('saleModal').classList.add('flex');
         }
 
-        function selectDealer(key) {
+        function selectDealer(key, name, min, max) {
             selectedDealerKey = key;
-            selectedDealerObj = activeDealers[key];
+            document.getElementById('lblSelectedDealerName').innerText = name;
+            document.getElementById('lblSelectedDealerRate').innerText = lockedEggPrice; // Exact live locked rate
+            document.getElementById('lblSelectedDealerLimit').innerText = `Limit: ${min} to ${max} Eggs`;
             
-            document.getElementById('lblSelectedDealerName').innerText = selectedDealerObj.name;
-            document.getElementById('lblSelectedDealerRate').innerText = selectedDealerObj.rate;
-            document.getElementById('lblSelectedDealerLimit').innerText = `Limit: ${selectedDealerObj.minLimit} to ${selectedDealerObj.maxLimit} Eggs`;
+            // Set max min limit on input for better form validation
+            document.getElementById('wdEggQty').setAttribute('min', min);
+            document.getElementById('wdEggQty').setAttribute('max', max);
             
             document.getElementById('saleStep1Marketplace').classList.add('hidden');
             document.getElementById('saleStep2Withdrawal').classList.remove('hidden');
@@ -1403,12 +1694,9 @@
             document.getElementById('saleStep1Marketplace').classList.remove('hidden');
         }
 
-        // FIXED EGG SALE / WITHDRAWAL FORM SUBMISSION TO SYNC WITH ADMIN PANEL
         document.getElementById('withdrawalForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            if(!selectedDealerObj) return;
 
-            // WITHDRAWAL PLAN CHECK: Safety re-check before final submission
             let planStatusCheck = getWithdrawalPlanStatus();
             if (planStatusCheck.locked) {
                 closeModal('saleModal');
@@ -1421,6 +1709,9 @@
             let currentGift = currentUserData ? (currentUserData.giftEggs || 0) : 0;
             let totalUserEggs = currentAvail + currentGift;
 
+            let minLimit = parseInt(document.getElementById('wdEggQty').getAttribute('min'));
+            let maxLimit = parseInt(document.getElementById('wdEggQty').getAttribute('max'));
+
             if(eggQty <= 0) {
                 showCustomAlert("Invalid Amount", "Please enter a valid egg quantity.");
                 return;
@@ -1431,17 +1722,16 @@
                 return;
             }
 
-            if(eggQty < selectedDealerObj.minLimit || eggQty > selectedDealerObj.maxLimit) {
-                showCustomAlert("Limit Exceeded", `Dealer accepts between ${selectedDealerObj.minLimit} and ${selectedDealerObj.maxLimit} eggs.`);
+            if(eggQty < minLimit || eggQty > maxLimit) {
+                showCustomAlert("Limit Exceeded", `Dealer ki limit ${minLimit} se ${maxLimit} eggs ki hai.`);
                 return;
             }
 
             let wdType = document.getElementById('wdType').value;
             let wdNumber = document.getElementById('wdNumber').value;
             let wdHolderName = document.getElementById('wdHolderName').value;
-            let totalPayout = eggQty * selectedDealerObj.rate;
+            let totalPayout = eggQty * lockedEggPrice;
 
-            // Deduct Eggs from User Balance
             let remainingToDeduct = eggQty;
             let newAvail = currentAvail;
             let newGift = currentGift;
@@ -1454,11 +1744,10 @@
                 newGift = Math.max(0, newGift - remainingToDeduct);
             }
 
-            // Write to withdraw_requests node so Admin Panel receives it instantly
             const requestData = {
                 uid: currentUid,
                 dealerId: selectedDealerKey,
-                dealerName: selectedDealerObj.name,
+                dealerName: document.getElementById('lblSelectedDealerName').innerText,
                 accountTitle: wdHolderName,
                 accountHolderName: wdHolderName,
                 accountNumber: wdNumber,
@@ -1479,7 +1768,7 @@
                 });
             }).then(() => {
                 closeModal('saleModal');
-                let waMessage = `*New Egg Sale Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nDealer: ${selectedDealerObj.name}\nEggs Sold: ${eggQty}\nTotal Amount: ${totalPayout} PKR\nAccount Type: ${wdType}\nAccount Title: ${wdHolderName}\nAccount No: ${wdNumber}`;
+                let waMessage = `*New Egg Sale Request!*\n\nUser: ${currentUserData ? currentUserData.name : 'Unknown'}\nEmail: ${currentUserData ? currentUserData.email : 'Unknown'}\nDealer: ${document.getElementById('lblSelectedDealerName').innerText}\nEggs Sold: ${eggQty}\nTotal Amount: ${totalPayout} PKR\nAccount Type: ${wdType}\nAccount Title: ${wdHolderName}\nAccount No: ${wdNumber}`;
                 let waUrl = `https://wa.me/${globalActiveWaNumber}?text=${encodeURIComponent(waMessage)}`;
                 showCustomAlert("Request Submitted", `Egg sale request of ${eggQty} eggs submitted successfully! Click below to send notification to Admin on WhatsApp.`, () => {
                     window.open(waUrl, '_blank');
