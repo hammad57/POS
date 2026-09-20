@@ -4,271 +4,734 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Green Land Poultry Farm — Owner Control Center</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 <style>
 :root{color-scheme:dark}
-body{background:#020617;color:#e2e8f0;font-family:Inter,Segoe UI,Tahoma,sans-serif}
-*{box-sizing:border-box}
-::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-track{background:#0f172a}::-webkit-scrollbar-thumb{background:#334155;border-radius:8px}
-.card{background:#0f172a;border:1px solid #1e293b;border-radius:16px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
-.btn{border-radius:10px;padding:.55rem .8rem;font-size:.72rem;font-weight:800;letter-spacing:.03em;transition:.15s}
-.btn:active{transform:scale(.98)}
-.input,.select,.textarea{width:100%;background:#020617;border:1px solid #334155;border-radius:10px;padding:.65rem .75rem;color:#e2e8f0;outline:none;font-size:.8rem}
-.input:focus,.select:focus,.textarea:focus{border-color:#10b981;box-shadow:0 0 0 2px rgba(16,185,129,.12)}
-.side-btn{width:100%;text-align:left;padding:.72rem .8rem;border-radius:10px;color:#94a3b8;font-size:.72rem;font-weight:800}
-.side-btn:hover,.side-btn.active{background:#1e293b;color:#34d399}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#020617;color:#e2e8f0;font-family:'Inter','Segoe UI',Tahoma,sans-serif;margin:0}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:#0f172a}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:#475569}
+.card{background:linear-gradient(180deg,#0f172a 0%,#0b1220 100%);border:1px solid #1e293b;border-radius:16px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
+.card-hover{transition:transform .15s ease,border-color .15s ease}
+.card-hover:hover{border-color:#334155;transform:translateY(-2px)}
+.btn{border-radius:10px;padding:.55rem .85rem;font-size:.72rem;font-weight:800;letter-spacing:.03em;transition:all .15s ease;cursor:pointer;border:none}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.input,.select,.textarea{width:100%;background:#020617;border:1px solid #334155;border-radius:10px;padding:.65rem .8rem;color:#e2e8f0;outline:none;font-size:.8rem;transition:border-color .15s ease,box-shadow .15s ease}
+.input:focus,.select:focus,.textarea:focus{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.12)}
+.side-btn{width:100%;text-align:left;padding:.72rem .85rem;border-radius:10px;color:#94a3b8;font-size:.72rem;font-weight:800;transition:all .15s ease;background:transparent;border:none;cursor:pointer}
+.side-btn:hover{background:#1e293b;color:#e2e8f0}
+.side-btn.active{background:linear-gradient(90deg,rgba(16,185,129,.14),rgba(16,185,129,.02));color:#34d399;border-left:3px solid #10b981}
 .hiddenx{display:none!important}
 pre{white-space:pre-wrap;word-break:break-word}
 table{border-collapse:collapse}
 th,td{border-bottom:1px solid #1e293b}
-.badge{display:inline-flex;align-items:center;padding:.2rem .45rem;border-radius:999px;font-size:.62rem;font-weight:800}
-.toast{position:fixed;right:16px;bottom:16px;z-index:1000;max-width:360px}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(5px);z-index:900}
-.modal{max-height:92vh;overflow:auto}
-.json-editor{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;min-height:300px}
-@media(max-width:767px){.desktop-only{display:none}.main-pad{padding:12px}.table-wrap{overflow-x:auto}.min-mobile{min-width:760px}}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:.2rem .5rem;border-radius:999px;font-size:.62rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:900;display:flex;align-items:center;justify-content:center;padding:12px}
+.modal{max-height:92vh;overflow:auto;width:100%}
+.json-editor{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;min-height:300px;font-size:.72rem}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{animation:fadeIn .25s ease-out}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:20px;height:20px;border:3px solid rgba(16,185,129,.2);border-top-color:#10b981;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+.pulse-dot{animation:pulse-dot 1.6s ease-in-out infinite}
+@media(max-width:767px){
+  .desktop-only{display:none}
+  .main-pad{padding:12px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .min-mobile{min-width:820px}
+}
+.tab-content-scroll{scrollbar-gutter:stable}
+.stat-card{position:relative;overflow:hidden}
+.stat-card::before{content:"";position:absolute;top:-30%;right:-30%;width:120px;height:120px;background:radial-gradient(circle,rgba(16,185,129,.08) 0%,transparent 70%);border-radius:50%}
+.hen-batch-card{transition:border-color .15s,background .15s}
+.hen-batch-card:hover{border-color:#10b981;background:rgba(16,185,129,.04)}
+.badge-paused{background:rgba(234,179,8,.15);color:#fbbf24;border:1px solid rgba(234,179,8,.3)}
+.badge-active{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3)}
+.badge-expired{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:6px;font-size:.6rem;font-weight:800}
 </style>
 </head>
 <body>
 
-<!-- DIRECT OPEN: no Firebase Authentication login is used by this console. -->
+<!-- GLOBAL LOADER -->
+<div id="globalLoader" class="overlay hiddenx" style="z-index:9999;background:rgba(0,0,0,.85)">
+  <div class="card p-6 flex flex-col items-center gap-3">
+    <div class="spinner"></div>
+    <div id="loaderText" class="text-xs text-emerald-400 font-bold">Processing...</div>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="app" class="min-h-screen md:flex">
-  <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 bg-slate-950 border-r border-slate-800 -translate-x-full md:translate-x-0 transition-transform flex flex-col">
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 bg-slate-950 border-r border-slate-800 -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col">
     <div class="p-4 border-b border-slate-800">
       <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-xl bg-emerald-950 border border-emerald-700 flex items-center justify-center text-2xl">👑</div>
-        <div><div class="font-black text-yellow-400">GREEN LAND</div><div class="text-[9px] text-emerald-400 font-bold tracking-widest">OWNER MASTER PANEL</div></div>
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-900 to-emerald-950 border border-emerald-700 flex items-center justify-center text-2xl shadow-lg">👑</div>
+        <div>
+          <div class="font-black text-yellow-400 text-sm tracking-wider">GREEN LAND</div>
+          <div class="text-[9px] text-emerald-400 font-bold tracking-widest">OWNER MASTER PANEL</div>
+        </div>
       </div>
     </div>
-    <nav class="p-3 space-y-1 overflow-y-auto">
+
+    <nav class="p-3 space-y-1 overflow-y-auto flex-1">
+      <div class="text-[9px] text-slate-600 font-bold tracking-widest px-3 py-2">OVERVIEW</div>
       <button class="side-btn active" data-tab="dashboard">📊 Dashboard</button>
       <button class="side-btn" data-tab="users">👥 Users</button>
+
+      <div class="text-[9px] text-slate-600 font-bold tracking-widest px-3 py-2 mt-2">FARM OPS</div>
       <button class="side-btn" data-tab="purchases">🐔 Purchases</button>
       <button class="side-btn" data-tab="withdrawals">💸 Withdrawals</button>
       <button class="side-btn" data-tab="batches">⏱️ Hen Batches</button>
       <button class="side-btn" data-tab="rates">🥚 Rates</button>
       <button class="side-btn" data-tab="dealers">🏪 Dealers</button>
       <button class="side-btn" data-tab="announcements">📢 Announcements</button>
+
+      <div class="text-[9px] text-slate-600 font-bold tracking-widest px-3 py-2 mt-2">ADVANCED</div>
       <button class="side-btn" data-tab="database">🗄️ Firebase Database</button>
       <button class="side-btn" data-tab="tools">🧰 System Tools</button>
       <button class="side-btn" data-tab="history">🧾 Transaction History</button>
       <button class="side-btn" data-tab="schedule">📅 Schedule / Jobs</button>
       <button class="side-btn" data-tab="audit">📜 Owner Audit Log</button>
     </nav>
-    <div class="p-3 border-t border-slate-800 mt-auto">
-      <div class="text-[10px] text-slate-500 mb-2">Signed in as</div>
-      <div id="ownerIdentity" class="text-xs text-amber-400 font-mono break-all mb-3">DIRECT OPEN MODE</div>
+
+    <div class="p-3 border-t border-slate-800">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+        <div class="text-[10px] text-emerald-400 font-bold">LIVE • Direct Mode</div>
+      </div>
+      <div id="ownerIdentity" class="text-[10px] text-slate-500 font-mono break-all mb-2">Signed in as Owner</div>
       <button id="signOutBtn" class="btn w-full bg-red-950/60 border border-red-800 text-red-300">🔄 Reload Panel</button>
     </div>
   </aside>
 
+  <!-- MAIN -->
   <div class="flex-1 min-w-0">
-    <header class="sticky top-0 z-40 bg-slate-950/95 backdrop-blur border-b border-slate-800 px-3 md:px-6 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-3">
+    <header class="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 px-3 md:px-6 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
         <button id="menuBtn" class="md:hidden btn bg-slate-800 text-slate-200">☰</button>
-        <div><h2 id="pageTitle" class="font-black text-yellow-400">Owner Dashboard</h2><div id="liveStatus" class="text-[10px] text-amber-400">● DIRECT OPEN — Firebase Rules control access</div></div>
+        <div class="min-w-0">
+          <h2 id="pageTitle" class="font-black text-yellow-400 text-sm md:text-base truncate">Owner Dashboard</h2>
+          <div id="liveStatus" class="text-[10px] text-emerald-500 font-mono truncate">● Live Sync Active</div>
+        </div>
       </div>
-      <div class="flex gap-2">
-        <button id="refreshBtn" class="btn bg-slate-800 text-slate-200">🔄 Refresh</button>
+      <div class="flex gap-2 shrink-0">
+        <button id="refreshBtn" class="btn bg-slate-800 text-slate-200 hidden md:inline-flex">🔄 Refresh</button>
         <button id="quickBackupBtn" class="btn bg-blue-900/50 text-blue-300 border border-blue-800">💾 Backup</button>
       </div>
     </header>
 
-    <main class="main-pad p-3 md:p-6 max-w-[1800px] mx-auto">
-      <!-- DASHBOARD -->
-      <section id="tab-dashboard" class="tab space-y-5">
+    <main class="main-pad p-3 md:p-6 max-w-[1800px] mx-auto tab-content-scroll">
+
+      <!-- ============ DASHBOARD ============ -->
+      <section id="tab-dashboard" class="tab space-y-5 animate-in">
         <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
-          <div class="card p-4"><div class="text-[10px] text-slate-400">USERS</div><div id="statUsers" class="text-2xl font-black text-white">0</div></div>
-          <div class="card p-4"><div class="text-[10px] text-slate-400">HENS</div><div id="statHens" class="text-2xl font-black text-yellow-400">0</div></div>
-          <div class="card p-4"><div class="text-[10px] text-slate-400">EGGS</div><div id="statEggs" class="text-2xl font-black text-emerald-400">0</div></div>
-          <div class="card p-4"><div class="text-[10px] text-slate-400">PENDING BUY</div><div id="statPendingBuy" class="text-2xl font-black text-amber-400">0</div></div>
-          <div class="card p-4"><div class="text-[10px] text-slate-400">PENDING WD</div><div id="statPendingWd" class="text-2xl font-black text-red-400">0</div></div>
-          <div class="card p-4"><div class="text-[10px] text-slate-400">PAID OUT</div><div id="statPaid" class="text-2xl font-black text-blue-400">0</div></div>
-        </div>
-        <div class="grid lg:grid-cols-2 gap-5">
-          <div class="card p-5">
-            <div class="flex justify-between items-center mb-3"><h3 class="font-bold text-emerald-400">System Snapshot</h3><span id="snapshotTime" class="text-[10px] text-slate-500">—</span></div>
-            <div id="snapshot" class="text-xs space-y-2"></div>
+          <div class="card stat-card p-4">
+            <div class="text-[10px] text-slate-400 font-bold tracking-wider">USERS</div>
+            <div id="statUsers" class="text-2xl font-black text-white mt-1">0</div>
           </div>
+          <div class="card stat-card p-4">
+            <div class="text-[10px] text-slate-400 font-bold tracking-wider">HENS</div>
+            <div id="statHens" class="text-2xl font-black text-yellow-400 mt-1">0</div>
+          </div>
+          <div class="card stat-card p-4">
+            <div class="text-[10px] text-slate-400 font-bold tracking-wider">EGGS</div>
+            <div id="statEggs" class="text-2xl font-black text-emerald-400 mt-1">0</div>
+          </div>
+          <div class="card stat-card p-4">
+            <div class="text-[10px] text-slate-400 font-bold tracking-wider">PENDING BUY</div>
+            <div id="statPendingBuy" class="text-2xl font-black text-amber-400 mt-1">0</div>
+          </div>
+          <div class="card stat-card p-4">
+            <div class="text-[10px] text-slate-400 font-bold tracking-wider">PENDING WD</div>
+            <div id="statPendingWd" class="text-2xl font-black text-red-400 mt-1">0</div>
+          </div>
+          <div class="card stat-card p-4">
+            <div class="text-[10px] text-slate-400 font-bold tracking-wider">PAID OUT</div>
+            <div id="statPaid" class="text-2xl font-black text-blue-400 mt-1">0</div>
+          </div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-5">
+          <div class="card p-5 lg:col-span-2">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-emerald-400 text-sm tracking-wide">🐔 Hen Batch Overview</h3>
+              <button class="btn bg-emerald-900/50 text-emerald-300" onclick="showTab('batches')">View All →</button>
+            </div>
+            <div id="henOverview" class="grid grid-cols-3 gap-3 mb-4">
+              <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 text-center">
+                <div class="text-[9px] text-emerald-400 font-bold tracking-wider">ACTIVE</div>
+                <div id="statActiveBatches" class="text-xl font-black text-emerald-400 mt-1">0</div>
+              </div>
+              <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 text-center">
+                <div class="text-[9px] text-amber-400 font-bold tracking-wider">PAUSED</div>
+                <div id="statPausedBatches" class="text-xl font-black text-amber-400 mt-1">0</div>
+              </div>
+              <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 text-center">
+                <div class="text-[9px] text-red-400 font-bold tracking-wider">EXPIRING</div>
+                <div id="statExpiringBatches" class="text-xl font-black text-red-400 mt-1">0</div>
+              </div>
+            </div>
+            <div id="dashboardHenList" class="space-y-2 max-h-72 overflow-y-auto pr-1"></div>
+          </div>
+
           <div class="card p-5">
-            <h3 class="font-bold text-yellow-400 mb-3">Quick Actions</h3>
+            <h3 class="font-bold text-yellow-400 mb-3 text-sm tracking-wide">⚡ Quick Actions</h3>
             <div class="grid grid-cols-2 gap-2">
-              <button class="btn bg-blue-900/50 text-blue-300" onclick="showTab('users')">👤 Manage User</button>
-              <button class="btn bg-emerald-900/50 text-emerald-300" onclick="showTab('purchases')">🐔 Purchase Queue</button>
-              <button class="btn bg-red-900/50 text-red-300" onclick="showTab('withdrawals')">💸 Withdrawal Queue</button>
-              <button class="btn bg-purple-900/50 text-purple-300" onclick="showTab('database')">🗄️ DB Explorer</button>
-              <button class="btn bg-amber-900/50 text-amber-300" onclick="cleanupExpired()">🧹 Clean Expired</button>
-              <button class="btn bg-slate-800 text-slate-200" onclick="downloadBackup()">💾 Full Backup</button>
+              <button class="btn bg-blue-900/50 text-blue-300 border border-blue-800" onclick="showTab('users')">👤 Users</button>
+              <button class="btn bg-emerald-900/50 text-emerald-300 border border-emerald-800" onclick="showTab('purchases')">🐔 Purchases</button>
+              <button class="btn bg-red-900/50 text-red-300 border border-red-800" onclick="showTab('withdrawals')">💸 Payouts</button>
+              <button class="btn bg-purple-900/50 text-purple-300 border border-purple-800" onclick="showTab('database')">🗄️ DB</button>
+              <button class="btn bg-amber-900/50 text-amber-300 border border-amber-800" onclick="cleanupExpired()">🧹 Cleanup</button>
+              <button class="btn bg-slate-800 text-slate-200 border border-slate-700" onclick="downloadBackup()">💾 Backup</button>
             </div>
           </div>
         </div>
+
+        <div class="grid lg:grid-cols-2 gap-5">
+          <div class="card p-5">
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="font-bold text-cyan-400 text-sm">📊 System Snapshot</h3>
+              <span id="snapshotTime" class="text-[10px] text-slate-500">—</span>
+            </div>
+            <div id="snapshot" class="text-xs space-y-1.5"></div>
+          </div>
+
+          <div class="card p-5">
+            <h3 class="font-bold text-slate-200 mb-3 text-sm">🛡️ Capability Status</h3>
+            <div id="capabilityBox" class="grid gap-2 text-xs"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ USERS ============ -->
+      <section id="tab-users" class="tab hiddenx space-y-4 animate-in">
+        <div class="card p-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+          <div>
+            <h3 class="font-bold text-yellow-400 text-sm">👥 User Management</h3>
+            <p class="text-[10px] text-slate-500 mt-0.5">Click "Hens" to control individual hen batches</p>
+          </div>
+          <div class="flex gap-2 w-full md:w-auto">
+            <input id="userSearch" class="input md:w-80" placeholder="🔍 Search name / email / mobile / UID">
+          </div>
+        </div>
+
+        <div class="card overflow-hidden">
+          <div class="table-wrap">
+            <table class="w-full text-left text-xs min-mobile">
+              <thead class="bg-slate-950 text-slate-400 uppercase text-[9px] tracking-wider">
+                <tr>
+                  <th class="p-3">User</th>
+                  <th class="p-3">Contact</th>
+                  <th class="p-3">Hens</th>
+                  <th class="p-3">Eggs</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PURCHASES ============ -->
+      <section id="tab-purchases" class="tab hiddenx space-y-4 animate-in">
+        <div class="card p-4 flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-yellow-400 text-sm">🐔 Purchase Requests</h3>
+            <p class="text-[10px] text-slate-500 mt-0.5">Approve to create new hen batch</p>
+          </div>
+          <span id="purchaseBadge" class="badge bg-amber-950 text-amber-300 border border-amber-800">0 pending</span>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="table-wrap">
+            <table class="w-full text-left text-xs min-mobile">
+              <thead class="bg-slate-950 text-slate-400 text-[9px] uppercase tracking-wider">
+                <tr>
+                  <th class="p-3">Date</th>
+                  <th class="p-3">User</th>
+                  <th class="p-3">Payment</th>
+                  <th class="p-3">Qty</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="purchasesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ WITHDRAWALS ============ -->
+      <section id="tab-withdrawals" class="tab hiddenx space-y-4 animate-in">
+        <div class="card p-4 flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-red-400 text-sm">💸 Withdrawal Requests</h3>
+            <p class="text-[10px] text-slate-500 mt-0.5">Rejection auto-refunds eggs</p>
+          </div>
+          <span id="withdrawBadge" class="badge bg-red-950 text-red-300 border border-red-800">0 pending</span>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="table-wrap">
+            <table class="w-full text-left text-xs min-mobile">
+              <thead class="bg-slate-950 text-slate-400 text-[9px] uppercase tracking-wider">
+                <tr>
+                  <th class="p-3">Date</th>
+                  <th class="p-3">User</th>
+                  <th class="p-3">Account</th>
+                  <th class="p-3">Amount</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="withdrawalsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ BATCHES ============ -->
+      <section id="tab-batches" class="tab hiddenx space-y-4 animate-in">
+        <div class="card p-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+          <div>
+            <h3 class="font-bold text-yellow-400 text-sm">⏱️ All Hen Batches Control</h3>
+            <p class="text-[10px] text-slate-500 mt-0.5">Every hen batch across the farm. Pause/Resume/Reset any batch.</p>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <input id="batchSearch" class="input md:w-56" placeholder="🔍 Search user or batch">
+            <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="cleanupExpired()">🧹 Clean Expired</button>
+          </div>
+        </div>
+        <div id="allBatchesContainer" class="space-y-3"></div>
+      </section>
+
+      <!-- ============ RATES ============ -->
+      <section id="tab-rates" class="tab hiddenx space-y-4 animate-in">
+        <div class="grid lg:grid-cols-2 gap-5">
+          <div class="card p-5">
+            <h3 class="font-bold text-yellow-400 mb-4 text-sm">🥚 System Rates</h3>
+            <form id="ratesForm" class="space-y-3">
+              <label class="block text-xs text-slate-400 font-bold">Egg Price From (PKR)
+                <input id="eggPrice" class="input mt-1" type="number" step="0.01">
+              </label>
+              <label class="block text-xs text-slate-400 font-bold">Egg Price To (PKR)
+                <input id="eggPriceTo" class="input mt-1" type="number" step="0.01">
+              </label>
+              <label class="block text-xs text-slate-400 font-bold">Hen Price (PKR)
+                <input id="henPrice" class="input mt-1" type="number" step="0.01">
+              </label>
+              <label class="block text-xs text-slate-400 font-bold">Eggs / Hen / Day
+                <input id="eggPerHen" class="input mt-1" type="number" step="0.01">
+              </label>
+              <button class="btn bg-emerald-600 text-white w-full py-3">💾 Save Rates</button>
+            </form>
+          </div>
+          <div class="card p-5">
+            <h3 class="font-bold text-emerald-400 mb-3 text-sm">📊 Live Rates Preview</h3>
+            <div id="ratesPreview" class="space-y-2 text-xs"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ DEALERS ============ -->
+      <section id="tab-dealers" class="tab hiddenx space-y-4 animate-in">
         <div class="card p-5">
-          <h3 class="font-bold text-slate-200 mb-3">Safety / Capability Status</h3>
-          <div id="capabilityBox" class="grid md:grid-cols-2 gap-2 text-xs"></div>
+          <h3 class="font-bold text-yellow-400 mb-4 text-sm">🏪 Dealer Manager</h3>
+          <form id="dealerForm" class="grid md:grid-cols-4 gap-2">
+            <input type="hidden" id="dealerId">
+            <input id="dealerName" class="input" placeholder="Dealer name" required>
+            <input id="dealerRate" class="input" type="number" step="0.01" placeholder="Rate" required>
+            <input id="dealerMin" class="input" type="number" placeholder="Min" required>
+            <input id="dealerMax" class="input" type="number" placeholder="Max" required>
+            <div class="md:col-span-4 flex gap-2">
+              <button class="btn bg-blue-600 text-white">💾 Save Dealer</button>
+              <button type="button" class="btn bg-slate-800" onclick="resetDealer()">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="table-wrap">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-950 text-slate-400 text-[9px] uppercase tracking-wider">
+                <tr>
+                  <th class="p-3">Name</th>
+                  <th class="p-3">Rate</th>
+                  <th class="p-3">Limits</th>
+                  <th class="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="dealersBody"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
-      <!-- USERS -->
-      <section id="tab-users" class="tab hiddenx space-y-4">
-        <div class="card p-4 flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
-          <div><h3 class="font-bold text-yellow-400">Complete User Management</h3><p class="text-[10px] text-slate-500">Profile, balances, status, timers, referrals and arbitrary fields.</p></div>
-          <div class="flex gap-2"><input id="userSearch" class="input md:w-80" placeholder="Search name / email / mobile / UID"><button class="btn bg-slate-800" onclick="renderUsers()">Search</button></div>
+      <!-- ============ ANNOUNCEMENTS ============ -->
+      <section id="tab-announcements" class="tab hiddenx space-y-4 animate-in">
+        <div class="card p-5">
+          <h3 class="font-bold text-yellow-400 mb-4 text-sm">📢 Announcement Manager</h3>
+          <form id="annForm" class="space-y-2">
+            <input type="hidden" id="annId">
+            <input id="annTitle" class="input" placeholder="Title" required>
+            <textarea id="annMessage" class="textarea" rows="4" placeholder="Message" required></textarea>
+            <div class="flex gap-2">
+              <button class="btn bg-blue-600 text-white">📤 Publish / Update</button>
+              <button type="button" class="btn bg-slate-800" onclick="resetAnn()">Clear</button>
+            </div>
+          </form>
         </div>
-        <div class="card overflow-hidden"><div class="table-wrap"><table class="w-full text-left text-xs min-mobile"><thead class="bg-slate-950 text-slate-400 uppercase text-[9px]"><tr>
-          <th class="p-3">User</th><th class="p-3">Contact</th><th class="p-3">Hens</th><th class="p-3">Eggs</th><th class="p-3">Status</th><th class="p-3 text-right">Actions</th>
-        </tr></thead><tbody id="usersBody"></tbody></table></div></div>
-      </section>
-
-      <!-- PURCHASES -->
-      <section id="tab-purchases" class="tab hiddenx space-y-4">
-        <div class="card p-4 flex justify-between"><h3 class="font-bold text-yellow-400">Purchase Requests</h3><span id="purchaseBadge" class="badge bg-amber-950 text-amber-300">0 pending</span></div>
-        <div class="card overflow-hidden"><div class="table-wrap"><table class="w-full text-left text-xs min-mobile"><thead class="bg-slate-950 text-slate-400 text-[9px] uppercase"><tr><th class="p-3">Date</th><th class="p-3">User</th><th class="p-3">Payment</th><th class="p-3">Qty</th><th class="p-3">Status</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="purchasesBody"></tbody></table></div></div>
-      </section>
-
-      <!-- WITHDRAWALS -->
-      <section id="tab-withdrawals" class="tab hiddenx space-y-4">
-        <div class="card p-4 flex justify-between"><h3 class="font-bold text-red-400">Withdrawal Requests</h3><span id="withdrawBadge" class="badge bg-red-950 text-red-300">0 pending</span></div>
-        <div class="card overflow-hidden"><div class="table-wrap"><table class="w-full text-left text-xs min-mobile"><thead class="bg-slate-950 text-slate-400 text-[9px] uppercase"><tr><th class="p-3">Date</th><th class="p-3">User</th><th class="p-3">Account</th><th class="p-3">Amount</th><th class="p-3">Status</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="withdrawalsBody"></tbody></table></div></div>
-      </section>
-
-      <!-- BATCHES -->
-      <section id="tab-batches" class="tab hiddenx space-y-4">
-        <div class="card p-4 flex flex-col md:flex-row gap-2 md:items-center md:justify-between"><div><h3 class="font-bold text-yellow-400">Hen Batch / Timer Control</h3><p class="text-[10px] text-slate-500">Current system uses 120-day batch expiry and 24-hour egg collection logic.</p></div><button class="btn bg-red-950 text-red-300 border border-red-800" onclick="cleanupExpired()">🧹 Clean Expired Batches</button></div>
-        <div class="card overflow-hidden"><div class="table-wrap"><table class="w-full text-left text-xs min-mobile"><thead class="bg-slate-950 text-slate-400 text-[9px] uppercase"><tr><th class="p-3">User</th><th class="p-3">Batch</th><th class="p-3">Qty</th><th class="p-3">Bought</th><th class="p-3">Days Left</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="batchesBody"></tbody></table></div></div>
-      </section>
-
-      <!-- RATES -->
-      <section id="tab-rates" class="tab hiddenx space-y-4">
-        <div class="card p-5 max-w-xl"><h3 class="font-bold text-yellow-400 mb-4">System Rates</h3><form id="ratesForm" class="space-y-3">
-          <label class="text-xs">Egg Price<input id="eggPrice" class="input mt-1" type="number" step="0.01"></label>
-          <label class="text-xs">Hen Price<input id="henPrice" class="input mt-1" type="number" step="0.01"></label>
-          <label class="text-xs">Eggs / Hen / Day<input id="eggPerHen" class="input mt-1" type="number" step="0.01"></label>
-          <button class="btn bg-emerald-600 text-white w-full">💾 Save Rates</button>
-        </form></div>
-      </section>
-
-      <!-- DEALERS -->
-      <section id="tab-dealers" class="tab hiddenx space-y-4">
-        <div class="card p-5"><h3 class="font-bold text-yellow-400 mb-4">Dealer Manager</h3><form id="dealerForm" class="grid md:grid-cols-4 gap-2">
-          <input type="hidden" id="dealerId"><input id="dealerName" class="input" placeholder="Dealer name" required><input id="dealerRate" class="input" type="number" step="0.01" placeholder="Rate" required><input id="dealerMin" class="input" type="number" placeholder="Min" required><input id="dealerMax" class="input" type="number" placeholder="Max" required>
-          <div class="md:col-span-4 flex gap-2"><button class="btn bg-blue-600 text-white">Save Dealer</button><button type="button" class="btn bg-slate-800" onclick="resetDealer()">Clear</button></div>
-        </form></div>
-        <div class="card overflow-hidden"><div class="table-wrap"><table class="w-full text-left text-xs"><thead class="bg-slate-950 text-slate-400 text-[9px]"><tr><th class="p-3">Name</th><th class="p-3">Rate</th><th class="p-3">Limits</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="dealersBody"></tbody></table></div></div>
-      </section>
-
-      <!-- ANNOUNCEMENTS -->
-      <section id="tab-announcements" class="tab hiddenx space-y-4">
-        <div class="card p-5"><h3 class="font-bold text-yellow-400 mb-4">Announcement Manager</h3><form id="annForm" class="space-y-2"><input type="hidden" id="annId"><input id="annTitle" class="input" placeholder="Title" required><textarea id="annMessage" class="textarea" rows="4" placeholder="Message" required></textarea><div class="flex gap-2"><button class="btn bg-blue-600 text-white">Publish / Update</button><button type="button" class="btn bg-slate-800" onclick="resetAnn()">Clear</button></div></form></div>
         <div id="announcementsList" class="space-y-2"></div>
       </section>
 
-      <!-- DATABASE -->
-      <section id="tab-database" class="tab hiddenx space-y-4">
-        <div class="card p-4"><h3 class="font-bold text-purple-400">Firebase Realtime Database Explorer</h3><p class="text-[10px] text-slate-500 mt-1">This is the master raw-data editor. Use carefully: deleting or changing a node changes the live database.</p></div>
+      <!-- ============ DATABASE ============ -->
+      <section id="tab-database" class="tab hiddenx space-y-4 animate-in">
+        <div class="card p-4 border-amber-800/40 bg-amber-950/10">
+          <h3 class="font-bold text-purple-400 text-sm">🗄️ Firebase Realtime Database Explorer</h3>
+          <p class="text-[10px] text-amber-300 mt-1">⚠️ Master raw-data editor. Any change here directly affects live production.</p>
+        </div>
         <div class="card p-4 grid md:grid-cols-[1fr_auto_auto_auto] gap-2">
           <input id="dbPath" class="input font-mono" value="/" placeholder="/users/UID">
-          <button class="btn bg-blue-600 text-white" onclick="loadDbPath()">Read</button><button class="btn bg-emerald-700 text-white" onclick="saveDbPath()">Save JSON</button><button class="btn bg-red-900 text-red-200" onclick="deleteDbPath()">Delete Node</button>
+          <button class="btn bg-blue-600 text-white" onclick="loadDbPath()">📖 Read</button>
+          <button class="btn bg-emerald-700 text-white" onclick="saveDbPath()">💾 Save</button>
+          <button class="btn bg-red-900 text-red-200" onclick="deleteDbPath()">🗑️ Delete</button>
         </div>
-        <div class="card p-4"><textarea id="dbEditor" class="textarea json-editor" spellcheck="false" placeholder='{}'></textarea><div class="flex flex-wrap gap-2 mt-2"><button class="btn bg-slate-800" onclick="formatDbJson()">Format JSON</button><button class="btn bg-slate-800" onclick="copyDbJson()">Copy</button><button class="btn bg-amber-900/50 text-amber-300" onclick="duplicateDbPath()">Duplicate Node</button></div></div>
-        <div class="card p-4"><h4 class="font-bold text-slate-300 mb-2">Common paths</h4><div id="commonPaths" class="flex flex-wrap gap-2"></div></div>
-      </section>
-
-      <!-- TOOLS -->
-      <section id="tab-tools" class="tab hiddenx space-y-4">
-        <div class="grid lg:grid-cols-2 gap-4">
-          <div class="card p-5"><h3 class="font-bold text-blue-400 mb-3">Backup / Restore</h3><p class="text-xs text-slate-400 mb-3">Backup exports the complete Realtime Database currently visible to this account.</p><div class="flex flex-wrap gap-2"><button class="btn bg-blue-700 text-white" onclick="downloadBackup()">⬇️ Download JSON Backup</button><label class="btn bg-slate-800 cursor-pointer">⬆️ Restore JSON<input id="restoreFile" type="file" accept=".json,application/json" class="hidden"></label></div></div>
-          <div class="card p-5"><h3 class="font-bold text-red-400 mb-3">Danger Zone</h3>
-            <div class="grid md:grid-cols-2 gap-2">
-              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="confirmClearAudit()">🗑️ Clear Owner Audit Log</button>
-              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteAllRequests('purchase_requests')">🗑️ Delete All Purchase History</button>
-              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteAllRequests('withdraw_requests')">🗑️ Delete All Withdrawal History</button>
-              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteAllAnnouncements()">🗑️ Delete All Announcements</button>
-              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteAllDealers()">🗑️ Delete All Dealers</button>
-              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteAllBatches()">🗑️ Delete All Hen Batches</button>
-            </div>
-            <p class="text-[10px] text-red-300/80 mt-3">These are live Firebase operations. A backup is strongly recommended first.</p>
+        <div class="card p-4">
+          <textarea id="dbEditor" class="textarea json-editor" spellcheck="false" placeholder='{}'></textarea>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <button class="btn bg-slate-800" onclick="formatDbJson()">🎨 Format</button>
+            <button class="btn bg-slate-800" onclick="copyDbJson()">📋 Copy</button>
+            <button class="btn bg-amber-900/50 text-amber-300" onclick="duplicateDbPath()">📑 Duplicate</button>
           </div>
         </div>
-        <div class="card p-5"><h3 class="font-bold text-emerald-400 mb-3">Maintenance</h3><div class="grid md:grid-cols-3 gap-2"><button class="btn bg-slate-800" onclick="refreshAll()">🔄 Re-read all data</button><button class="btn bg-slate-800" onclick="cleanupExpired()">⏱️ Process expired batches</button><button class="btn bg-slate-800" onclick="showTab('database')">🗄️ Open raw database</button></div></div>
-        <div class="card p-5"><h3 class="font-bold text-yellow-400 mb-3">Authentication Limitation</h3><p class="text-xs text-slate-300 leading-relaxed">This browser file can manage Realtime Database records and can send password-reset emails. It cannot securely change/delete another user's Firebase Authentication account by itself. That requires Firebase Admin SDK on a trusted server/Cloud Function. The buttons below therefore never pretend to perform that privileged operation.</p><div class="mt-3 p-3 bg-amber-950/40 border border-amber-800 rounded-xl text-[10px] text-amber-200">Also note: the existing user file currently stores a <b>password field in Realtime Database</b>. That is not a safe place for real passwords. Firebase Authentication should be the only password store.</div></div>
-      </section>
-
-      <!-- HISTORY -->
-      <section id="tab-history" class="tab hiddenx space-y-4">
-        <div class="card p-4 flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
-          <div><h3 class="font-bold text-cyan-400">Transaction & Record History</h3><p class="text-[10px] text-slate-500">Purchase and withdrawal records with one-by-one delete and bulk clear controls.</p></div>
-          <div class="flex flex-wrap gap-2"><button class="btn bg-slate-800" onclick="showHistory('all')">All</button><button class="btn bg-amber-900/50 text-amber-300" onclick="showHistory('purchase')">Purchases</button><button class="btn bg-red-900/50 text-red-300" onclick="showHistory('withdrawal')">Withdrawals</button></div>
+        <div class="card p-4">
+          <h4 class="font-bold text-slate-300 mb-3 text-xs">Common paths</h4>
+          <div id="commonPaths" class="flex flex-wrap gap-2"></div>
         </div>
-        <div class="card p-4 overflow-hidden"><div class="table-wrap"><table class="w-full text-left text-xs min-mobile"><thead class="bg-slate-950 text-slate-400 text-[9px] uppercase"><tr><th class="p-3">Type</th><th class="p-3">Date</th><th class="p-3">User</th><th class="p-3">Amount / Qty</th><th class="p-3">Status</th><th class="p-3 text-right">Delete</th></tr></thead><tbody id="historyBody"></tbody></table></div></div>
       </section>
 
-      <!-- SCHEDULE -->
-      <section id="tab-schedule" class="tab hiddenx space-y-4">
-        <div class="card p-5"><h3 class="font-bold text-yellow-400 mb-2">Schedule / Maintenance Center</h3><p class="text-xs text-slate-400 mb-4">Browser-based schedules can run while this page is open. For guaranteed background jobs, use Cloud Functions or another trusted server.</p>
-          <div class="grid md:grid-cols-3 gap-2"><button class="btn bg-emerald-900/50 text-emerald-300" onclick="runScheduledCleanup()">▶ Run Expired-Batch Job Now</button><button class="btn bg-blue-900/50 text-blue-300" onclick="refreshAll()">🔄 Re-read Firebase</button><button class="btn bg-purple-900/50 text-purple-300" onclick="downloadBackup()">💾 Backup Before Job</button></div>
+      <!-- ============ TOOLS ============ -->
+      <section id="tab-tools" class="tab hiddenx space-y-4 animate-in">
+        <div class="grid lg:grid-cols-2 gap-4">
+          <div class="card p-5">
+            <h3 class="font-bold text-blue-400 mb-3 text-sm">💾 Backup / Restore</h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">Export complete Realtime Database as JSON. Use with caution.</p>
+            <div class="flex flex-wrap gap-2">
+              <button class="btn bg-blue-700 text-white" onclick="downloadBackup()">⬇️ Download Backup</button>
+              <label class="btn bg-slate-800 cursor-pointer">⬆️ Restore JSON<input id="restoreFile" type="file" accept=".json,application/json" class="hidden"></label>
+            </div>
+          </div>
+
+          <div class="card p-5">
+            <h3 class="font-bold text-red-400 mb-3 text-sm">⚠️ Danger Zone</h3>
+            <div class="grid md:grid-cols-2 gap-2">
+              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="confirmClearAudit()">🗑️ Clear Audit Log</button>
+              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteAllRequests('purchase_requests')">🗑️ Del Purchase History</button>
+              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteAllRequests('withdraw_requests')">🗑️ Del Withdraw History</button>
+              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteAllAnnouncements()">🗑️ Del Announcements</button>
+              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteAllDealers()">🗑️ Del All Dealers</button>
+              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteAllBatches()">🗑️ Del All Batches</button>
+            </div>
+            <p class="text-[10px] text-red-300/80 mt-3">⚠️ Live Firebase operations. Always backup first.</p>
+          </div>
         </div>
-        <div class="card p-5"><h4 class="font-bold text-slate-200 mb-3">Job Status</h4><div id="scheduleStatus" class="text-xs text-slate-400">No job has run in this session.</div></div>
+
+        <div class="card p-5">
+          <h3 class="font-bold text-emerald-400 mb-3 text-sm">🛠️ Maintenance</h3>
+          <div class="grid md:grid-cols-3 gap-2">
+            <button class="btn bg-slate-800" onclick="refreshAll()">🔄 Re-read All Data</button>
+            <button class="btn bg-slate-800" onclick="cleanupExpired()">⏱️ Process Expired</button>
+            <button class="btn bg-slate-800" onclick="showTab('database')">🗄️ Open Raw DB</button>
+          </div>
+        </div>
+
+        <div class="card p-5 border-amber-800/40 bg-amber-950/10">
+          <h3 class="font-bold text-yellow-400 mb-2 text-sm">🔐 Authentication Note</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            This panel uses DIRECT-OPEN mode. It can manage the Realtime Database but <b class="text-amber-300">cannot</b> delete or modify Firebase Authentication accounts. That requires Admin SDK via Cloud Functions.
+          </p>
+        </div>
       </section>
 
-      <!-- AUDIT -->
-      <section id="tab-audit" class="tab hiddenx space-y-4">
-        <div class="card p-4 flex justify-between"><div><h3 class="font-bold text-slate-200">Owner Audit Log</h3><p class="text-[10px] text-slate-500">Records actions initiated from this panel.</p></div><button class="btn bg-red-950 text-red-300" onclick="confirmClearAudit()">Clear</button></div>
+      <!-- ============ HISTORY ============ -->
+      <section id="tab-history" class="tab hiddenx space-y-4 animate-in">
+        <div class="card p-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+          <div>
+            <h3 class="font-bold text-cyan-400 text-sm">🧾 Transaction & Record History</h3>
+            <p class="text-[10px] text-slate-500 mt-0.5">Purchase and withdrawal records with delete controls.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn bg-slate-800" onclick="showHistory('all')">All</button>
+            <button class="btn bg-amber-900/50 text-amber-300" onclick="showHistory('purchase')">🐔 Purchases</button>
+            <button class="btn bg-red-900/50 text-red-300" onclick="showHistory('withdrawal')">💸 Withdrawals</button>
+          </div>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="table-wrap">
+            <table class="w-full text-left text-xs min-mobile">
+              <thead class="bg-slate-950 text-slate-400 text-[9px] uppercase tracking-wider">
+                <tr>
+                  <th class="p-3">Type</th>
+                  <th class="p-3">Date</th>
+                  <th class="p-3">User</th>
+                  <th class="p-3">Amount / Qty</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3 text-right">Delete</th>
+                </tr>
+              </thead>
+              <tbody id="historyBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SCHEDULE ============ -->
+      <section id="tab-schedule" class="tab hiddenx space-y-4 animate-in">
+        <div class="card p-5">
+          <h3 class="font-bold text-yellow-400 mb-2 text-sm">📅 Schedule / Maintenance Center</h3>
+          <p class="text-xs text-slate-400 mb-4 leading-relaxed">Browser-based schedules run only while this page is open. For 24/7 jobs, use Cloud Functions.</p>
+          <div class="grid md:grid-cols-3 gap-2">
+            <button class="btn bg-emerald-900/50 text-emerald-300 border border-emerald-800" onclick="runScheduledCleanup()">▶ Run Cleanup Now</button>
+            <button class="btn bg-blue-900/50 text-blue-300 border border-blue-800" onclick="refreshAll()">🔄 Refresh Firebase</button>
+            <button class="btn bg-purple-900/50 text-purple-300 border border-purple-800" onclick="downloadBackup()">💾 Backup First</button>
+          </div>
+        </div>
+        <div class="card p-5">
+          <h4 class="font-bold text-slate-200 mb-3 text-xs">Job Status</h4>
+          <div id="scheduleStatus" class="text-xs text-slate-400 italic">No job has run in this session.</div>
+        </div>
+      </section>
+
+      <!-- ============ AUDIT ============ -->
+      <section id="tab-audit" class="tab hiddenx space-y-4 animate-in">
+        <div class="card p-4 flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-slate-200 text-sm">📜 Owner Audit Log</h3>
+            <p class="text-[10px] text-slate-500 mt-0.5">All actions initiated from this panel.</p>
+          </div>
+          <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="confirmClearAudit()">Clear All</button>
+        </div>
         <div id="auditList" class="space-y-2"></div>
       </section>
+
     </main>
   </div>
 </div>
 
-<!-- USER MODAL -->
-<div id="userModal" class="overlay hiddenx items-center justify-center p-3">
- <div class="modal card w-full max-w-4xl p-5">
-  <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-yellow-400">Master User Editor</h3><button class="text-2xl" onclick="closeModal('userModal')">&times;</button></div>
-  <div class="grid md:grid-cols-2 gap-3">
-   <input type="hidden" id="editUid">
-   <label class="text-xs">Name<input id="editName" class="input mt-1"></label>
-   <label class="text-xs">Email<input id="editEmail" class="input mt-1"></label>
-   <label class="text-xs">Mobile<input id="editMobile" class="input mt-1"></label>
-   <label class="text-xs">Status<select id="editStatus" class="select mt-1"><option value="active">active</option><option value="blocked">blocked</option></select></label>
-   <label class="text-xs">Available Eggs<input id="editAvailableEggs" class="input mt-1" type="number"></label>
-   <label class="text-xs">Gift Eggs<input id="editGiftEggs" class="input mt-1" type="number"></label>
-   <label class="text-xs">Total Hens<input id="editTotalHens" class="input mt-1" type="number"></label>
-   <label class="text-xs">Total Expense<input id="editExpense" class="input mt-1" type="number" step="0.01"></label>
-   <label class="text-xs">Total Withdrawal<input id="editWithdrawal" class="input mt-1" type="number" step="0.01"></label>
-   <label class="text-xs">Referred By<input id="editReferredBy" class="input mt-1"></label>
-   <label class="text-xs text-amber-400 font-bold">Invite Restriction<select id="editInviteBypass" class="select mt-1 border-amber-700 text-amber-400"><option value="false">Active (Needs Invites)</option><option value="true">Bypassed (No Invites)</option></select></label>
+<!-- ============ USER MODAL ============ -->
+<div id="userModal" class="overlay hiddenx">
+  <div class="modal card w-full max-w-4xl p-5 animate-in">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-yellow-400 text-sm">👤 Master User Editor</h3>
+      <button class="text-2xl leading-none hover:text-red-400" onclick="closeModal('userModal')">&times;</button>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-3">
+      <input type="hidden" id="editUid">
+      <label class="text-xs text-slate-400 font-bold">Name<input id="editName" class="input mt-1"></label>
+      <label class="text-xs text-slate-400 font-bold">Email<input id="editEmail" class="input mt-1"></label>
+      <label class="text-xs text-slate-400 font-bold">Mobile<input id="editMobile" class="input mt-1"></label>
+      <label class="text-xs text-slate-400 font-bold">Status
+        <select id="editStatus" class="select mt-1">
+          <option value="active">active</option>
+          <option value="blocked">blocked</option>
+        </select>
+      </label>
+      <label class="text-xs text-slate-400 font-bold">Available Eggs<input id="editAvailableEggs" class="input mt-1" type="number"></label>
+      <label class="text-xs text-slate-400 font-bold">Gift Eggs<input id="editGiftEggs" class="input mt-1" type="number"></label>
+      <label class="text-xs text-slate-400 font-bold">Total Hens<input id="editTotalHens" class="input mt-1" type="number"></label>
+      <label class="text-xs text-slate-400 font-bold">Total Expense<input id="editExpense" class="input mt-1" type="number" step="0.01"></label>
+      <label class="text-xs text-slate-400 font-bold">Total Withdrawal<input id="editWithdrawal" class="input mt-1" type="number" step="0.01"></label>
+      <label class="text-xs text-slate-400 font-bold">Referred By<input id="editReferredBy" class="input mt-1"></label>
+      <label class="text-xs text-amber-400 font-bold">Invite Restriction
+        <select id="editInviteBypass" class="select mt-1 border-amber-700">
+          <option value="false">Active (Needs Invites)</option>
+          <option value="true">Bypassed (No Invites)</option>
+        </select>
+      </label>
+      <label class="text-xs text-slate-400 font-bold">Self Purchased Hens<input id="editSelfHens" class="input mt-1" type="number"></label>
+      <label class="text-xs text-slate-400 font-bold">Referral Hens<input id="editRefHens" class="input mt-1" type="number"></label>
+    </div>
+
+    <div class="mt-4 p-3 rounded-xl bg-slate-950 border border-slate-800">
+      <div class="text-xs font-bold text-emerald-400 mb-2">⏱️ Bulk Timer Override (all batches)</div>
+      <div class="grid grid-cols-3 gap-2">
+        <input id="timerHours" class="input" type="number" min="0" placeholder="Hours">
+        <input id="timerMins" class="input" type="number" min="0" placeholder="Minutes">
+        <button class="btn bg-amber-700 text-white" onclick="setOneMinute()">⚡ Set 1 Min</button>
+      </div>
+      <p class="text-[10px] text-slate-500 mt-2">Applies to every existing hen batch's lastCollectedAt.</p>
+    </div>
+
+    <div class="mt-4 flex flex-wrap gap-2">
+      <button class="btn bg-emerald-600 text-white" onclick="saveUser()">💾 Save User</button>
+      <button class="btn bg-amber-700 text-white" onclick="closeModal('userModal');openHensControlModal(document.getElementById('editUid').value)">🐔 Manage Hens</button>
+      <button class="btn bg-blue-900 text-blue-200" onclick="sendUserReset()">📧 Password Reset</button>
+      <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteUserProfile()">🗑️ Delete Profile</button>
+      <button class="btn bg-slate-800" onclick="openRawUser()">🗄️ Raw JSON</button>
+    </div>
+
+    <div class="mt-4">
+      <label class="text-xs text-slate-400 font-bold">Arbitrary user JSON (advanced)</label>
+      <textarea id="rawUserEditor" class="textarea json-editor mt-1"></textarea>
+      <button class="btn bg-purple-700 text-white mt-2" onclick="saveRawUser()">💾 Save Raw JSON</button>
+    </div>
   </div>
-  <div class="mt-4 p-3 rounded-xl bg-slate-950 border border-slate-800"><div class="text-xs font-bold text-emerald-400 mb-2">Timer override</div><div class="grid grid-cols-3 gap-2"><input id="timerHours" class="input" type="number" min="0" placeholder="Hours"><input id="timerMins" class="input" type="number" min="0" placeholder="Minutes"><button class="btn bg-amber-700 text-white" onclick="setOneMinute()">Set 1 Minute</button></div><p class="text-[10px] text-slate-500 mt-2">Applies to the user's top-level timer fields and every existing hen batch's lastCollectedAt.</p></div>
-  <div class="mt-4 flex flex-wrap gap-2">
-   <button class="btn bg-emerald-600 text-white" onclick="saveUser()">💾 Save User</button>
-   <button class="btn bg-blue-900 text-blue-200" onclick="sendUserReset()">📧 Send Auth Password Reset</button>
-   <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteUserProfile()">🗑️ Delete RTDB Profile</button>
-   <button class="btn bg-slate-800" onclick="openRawUser()">🗄️ Raw User JSON</button>
-  </div>
-  <div class="mt-4"><label class="text-xs text-slate-400">Arbitrary user JSON (advanced)</label><textarea id="rawUserEditor" class="textarea json-editor mt-1"></textarea><button class="btn bg-purple-700 text-white mt-2" onclick="saveRawUser()">Save Raw User JSON</button></div>
- </div>
 </div>
 
-<div id="rejectModal" class="overlay hiddenx items-center justify-center p-3">
- <div class="card w-full max-w-md p-5"><h3 class="font-bold text-red-400 mb-3">Reject Request</h3><input id="rejectReason" class="input" placeholder="Reason"><div class="flex gap-2 mt-3"><button class="btn bg-red-700 text-white" onclick="confirmReject()">Reject</button><button class="btn bg-slate-800" onclick="closeModal('rejectModal')">Cancel</button></div></div>
+<!-- ============ HENS CONTROL MODAL (NEW) ============ -->
+<div id="hensControlModal" class="overlay hiddenx">
+  <div class="modal card w-full max-w-5xl p-5 animate-in">
+    <div class="flex justify-between items-start mb-4 gap-3">
+      <div>
+        <h3 class="font-bold text-yellow-400 text-sm">🐔 Hens Control — <span id="hensOwnerName" class="text-emerald-400">User</span></h3>
+        <p class="text-[10px] text-slate-500 mt-0.5">Pause, resume, reset, or delete any individual hen batch</p>
+      </div>
+      <button class="text-2xl leading-none hover:text-red-400" onclick="closeModal('hensControlModal')">&times;</button>
+    </div>
+
+    <input type="hidden" id="hensOwnerUid">
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <div class="text-[9px] text-slate-500 font-bold">TOTAL HENS</div>
+        <div id="hensStatTotal" class="text-lg font-black text-yellow-400 mt-0.5">0</div>
+      </div>
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <div class="text-[9px] text-slate-500 font-bold">ACTIVE</div>
+        <div id="hensStatActive" class="text-lg font-black text-emerald-400 mt-0.5">0</div>
+      </div>
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <div class="text-[9px] text-slate-500 font-bold">PAUSED</div>
+        <div id="hensStatPaused" class="text-lg font-black text-amber-400 mt-0.5">0</div>
+      </div>
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <div class="text-[9px] text-slate-500 font-bold">BATCHES</div>
+        <div id="hensStatBatches" class="text-lg font-black text-blue-400 mt-0.5">0</div>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2 mb-4">
+      <button class="btn bg-emerald-900/50 text-emerald-300 border border-emerald-800" onclick="pauseAllUserBatches()">⏸️ Pause All</button>
+      <button class="btn bg-blue-900/50 text-blue-300 border border-blue-800" onclick="resumeAllUserBatches()">▶️ Resume All</button>
+      <button class="btn bg-amber-900/50 text-amber-300 border border-amber-800" onclick="resetAllUserTimers()">🔄 Reset All Timers</button>
+      <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteAllUserBatches()">🗑️ Delete All Hens</button>
+    </div>
+
+    <div id="hensListContainer" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1"></div>
+  </div>
 </div>
 
-<div id="toast" class="toast hiddenx"></div>
+<!-- ============ BATCH EDIT MODAL (NEW) ============ -->
+<div id="batchEditModal" class="overlay hiddenx">
+  <div class="modal card w-full max-w-md p-5 animate-in">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-yellow-400 text-sm">⚙️ Edit Hen Batch</h3>
+      <button class="text-2xl leading-none hover:text-red-400" onclick="closeModal('batchEditModal')">&times;</button>
+    </div>
+
+    <input type="hidden" id="beUid">
+    <input type="hidden" id="beKey">
+
+    <div class="space-y-3 text-xs">
+      <label class="block text-slate-400 font-bold">Batch Label
+        <input id="beLabel" class="input mt-1" placeholder="e.g. Batch A">
+      </label>
+      <label class="block text-slate-400 font-bold">Quantity (Hens)
+        <input id="beQty" class="input mt-1" type="number" min="1">
+      </label>
+      <label class="block text-slate-400 font-bold">Status
+        <select id="beStatus" class="select mt-1">
+          <option value="active">Active (producing eggs)</option>
+          <option value="paused">Paused (not producing)</option>
+        </select>
+      </label>
+
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
+        <div class="text-[10px] text-emerald-400 font-bold uppercase">Time Controls</div>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="block text-slate-400">Hours Left
+            <input id="beHoursLeft" class="input mt-1" type="number" min="0" max="23" placeholder="0-23">
+          </label>
+          <label class="block text-slate-400">Minutes Left
+            <input id="beMinsLeft" class="input mt-1" type="number" min="0" max="59" placeholder="0-59">
+          </label>
+        </div>
+        <p class="text-[10px] text-slate-500">Set time until next egg. Leave empty to keep current.</p>
+      </div>
+
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
+        <div class="text-[10px] text-emerald-400 font-bold uppercase">Age / Lifespan</div>
+        <label class="block text-slate-400">Days Left (0-120)
+          <input id="beDaysLeft" class="input mt-1" type="number" min="0" max="120" placeholder="120">
+        </label>
+        <p class="text-[10px] text-slate-500">Sets purchased-at date to match this remaining lifespan.</p>
+      </div>
+    </div>
+
+    <div class="mt-4 flex flex-wrap gap-2">
+      <button class="btn bg-emerald-600 text-white" onclick="saveBatchEdit()">💾 Save Changes</button>
+      <button class="btn bg-blue-900 text-blue-200" onclick="forceCollectEggs()">⚡ Force Collect Eggs</button>
+      <button class="btn bg-amber-700 text-white" onclick="resetSingleBatchTimer()">🔄 Reset Timer</button>
+      <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteSingleBatch()">🗑️ Delete Batch</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ REJECT MODAL ============ -->
+<div id="rejectModal" class="overlay hiddenx">
+  <div class="modal card w-full max-w-md p-5 animate-in">
+    <h3 class="font-bold text-red-400 mb-3 text-sm">🚫 Reject Request</h3>
+    <input id="rejectReason" class="input" placeholder="Reason for rejection">
+    <div class="flex gap-2 mt-3">
+      <button class="btn bg-red-700 text-white" onclick="confirmReject()">Reject</button>
+      <button class="btn bg-slate-800" onclick="closeModal('rejectModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CUSTOM CONFIRM MODAL (NEW) ============ -->
+<div id="confirmModal" class="overlay hiddenx">
+  <div class="modal card w-full max-w-sm p-5 animate-in text-center">
+    <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-2xl">⚠️</div>
+    <h3 id="confirmTitle" class="font-bold text-yellow-400 mb-2 text-sm">Are you sure?</h3>
+    <p id="confirmMessage" class="text-xs text-slate-300 mb-5 leading-relaxed">This action cannot be undone.</p>
+    <div class="flex gap-2">
+      <button id="confirmCancelBtn" class="flex-1 btn bg-slate-800 text-slate-300">Cancel</button>
+      <button id="confirmOkBtn" class="flex-1 btn bg-red-600 text-white">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CUSTOM PROMPT MODAL (NEW) ============ -->
+<div id="promptModal" class="overlay hiddenx">
+  <div class="modal card w-full max-w-sm p-5 animate-in">
+    <h3 id="promptTitle" class="font-bold text-yellow-400 mb-3 text-sm">Enter value</h3>
+    <input id="promptInput" class="input">
+    <div class="flex gap-2 mt-3">
+      <button class="btn bg-slate-800 text-slate-300 flex-1" onclick="closeModal('promptModal')">Cancel</button>
+      <button class="btn bg-emerald-600 text-white flex-1" id="promptOkBtn">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div id="toast" class="fixed bottom-5 right-5 z-[9998] hiddenx"></div>
 
 <script>
 /* =========================================================
-   GREEN LAND POULTRY FARM — OWNER.HTML
-   Based on the two supplied files:
-   - users/<uid>
-   - purchase_requests
-   - withdraw_requests
-   - rates
-   - dealers
-   - announcements
-   - hen_batches
+   GREEN LAND POULTRY FARM — OWNER.HTML (ENHANCED)
+   Direct-open mode. All existing functions preserved + new
+   hen-level control features added.
    ========================================================= */
 
 const firebaseConfig = {
@@ -281,394 +744,1524 @@ const firebaseConfig = {
   appId: "xxxxxxxxxxx"
 };
 
-/* CHANGE THESE BEFORE PUBLISHING.
-   Use your real owner Firebase Auth email and preferably UID.
-   SECURITY RULES MUST ENFORCE THIS OWNER IDENTITY TOO. */
-const OWNER_EMAILS = [
-  "YOUR_OWNER_EMAIL@example.com"
-];
-const OWNER_UIDS = [
-  /* "YOUR_FIREBASE_OWNER_UID" */
-];
+const OWNER_EMAILS = ["YOUR_OWNER_EMAIL@example.com"];
+const OWNER_UIDS = [/* "YOUR_FIREBASE_OWNER_UID" */];
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
+
 const DAY = 86400000;
+const HEN_LIFESPAN_DAYS = 120;
+
 let users = {}, purchases = {}, withdrawals = {}, dealers = {}, announcements = {}, rates = {};
-let selectedReject = {type:null,id:null};
+let selectedReject = { type: null, id: null };
 let listenersStarted = false;
+let editingBatch = { uid: null, key: null };
 
+/* ============ UTILITIES ============ */
 const $ = id => document.getElementById(id);
-const esc = s => String(s ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
-const num = v => Number(v)||0;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const num = v => { const n = Number(v); return isNaN(n) ? 0 : n; };
+const int = v => { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; };
 
-function toast(msg, good=true){
-  const t=$("toast"); t.className="toast";
-  t.innerHTML=`<div class="card p-3 ${good?"border-emerald-700":"border-red-700"} ${good?"text-emerald-300":"text-red-300"} text-xs">${esc(msg)}</div>`;
-  setTimeout(()=>t.classList.add("hiddenx"),3200);
+function toast(msg, good = true) {
+  const t = $("toast");
+  t.className = "fixed bottom-5 right-5 z-[9998]";
+  t.innerHTML = `<div class="card p-3 ${good ? "border-emerald-700" : "border-red-700"} ${good ? "text-emerald-300" : "text-red-300"} text-xs font-bold animate-in shadow-2xl">${good ? "✓" : "✕"} ${esc(msg)}</div>`;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.add("hiddenx"), 3400);
+  t.classList.remove("hiddenx");
 }
-function openModal(id){$(id).classList.remove("hiddenx");$(id).classList.add("flex")}
-function closeModal(id){$(id).classList.add("hiddenx");$(id).classList.remove("flex")}
-function pathClean(p){p=(p||"/").trim();if(!p.startsWith("/"))p="/"+p;return p.replace(/\/+/g,"/").replace(/\/$/,"")||"/"}
-function ownerAllowed(user){
-  if(!user)return false;
-  const email=(user.email||"").toLowerCase();
-  const allowedEmail=OWNER_EMAILS.some(x=>x && !x.startsWith("YOUR_") && x.toLowerCase()===email);
-  const allowedUid=OWNER_UIDS.some(x=>x && user.uid===x);
+
+function showLoader(text = "Processing...") {
+  $("loaderText").innerText = text;
+  $("globalLoader").classList.remove("hiddenx");
+}
+function hideLoader() { $("globalLoader").classList.add("hiddenx"); }
+
+function openModal(id) { const m = $(id); m.classList.remove("hiddenx"); m.classList.add("flex"); }
+function closeModal(id) { const m = $(id); m.classList.add("hiddenx"); m.classList.remove("flex"); }
+
+/* Custom Confirm */
+function askConfirm(title, message, onConfirm, confirmText = "Confirm", isDanger = true) {
+  $("confirmTitle").innerText = title;
+  $("confirmMessage").innerText = message;
+  const okBtn = $("confirmOkBtn");
+  const cancelBtn = $("confirmCancelBtn");
+  okBtn.innerText = confirmText;
+  okBtn.className = `flex-1 btn ${isDanger ? "bg-red-600" : "bg-emerald-600"} text-white`;
+  okBtn.onclick = () => { closeModal("confirmModal"); onConfirm && onConfirm(); };
+  cancelBtn.onclick = () => closeModal("confirmModal");
+  openModal("confirmModal");
+}
+
+/* Custom Prompt */
+function askPrompt(title, defaultValue, onOk, placeholder = "") {
+  $("promptTitle").innerText = title;
+  $("promptInput").value = defaultValue || "";
+  $("promptInput").placeholder = placeholder;
+  $("promptOkBtn").onclick = () => {
+    const v = $("promptInput").value;
+    closeModal("promptModal");
+    onOk && onOk(v);
+  };
+  openModal("promptModal");
+  setTimeout(() => $("promptInput").focus(), 100);
+}
+
+function pathClean(p) {
+  p = (p || "/").trim();
+  if (!p.startsWith("/")) p = "/" + p;
+  return p.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
+}
+
+function ownerAllowed(user) {
+  if (!user) return false;
+  const email = (user.email || "").toLowerCase();
+  const allowedEmail = OWNER_EMAILS.some(x => x && !x.startsWith("YOUR_") && x.toLowerCase() === email);
+  const allowedUid = OWNER_UIDS.some(x => x && user.uid === x);
   return allowedEmail || allowedUid;
 }
-function requireOwner(){
-  // DIRECT-OPEN MODE: this file intentionally does not require Firebase Auth login.
-  // Real protection must be enforced by Firebase Security Rules / a trusted backend.
-  return true;
+
+function requireOwner() { return true; }
+
+function audit(action, path = "", detail = "") {
+  const item = { action, path, detail, mode: "DIRECT_OPEN_OWNER_PANEL", timestamp: firebase.database.ServerValue.TIMESTAMP };
+  db.ref("owner_audit").push(item).catch(() => {});
 }
-function audit(action, path="", detail=""){
-  const item={action,path,detail,mode:"DIRECT_OPEN_OWNER_PANEL",timestamp:firebase.database.ServerValue.TIMESTAMP};
-  db.ref("owner_audit").push(item).catch(()=>{});
+
+function statusBadge(s) {
+  const c = s === "approved" ? "badge-active" : s === "rejected" ? "badge-expired" : "badge-paused";
+  return `<span class="badge ${c}">${esc(s || "pending")}</span>`;
 }
-function showTab(tab){
-  document.querySelectorAll(".tab").forEach(x=>x.classList.add("hiddenx"));
-  $("tab-"+tab).classList.remove("hiddenx");
-  document.querySelectorAll(".side-btn").forEach(x=>x.classList.toggle("active",x.dataset.tab===tab));
-  const titles={dashboard:"Owner Dashboard",users:"User Management",purchases:"Purchase Control",withdrawals:"Withdrawal Control",batches:"Hen Batch Control",rates:"Rates",dealers:"Dealers",announcements:"Announcements",database:"Firebase Database",tools:"System Tools",history:"Transaction History",schedule:"Schedule / Jobs",audit:"Audit Log"};
-  $("pageTitle").innerText=titles[tab]||"Owner Panel";
+
+function emptyRow(n, t) {
+  return `<tr><td colspan="${n}" class="p-6 text-center text-slate-500 italic text-xs">${t}</td></tr>`;
+}
+
+/* ============ TAB NAVIGATION ============ */
+function showTab(tab) {
+  document.querySelectorAll(".tab").forEach(x => x.classList.add("hiddenx"));
+  const el = $("tab-" + tab);
+  if (el) el.classList.remove("hiddenx");
+  document.querySelectorAll(".side-btn").forEach(x => x.classList.toggle("active", x.dataset.tab === tab));
+  const titles = {
+    dashboard: "Owner Dashboard", users: "User Management", purchases: "Purchase Control",
+    withdrawals: "Withdrawal Control", batches: "Hen Batch Control", rates: "Rates Configuration",
+    dealers: "Dealers Management", announcements: "Announcements", database: "Firebase Database",
+    tools: "System Tools", history: "Transaction History", schedule: "Schedule / Jobs", audit: "Audit Log"
+  };
+  $("pageTitle").innerText = titles[tab] || "Owner Panel";
   $("sidebar").classList.add("-translate-x-full");
-  if(tab==="database")loadDbPath();
+  if (tab === "database") loadDbPath();
 }
-window.showTab=showTab;
+window.showTab = showTab;
 
-document.querySelectorAll(".side-btn").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
-$("menuBtn").onclick=()=> $("sidebar").classList.toggle("-translate-x-full");
-$("refreshBtn").onclick=refreshAll;
-$("quickBackupBtn").onclick=downloadBackup;
-if($("signOutBtn")) $("signOutBtn").onclick=()=>location.reload();
+/* ============ SIDEBAR & HEADER ============ */
+document.querySelectorAll(".side-btn").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+$("menuBtn").onclick = () => $("sidebar").classList.toggle("-translate-x-full");
+$("refreshBtn").onclick = refreshAll;
+$("quickBackupBtn").onclick = downloadBackup;
+if ($("signOutBtn")) $("signOutBtn").onclick = () => location.reload();
 
-// Direct-open startup: no login required. Firebase Rules decide whether reads/writes are permitted.
-window.addEventListener("DOMContentLoaded",()=>{ startListeners(); showTab("dashboard"); });
+/* ============ STARTUP ============ */
+window.addEventListener("DOMContentLoaded", () => {
+  startListeners();
+  showTab("dashboard");
+  $("userSearch").addEventListener("input", renderUsers);
+  const bs = $("batchSearch");
+  if (bs) bs.addEventListener("input", renderAllBatches);
+});
 
-function startListeners(){
-  if(listenersStarted)return; listenersStarted=true;
-  db.ref("users").on("value",s=>{users=s.val()||{};renderUsers();renderBatches();updateStats()});
-  db.ref("purchase_requests").on("value",s=>{purchases=s.val()||{};renderPurchases();showHistory("all");updateStats()});
-  db.ref("withdraw_requests").on("value",s=>{withdrawals=s.val()||{};renderWithdrawals();showHistory("all");updateStats()});
-  db.ref("rates").on("value",s=>{rates=s.val()||{};renderRates()});
-  db.ref("dealers").on("value",s=>{dealers=s.val()||{};renderDealers()});
-  db.ref("announcements").on("value",s=>{announcements=s.val()||{};renderAnnouncements()});
-  db.ref("owner_audit").limitToLast(100).on("value",s=>renderAudit(s.val()||{}));
-  $("liveStatus").innerText="● Firebase realtime listeners active";
+/* ============ LISTENERS ============ */
+function startListeners() {
+  if (listenersStarted) return;
+  listenersStarted = true;
+
+  db.ref("users").on("value", s => {
+    users = s.val() || {};
+    renderUsers();
+    renderAllBatches();
+    updateStats();
+    updateDashboardHenList();
+    if (!$("hensControlModal").classList.contains("hiddenx")) {
+      const uid = $("hensOwnerUid").value;
+      if (uid) renderHensControl(uid);
+    }
+  });
+
+  db.ref("purchase_requests").on("value", s => {
+    purchases = s.val() || {};
+    renderPurchases();
+    updateStats();
+  });
+
+  db.ref("withdraw_requests").on("value", s => {
+    withdrawals = s.val() || {};
+    renderWithdrawals();
+    updateStats();
+  });
+
+  db.ref("rates").on("value", s => { rates = s.val() || {}; renderRates(); });
+  db.ref("dealers").on("value", s => { dealers = s.val() || {}; renderDealers(); });
+  db.ref("announcements").on("value", s => { announcements = s.val() || {}; renderAnnouncements(); });
+  db.ref("owner_audit").limitToLast(100).on("value", s => renderAudit(s.val() || {}));
+
+  $("liveStatus").innerText = "● Live Sync Active";
 }
-function refreshAll(){toast("Realtime listeners are already active.");updateStats();renderUsers();renderPurchases();renderWithdrawals();renderBatches();renderDealers();renderAnnouncements();renderRates()}
 
-function updateStats(){
-  let h=0,e=0,p=0,w=0,paid=0;
-  Object.values(users).forEach(u=>{h+=num(u.totalHens);e+=num(u.availableEggs)+num(u.giftEggs)});
-  Object.values(purchases).forEach(x=>{if(x.status==="pending")p++});
-  Object.values(withdrawals).forEach(x=>{if(x.status==="pending")w++;if(x.status==="approved")paid+=num(x.amount||x.totalPayout)});
-  $("statUsers").innerText=Object.keys(users).length;
-  $("statHens").innerText=h.toLocaleString();
-  $("statEggs").innerText=e.toLocaleString();
-  $("statPendingBuy").innerText=p;
-  $("statPendingWd").innerText=w;
-  $("statPaid").innerText=paid.toLocaleString()+" PKR";
-  $("purchaseBadge").innerText=p+" pending";$("withdrawBadge").innerText=w+" pending";
-  $("snapshotTime").innerText=new Date().toLocaleString();
-  $("snapshot").innerHTML=[
-    ["Users",Object.keys(users).length],["Active users",Object.values(users).filter(u=>u.status!=="blocked").length],
-    ["Blocked users",Object.values(users).filter(u=>u.status==="blocked").length],
-    ["Active hen batches",countBatches()],["Dealers",Object.keys(dealers).length],
-    ["Announcements",Object.keys(announcements).length]
-  ].map(x=>`<div class="flex justify-between border-b border-slate-800 py-1"><span class="text-slate-400">${x[0]}</span><b>${esc(x[1])}</b></div>`).join("");
-  $("capabilityBox").innerHTML=[
-    ["Realtime Database","LIVE — read/write subject to Firebase Rules","text-emerald-400"],
-    ["User profile edit","AVAILABLE","text-emerald-400"],
-    ["Purchase approval/rejection","AVAILABLE","text-emerald-400"],
-    ["Withdrawal approval/rejection","AVAILABLE","text-emerald-400"],
-    ["Batch/timer control","AVAILABLE","text-emerald-400"],
-    ["Firebase Auth password reset email","NOT AVAILABLE in direct-open mode","text-amber-400"],
-    ["Firebase Authentication user list / delete","SERVER REQUIRED","text-amber-400"],
-    ["Delete another user's Auth account","SERVER REQUIRED","text-amber-400"]
-  ].map(x=>`<div class="p-2 rounded-lg bg-slate-950 border border-slate-800"><span class="${x[2]} font-bold">${x[0]}</span><div class="text-[10px] text-slate-400">${x[1]}</div></div>`).join("");
+function refreshAll() {
+  toast("Data is already live. Forcing refresh...", true);
+  updateStats();
+  renderUsers();
+  renderAllBatches();
+  renderPurchases();
+  renderWithdrawals();
+  renderDealers();
+  renderAnnouncements();
+  renderRates();
+  updateDashboardHenList();
 }
-function countBatches(){let n=0;Object.values(users).forEach(u=>n+=Object.keys(u.hen_batches||{}).length);return n}
 
-function renderUsers(){
-  const q=($("userSearch").value||"").toLowerCase();
-  let arr=Object.entries(users).filter(([uid,u])=>(uid+" "+JSON.stringify(u)).toLowerCase().includes(q));
-  $("usersBody").innerHTML=arr.map(([uid,u])=>{
-    const eggs=num(u.availableEggs)+num(u.giftEggs), blocked=u.status==="blocked";
-    return `<tr class="hover:bg-slate-900"><td class="p-3"><b>${esc(u.name||"Anonymous")}</b><div class="text-[9px] text-slate-500 font-mono">${esc(uid)}</div></td>
-    <td class="p-3">${esc(u.email||"—")}<div class="text-[10px] text-slate-500">${esc(u.mobile||"")}</div></td>
-    <td class="p-3 text-yellow-400 font-bold">${num(u.totalHens)}</td><td class="p-3 text-emerald-400 font-bold">${eggs}</td>
-    <td class="p-3"><span class="badge ${blocked?"bg-red-950 text-red-300":"bg-emerald-950 text-emerald-300"}">${blocked?"BLOCKED":"ACTIVE"}</span></td>
-    <td class="p-3 text-right whitespace-nowrap"><button class="btn bg-blue-900/50 text-blue-300" onclick="openUser('${esc(uid)}')">Manage</button>
-    <button class="btn ${blocked?"bg-emerald-900/50 text-emerald-300":"bg-amber-900/50 text-amber-300"}" onclick="toggleBlock('${esc(uid)}')">${blocked?"Unblock":"Block"}</button></td></tr>`
-  }).join("")||`<tr><td colspan="6" class="p-5 text-center text-slate-500">No users.</td></tr>`;
+/* ============ STATS ============ */
+function updateStats() {
+  let h = 0, e = 0, p = 0, w = 0, paid = 0;
+  let activeBatches = 0, pausedBatches = 0, expiringBatches = 0;
+  const now = Date.now();
+
+  Object.values(users).forEach(u => {
+    h += num(u.totalHens);
+    e += num(u.availableEggs) + num(u.giftEggs);
+
+    Object.values(u.hen_batches || {}).forEach(b => {
+      const bought = num(b.boughtAt || b.purchasedAt || b.lastCollectedAt || now);
+      const daysLeft = Math.ceil((HEN_LIFESPAN_DAYS * DAY - (now - bought)) / DAY);
+      if (b.paused) pausedBatches++;
+      else activeBatches++;
+      if (daysLeft <= 10 && daysLeft > 0) expiringBatches++;
+    });
+  });
+
+  Object.values(purchases).forEach(x => { if (x.status === "pending") p++; });
+  Object.values(withdrawals).forEach(x => {
+    if (x.status === "pending") w++;
+    if (x.status === "approved") paid += num(x.amount || x.totalPayout);
+  });
+
+  $("statUsers").innerText = Object.keys(users).length;
+  $("statHens").innerText = h.toLocaleString();
+  $("statEggs").innerText = e.toLocaleString();
+  $("statPendingBuy").innerText = p;
+  $("statPendingWd").innerText = w;
+  $("statPaid").innerText = paid.toLocaleString() + " PKR";
+  $("purchaseBadge").innerText = p + " pending";
+  $("withdrawBadge").innerText = w + " pending";
+  $("statActiveBatches").innerText = activeBatches;
+  $("statPausedBatches").innerText = pausedBatches;
+  $("statExpiringBatches").innerText = expiringBatches;
+
+  $("snapshotTime").innerText = new Date().toLocaleString();
+  $("snapshot").innerHTML = [
+    ["Total Users", Object.keys(users).length],
+    ["Active Users", Object.values(users).filter(u => u.status !== "blocked").length],
+    ["Blocked Users", Object.values(users).filter(u => u.status === "blocked").length],
+    ["Active Hen Batches", activeBatches],
+    ["Paused Hen Batches", pausedBatches],
+    ["Expiring in 10 days", expiringBatches],
+    ["Dealers", Object.keys(dealers).length],
+    ["Announcements", Object.keys(announcements).length]
+  ].map(x => `<div class="flex justify-between border-b border-slate-800/70 py-1.5">
+    <span class="text-slate-400">${x[0]}</span><b class="text-slate-200">${esc(x[1])}</b>
+  </div>`).join("");
+
+  $("capabilityBox").innerHTML = [
+    ["Realtime Database", "LIVE — direct read/write", "text-emerald-400"],
+    ["User Management", "AVAILABLE", "text-emerald-400"],
+    ["Hen Batch Control", "FULL — pause/resume/reset/delete", "text-emerald-400"],
+    ["Purchase Approval", "AVAILABLE", "text-emerald-400"],
+    ["Withdrawal Approval", "AVAILABLE", "text-emerald-400"],
+    ["Auth Password Reset", "Email only — no direct change", "text-amber-400"],
+    ["Auth User Deletion", "SERVER REQUIRED (Cloud Function)", "text-amber-400"],
+    ["Firebase Rules", "ENFORCES REAL SECURITY", "text-amber-400"]
+  ].map(x => `<div class="p-2 rounded-lg bg-slate-950 border border-slate-800">
+    <span class="${x[2]} font-bold">${x[0]}</span>
+    <div class="text-[10px] text-slate-400 mt-0.5">${x[1]}</div>
+  </div>`).join("");
 }
-$("userSearch").addEventListener("input",renderUsers);
 
-function openUser(uid){
-  const u=users[uid]||{};$("editUid").value=uid;
-  $("editName").value=u.name||"";$("editEmail").value=u.email||"";$("editMobile").value=u.mobile||"";
-  $("editStatus").value=u.status||"active";$("editAvailableEggs").value=num(u.availableEggs);
-  $("editGiftEggs").value=num(u.giftEggs);$("editTotalHens").value=num(u.totalHens);
-  $("editExpense").value=num(u.totalExpense);$("editWithdrawal").value=num(u.totalWithdrawal);
-  $("editReferredBy").value=u.referredBy||"";$("editInviteBypass").value=u.inviteBypass===true?"true":"false";$("timerHours").value="";$("timerMins").value="";
-  $("rawUserEditor").value=JSON.stringify(u,null,2);openModal("userModal");
-}
-window.openUser=openUser;
+function updateDashboardHenList() {
+  const container = $("dashboardHenList");
+  if (!container) return;
+  const now = Date.now();
+  const rows = [];
+  Object.entries(users).forEach(([uid, u]) => {
+    Object.entries(u.hen_batches || {}).forEach(([k, b]) => {
+      const bought = num(b.boughtAt || b.purchasedAt || b.lastCollectedAt || now);
+      const daysLeft = Math.max(0, Math.ceil((HEN_LIFESPAN_DAYS * DAY - (now - bought)) / DAY));
+      rows.push({ uid, name: u.name || "User", key: k, qty: num(b.qty), daysLeft, paused: !!b.paused });
+    });
+  });
+  rows.sort((a, b) => a.daysLeft - b.daysLeft);
 
-function setOneMinute(){$("timerHours").value=0;$("timerMins").value=1}
-window.setOneMinute=setOneMinute;
-
-async function saveUser(){
- if(!requireOwner())return;
- const uid=$("editUid").value,u=users[uid]||{};
- const updates={name:$("editName").value.trim(),email:$("editEmail").value.trim(),mobile:$("editMobile").value.trim(),status:$("editStatus").value,
- availableEggs:num($("editAvailableEggs").value),giftEggs:num($("editGiftEggs").value),totalHens:num($("editTotalHens").value),
- totalExpense:num($("editExpense").value),totalWithdrawal:num($("editWithdrawal").value),referredBy:$("editReferredBy").value.trim(),
- inviteBypass:$("editInviteBypass").value==="true"};
- const h=$("timerHours").value,m=$("timerMins").value;
- if(h!==""||m!==""){
-   const remaining=num(h)*3600000+num(m)*60000, last=Date.now()-DAY+remaining;
-   updates.lastCollectedAt=last;updates.nextEggTime=Date.now()+remaining;
-   Object.keys(u.hen_batches||{}).forEach(k=>updates[`hen_batches/${k}/lastCollectedAt`]=last);
- }
- try{await db.ref("users/"+uid).update(updates);audit("UPDATE_USER","users/"+uid,JSON.stringify(updates));toast("User updated.");closeModal("userModal")}
- catch(e){toast(e.message,false)}
-}
-window.saveUser=saveUser;
-
-async function toggleBlock(uid){
- if(!requireOwner())return; const blocked=users[uid]?.status==="blocked";
- if(!confirm((blocked?"Unblock":"Block")+" this user?"))return;
- try{await db.ref(`users/${uid}/status`).set(blocked?"active":"blocked");audit(blocked?"UNBLOCK_USER":"BLOCK_USER","users/"+uid);toast(blocked?"User unblocked.":"User blocked.")}
- catch(e){toast(e.message,false)}
-}
-window.toggleBlock=toggleBlock;
-
-async function sendUserReset(){
- const email=$("editEmail").value.trim();if(!email)return toast("No email found.",false);
- try{await auth.sendPasswordResetEmail(email);audit("AUTH_PASSWORD_RESET_EMAIL","",email);toast("Password reset email sent.")}
- catch(e){toast(e.message,false)}
-}
-window.sendUserReset=sendUserReset;
-
-async function deleteUserProfile(){
- const uid=$("editUid").value;
- if(!confirm("DELETE this user's Realtime Database profile and all nested data? This does NOT delete the Firebase Auth account."))return;
- try{await db.ref("users/"+uid).remove();audit("DELETE_USER_PROFILE","users/"+uid);toast("RTDB profile deleted.");closeModal("userModal")}
- catch(e){toast(e.message,false)}
-}
-window.deleteUserProfile=deleteUserProfile;
-
-function openRawUser(){$("rawUserEditor").value=JSON.stringify(users[$("editUid").value]||{},null,2)}
-window.openRawUser=openRawUser;
-async function saveRawUser(){
- try{const uid=$("editUid").value;const obj=JSON.parse($("rawUserEditor").value);await db.ref("users/"+uid).set(obj);audit("RAW_USER_SET","users/"+uid);toast("Raw user JSON saved.")}
- catch(e){toast(e.message,false)}
-}
-window.saveRawUser=saveRawUser;
-
-function renderPurchases(){
- let html="";
- Object.entries(purchases).sort((a,b)=>num(b[1].timestamp)-num(a[1].timestamp)).forEach(([id,p])=>{
-   const u=users[p.uid]||{}, pending=p.status==="pending";
-   html+=`<tr><td class="p-3 text-[10px]">${p.timestamp?new Date(p.timestamp).toLocaleString():"—"}</td><td class="p-3"><b>${esc(u.name||"Unknown")}</b><div class="text-[9px] text-slate-500">${esc(p.uid||"")}</div></td>
-   <td class="p-3">${esc(p.accountHolderName||"—")}<div class="text-cyan-400 text-[10px]">${esc(p.transactionId||"")}</div></td><td class="p-3 text-yellow-400 font-bold">${num(p.quantity)}</td>
-   <td class="p-3">${statusBadge(p.status)}</td><td class="p-3 text-right">${pending?`<button class="btn bg-emerald-900/50 text-emerald-300" onclick="approvePurchase('${esc(id)}')">Approve</button><button class="btn bg-red-950 text-red-300" onclick="rejectRequest('purchase','${esc(id)}')">Reject</button>`:"—"}</td></tr>`;
- });
- $("purchasesBody").innerHTML=html||emptyRow(6,"No purchase requests.");
-}
-function statusBadge(s){const c=s==="approved"?"bg-emerald-950 text-emerald-300":s==="rejected"?"bg-red-950 text-red-300":"bg-amber-950 text-amber-300";return `<span class="badge ${c}">${esc(s||"pending")}</span>`}
-function emptyRow(n,t){return `<tr><td colspan="${n}" class="p-5 text-center text-slate-500">${t}</td></tr>`}
-
-async function approvePurchase(id){
- if(!requireOwner()||!confirm("Approve this purchase and create the hen batch?"))return;
- try{
-  const p=purchases[id];if(!p||p.status!=="pending")return;
-  const uid=p.uid,u=users[uid]||{},qty=num(p.quantity),amount=num(p.amount);
-  const ref=db.ref("users/"+uid), snap=await ref.once("value"), live=snap.val()||{};
-  const batchKey=ref.child("hen_batches").push().key;
-  await ref.update({totalHens:num(live.totalHens)+qty,totalExpense:num(live.totalExpense)+amount,[`hen_batches/${batchKey}`]:{qty,boughtAt:firebase.database.ServerValue.TIMESTAMP,lastCollectedAt:firebase.database.ServerValue.TIMESTAMP}});
-  await db.ref("purchase_requests/"+id).update({status:"approved",approvedAt:firebase.database.ServerValue.TIMESTAMP,approvedBy:"direct-owner-panel"});
-  audit("APPROVE_PURCHASE","purchase_requests/"+id,`uid=${uid}, qty=${qty}`);toast("Purchase approved.")
- }catch(e){toast(e.message,false)}
-}
-window.approvePurchase=approvePurchase;
-
-function rejectRequest(type,id){selectedReject={type,id};$("rejectReason").value="";openModal("rejectModal")}
-window.rejectRequest=rejectRequest;
-async function confirmReject(){
- if(!requireOwner())return;const reason=$("rejectReason").value.trim()||"Rejected by Owner";const {type,id}=selectedReject;
- try{
-  if(type==="purchase"){await db.ref("purchase_requests/"+id).update({status:"rejected",reason,updatedAt:firebase.database.ServerValue.TIMESTAMP});}
-  else{
-   const ref=db.ref("withdraw_requests/"+id),snap=await ref.once("value"),w=snap.val()||{};
-   if(w.status!=="pending"){closeModal("rejectModal");return}
-   const refund=num(w.eggsSold||w.eggsDeductedCount||0),uid=w.uid;
-   await ref.update({status:"rejected",reason,updatedAt:firebase.database.ServerValue.TIMESTAMP});
-   await db.ref("users/"+uid+"/availableEggs").transaction(v=>num(v)+refund);
+  if (!rows.length) {
+    container.innerHTML = `<div class="text-xs text-slate-500 italic p-4 bg-slate-950 rounded-xl border border-slate-800 text-center">No hen batches yet.</div>`;
+    return;
   }
-  audit("REJECT_"+type.toUpperCase(),type==="purchase"?"purchase_requests/"+id:"withdraw_requests/"+id,reason);toast("Request rejected.");closeModal("rejectModal")
- }catch(e){toast(e.message,false)}
-}
-window.confirmReject=confirmReject;
 
-function renderWithdrawals(){
- let html="";
- Object.entries(withdrawals).sort((a,b)=>num(b[1].timestamp)-num(a[1].timestamp)).forEach(([id,w])=>{
-  const u=users[w.uid]||{},amt=num(w.amount||w.totalPayout),pending=w.status==="pending";
-  html+=`<tr><td class="p-3 text-[10px]">${w.timestamp?new Date(w.timestamp).toLocaleString():"—"}</td><td class="p-3"><b>${esc(u.name||"Unknown")}</b><div class="text-[9px]">${esc(w.dealerName||"Dealer")} • ${num(w.eggsSold||w.eggsDeductedCount)} eggs</div></td>
-  <td class="p-3">${esc(w.accountTitle||w.accountHolderName||"—")}<div class="text-[10px] text-cyan-400">${esc(w.accountNumber||"")}</div></td><td class="p-3 text-emerald-400 font-bold">Rs. ${amt.toFixed(2)}</td><td class="p-3">${statusBadge(w.status)}</td>
-  <td class="p-3 text-right">${pending?`<button class="btn bg-emerald-900/50 text-emerald-300" onclick="approveWithdrawal('${esc(id)}')">Approve Paid</button><button class="btn bg-red-950 text-red-300" onclick="rejectRequest('withdrawal','${esc(id)}')">Reject + Refund</button>`:"—"}</td></tr>`;
- });
- $("withdrawalsBody").innerHTML=html||emptyRow(6,"No withdrawal requests.");
+  container.innerHTML = rows.slice(0, 12).map(r => `
+    <div class="hen-batch-card bg-slate-950 border border-slate-800 rounded-xl p-3 flex justify-between items-center cursor-pointer"
+         onclick="openHensControlModal('${esc(r.uid)}')">
+      <div class="min-w-0">
+        <div class="text-xs font-bold text-slate-200 truncate">${esc(r.name)}</div>
+        <div class="text-[10px] text-slate-500 font-mono truncate">${esc(r.key.substring(0, 14))}…</div>
+      </div>
+      <div class="text-right shrink-0 ml-3">
+        <div class="text-sm font-black text-yellow-400">${r.qty} 🐔</div>
+        <div class="text-[10px] ${r.daysLeft <= 10 ? "text-red-400 font-bold" : "text-emerald-400"}">
+          ${r.paused ? "⏸ Paused" : r.daysLeft + "d left"}
+        </div>
+      </div>
+    </div>
+  `).join("");
 }
-async function approveWithdrawal(id){
- if(!requireOwner()||!confirm("Mark this withdrawal as approved and paid?"))return;
- try{
-  const w=withdrawals[id];if(!w||w.status!=="pending")return;
-  const uid=w.uid,amt=num(w.amount||w.totalPayout);
-  await db.ref("users/"+uid+"/totalWithdrawal").transaction(v=>num(v)+amt);
-  await db.ref("withdraw_requests/"+id).update({status:"approved",approvedAt:firebase.database.ServerValue.TIMESTAMP,approvedBy:"direct-owner-panel"});
-  audit("APPROVE_WITHDRAWAL","withdraw_requests/"+id,`uid=${uid}, amount=${amt}`);toast("Withdrawal approved.")
- }catch(e){toast(e.message,false)}
-}
-window.approveWithdrawal=approveWithdrawal;
 
-function renderBatches(){
- const rows=[];Object.entries(users).forEach(([uid,u])=>Object.entries(u.hen_batches||{}).forEach(([key,b])=>{
-   const bought=num(b.boughtAt||b.purchasedAt||b.lastCollectedAt||Date.now()),left=Math.max(0,Math.ceil((120*DAY-(Date.now()-bought))/DAY));
-   rows.push(`<tr><td class="p-3"><b>${esc(u.name||"User")}</b><div class="text-[9px]">${esc(uid)}</div></td><td class="p-3 font-mono">${esc(key)}</td><td class="p-3 text-yellow-400">${num(b.qty)}</td><td class="p-3 text-[10px]">${new Date(bought).toLocaleString()}</td><td class="p-3 ${left<=10?"text-red-400":"text-emerald-400"} font-bold">${left} days</td>
-   <td class="p-3 text-right"><button class="btn bg-blue-900/50 text-blue-300" onclick="editBatch('${esc(uid)}','${esc(key)}',${left})">Edit</button><button class="btn bg-red-950 text-red-300" onclick="removeBatch('${esc(uid)}','${esc(key)}',${num(b.qty)})">Remove</button></td></tr>`);
- }));
- $("batchesBody").innerHTML=rows.join("")||emptyRow(6,"No batches found.");
-}
-async function editBatch(uid,key,current){
- const value=prompt("Enter remaining days (0-120):",current);if(value===null)return;const d=Math.max(0,Math.min(120,parseInt(value)||0));
- const bought=Date.now()-(120-d)*DAY;
- try{await db.ref(`users/${uid}/hen_batches/${key}`).update({boughtAt:bought,purchasedAt:bought});audit("EDIT_BATCH_DAYS",`users/${uid}/hen_batches/${key}`,String(d));toast("Batch days updated.")}
- catch(e){toast(e.message,false)}
-}
-window.editBatch=editBatch;
-async function removeBatch(uid,key,qty){
- if(!confirm(`Remove batch of ${qty} hens? This will also reduce totalHens.`))return;
- try{await db.ref(`users/${uid}/hen_batches/${key}`).remove();await db.ref(`users/${uid}/totalHens`).transaction(v=>Math.max(0,num(v)-qty));audit("DELETE_BATCH",`users/${uid}/hen_batches/${key}`,`qty=${qty}`);toast("Batch removed.")}
- catch(e){toast(e.message,false)}
-}
-window.removeBatch=removeBatch;
-async function cleanupExpired(){
- if(!requireOwner()||!confirm("Process all batches that are 120+ days old?"))return;let n=0;
- try{
-  const now=Date.now(),updates={};
-  Object.entries(users).forEach(([uid,u])=>Object.entries(u.hen_batches||{}).forEach(([k,b])=>{
-   const bought=num(b.boughtAt||b.purchasedAt||b.lastCollectedAt||now);
-   if(now-bought>=120*DAY){updates[`users/${uid}/hen_batches/${k}`]=null;updates[`users/${uid}/totalHens`]=Math.max(0,num(u.totalHens)-num(b.qty));n++}
-  }));
-  if(n)await db.ref().update(updates);
-  audit("CLEANUP_EXPIRED_BATCHES","",`removed=${n}`);toast(`Expired cleanup complete: ${n} batch(es).`);
- }catch(e){toast(e.message,false)}
-}
-window.cleanupExpired=cleanupExpired;
+/* ============ USERS ============ */
+function renderUsers() {
+  const q = ($("userSearch").value || "").toLowerCase();
+  const arr = Object.entries(users).filter(([uid, u]) =>
+    (uid + " " + (u.name || "") + " " + (u.email || "") + " " + (u.mobile || "")).toLowerCase().includes(q)
+  );
 
-function renderRates(){$("eggPrice").value=rates.eggPrice??"";$("henPrice").value=rates.henPrice??"";$("eggPerHen").value=rates.eggPerHen??""}
-$("ratesForm").onsubmit=async e=>{e.preventDefault();try{const d={eggPrice:num($("eggPrice").value),henPrice:num($("henPrice").value),eggPerHen:num($("eggPerHen").value)};await db.ref("rates").update(d);audit("UPDATE_RATES","rates",JSON.stringify(d));toast("Rates saved.")}catch(x){toast(x.message,false)}};
+  $("usersBody").innerHTML = arr.map(([uid, u]) => {
+    const eggs = num(u.availableEggs) + num(u.giftEggs);
+    const blocked = u.status === "blocked";
+    const batchCount = Object.keys(u.hen_batches || {}).length;
+    return `<tr class="hover:bg-slate-900/60">
+      <td class="p-3">
+        <b class="text-slate-200">${esc(u.name || "Anonymous")}</b>
+        <div class="text-[9px] text-slate-500 font-mono">${esc(uid.substring(0, 12))}…</div>
+      </td>
+      <td class="p-3">
+        <div class="text-slate-300 truncate max-w-[180px]">${esc(u.email || "—")}</div>
+        <div class="text-[10px] text-slate-500 font-mono">${esc(u.mobile || "")}</div>
+      </td>
+      <td class="p-3 text-yellow-400 font-bold">${num(u.totalHens)} <span class="text-[9px] text-slate-500 font-normal">(${batchCount} batches)</span></td>
+      <td class="p-3 text-emerald-400 font-bold">${eggs}</td>
+      <td class="p-3">
+        <span class="badge ${blocked ? "badge-expired" : "badge-active"}">${blocked ? "BLOCKED" : "ACTIVE"}</span>
+      </td>
+      <td class="p-3 text-right whitespace-nowrap space-x-1">
+        <button class="btn bg-amber-900/50 text-amber-300 border border-amber-800" onclick="openHensControlModal('${esc(uid)}')">🐔 Hens</button>
+        <button class="btn bg-blue-900/50 text-blue-300 border border-blue-800" onclick="openUser('${esc(uid)}')">Manage</button>
+        <button class="btn ${blocked ? "bg-emerald-900/50 text-emerald-300" : "bg-amber-900/50 text-amber-300"} border border-slate-700" onclick="toggleBlock('${esc(uid)}')">${blocked ? "Unblock" : "Block"}</button>
+      </td>
+    </tr>`;
+  }).join("") || emptyRow(6, "No users found.");
+}
 
-function renderDealers(){
- $("dealersBody").innerHTML=Object.entries(dealers).map(([id,d])=>`<tr><td class="p-3 font-bold">${esc(d.name)}</td><td class="p-3 text-yellow-400">${num(d.rate||d.price)}</td><td class="p-3">${num(d.minLimit)} — ${num(d.maxLimit)}</td><td class="p-3 text-right"><button class="btn bg-blue-900/50 text-blue-300" onclick="editDealer('${esc(id)}')">Edit</button><button class="btn bg-red-950 text-red-300" onclick="deleteDealer('${esc(id)}')">Delete</button></td></tr>`).join("")||emptyRow(4,"No dealers.");
+function openUser(uid) {
+  const u = users[uid] || {};
+  $("editUid").value = uid;
+  $("editName").value = u.name || "";
+  $("editEmail").value = u.email || "";
+  $("editMobile").value = u.mobile || "";
+  $("editStatus").value = u.status || "active";
+  $("editAvailableEggs").value = num(u.availableEggs);
+  $("editGiftEggs").value = num(u.giftEggs);
+  $("editTotalHens").value = num(u.totalHens);
+  $("editExpense").value = num(u.totalExpense);
+  $("editWithdrawal").value = num(u.totalWithdrawal);
+  $("editReferredBy").value = u.referredBy || "";
+  $("editInviteBypass").value = u.inviteBypass === true ? "true" : "false";
+  $("editSelfHens").value = num(u.selfPurchasedHens);
+  $("editRefHens").value = num(u.referralHensPurchased);
+  $("timerHours").value = "";
+  $("timerMins").value = "";
+  $("rawUserEditor").value = JSON.stringify(u, null, 2);
+  openModal("userModal");
 }
-$("dealerForm").onsubmit=async e=>{e.preventDefault();try{const id=$("dealerId").value,d={name:$("dealerName").value.trim(),rate:num($("dealerRate").value),minLimit:num($("dealerMin").value),maxLimit:num($("dealerMax").value)};if(id)await db.ref("dealers/"+id).update(d);else await db.ref("dealers").push(d);audit(id?"UPDATE_DEALER":"CREATE_DEALER","dealers/"+(id||"new"),JSON.stringify(d));resetDealer();toast("Dealer saved.")}catch(x){toast(x.message,false)}};
-function editDealer(id){const d=dealers[id]||{};$("dealerId").value=id;$("dealerName").value=d.name||"";$("dealerRate").value=d.rate||d.price||0;$("dealerMin").value=d.minLimit||0;$("dealerMax").value=d.maxLimit||0}
-window.editDealer=editDealer;
-async function deleteDealer(id){if(!confirm("Delete dealer?"))return;try{await db.ref("dealers/"+id).remove();audit("DELETE_DEALER","dealers/"+id);toast("Dealer deleted.")}catch(e){toast(e.message,false)}}
-window.deleteDealer=deleteDealer;
-function resetDealer(){$("dealerForm").reset();$("dealerId").value=""}window.resetDealer=resetDealer;
+window.openUser = openUser;
 
-function renderAnnouncements(){
- $("announcementsList").innerHTML=Object.entries(announcements).sort((a,b)=>num(b[1].timestamp)-num(a[1].timestamp)).map(([id,a])=>`<div class="card p-4"><div class="flex justify-between gap-3"><div><h4 class="font-bold text-yellow-400">${esc(a.title)}</h4><p class="text-xs text-slate-300 mt-1 whitespace-pre-wrap">${esc(a.message)}</p><div class="text-[9px] text-slate-500 mt-2">${a.timestamp?new Date(a.timestamp).toLocaleString():"—"}</div></div><div class="flex gap-1"><button class="btn bg-blue-900/50 text-blue-300" onclick="editAnn('${esc(id)}')">Edit</button><button class="btn bg-red-950 text-red-300" onclick="deleteAnn('${esc(id)}')">Delete</button></div></div></div>`).join("")||`<div class="card p-5 text-slate-500">No announcements.</div>`;
-}
-$("annForm").onsubmit=async e=>{e.preventDefault();try{const id=$("annId").value,d={title:$("annTitle").value.trim(),message:$("annMessage").value.trim(),timestamp:firebase.database.ServerValue.TIMESTAMP};if(id)await db.ref("announcements/"+id).update(d);else await db.ref("announcements").push(d);audit(id?"UPDATE_ANNOUNCEMENT":"CREATE_ANNOUNCEMENT","announcements/"+(id||"new"));resetAnn();toast("Announcement saved.")}catch(x){toast(x.message,false)}};
-function editAnn(id){const a=announcements[id]||{};$("annId").value=id;$("annTitle").value=a.title||"";$("annMessage").value=a.message||"";window.scrollTo({top:0,behavior:"smooth"})}window.editAnn=editAnn;
-async function deleteAnn(id){if(!confirm("Delete announcement?"))return;try{await db.ref("announcements/"+id).remove();audit("DELETE_ANNOUNCEMENT","announcements/"+id);toast("Announcement deleted.")}catch(e){toast(e.message,false)}}window.deleteAnn=deleteAnn;
-function resetAnn(){$("annForm").reset();$("annId").value=""}window.resetAnn=resetAnn;
+function setOneMinute() { $("timerHours").value = 0; $("timerMins").value = 1; }
+window.setOneMinute = setOneMinute;
 
-async function loadDbPath(){
- if(!requireOwner())return;const p=pathClean($("dbPath").value);
- try{const s=await db.ref(p).once("value");$("dbEditor").value=JSON.stringify(s.val(),null,2);renderCommonPaths(p)}
- catch(e){toast(e.message,false)}
-}
-window.loadDbPath=loadDbPath;
-async function saveDbPath(){
- if(!requireOwner())return;const p=pathClean($("dbPath").value);let obj;
- try{obj=JSON.parse($("dbEditor").value)}catch(e){return toast("Invalid JSON.",false)}
- if(!confirm("SAVE this JSON to "+p+"? This changes live Firebase data."))return;
- try{await db.ref(p).set(obj);audit("RAW_SET",p);toast("Database node saved.")}
- catch(e){toast(e.message,false)}
-}
-window.saveDbPath=saveDbPath;
-async function deleteDbPath(){
- if(!requireOwner())return;const p=pathClean($("dbPath").value);if(p==="/")return toast("Root deletion is disabled.",false);
- if(!confirm("DELETE node "+p+" permanently?"))return;
- try{await db.ref(p).remove();audit("RAW_DELETE",p);$("dbEditor").value="null";toast("Node deleted.")}
- catch(e){toast(e.message,false)}
-}
-window.deleteDbPath=deleteDbPath;
-function formatDbJson(){try{$("dbEditor").value=JSON.stringify(JSON.parse($("dbEditor").value),null,2)}catch(e){toast("Invalid JSON.",false)}}window.formatDbJson=formatDbJson;
-async function copyDbJson(){try{await navigator.clipboard.writeText($("dbEditor").value);toast("Copied.")}catch(e){toast("Clipboard unavailable.",false)}}window.copyDbJson=copyDbJson;
-async function duplicateDbPath(){
- const src=pathClean($("dbPath").value),dest=prompt("Destination path:",src+"_copy");if(!dest)return;
- try{const s=await db.ref(src).once("value");await db.ref(pathClean(dest)).set(s.val());audit("RAW_DUPLICATE",src,"to="+pathClean(dest));toast("Node duplicated.")}catch(e){toast(e.message,false)}
-}
-window.duplicateDbPath=duplicateDbPath;
-function renderCommonPaths(current){
- const paths=["/","/users","/purchase_requests","/withdraw_requests","/rates","/dealers","/announcements","/owner_audit"];
- $("commonPaths").innerHTML=paths.map(p=>`<button class="btn bg-slate-800 text-slate-300" onclick="setDbPath('${p}')">${p}</button>`).join("");
-}
-function setDbPath(p){$("dbPath").value=p;loadDbPath()}window.setDbPath=setDbPath;
+async function saveUser() {
+  if (!requireOwner()) return;
+  const uid = $("editUid").value;
+  const u = users[uid] || {};
 
-function downloadBackup(){
- if(!requireOwner())return;
- db.ref("/").once("value").then(s=>{
-   const blob=new Blob([JSON.stringify(s.val(),null,2)],{type:"application/json"}),a=document.createElement("a");
-   a.href=URL.createObjectURL(blob);a.download="greenland-firebase-backup-"+new Date().toISOString().replace(/[:.]/g,"-")+".json";a.click();URL.revokeObjectURL(a.href);
-   audit("DOWNLOAD_BACKUP","/");toast("Backup downloaded.")
- }).catch(e=>toast(e.message,false))
+  const updates = {
+    name: $("editName").value.trim(),
+    email: $("editEmail").value.trim(),
+    mobile: $("editMobile").value.trim(),
+    status: $("editStatus").value,
+    availableEggs: num($("editAvailableEggs").value),
+    giftEggs: num($("editGiftEggs").value),
+    totalHens: num($("editTotalHens").value),
+    totalExpense: num($("editExpense").value),
+    totalWithdrawal: num($("editWithdrawal").value),
+    referredBy: $("editReferredBy").value.trim(),
+    inviteBypass: $("editInviteBypass").value === "true",
+    selfPurchasedHens: num($("editSelfHens").value),
+    referralHensPurchased: num($("editRefHens").value)
+  };
+
+  const h = $("timerHours").value, m = $("timerMins").value;
+  if (h !== "" || m !== "") {
+    const remaining = num(h) * 3600000 + num(m) * 60000;
+    const last = Date.now() - DAY + remaining;
+    updates.lastCollectedAt = last;
+    updates.nextEggTime = Date.now() + remaining;
+    Object.keys(u.hen_batches || {}).forEach(k => { updates[`hen_batches/${k}/lastCollectedAt`] = last; });
+  }
+
+  try {
+    showLoader("Saving user...");
+    await db.ref("users/" + uid).update(updates);
+    audit("UPDATE_USER", "users/" + uid, JSON.stringify(updates));
+    toast("User updated.");
+    closeModal("userModal");
+  } catch (e) {
+    toast(e.message, false);
+  } finally {
+    hideLoader();
+  }
 }
-window.downloadBackup=downloadBackup;
-$("restoreFile").onchange=async e=>{
- const file=e.target.files[0];if(!file)return;
- if(!confirm("RESTORE this entire JSON file to Firebase root? Existing data can be overwritten/deleted. Make a backup first."))return;
- try{const obj=JSON.parse(await file.text());await db.ref("/").set(obj);audit("RESTORE_ROOT","/");toast("Root restore complete.")}catch(x){toast(x.message,false)}
- e.target.value="";
+window.saveUser = saveUser;
+
+async function toggleBlock(uid) {
+  const blocked = users[uid]?.status === "blocked";
+  askConfirm(
+    blocked ? "Unblock User?" : "Block User?",
+    blocked ? "This user will regain access to their dashboard." : "This user will be signed out and cannot log in.",
+    async () => {
+      try {
+        await db.ref(`users/${uid}/status`).set(blocked ? "active" : "blocked");
+        audit(blocked ? "UNBLOCK_USER" : "BLOCK_USER", "users/" + uid);
+        toast(blocked ? "User unblocked." : "User blocked.");
+      } catch (e) { toast(e.message, false); }
+    },
+    blocked ? "Unblock" : "Block",
+    !blocked
+  );
+}
+window.toggleBlock = toggleBlock;
+
+async function sendUserReset() {
+  const email = $("editEmail").value.trim();
+  if (!email) return toast("No email found.", false);
+  try {
+    await auth.sendPasswordResetEmail(email);
+    audit("AUTH_PASSWORD_RESET_EMAIL", "", email);
+    toast("Reset email sent to " + email);
+  } catch (e) { toast(e.message, false); }
+}
+window.sendUserReset = sendUserReset;
+
+function deleteUserProfile() {
+  const uid = $("editUid").value;
+  askConfirm(
+    "Delete User Profile?",
+    "This will remove all data under users/" + uid.substring(0, 12) + "… from the Realtime Database. Firebase Auth account will NOT be deleted.",
+    async () => {
+      try {
+        await db.ref("users/" + uid).remove();
+        audit("DELETE_USER_PROFILE", "users/" + uid);
+        toast("Profile deleted.");
+        closeModal("userModal");
+      } catch (e) { toast(e.message, false); }
+    },
+    "Delete Profile"
+  );
+}
+window.deleteUserProfile = deleteUserProfile;
+
+function openRawUser() {
+  $("rawUserEditor").value = JSON.stringify(users[$("editUid").value] || {}, null, 2);
+}
+window.openRawUser = openRawUser;
+
+async function saveRawUser() {
+  try {
+    const uid = $("editUid").value;
+    const obj = JSON.parse($("rawUserEditor").value);
+    await db.ref("users/" + uid).set(obj);
+    audit("RAW_USER_SET", "users/" + uid);
+    toast("Raw user JSON saved.");
+  } catch (e) { toast(e.message, false); }
+}
+window.saveRawUser = saveRawUser;
+
+/* =========================================================
+   HENS CONTROL MODAL — CORE NEW FEATURE
+   ========================================================= */
+function openHensControlModal(uid) {
+  const u = users[uid] || {};
+  $("hensOwnerUid").value = uid;
+  $("hensOwnerName").innerText = u.name || "User";
+  renderHensControl(uid);
+  openModal("hensControlModal");
+}
+window.openHensControlModal = openHensControlModal;
+
+function renderHensControl(uid) {
+  const u = users[uid] || {};
+  const batches = u.hen_batches || {};
+  const entries = Object.entries(batches);
+  const now = Date.now();
+
+  let totalHens = 0, active = 0, paused = 0;
+
+  const rows = entries.map(([key, b]) => {
+    const qty = num(b.qty);
+    const boughtAt = num(b.boughtAt || b.purchasedAt || b.lastCollectedAt || now);
+    const lastCollected = num(b.lastCollectedAt || boughtAt);
+    const elapsedTotal = now - boughtAt;
+    const daysLeft = Math.max(0, Math.ceil((HEN_LIFESPAN_DAYS * DAY - elapsedTotal) / DAY));
+    const isExpired = elapsedTotal >= (HEN_LIFESPAN_DAYS * DAY);
+    const isPaused = !!b.paused;
+    const label = b.label || ("Batch " + key.substring(0, 6));
+
+    totalHens += qty;
+    if (isPaused) paused++; else active++;
+
+    // Time until next egg
+    const elapsedSinceCollect = now - lastCollected;
+    const timeLeft = Math.max(0, DAY - elapsedSinceCollect);
+    const h = Math.floor(timeLeft / 3600000);
+    const m = Math.floor((timeLeft % 3600000) / 60000);
+    const s = Math.floor((timeLeft % 60000) / 1000);
+
+    const badge = isExpired ? `<span class="badge badge-expired">EXPIRED</span>`
+                : isPaused ? `<span class="badge badge-paused">PAUSED</span>`
+                : `<span class="badge badge-active">ACTIVE</span>`;
+
+    return `
+      <div class="hen-batch-card bg-slate-950 border border-slate-800 rounded-xl p-3">
+        <div class="flex justify-between items-start gap-3 flex-wrap">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-bold text-slate-200 text-xs">${esc(label)}</span>
+              ${badge}
+              <span class="tag bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">${qty} 🐔</span>
+            </div>
+            <div class="text-[10px] text-slate-500 font-mono mt-1">Key: ${esc(key)}</div>
+            <div class="grid grid-cols-2 gap-2 mt-2 text-[11px]">
+              <div class="text-slate-400">⏱️ Next Egg: <span class="font-mono text-emerald-400">${isPaused ? "—" : `${String(h).padStart(2,"0")}h ${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`}</span></div>
+              <div class="text-slate-400">📅 Expires: <span class="${daysLeft <= 10 ? "text-red-400 font-bold" : "text-emerald-400"}">${daysLeft}d</span></div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5 shrink-0">
+            ${isPaused
+              ? `<button class="btn bg-emerald-900/60 text-emerald-300 border border-emerald-800" onclick="resumeBatch('${esc(uid)}','${esc(key)}')">▶️ Resume</button>`
+              : `<button class="btn bg-amber-900/60 text-amber-300 border border-amber-800" onclick="pauseBatch('${esc(uid)}','${esc(key)}')">⏸️ Pause</button>`}
+            <button class="btn bg-blue-900/50 text-blue-300 border border-blue-800" onclick="resetSingleBatchFromList('${esc(uid)}','${esc(key)}')">🔄 Reset</button>
+            <button class="btn bg-emerald-900/50 text-emerald-300 border border-emerald-800" onclick="forceCollectFromList('${esc(uid)}','${esc(key)}')">⚡ Eggs</button>
+            <button class="btn bg-purple-900/50 text-purple-300 border border-purple-800" onclick="openBatchEditModal('${esc(uid)}','${esc(key)}')">⚙️ Edit</button>
+            <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteSingleBatchFromList('${esc(uid)}','${esc(key)}',${qty})">🗑️</button>
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+
+  $("hensStatTotal").innerText = totalHens;
+  $("hensStatActive").innerText = active;
+  $("hensStatPaused").innerText = paused;
+  $("hensStatBatches").innerText = entries.length;
+
+  $("hensListContainer").innerHTML = entries.length
+    ? rows
+    : `<div class="text-xs text-slate-500 italic p-6 text-center bg-slate-950 border border-slate-800 rounded-xl">This user has no hen batches.</div>`;
+}
+
+/* Pause / Resume single batch */
+async function pauseBatch(uid, key) {
+  try {
+    await db.ref(`users/${uid}/hen_batches/${key}`).update({
+      paused: true,
+      pausedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+    audit("PAUSE_BATCH", `users/${uid}/hen_batches/${key}`);
+    toast("Batch paused.");
+  } catch (e) { toast(e.message, false); }
+}
+window.pauseBatch = pauseBatch;
+
+async function resumeBatch(uid, key) {
+  try {
+    // Reset timer so production starts fresh
+    await db.ref(`users/${uid}/hen_batches/${key}`).update({
+      paused: false,
+      pausedAt: null,
+      lastCollectedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+    audit("RESUME_BATCH", `users/${uid}/hen_batches/${key}`);
+    toast("Batch resumed.");
+  } catch (e) { toast(e.message, false); }
+}
+window.resumeBatch = resumeBatch;
+
+/* Reset single batch timer */
+async function resetSingleBatchFromList(uid, key) {
+  try {
+    await db.ref(`users/${uid}/hen_batches/${key}`).update({
+      lastCollectedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+    audit("RESET_BATCH_TIMER", `users/${uid}/hen_batches/${key}`);
+    toast("Timer reset to 24h.");
+  } catch (e) { toast(e.message, false); }
+}
+window.resetSingleBatchFromList = resetSingleBatchFromList;
+
+/* Force collect eggs from a batch */
+async function forceCollectFromList(uid, key) {
+  const b = (users[uid]?.hen_batches || {})[key];
+  if (!b) return toast("Batch not found.", false);
+  const qty = num(b.qty);
+
+  askConfirm(
+    "Force Collect Eggs?",
+    `This will instantly add ${qty} eggs to ${users[uid]?.name || "user"}'s balance and reset the timer.`,
+    async () => {
+      try {
+        await db.ref(`users/${uid}/availableEggs`).transaction(v => num(v) + qty);
+        await db.ref(`users/${uid}/hen_batches/${key}`).update({
+          lastCollectedAt: firebase.database.ServerValue.TIMESTAMP
+        });
+        audit("FORCE_COLLECT", `users/${uid}/hen_batches/${key}`, `+${qty} eggs`);
+        toast(`+${qty} eggs added.`);
+      } catch (e) { toast(e.message, false); }
+    },
+    "Collect Now",
+    false
+  );
+}
+window.forceCollectFromList = forceCollectFromList;
+
+/* Delete single batch */
+function deleteSingleBatchFromList(uid, key, qty) {
+  askConfirm(
+    "Delete Batch?",
+    `Remove this batch of ${qty} hens permanently? User's total hens will reduce by ${qty}.`,
+    async () => {
+      try {
+        await db.ref(`users/${uid}/hen_batches/${key}`).remove();
+        await db.ref(`users/${uid}/totalHens`).transaction(v => Math.max(0, num(v) - qty));
+        audit("DELETE_BATCH", `users/${uid}/hen_batches/${key}`, `qty=${qty}`);
+        toast("Batch deleted.");
+      } catch (e) { toast(e.message, false); }
+    },
+    "Delete"
+  );
+}
+window.deleteSingleBatchFromList = deleteSingleBatchFromList;
+
+/* Bulk actions inside hens modal */
+function pauseAllUserBatches() {
+  const uid = $("hensOwnerUid").value;
+  const batches = Object.keys(users[uid]?.hen_batches || {});
+  if (!batches.length) return toast("No batches to pause.", false);
+
+  askConfirm("Pause All Batches?", `Pause all ${batches.length} batches of this user?`, async () => {
+    try {
+      const updates = {};
+      batches.forEach(k => {
+        updates[`hen_batches/${k}/paused`] = true;
+        updates[`hen_batches/${k}/pausedAt`] = firebase.database.ServerValue.TIMESTAMP;
+      });
+      await db.ref("users/" + uid).update(updates);
+      audit("PAUSE_ALL_BATCHES", `users/${uid}`, `count=${batches.length}`);
+      toast(`Paused ${batches.length} batches.`);
+    } catch (e) { toast(e.message, false); }
+  }, "Pause All");
+}
+window.pauseAllUserBatches = pauseAllUserBatches;
+
+function resumeAllUserBatches() {
+  const uid = $("hensOwnerUid").value;
+  const batches = Object.keys(users[uid]?.hen_batches || {});
+  if (!batches.length) return toast("No batches to resume.", false);
+
+  askConfirm("Resume All Batches?", `Resume all ${batches.length} batches?`, async () => {
+    try {
+      const updates = {};
+      const now = firebase.database.ServerValue.TIMESTAMP;
+      batches.forEach(k => {
+        updates[`hen_batches/${k}/paused`] = false;
+        updates[`hen_batches/${k}/pausedAt`] = null;
+        updates[`hen_batches/${k}/lastCollectedAt`] = now;
+      });
+      await db.ref("users/" + uid).update(updates);
+      audit("RESUME_ALL_BATCHES", `users/${uid}`, `count=${batches.length}`);
+      toast(`Resumed ${batches.length} batches.`);
+    } catch (e) { toast(e.message, false); }
+  }, "Resume All", false);
+}
+window.resumeAllUserBatches = resumeAllUserBatches;
+
+function resetAllUserTimers() {
+  const uid = $("hensOwnerUid").value;
+  const batches = Object.keys(users[uid]?.hen_batches || {});
+  if (!batches.length) return toast("No batches.", false);
+
+  askConfirm("Reset All Timers?", "All batches will restart from 24h.", async () => {
+    try {
+      const updates = {};
+      const now = firebase.database.ServerValue.TIMESTAMP;
+      batches.forEach(k => { updates[`hen_batches/${k}/lastCollectedAt`] = now; });
+      await db.ref("users/" + uid).update(updates);
+      audit("RESET_ALL_TIMERS", `users/${uid}`, `count=${batches.length}`);
+      toast(`Reset ${batches.length} timers.`);
+    } catch (e) { toast(e.message, false); }
+  }, "Reset All", false);
+}
+window.resetAllUserTimers = resetAllUserTimers;
+
+function deleteAllUserBatches() {
+  const uid = $("hensOwnerUid").value;
+  const u = users[uid] || {};
+  const batchCount = Object.keys(u.hen_batches || {}).length;
+  const totalHens = num(u.totalHens);
+  if (!batchCount) return toast("No batches.", false);
+
+  askConfirm(
+    "Delete ALL Hens?",
+    `Permanently remove all ${batchCount} batches (= ${totalHens} hens) of ${u.name || "this user"}?`,
+    async () => {
+      try {
+        await db.ref("users/" + uid).update({ hen_batches: null, totalHens: 0 });
+        audit("DELETE_ALL_USER_BATCHES", `users/${uid}`, `count=${batchCount}`);
+        toast("All batches removed.");
+      } catch (e) { toast(e.message, false); }
+    },
+    "Delete All"
+  );
+}
+window.deleteAllUserBatches = deleteAllUserBatches;
+
+/* ============ BATCH EDIT MODAL ============ */
+function openBatchEditModal(uid, key) {
+  const b = (users[uid]?.hen_batches || {})[key];
+  if (!b) return toast("Batch not found.", false);
+
+  editingBatch = { uid, key };
+  $("beUid").value = uid;
+  $("beKey").value = key;
+  $("beLabel").value = b.label || "";
+  $("beQty").value = num(b.qty);
+  $("beStatus").value = b.paused ? "paused" : "active";
+
+  const now = Date.now();
+  const boughtAt = num(b.boughtAt || b.purchasedAt || b.lastCollectedAt || now);
+  const daysLeft = Math.max(0, Math.ceil((HEN_LIFESPAN_DAYS * DAY - (now - boughtAt)) / DAY));
+
+  $("beDaysLeft").value = daysLeft;
+
+  const lastCollected = num(b.lastCollectedAt || boughtAt);
+  const elapsed = now - lastCollected;
+  const timeLeft = Math.max(0, DAY - elapsed);
+  $("beHoursLeft").value = Math.floor(timeLeft / 3600000);
+  $("beMinsLeft").value = Math.floor((timeLeft % 3600000) / 60000);
+
+  openModal("batchEditModal");
+}
+window.openBatchEditModal = openBatchEditModal;
+
+async function saveBatchEdit() {
+  const uid = $("beUid").value;
+  const key = $("beKey").value;
+  const b = (users[uid]?.hen_batches || {})[key];
+  if (!b) return toast("Batch not found.", false);
+
+  const oldQty = num(b.qty);
+  const newQty = int($("beQty").value);
+  if (newQty <= 0) return toast("Quantity must be > 0.", false);
+
+  const updates = {
+    label: $("beLabel").value.trim(),
+    qty: newQty,
+    paused: $("beStatus").value === "paused"
+  };
+
+  // Time override
+  const hVal = $("beHoursLeft").value;
+  const mVal = $("beMinsLeft").value;
+  if (hVal !== "" || mVal !== "") {
+    const h = int(hVal), m = int(mVal);
+    const remaining = h * 3600000 + m * 60000;
+    updates.lastCollectedAt = Date.now() - DAY + remaining;
+  }
+
+  // Lifespan override
+  const daysVal = $("beDaysLeft").value;
+  if (daysVal !== "") {
+    const days = Math.max(0, Math.min(HEN_LIFESPAN_DAYS, int(daysVal)));
+    const daysPassed = HEN_LIFESPAN_DAYS - days;
+    const newBought = Date.now() - (daysPassed * DAY);
+    updates.boughtAt = newBought;
+    updates.purchasedAt = newBought;
+  }
+
+  try {
+    showLoader("Saving batch...");
+    await db.ref(`users/${uid}/hen_batches/${key}`).update(updates);
+
+    // Update totalHens if qty changed
+    if (newQty !== oldQty) {
+      const diff = newQty - oldQty;
+      await db.ref(`users/${uid}/totalHens`).transaction(v => Math.max(0, num(v) + diff));
+    }
+
+    audit("EDIT_BATCH", `users/${uid}/hen_batches/${key}`, JSON.stringify(updates));
+    toast("Batch updated.");
+    closeModal("batchEditModal");
+  } catch (e) { toast(e.message, false); }
+  finally { hideLoader(); }
+}
+window.saveBatchEdit = saveBatchEdit;
+
+async function forceCollectEggs() {
+  const uid = $("beUid").value;
+  const key = $("beKey").value;
+  const b = (users[uid]?.hen_batches || {})[key];
+  if (!b) return toast("Batch not found.", false);
+  const qty = num(b.qty);
+
+  askConfirm("Force Collect?", `Add ${qty} eggs to user's balance instantly?`, async () => {
+    try {
+      await db.ref(`users/${uid}/availableEggs`).transaction(v => num(v) + qty);
+      await db.ref(`users/${uid}/hen_batches/${key}`).update({
+        lastCollectedAt: firebase.database.ServerValue.TIMESTAMP
+      });
+      audit("FORCE_COLLECT", `users/${uid}/hen_batches/${key}`, `+${qty} eggs`);
+      toast(`+${qty} eggs added.`);
+      closeModal("batchEditModal");
+    } catch (e) { toast(e.message, false); }
+  }, "Collect", false);
+}
+window.forceCollectEggs = forceCollectEggs;
+
+async function resetSingleBatchTimer() {
+  const uid = $("beUid").value;
+  const key = $("beKey").value;
+  try {
+    await db.ref(`users/${uid}/hen_batches/${key}`).update({
+      lastCollectedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+    audit("RESET_BATCH_TIMER", `users/${uid}/hen_batches/${key}`);
+    toast("Timer reset.");
+    $("beHoursLeft").value = 0;
+    $("beMinsLeft").value = 0;
+  } catch (e) { toast(e.message, false); }
+}
+window.resetSingleBatchTimer = resetSingleBatchTimer;
+
+function deleteSingleBatch() {
+  const uid = $("beUid").value;
+  const key = $("beKey").value;
+  const b = (users[uid]?.hen_batches || {})[key];
+  if (!b) return toast("Batch not found.", false);
+  const qty = num(b.qty);
+
+  askConfirm("Delete Batch?", `Remove this batch of ${qty} hens?`, async () => {
+    try {
+      await db.ref(`users/${uid}/hen_batches/${key}`).remove();
+      await db.ref(`users/${uid}/totalHens`).transaction(v => Math.max(0, num(v) - qty));
+      audit("DELETE_BATCH", `users/${uid}/hen_batches/${key}`, `qty=${qty}`);
+      toast("Batch deleted.");
+      closeModal("batchEditModal");
+    } catch (e) { toast(e.message, false); }
+  }, "Delete");
+}
+window.deleteSingleBatch = deleteSingleBatch;
+
+/* ============ PURCHASES ============ */
+function renderPurchases() {
+  const arr = Object.entries(purchases).sort((a, b) => num(b[1].timestamp) - num(a[1].timestamp));
+  $("purchasesBody").innerHTML = arr.map(([id, p]) => {
+    const u = users[p.uid] || {};
+    const pending = p.status === "pending";
+    return `<tr class="hover:bg-slate-900/60">
+      <td class="p-3 text-[10px] text-slate-400">${p.timestamp ? new Date(p.timestamp).toLocaleString() : "—"}</td>
+      <td class="p-3">
+        <b class="text-slate-200">${esc(u.name || "Unknown")}</b>
+        <div class="text-[9px] text-slate-500 font-mono">${esc((p.uid || "").substring(0, 12))}…</div>
+      </td>
+      <td class="p-3">
+        <div class="text-slate-300 text-[10px]">${esc(p.accountHolderName || "—")}</div>
+        <div class="text-cyan-400 text-[10px] font-mono">${esc(p.transactionId || "")}</div>
+      </td>
+      <td class="p-3 text-yellow-400 font-bold">${num(p.quantity)}</td>
+      <td class="p-3">${statusBadge(p.status)}</td>
+      <td class="p-3 text-right whitespace-nowrap">
+        ${pending ? `
+          <button class="btn bg-emerald-900/50 text-emerald-300 border border-emerald-800" onclick="approvePurchase('${esc(id)}')">Approve</button>
+          <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="rejectRequest('purchase','${esc(id)}')">Reject</button>
+        ` : `<span class="text-slate-600 text-[10px]">—</span>`}
+      </td>
+    </tr>`;
+  }).join("") || emptyRow(6, "No purchase requests.");
+}
+
+async function approvePurchase(id) {
+  const p = purchases[id];
+  if (!p || p.status !== "pending") return;
+  askConfirm("Approve Purchase?", `Approve ${num(p.quantity)} hens for ${users[p.uid]?.name || "user"}?`, async () => {
+    try {
+      showLoader("Approving...");
+      const uid = p.uid;
+      const ref = db.ref("users/" + uid);
+      const snap = await ref.once("value");
+      const live = snap.val() || {};
+      const qty = num(p.quantity);
+      const amount = num(p.amount);
+      const batchKey = ref.child("hen_batches").push().key;
+
+      await ref.update({
+        totalHens: num(live.totalHens) + qty,
+        totalExpense: num(live.totalExpense) + amount,
+        selfPurchasedHens: num(live.selfPurchasedHens) + qty,
+        [`hen_batches/${batchKey}`]: {
+          qty,
+          label: "Batch " + batchKey.substring(0, 6),
+          boughtAt: firebase.database.ServerValue.TIMESTAMP,
+          lastCollectedAt: firebase.database.ServerValue.TIMESTAMP,
+          paused: false
+        }
+      });
+
+      await db.ref("purchase_requests/" + id).update({
+        status: "approved",
+        approvedAt: firebase.database.ServerValue.TIMESTAMP,
+        approvedBy: "direct-owner-panel"
+      });
+
+      audit("APPROVE_PURCHASE", "purchase_requests/" + id, `uid=${uid}, qty=${qty}`);
+      toast("Purchase approved.");
+    } catch (e) { toast(e.message, false); }
+    finally { hideLoader(); }
+  }, "Approve", false);
+}
+window.approvePurchase = approvePurchase;
+
+function rejectRequest(type, id) {
+  selectedReject = { type, id };
+  $("rejectReason").value = "";
+  openModal("rejectModal");
+}
+window.rejectRequest = rejectRequest;
+
+async function confirmReject() {
+  if (!requireOwner()) return;
+  const reason = $("rejectReason").value.trim() || "Rejected by Owner";
+  const { type, id } = selectedReject;
+  try {
+    showLoader("Rejecting...");
+    if (type === "purchase") {
+      await db.ref("purchase_requests/" + id).update({ status: "rejected", reason, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+    } else {
+      const ref = db.ref("withdraw_requests/" + id);
+      const snap = await ref.once("value");
+      const w = snap.val() || {};
+      if (w.status !== "pending") { closeModal("rejectModal"); hideLoader(); return; }
+      const refund = num(w.eggsSold || w.eggsDeductedCount);
+      const uid = w.uid;
+
+      await ref.update({ status: "rejected", reason, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+      await db.ref("users/" + uid + "/availableEggs").transaction(v => num(v) + refund);
+    }
+    audit("REJECT_" + type.toUpperCase(), type === "purchase" ? "purchase_requests/" + id : "withdraw_requests/" + id, reason);
+    toast("Request rejected.");
+    closeModal("rejectModal");
+  } catch (e) { toast(e.message, false); }
+  finally { hideLoader(); }
+}
+window.confirmReject = confirmReject;
+
+/* ============ WITHDRAWALS ============ */
+function renderWithdrawals() {
+  const arr = Object.entries(withdrawals).sort((a, b) => num(b[1].timestamp) - num(a[1].timestamp));
+  $("withdrawalsBody").innerHTML = arr.map(([id, w]) => {
+    const u = users[w.uid] || {};
+    const amt = num(w.amount || w.totalPayout);
+    const pending = w.status === "pending";
+    return `<tr class="hover:bg-slate-900/60">
+      <td class="p-3 text-[10px] text-slate-400">${w.timestamp ? new Date(w.timestamp).toLocaleString() : "—"}</td>
+      <td class="p-3">
+        <b class="text-slate-200">${esc(u.name || "Unknown")}</b>
+        <div class="text-[9px] text-slate-500">${esc(w.dealerName || "Dealer")} • ${num(w.eggsSold || w.eggsDeductedCount)} eggs</div>
+      </td>
+      <td class="p-3">
+        <div class="text-slate-300 text-[10px]">${esc(w.accountTitle || w.accountHolderName || "—")}</div>
+        <div class="text-cyan-400 text-[10px] font-mono">${esc(w.accountNumber || "")}</div>
+      </td>
+      <td class="p-3 text-emerald-400 font-bold">Rs. ${amt.toFixed(2)}</td>
+      <td class="p-3">${statusBadge(w.status)}</td>
+      <td class="p-3 text-right whitespace-nowrap">
+        ${pending ? `
+          <button class="btn bg-emerald-900/50 text-emerald-300 border border-emerald-800" onclick="approveWithdrawal('${esc(id)}')">Paid ✓</button>
+          <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="rejectRequest('withdrawal','${esc(id)}')">Reject</button>
+        ` : `<span class="text-slate-600 text-[10px]">—</span>`}
+      </td>
+    </tr>`;
+  }).join("") || emptyRow(6, "No withdrawal requests.");
+}
+
+async function approveWithdrawal(id) {
+  const w = withdrawals[id];
+  if (!w || w.status !== "pending") return;
+  askConfirm("Approve Withdrawal?", `Mark ${num(w.amount || w.totalPayout).toFixed(2)} PKR as paid?`, async () => {
+    try {
+      showLoader("Approving...");
+      const uid = w.uid;
+      const amt = num(w.amount || w.totalPayout);
+      await db.ref("users/" + uid + "/totalWithdrawal").transaction(v => num(v) + amt);
+      await db.ref("withdraw_requests/" + id).update({
+        status: "approved",
+        approvedAt: firebase.database.ServerValue.TIMESTAMP,
+        approvedBy: "direct-owner-panel"
+      });
+      audit("APPROVE_WITHDRAWAL", "withdraw_requests/" + id, `uid=${uid}, amount=${amt}`);
+      toast("Withdrawal approved.");
+    } catch (e) { toast(e.message, false); }
+    finally { hideLoader(); }
+  }, "Approve", false);
+}
+window.approveWithdrawal = approveWithdrawal;
+
+/* ============ ALL BATCHES VIEW ============ */
+function renderAllBatches() {
+  const container = $("allBatchesContainer");
+  if (!container) return;
+
+  const q = ($("batchSearch")?.value || "").toLowerCase();
+  const now = Date.now();
+  const rows = [];
+
+  Object.entries(users).forEach(([uid, u]) => {
+    Object.entries(u.hen_batches || {}).forEach(([k, b]) => {
+      const haystack = `${uid} ${u.name || ""} ${k} ${b.label || ""}`.toLowerCase();
+      if (q && !haystack.includes(q)) return;
+
+      const qty = num(b.qty);
+      const boughtAt = num(b.boughtAt || b.purchasedAt || b.lastCollectedAt || now);
+      const daysLeft = Math.max(0, Math.ceil((HEN_LIFESPAN_DAYS * DAY - (now - boughtAt)) / DAY));
+      const isExpired = daysLeft === 0;
+      const isPaused = !!b.paused;
+
+      const lastCollected = num(b.lastCollectedAt || boughtAt);
+      const elapsed = now - lastCollected;
+      const timeLeft = Math.max(0, DAY - elapsed);
+      const h = Math.floor(timeLeft / 3600000);
+      const m = Math.floor((timeLeft % 3600000) / 60000);
+
+      const badge = isExpired ? `<span class="badge badge-expired">EXPIRED</span>`
+                  : isPaused ? `<span class="badge badge-paused">PAUSED</span>`
+                  : `<span class="badge badge-active">ACTIVE</span>`;
+
+      rows.push(`
+        <div class="card hen-batch-card p-4">
+          <div class="flex justify-between items-start gap-3 flex-wrap">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <b class="text-slate-200 text-sm">${esc(u.name || "User")}</b>
+                ${badge}
+                <span class="tag bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">${qty} 🐔</span>
+              </div>
+              <div class="text-[10px] text-slate-500 font-mono mt-1">${esc(b.label || k)} • UID: ${esc(uid.substring(0, 10))}…</div>
+              <div class="flex gap-4 text-[11px] text-slate-400 mt-2 flex-wrap">
+                <span>📅 ${daysLeft}d left</span>
+                <span>⏱️ ${isPaused ? "—" : `${h}h ${m}m to next egg`}</span>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5 shrink-0">
+              ${isPaused
+                ? `<button class="btn bg-emerald-900/60 text-emerald-300 border border-emerald-800" onclick="resumeBatch('${esc(uid)}','${esc(k)}')">▶️</button>`
+                : `<button class="btn bg-amber-900/60 text-amber-300 border border-amber-800" onclick="pauseBatch('${esc(uid)}','${esc(k)}')">⏸️</button>`}
+              <button class="btn bg-blue-900/50 text-blue-300 border border-blue-800" onclick="resetSingleBatchFromList('${esc(uid)}','${esc(k)}')">🔄</button>
+              <button class="btn bg-emerald-900/50 text-emerald-300 border border-emerald-800" onclick="forceCollectFromList('${esc(uid)}','${esc(k)}')">⚡</button>
+              <button class="btn bg-purple-900/50 text-purple-300 border border-purple-800" onclick="openBatchEditModal('${esc(uid)}','${esc(k)}')">⚙️</button>
+              <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteSingleBatchFromList('${esc(uid)}','${esc(k)}',${qty})">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `);
+    });
+  });
+
+  container.innerHTML = rows.join("") || `<div class="card p-6 text-center text-slate-500 italic text-xs">No hen batches found.</div>`;
+}
+window.renderAllBatches = renderAllBatches;
+
+/* Legacy renderBatches wrapper for compatibility */
+function renderBatches() { renderAllBatches(); }
+window.renderBatches = renderBatches;
+
+/* Legacy editBatch wrapper */
+function editBatch(uid, key, currentDays) {
+  openBatchEditModal(uid, key);
+}
+window.editBatch = editBatch;
+
+/* Legacy removeBatch wrapper */
+function removeBatch(uid, key, qty) {
+  deleteSingleBatchFromList(uid, key, qty);
+}
+window.removeBatch = removeBatch;
+
+/* ============ CLEANUP EXPIRED (FIXED RACE) ============ */
+async function cleanupExpired() {
+  askConfirm(
+    "Clean Expired Batches?",
+    "All batches 120+ days old will be removed. Hens count will be reduced atomically.",
+    async () => {
+      let n = 0;
+      try {
+        showLoader("Cleaning expired batches...");
+        const now = Date.now();
+
+        for (const uid of Object.keys(users)) {
+          const u = users[uid];
+          for (const k of Object.keys(u.hen_batches || {})) {
+            const b = u.hen_batches[k];
+            const bought = num(b.boughtAt || b.purchasedAt || b.lastCollectedAt || now);
+            if (now - bought >= HEN_LIFESPAN_DAYS * DAY) {
+              n++;
+              // Atomic per-user update (no race condition)
+              await db.ref(`users/${uid}/totalHens`).transaction(v => Math.max(0, num(v) - num(b.qty)));
+              await db.ref(`users/${uid}/hen_batches/${k}`).remove();
+            }
+          }
+        }
+
+        audit("CLEANUP_EXPIRED_BATCHES", "", `removed=${n}`);
+        toast(`Cleanup complete: ${n} batch(es) removed.`);
+      } catch (e) { toast(e.message, false); }
+      finally { hideLoader(); }
+    },
+    "Clean Now"
+  );
+}
+window.cleanupExpired = cleanupExpired;
+
+/* ============ RATES ============ */
+function renderRates() {
+  $("eggPrice").value = rates.eggPrice ?? "";
+  $("eggPriceTo").value = rates.eggPriceTo ?? "";
+  $("henPrice").value = rates.henPrice ?? "";
+  $("eggPerHen").value = rates.eggPerHen ?? "";
+
+  const preview = $("ratesPreview");
+  if (preview) {
+    preview.innerHTML = `
+      <div class="flex justify-between border-b border-slate-800 py-2"><span class="text-slate-400">Egg Price (live)</span><b class="text-yellow-400">${num(rates.eggPrice).toFixed(2)} PKR</b></div>
+      <div class="flex justify-between border-b border-slate-800 py-2"><span class="text-slate-400">Range</span><b class="text-emerald-400">${num(rates.eggPriceFrom)} – ${num(rates.eggPriceTo)} PKR</b></div>
+      <div class="flex justify-between border-b border-slate-800 py-2"><span class="text-slate-400">Hen Price</span><b class="text-yellow-400">${num(rates.henPrice)} PKR</b></div>
+      <div class="flex justify-between py-2"><span class="text-slate-400">Eggs/Hen/Day</span><b class="text-white">${num(rates.eggPerHen)}</b></div>
+    `;
+  }
+}
+
+$("ratesForm").onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const d = {
+      eggPrice: num($("eggPrice").value),
+      eggPriceFrom: num($("eggPrice").value),
+      eggPriceTo: num($("eggPriceTo").value) || num($("eggPrice").value),
+      henPrice: num($("henPrice").value),
+      eggPerHen: num($("eggPerHen").value)
+    };
+    await db.ref("rates").update(d);
+    audit("UPDATE_RATES", "rates", JSON.stringify(d));
+    toast("Rates saved.");
+  } catch (x) { toast(x.message, false); }
 };
 
-function showHistory(kind="all"){
-  const rows=[];
-  if(kind==="all"||kind==="purchase") Object.entries(purchases).forEach(([id,p])=>rows.push({type:"Purchase",id,path:"purchase_requests/"+id,date:p.timestamp,user:(users[p.uid]||{}).name||p.uid,amount:(num(p.quantity)+" hens"),status:p.status,node:"purchase_requests"}));
-  if(kind==="all"||kind==="withdrawal") Object.entries(withdrawals).forEach(([id,w])=>rows.push({type:"Withdrawal",id,path:"withdraw_requests/"+id,date:w.timestamp,user:(users[w.uid]||{}).name||w.uid,amount:(num(w.amount||w.totalPayout).toFixed(2)+" PKR"),status:w.status,node:"withdraw_requests"}));
-  rows.sort((a,b)=>num(b.date)-num(a.date));
-  $("historyBody").innerHTML=rows.map(r=>`<tr><td class="p-3">${esc(r.type)}</td><td class="p-3 text-[10px]">${r.date?new Date(r.date).toLocaleString():"—"}</td><td class="p-3">${esc(r.user)}</td><td class="p-3">${esc(r.amount)}</td><td class="p-3">${statusBadge(r.status)}</td><td class="p-3 text-right"><button class="btn bg-red-950 text-red-300" onclick="deleteHistoryItem('${esc(r.node)}','${esc(r.id)}')">Delete</button></td></tr>`).join("")||emptyRow(6,"No records found.");
+/* ============ DEALERS ============ */
+function renderDealers() {
+  $("dealersBody").innerHTML = Object.entries(dealers).map(([id, d]) => `
+    <tr class="hover:bg-slate-900/60">
+      <td class="p-3 font-bold text-slate-200">${esc(d.name)}</td>
+      <td class="p-3 text-yellow-400 font-mono">${num(d.rate || d.price)}</td>
+      <td class="p-3 text-slate-300">${num(d.minLimit)} — ${num(d.maxLimit)}</td>
+      <td class="p-3 text-right whitespace-nowrap">
+        <button class="btn bg-blue-900/50 text-blue-300 border border-blue-800" onclick="editDealer('${esc(id)}')">Edit</button>
+        <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteDealer('${esc(id)}')">Delete</button>
+      </td>
+    </tr>
+  `).join("") || emptyRow(4, "No dealers.");
 }
-async function deleteHistoryItem(node,id){if(!confirm("Delete this record permanently?"))return;try{await db.ref(node+"/"+id).remove();audit("DELETE_HISTORY",node+"/"+id);toast("Record deleted.")}catch(e){toast(e.message,false)}}
-window.showHistory=showHistory;window.deleteHistoryItem=deleteHistoryItem;
-async function deleteAllRequests(node){if(!confirm("DELETE ALL records under /"+node+"? This cannot be undone."))return;try{await db.ref(node).remove();audit("DELETE_ALL",node);toast("All records deleted.")}catch(e){toast(e.message,false)}}
-async function deleteAllAnnouncements(){if(!confirm("Delete ALL announcements?"))return;try{await db.ref("announcements").remove();audit("DELETE_ALL","announcements");toast("All announcements deleted.")}catch(e){toast(e.message,false)}}
-async function deleteAllDealers(){if(!confirm("Delete ALL dealers?"))return;try{await db.ref("dealers").remove();audit("DELETE_ALL","dealers");toast("All dealers deleted.")}catch(e){toast(e.message,false)}}
-async function deleteAllBatches(){if(!confirm("Delete ALL hen batches from ALL users and set totalHens to 0?"))return;try{const updates={};Object.entries(users).forEach(([uid,u])=>{if(u.hen_batches){updates[`users/${uid}/hen_batches`]=null;updates[`users/${uid}/totalHens`]=0;}});if(Object.keys(updates).length)await db.ref().update(updates);audit("DELETE_ALL_BATCHES","users");toast("All hen batches removed.")}catch(e){toast(e.message,false)}}
-async function runScheduledCleanup(){const started=Date.now();await cleanupExpired();$("scheduleStatus").innerText="Expired-batch maintenance executed at "+new Date(started).toLocaleString();}
-window.runScheduledCleanup=runScheduledCleanup;
 
-function renderAudit(data){
- const arr=Object.values(data).sort((a,b)=>num(b.timestamp)-num(a.timestamp)).reverse();
- $("auditList").innerHTML=arr.map(a=>`<div class="card p-3"><div class="flex justify-between gap-2"><b class="text-emerald-400 text-xs">${esc(a.action)}</b><span class="text-[9px] text-slate-500">${a.timestamp?new Date(a.timestamp).toLocaleString():"—"}</span></div><div class="text-[10px] text-slate-400 mt-1">${esc(a.path||"")}</div><div class="text-[10px] text-slate-300 mt-1 break-all">${esc(a.detail||"")}</div></div>`).join("")||`<div class="card p-5 text-slate-500">No audit records.</div>`;
+$("dealerForm").onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const id = $("dealerId").value;
+    const d = {
+      name: $("dealerName").value.trim(),
+      rate: num($("dealerRate").value),
+      minLimit: num($("dealerMin").value),
+      maxLimit: num($("dealerMax").value)
+    };
+    if (id) await db.ref("dealers/" + id).update(d);
+    else await db.ref("dealers").push(d);
+    audit(id ? "UPDATE_DEALER" : "CREATE_DEALER", "dealers/" + (id || "new"), JSON.stringify(d));
+    resetDealer();
+    toast("Dealer saved.");
+  } catch (x) { toast(x.message, false); }
+};
+
+function editDealer(id) {
+  const d = dealers[id] || {};
+  $("dealerId").value = id;
+  $("dealerName").value = d.name || "";
+  $("dealerRate").value = d.rate || d.price || 0;
+  $("dealerMin").value = d.minLimit || 0;
+  $("dealerMax").value = d.maxLimit || 0;
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
-async function confirmClearAudit(){if(!confirm("Clear owner_audit completely?"))return;try{await db.ref("owner_audit").remove();toast("Audit log cleared.")}catch(e){toast(e.message,false)}}
-window.confirmClearAudit=confirmClearAudit;
+window.editDealer = editDealer;
 
-function downloadText(name,text,type="application/json"){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click()}
-window.addEventListener("beforeunload",()=>{});
+async function deleteDealer(id) {
+  askConfirm("Delete Dealer?", "This dealer will be removed permanently.", async () => {
+    try {
+      await db.ref("dealers/" + id).remove();
+      audit("DELETE_DEALER", "dealers/" + id);
+      toast("Dealer deleted.");
+    } catch (e) { toast(e.message, false); }
+  }, "Delete");
+}
+window.deleteDealer = deleteDealer;
 
+function resetDealer() { $("dealerForm").reset(); $("dealerId").value = ""; }
+window.resetDealer = resetDealer;
+
+/* ============ ANNOUNCEMENTS ============ */
+function renderAnnouncements() {
+  const arr = Object.entries(announcements).sort((a, b) => num(b[1].timestamp) - num(a[1].timestamp));
+  $("announcementsList").innerHTML = arr.map(([id, a]) => `
+    <div class="card p-4">
+      <div class="flex justify-between gap-3 flex-wrap">
+        <div class="min-w-0 flex-1">
+          <h4 class="font-bold text-yellow-400 text-sm">${esc(a.title)}</h4>
+          <p class="text-xs text-slate-300 mt-1 whitespace-pre-wrap break-words">${esc(a.message)}</p>
+          <div class="text-[9px] text-slate-500 mt-2 font-mono">${a.timestamp ? new Date(a.timestamp).toLocaleString() : "—"}</div>
+        </div>
+        <div class="flex gap-1 shrink-0">
+          <button class="btn bg-blue-900/50 text-blue-300 border border-blue-800" onclick="editAnn('${esc(id)}')">Edit</button>
+          <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteAnn('${esc(id)}')">Delete</button>
+        </div>
+      </div>
+    </div>
+  `).join("") || `<div class="card p-6 text-center text-slate-500 italic text-xs">No announcements.</div>`;
+}
+
+$("annForm").onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const id = $("annId").value;
+    const d = {
+      title: $("annTitle").value.trim(),
+      message: $("annMessage").value.trim(),
+      timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+    if (id) await db.ref("announcements/" + id).update(d);
+    else await db.ref("announcements").push(d);
+    audit(id ? "UPDATE_ANNOUNCEMENT" : "CREATE_ANNOUNCEMENT", "announcements/" + (id || "new"));
+    resetAnn();
+    toast("Announcement saved.");
+  } catch (x) { toast(x.message, false); }
+};
+
+function editAnn(id) {
+  const a = announcements[id] || {};
+  $("annId").value = id;
+  $("annTitle").value = a.title || "";
+  $("annMessage").value = a.message || "";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+window.editAnn = editAnn;
+
+async function deleteAnn(id) {
+  askConfirm("Delete Announcement?", "This announcement will be removed.", async () => {
+    try {
+      await db.ref("announcements/" + id).remove();
+      audit("DELETE_ANNOUNCEMENT", "announcements/" + id);
+      toast("Announcement deleted.");
+    } catch (e) { toast(e.message, false); }
+  }, "Delete");
+}
+window.deleteAnn = deleteAnn;
+
+function resetAnn() { $("annForm").reset(); $("annId").value = ""; }
+window.resetAnn = resetAnn;
+
+/* ============ DATABASE EXPLORER ============ */
+async function loadDbPath() {
+  if (!requireOwner()) return;
+  const p = pathClean($("dbPath").value);
+  try {
+    showLoader("Reading...");
+    const s = await db.ref(p).once("value");
+    $("dbEditor").value = JSON.stringify(s.val(), null, 2);
+    renderCommonPaths(p);
+  } catch (e) { toast(e.message, false); }
+  finally { hideLoader(); }
+}
+window.loadDbPath = loadDbPath;
+
+async function saveDbPath() {
+  if (!requireOwner()) return;
+  const p = pathClean($("dbPath").value);
+  let obj;
+  try { obj = JSON.parse($("dbEditor").value); }
+  catch (e) { return toast("Invalid JSON.", false); }
+
+  askConfirm("Save to Firebase?", `Overwrite ${p}? This changes live data.`, async () => {
+    try {
+      showLoader("Saving...");
+      await db.ref(p).set(obj);
+      audit("RAW_SET", p);
+      toast("Database node saved.");
+    } catch (e) { toast(e.message, false); }
+    finally { hideLoader(); }
+  }, "Save", false);
+}
+window.saveDbPath = saveDbPath;
+
+async function deleteDbPath() {
+  if (!requireOwner()) return;
+  const p = pathClean($("dbPath").value);
+  if (p === "/") return toast("Root deletion is disabled.", false);
+
+  askConfirm("Delete Node?", `Permanently delete ${p}?`, async () => {
+    try {
+      await db.ref(p).remove();
+      audit("RAW_DELETE", p);
+      $("dbEditor").value = "null";
+      toast("Node deleted.");
+    } catch (e) { toast(e.message, false); }
+  }, "Delete");
+}
+window.deleteDbPath = deleteDbPath;
+
+function formatDbJson() {
+  try { $("dbEditor").value = JSON.stringify(JSON.parse($("dbEditor").value), null, 2); }
+  catch (e) { toast("Invalid JSON.", false); }
+}
+window.formatDbJson = formatDbJson;
+
+async function copyDbJson() {
+  try { await navigator.clipboard.writeText($("dbEditor").value); toast("Copied."); }
+  catch (e) { toast("Clipboard unavailable.", false); }
+}
+window.copyDbJson = copyDbJson;
+
+async function duplicateDbPath() {
+  const src = pathClean($("dbPath").value);
+  askPrompt("Destination path:", src + "_copy", async dest => {
+    if (!dest) return;
+    try {
+      const s = await db.ref(src).once("value");
+      await db.ref(pathClean(dest)).set(s.val());
+      audit("RAW_DUPLICATE", src, "to=" + pathClean(dest));
+      toast("Node duplicated.");
+    } catch (e) { toast(e.message, false); }
+  });
+}
+window.duplicateDbPath = duplicateDbPath;
+
+function renderCommonPaths(current) {
+  const paths = ["/", "/users", "/purchase_requests", "/withdraw_requests", "/rates", "/dealers", "/announcements", "/settings", "/owner_audit"];
+  $("commonPaths").innerHTML = paths.map(p => `<button class="btn bg-slate-800 text-slate-300" onclick="setDbPath('${p}')">${p}</button>`).join("");
+}
+function setDbPath(p) { $("dbPath").value = p; loadDbPath(); }
+window.setDbPath = setDbPath;
+
+/* ============ BACKUP ============ */
+function downloadBackup() {
+  if (!requireOwner()) return;
+  showLoader("Preparing backup...");
+  db.ref("/").once("value").then(s => {
+    const blob = new Blob([JSON.stringify(s.val(), null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "greenland-backup-" + new Date().toISOString().replace(/[:.]/g, "-") + ".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    audit("DOWNLOAD_BACKUP", "/");
+    toast("Backup downloaded.");
+  }).catch(e => toast(e.message, false))
+    .finally(() => hideLoader());
+}
+window.downloadBackup = downloadBackup;
+
+$("restoreFile").onchange = async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  askConfirm(
+    "Restore Database?",
+    "This will OVERWRITE the entire Realtime Database with the uploaded JSON. Make a backup first!",
+    async () => {
+      try {
+        showLoader("Restoring...");
+        const obj = JSON.parse(await file.text());
+        await db.ref("/").set(obj);
+        audit("RESTORE_ROOT", "/");
+        toast("Root restore complete.");
+      } catch (x) { toast(x.message, false); }
+      finally { hideLoader(); e.target.value = ""; }
+    },
+    "Restore"
+  );
+};
+
+/* ============ HISTORY ============ */
+function showHistory(kind = "all") {
+  const rows = [];
+  if (kind === "all" || kind === "purchase") {
+    Object.entries(purchases).forEach(([id, p]) => rows.push({
+      type: "Purchase", id, date: p.timestamp,
+      user: (users[p.uid] || {}).name || p.uid,
+      amount: num(p.quantity) + " hens",
+      status: p.status, node: "purchase_requests"
+    }));
+  }
+  if (kind === "all" || kind === "withdrawal") {
+    Object.entries(withdrawals).forEach(([id, w]) => rows.push({
+      type: "Withdrawal", id, date: w.timestamp,
+      user: (users[w.uid] || {}).name || w.uid,
+      amount: num(w.amount || w.totalPayout).toFixed(2) + " PKR",
+      status: w.status, node: "withdraw_requests"
+    }));
+  }
+  rows.sort((a, b) => num(b.date) - num(a.date));
+  $("historyBody").innerHTML = rows.map(r => `
+    <tr class="hover:bg-slate-900/60">
+      <td class="p-3 font-bold text-slate-200">${esc(r.type)}</td>
+      <td class="p-3 text-[10px] text-slate-400">${r.date ? new Date(r.date).toLocaleString() : "—"}</td>
+      <td class="p-3 text-slate-300">${esc(r.user)}</td>
+      <td class="p-3 text-slate-200 font-mono">${esc(r.amount)}</td>
+      <td class="p-3">${statusBadge(r.status)}</td>
+      <td class="p-3 text-right">
+        <button class="btn bg-red-950 text-red-300 border border-red-800" onclick="deleteHistoryItem('${esc(r.node)}','${esc(r.id)}')">Delete</button>
+      </td>
+    </tr>
+  `).join("") || emptyRow(6, "No records found.");
+}
+window.showHistory = showHistory;
+
+async function deleteHistoryItem(node, id) {
+  askConfirm("Delete Record?", "This record will be permanently deleted.", async () => {
+    try {
+      await db.ref(node + "/" + id).remove();
+      audit("DELETE_HISTORY", node + "/" + id);
+      toast("Record deleted.");
+    } catch (e) { toast(e.message, false); }
+  }, "Delete");
+}
+window.deleteHistoryItem = deleteHistoryItem;
+
+async function deleteAllRequests(node) {
+  askConfirm("Delete All?", `Delete ALL records under /${node}? This cannot be undone.`, async () => {
+    try {
+      await db.ref(node).remove();
+      audit("DELETE_ALL", node);
+      toast("All records deleted.");
+    } catch (e) { toast(e.message, false); }
+  }, "Delete All");
+}
+window.deleteAllRequests = deleteAllRequests;
+
+async function deleteAllAnnouncements() {
+  askConfirm("Delete All Announcements?", "All announcements will be removed.", async () => {
+    try { await db.ref("announcements").remove(); audit("DELETE_ALL", "announcements"); toast("All announcements deleted."); }
+    catch (e) { toast(e.message, false); }
+  }, "Delete All");
+}
+window.deleteAllAnnouncements = deleteAllAnnouncements;
+
+async function deleteAllDealers() {
+  askConfirm("Delete All Dealers?", "All dealers will be removed.", async () => {
+    try { await db.ref("dealers").remove(); audit("DELETE_ALL", "dealers"); toast("All dealers deleted."); }
+    catch (e) { toast(e.message, false); }
+  }, "Delete All");
+}
+window.deleteAllDealers = deleteAllDealers;
+
+async function deleteAllBatches() {
+  askConfirm("Delete ALL Hen Batches?", "This will remove every hen batch from every user and set totalHens to 0.", async () => {
+    try {
+      showLoader("Deleting all batches...");
+      const updates = {};
+      Object.entries(users).forEach(([uid, u]) => {
+        if (u.hen_batches) {
+          updates[`users/${uid}/hen_batches`] = null;
+          updates[`users/${uid}/totalHens`] = 0;
+        }
+      });
+      if (Object.keys(updates).length) await db.ref().update(updates);
+      audit("DELETE_ALL_BATCHES", "users");
+      toast("All hen batches removed.");
+    } catch (e) { toast(e.message, false); }
+    finally { hideLoader(); }
+  }, "Delete All");
+}
+window.deleteAllBatches = deleteAllBatches;
+
+/* ============ SCHEDULE ============ */
+async function runScheduledCleanup() {
+  const started = Date.now();
+  await cleanupExpired();
+  $("scheduleStatus").innerText = "Expired-batch maintenance executed at " + new Date(started).toLocaleString();
+}
+window.runScheduledCleanup = runScheduledCleanup;
+
+/* ============ AUDIT ============ */
+function renderAudit(data) {
+  const arr = Object.values(data).sort((a, b) => num(b.timestamp) - num(a.timestamp));
+  $("auditList").innerHTML = arr.map(a => `
+    <div class="card p-3">
+      <div class="flex justify-between gap-2 flex-wrap">
+        <b class="text-emerald-400 text-xs">${esc(a.action)}</b>
+        <span class="text-[9px] text-slate-500">${a.timestamp ? new Date(a.timestamp).toLocaleString() : "—"}</span>
+      </div>
+      <div class="text-[10px] text-slate-400 mt-1 font-mono">${esc(a.path || "")}</div>
+      <div class="text-[10px] text-slate-300 mt-1 break-all">${esc(a.detail || "")}</div>
+    </div>
+  `).join("") || `<div class="card p-6 text-center text-slate-500 italic text-xs">No audit records.</div>`;
+}
+
+async function confirmClearAudit() {
+  askConfirm("Clear Audit Log?", "All audit records will be removed.", async () => {
+    try { await db.ref("owner_audit").remove(); toast("Audit log cleared."); }
+    catch (e) { toast(e.message, false); }
+  }, "Clear");
+}
+window.confirmClearAudit = confirmClearAudit;
+
+/* ============ OUTSIDE CLICK + ESC ============ */
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    document.querySelectorAll(".overlay").forEach(o => o.classList.add("hiddenx"));
+  }
+});
+
+document.querySelectorAll(".overlay").forEach(o => {
+  o.addEventListener("click", e => {
+    if (e.target === o) o.classList.add("hiddenx");
+  });
+});
+
+/* Legacy stub for compatibility */
+function countBatches() {
+  let n = 0;
+  Object.values(users).forEach(u => n += Object.keys(u.hen_batches || {}).length);
+  return n;
+}
 </script>
 </body>
 </html>
