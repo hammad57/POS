@@ -3,1661 +3,1003 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#07110c" />
-  <title>DriveVault — Google Drive Dashboard</title>
+  <meta name="theme-color" content="#ffffff" />
+  <title>DriveVault — Professional Cloud Storage</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
     :root {
-      --bg: #07110c;
-      --bg-2: #0b1711;
-      --panel: rgba(15, 29, 21, 0.82);
-      --panel-2: rgba(20, 38, 28, 0.82);
-      --border: rgba(255,255,255,.09);
-      --border-strong: rgba(255,255,255,.15);
-      --text: #f1f8f3;
-      --muted: #91a79a;
-      --green: #38f58d;
-      --green-2: #19cf6e;
-      --danger: #ff6679;
-      --warning: #ffcc66;
-      --shadow: 0 22px 70px rgba(0,0,0,.36);
-      --radius: 22px;
+      /* Clean Corporate White & Blue Theme */
+      --bg-body: #f8fafc;
+      --bg-panel: #ffffff;
+      --bg-hover: #f1f5f9;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      
+      /* Brand Colors */
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --danger: #ef4444;
+      --danger-bg: #fee2e2;
+      --success: #10b981;
+      
+      /* UI Elements */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --radius: 12px;
+      --radius-sm: 8px;
     }
 
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; }
     body {
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 15% 0%, rgba(56,245,141,.10), transparent 30%),
-        radial-gradient(circle at 90% 10%, rgba(26,207,110,.07), transparent 28%),
-        linear-gradient(145deg, var(--bg), #050a07 55%, #07130d);
-      min-height: 100vh;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text-main);
+      background-color: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
     }
 
-    button, input, select { font: inherit; }
-    button { cursor: pointer; }
-    a { color: inherit; }
+    button, input, select { font: inherit; outline: none; }
+    button { cursor: pointer; border: none; background: transparent; }
+    a { color: inherit; text-decoration: none; }
 
-    .shell {
-      width: min(1450px, calc(100% - 30px));
+    /* Layout */
+    .app-container {
+      max-width: 1500px;
       margin: 0 auto;
-      padding: 18px 0 34px;
+      padding: 20px 24px;
     }
 
+    /* Topbar */
     .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 18px;
+      margin-bottom: 24px;
+      background: var(--bg-panel);
+      padding: 16px 24px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .logo {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
       display: grid;
       place-items: center;
-      color: #041009;
-      font-weight: 950;
-      background: linear-gradient(145deg, var(--green), #86ffc0);
-      box-shadow: 0 12px 32px rgba(56,245,141,.22);
+      color: white;
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), #60a5fa);
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
     }
 
-    .brand h1 {
-      margin: 0;
-      font-size: 18px;
-      letter-spacing: .3px;
-    }
+    .brand h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .brand p { margin: 2px 0 0; color: var(--text-muted); font-size: 12px; font-weight: 500; }
 
-    .brand p {
-      margin: 3px 0 0;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
+    /* Account Profile */
     .account {
       display: none;
       align-items: center;
-      gap: 10px;
-      background: rgba(255,255,255,.045);
+      gap: 12px;
+      padding: 6px 12px 6px 6px;
+      background: var(--bg-body);
       border: 1px solid var(--border);
-      padding: 7px 9px 7px 8px;
-      border-radius: 999px;
+      border-radius: 50px;
+      transition: 0.2s;
     }
+    .account:hover { border-color: var(--border-strong); }
 
     .account img {
-      width: 31px;
-      height: 31px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       object-fit: cover;
-      background: #15271d;
     }
 
-    .account-info {
-      min-width: 0;
-      max-width: 190px;
-    }
+    .account-info { display: flex; flex-direction: column; max-width: 150px; }
+    .account-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .account-email { color: var(--text-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .account-name {
-      font-size: 12px;
-      font-weight: 800;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .account-email {
-      color: var(--muted);
-      font-size: 10px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
+    /* Buttons */
     .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       border: 1px solid var(--border);
-      background: rgba(255,255,255,.055);
-      color: var(--text);
-      min-height: 42px;
-      padding: 0 14px;
-      border-radius: 13px;
-      font-weight: 800;
-      transition: .18s ease;
+      background: var(--bg-panel);
+      color: var(--text-main);
+      min-height: 40px;
+      padding: 0 16px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s ease;
     }
-
-    .btn:hover { transform: translateY(-1px); border-color: var(--border-strong); }
-    .btn:disabled { opacity: .48; cursor: not-allowed; transform: none; }
+    .btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .btn-primary {
-      color: #041009;
-      background: linear-gradient(135deg, var(--green), var(--green-2));
-      border-color: transparent;
-      box-shadow: 0 10px 28px rgba(56,245,141,.16);
+      background: var(--primary);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3); }
 
-    .btn-danger {
-      background: rgba(255,102,121,.09);
-      border-color: rgba(255,102,121,.22);
-      color: #ff9aa7;
-    }
+    .btn-icon { width: 40px; padding: 0; flex-shrink: 0; border-radius: var(--radius-sm); font-size: 16px; }
 
-    .btn-icon {
-      width: 42px;
-      padding: 0;
-      display: grid;
-      place-items: center;
-      flex: 0 0 auto;
-    }
-
-    .hero {
-      border: 1px solid var(--border);
-      border-radius: 28px;
-      padding: clamp(18px, 3vw, 30px);
-      background:
-        linear-gradient(135deg, rgba(56,245,141,.07), rgba(255,255,255,.025) 45%, rgba(56,245,141,.02)),
-        var(--panel);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      position: relative;
-    }
-
-    .hero::after {
-      content: "";
-      position: absolute;
-      width: 250px;
-      height: 250px;
-      border-radius: 50%;
-      background: rgba(56,245,141,.055);
-      filter: blur(10px);
-      right: -80px;
-      top: -120px;
-      pointer-events: none;
-    }
-
+    /* Login Screen */
     .login-view {
-      min-height: calc(100vh - 130px);
+      min-height: 70vh;
       display: grid;
       place-items: center;
     }
-
     .login-card {
-      width: min(620px, 100%);
+      background: var(--bg-panel);
+      width: min(500px, 100%);
       text-align: center;
-      padding: 38px 25px;
+      padding: 48px 40px;
+      border-radius: 24px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
     }
-
-    .login-mark {
-      width: 76px;
-      height: 76px;
-      border-radius: 25px;
-      display: grid;
-      place-items: center;
-      margin: 0 auto 18px;
-      color: #03100a;
-      font-size: 30px;
-      font-weight: 1000;
-      background: linear-gradient(145deg, var(--green), #8bffc1);
-      box-shadow: 0 20px 50px rgba(56,245,141,.2);
-    }
-
-    .login-card h2 {
-      margin: 0 0 10px;
-      font-size: clamp(28px, 5vw, 45px);
-      letter-spacing: -1.4px;
-    }
-
-    .login-card p {
-      color: var(--muted);
-      max-width: 520px;
-      margin: 0 auto 24px;
-      line-height: 1.65;
-    }
-
+    .login-card h2 { margin: 0 0 12px; font-size: 28px; font-weight: 800; color: var(--text-main); }
+    .login-card p { color: var(--text-muted); margin: 0 auto 32px; font-size: 14px; line-height: 1.6; }
+    
     .google-btn {
-      width: min(340px, 100%);
-      margin: 0 auto;
-      height: 52px;
+      width: 100%;
+      height: 54px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      color: #152019;
-      background: #fff;
-      border: 0;
-      border-radius: 14px;
-      font-weight: 900;
-      box-shadow: 0 15px 35px rgba(0,0,0,.25);
-    }
-
-    .google-g {
-      width: 22px;
-      height: 22px;
-      display: grid;
-      place-items: center;
-      font-weight: 1000;
-      font-size: 18px;
-    }
-
-    .note {
-      margin-top: 18px;
-      font-size: 11px !important;
-      color: #71877a !important;
-    }
-
-    .dashboard { display: none; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 260px minmax(0, 1fr);
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .sidebar {
-      border: 1px solid var(--border);
-      background: var(--panel);
+      background: white;
+      border: 1px solid var(--border-strong);
       border-radius: var(--radius);
-      padding: 14px;
-      box-shadow: var(--shadow);
-      height: fit-content;
-      position: sticky;
-      top: 14px;
+      font-weight: 600;
+      font-size: 15px;
+      color: #3c4043;
+      box-shadow: var(--shadow-sm);
+      transition: 0.2s;
+    }
+    .google-btn:hover { background: #f8f9fa; box-shadow: var(--shadow); }
+    .google-btn img { width: 20px; }
+
+    /* Main Dashboard Grid */
+    .dashboard { display: none; }
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
     }
 
+    /* Sidebar */
+    .sidebar {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 120px);
+      position: sticky;
+      top: 20px;
+    }
+
+    .side-section { margin-bottom: 20px; }
     .side-title {
-      font-size: 10px;
-      color: #64796c;
+      font-size: 11px;
+      color: var(--text-muted);
       text-transform: uppercase;
-      font-weight: 950;
-      letter-spacing: 1.3px;
-      padding: 6px 10px 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      padding: 0 10px;
     }
 
     .nav-btn {
       width: 100%;
-      border: 1px solid transparent;
-      background: transparent;
-      color: #c4d4c9;
       text-align: left;
-      padding: 11px 11px;
-      border-radius: 12px;
-      margin-bottom: 4px;
-      font-weight: 800;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 2px;
+      font-weight: 500;
+      font-size: 14px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-btn:hover { background: var(--bg-hover); }
+    .nav-btn.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
     }
 
-    .nav-btn:hover, .nav-btn.active {
-      background: rgba(56,245,141,.075);
-      border-color: rgba(56,245,141,.12);
-      color: #ebfff2;
+    /* Folder List in Sidebar */
+    .folder-search {
+      padding: 0 10px;
+      margin-bottom: 10px;
     }
-
-    .side-stats {
-      margin-top: 15px;
-      padding: 13px;
-      background: rgba(255,255,255,.035);
+    .folder-search input {
+      width: 100%;
+      background: var(--bg-body);
       border: 1px solid var(--border);
-      border-radius: 15px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      transition: 0.2s;
     }
-
-    .mini-label { color: var(--muted); font-size: 10px; }
-    .mini-value { margin-top: 6px; font-size: 18px; font-weight: 950; }
-
-    .main {
-      min-width: 0;
+    .folder-search input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px var(--primary-light); }
+    
+    .folder-list-container {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
     }
+    .folder-list-container::-webkit-scrollbar { width: 4px; }
+    .folder-list-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
+    .folder-item {
+      font-size: 13px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 6px;
+      color: var(--text-main);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .folder-item i { color: #94a3b8; font-size: 16px; }
+    .folder-item:hover { background: var(--bg-hover); }
+    .folder-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+    .folder-item.active i { color: var(--primary); }
+
+    /* Main Content Area */
     .toolbar {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       align-items: center;
       justify-content: space-between;
+      margin-bottom: 20px;
       flex-wrap: wrap;
-      margin-bottom: 14px;
     }
 
-    .search {
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 0 16px;
+      flex: 1;
+      max-width: 500px;
+      box-shadow: var(--shadow-sm);
+      transition: 0.2s;
+    }
+    .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
+    .search-box input { border: none; width: 100%; height: 46px; font-size: 14px; background: transparent; }
+    .search-box input::placeholder { color: #94a3b8; }
+    .search-box i { color: #94a3b8; margin-right: 10px; }
+
+    /* Breadcrumbs */
+    .breadcrumbs {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
       display: flex;
       align-items: center;
       gap: 8px;
-      min-width: min(430px, 100%);
-      flex: 1;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 0 12px;
+      margin-bottom: 16px;
     }
+    .breadcrumbs span.path-muted { color: var(--text-muted); font-weight: 500; cursor: pointer; }
+    .breadcrumbs span.path-muted:hover { text-decoration: underline; color: var(--primary); }
 
-    .search span { color: #6e8577; }
-    .search input {
-      width: 100%;
-      border: 0;
-      outline: 0;
-      background: transparent;
-      color: var(--text);
-      min-height: 45px;
-    }
-    .search input::placeholder { color: #64786c; }
-
-    .toolbar-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .stat {
-      padding: 16px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      min-width: 0;
-    }
-
-    .stat-icon { font-size: 17px; }
-    .stat-num { font-size: 22px; font-weight: 950; margin-top: 8px; }
-    .stat-label { color: var(--muted); font-size: 11px; margin-top: 2px; }
-
+    /* File Area */
     .content-card {
-      background: var(--panel);
+      background: var(--bg-panel);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      min-height: 400px;
     }
 
-    .content-head {
-      padding: 15px 17px;
+    .content-header {
+      padding: 16px 20px;
       border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
-      gap: 10px;
       align-items: center;
+      background: #fcfcfd;
+      border-radius: var(--radius) var(--radius) 0 0;
     }
 
-    .content-title { font-size: 15px; font-weight: 950; }
-    .content-subtitle { font-size: 10px; color: var(--muted); margin-top: 3px; }
+    /* Grid/List Toggle */
+    .view-toggle { display: flex; gap: 4px; background: var(--border); padding: 4px; border-radius: 8px; }
+    .view-toggle button { padding: 6px 10px; border-radius: 6px; font-size: 14px; color: var(--text-muted); }
+    .view-toggle button.active { background: white; color: var(--text-main); box-shadow: var(--shadow-sm); }
 
-    .filters {
-      display: flex;
-      gap: 7px;
-      flex-wrap: wrap;
-    }
-
-    .chip {
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.035);
-      color: #97aa9d;
-      border-radius: 999px;
-      min-height: 34px;
-      padding: 0 11px;
-      font-size: 11px;
-      font-weight: 800;
-    }
-
-    .chip.active {
-      color: #dffff0;
-      border-color: rgba(56,245,141,.22);
-      background: rgba(56,245,141,.09);
-    }
-
-    .file-list { padding: 5px; }
-
-    .file-row {
+    .file-container { padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+    
+    /* View: LIST */
+    .file-container.view-list .file-row {
       display: grid;
-      grid-template-columns: 54px minmax(0, 1fr) auto;
+      grid-template-columns: 48px minmax(0, 1fr) auto;
       align-items: center;
-      gap: 12px;
-      padding: 11px;
-      border-radius: 16px;
+      gap: 16px;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      transition: 0.15s;
     }
+    .file-container.view-list .file-row:hover { background: var(--bg-hover); border-color: var(--border); }
+    
+    /* View: GRID */
+    .file-container.view-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      padding: 20px;
+    }
+    .file-container.view-grid .file-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 24px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: 0.2s;
+    }
+    .file-container.view-grid .file-row:hover { border-color: var(--primary); box-shadow: var(--shadow); transform: translateY(-2px); }
+    .file-container.view-grid .file-icon { margin-bottom: 12px; width: 64px; height: 64px; font-size: 32px; }
+    .file-container.view-grid .file-meta { justify-content: center; margin-top: 6px; }
+    .file-container.view-grid .file-actions { margin-top: 16px; width: 100%; justify-content: center; }
 
-    .file-row:hover { background: rgba(255,255,255,.035); }
-
+    /* Common File Elements */
     .file-icon {
       width: 48px;
       height: 48px;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-      background: rgba(255,255,255,.045);
-      border: 1px solid var(--border);
-      font-size: 21px;
-    }
-
-    .file-main { min-width: 0; }
-    .file-name {
-      font-weight: 850;
-      font-size: 13px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .file-meta {
-      display: flex;
-      gap: 7px;
-      flex-wrap: wrap;
-      color: var(--muted);
-      font-size: 10px;
-      margin-top: 4px;
-    }
-
-    .file-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .empty {
-      padding: 55px 20px;
-      text-align: center;
-      color: var(--muted);
-    }
-
-    .empty-big { font-size: 34px; margin-bottom: 8px; }
-
-    .skeleton {
-      height: 72px;
-      margin: 6px;
-      border-radius: 16px;
-      background: linear-gradient(90deg, rgba(255,255,255,.03), rgba(255,255,255,.07), rgba(255,255,255,.03));
-      background-size: 200% 100%;
-      animation: shimmer 1.3s linear infinite;
-    }
-
-    @keyframes shimmer {
-      to { background-position: -200% 0; }
-    }
-
-    .modal-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      background: rgba(0,0,0,.72);
-      backdrop-filter: blur(10px);
-      padding: 18px;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal {
-      width: min(900px, 100%);
-      max-height: min(90vh, 900px);
-      background: #0a140e;
-      border: 1px solid var(--border-strong);
-      border-radius: 24px;
-      overflow: hidden;
-      box-shadow: 0 30px 100px rgba(0,0,0,.56);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .modal-head {
-      padding: 13px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .modal-title {
-      font-weight: 950;
-      min-width: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .modal-body {
-      min-height: 300px;
-      overflow: auto;
-      padding: 14px;
-      display: grid;
-      place-items: center;
-      background: #050905;
-    }
-
-    .preview-media {
-      max-width: 100%;
-      max-height: 64vh;
-      border-radius: 14px;
-    }
-
-    .preview-frame {
-      width: 100%;
-      min-height: 63vh;
-      border: 0;
       border-radius: 12px;
-      background: #fff;
-    }
-
-    .modal-foot {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      padding: 12px 16px;
-      border-top: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-
-    .drawer {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 1100;
-      background: rgba(0,0,0,.68);
-      backdrop-filter: blur(8px);
-      align-items: flex-end;
-      justify-content: center;
-      padding: 0;
-    }
-
-    .drawer-card {
-      width: min(620px, 100%);
-      background: #0b160f;
-      border: 1px solid var(--border-strong);
-      border-radius: 24px 24px 0 0;
-      box-shadow: 0 -30px 90px rgba(0,0,0,.46);
-      padding: 18px;
-    }
-
-    .dropzone {
-      border: 1px dashed rgba(56,245,141,.32);
-      background: rgba(56,245,141,.045);
-      border-radius: 18px;
-      padding: 22px;
-      text-align: center;
-      transition: .18s ease;
-    }
-
-    .dropzone.drag {
-      transform: scale(1.01);
-      border-color: var(--green);
-      background: rgba(56,245,141,.09);
-    }
-
-    .dropzone-icon {
-      font-size: 32px;
-      margin-bottom: 6px;
-    }
-
-    .dropzone strong { display: block; font-size: 14px; }
-    .dropzone small { color: var(--muted); line-height: 1.5; }
-
-    .dropzone input { display: none; }
-
-    .row {
-      display: flex;
-      gap: 9px;
-      align-items: center;
-      margin-top: 13px;
-      flex-wrap: wrap;
-    }
-
-    .field {
-      flex: 1;
-      min-width: 190px;
-      background: rgba(255,255,255,.045);
-      border: 1px solid var(--border);
-      border-radius: 13px;
-      min-height: 44px;
-      padding: 0 11px;
-      color: var(--text);
-      outline: 0;
-    }
-
-    .field::placeholder { color: #647a6c; }
-
-    select.field { appearance: auto; }
-
-    .upload-list { margin-top: 14px; display: grid; gap: 8px; }
-    .upload-item {
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.03);
-      border-radius: 14px;
-      padding: 10px;
-    }
-    .upload-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      font-size: 11px;
-      font-weight: 800;
-    }
-    .progress {
-      height: 6px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.07);
-      margin-top: 8px;
-      overflow: hidden;
-    }
-    .progress > span {
-      display: block;
-      height: 100%;
-      width: 0;
-      background: linear-gradient(90deg, var(--green), #91ffc0);
-      transition: width .1s linear;
-    }
-
-    .toast-wrap {
-      position: fixed;
-      right: 17px;
-      bottom: 17px;
-      z-index: 1500;
-      width: min(360px, calc(100% - 34px));
       display: grid;
-      gap: 8px;
+      place-items: center;
+      background: var(--bg-body);
+      border: 1px solid var(--border);
+      font-size: 20px;
+      color: var(--primary);
     }
+    .file-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-meta { display: flex; gap: 8px; color: var(--text-muted); font-size: 11px; margin-top: 4px; }
+    
+    .file-actions { display: flex; gap: 6px; opacity: 0; transition: 0.2s; }
+    .file-row:hover .file-actions { opacity: 1; }
+    .action-btn { 
+      width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); 
+      background: white; color: var(--text-muted); display: grid; place-items: center; transition: 0.2s;
+    }
+    .action-btn:hover { background: var(--bg-hover); color: var(--text-main); }
+    .action-btn.del:hover { background: var(--danger-bg); color: var(--danger); border-color: #fca5a5; }
 
+    /* Empty States */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+    .empty-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 4px; }
+
+    /* Modals & Upload Drawer */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal {
+      background: white; border-radius: 20px; width: min(500px, 100%);
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden;
+    }
+    .modal-head { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-head h3 { margin: 0; font-size: 18px; }
+    .modal-body { padding: 24px; }
+    .modal-foot { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-body); }
+
+    /* Dropzone */
+    .dropzone {
+      border: 2px dashed var(--border-strong); border-radius: 16px; padding: 40px 20px;
+      text-align: center; background: var(--bg-body); transition: 0.2s; cursor: pointer;
+    }
+    .dropzone:hover, .dropzone.drag { border-color: var(--primary); background: var(--primary-light); }
+    .dropzone i { font-size: 40px; color: var(--primary); margin-bottom: 12px; }
+
+    .input-field { width: 100%; border: 1px solid var(--border-strong); padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
+    .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+
+    /* Toasts */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
     .toast {
-      padding: 13px 14px;
-      border-radius: 14px;
-      border: 1px solid var(--border-strong);
-      background: rgba(11,22,15,.95);
-      box-shadow: var(--shadow);
-      font-size: 12px;
-      line-height: 1.45;
+      background: white; border-left: 4px solid var(--primary); padding: 14px 20px; border-radius: 8px;
+      box-shadow: var(--shadow-lg); font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 12px;
+      animation: slideIn 0.3s ease forwards;
     }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-    .toast.success { border-color: rgba(56,245,141,.24); }
-    .toast.error { border-color: rgba(255,102,121,.28); }
-    .toast.warning { border-color: rgba(255,204,102,.28); }
-
-    .hidden { display: none !important; }
-
-    @media (max-width: 1000px) {
-      .grid { grid-template-columns: 1fr; }
-      .sidebar { position: static; }
-      .stats { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (max-width: 650px) {
-      .shell { width: min(100% - 18px, 1450px); padding-top: 9px; }
-      .topbar { align-items: flex-start; }
-      .account { max-width: 240px; }
-      .account-info { display: none; }
-      .hero { border-radius: 22px; }
-      .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-      .stat { padding: 13px; }
-      .toolbar-actions { width: 100%; }
-      .toolbar-actions .btn { flex: 1; }
-      .file-row {
-        grid-template-columns: 45px minmax(0, 1fr);
-      }
-      .file-icon { width: 43px; height: 43px; border-radius: 12px; }
-      .file-actions {
-        grid-column: 2;
-        justify-content: flex-start;
-      }
-      .sidebar { padding: 10px; }
-      .nav-row {
-        display: flex;
-        overflow-x: auto;
-        gap: 6px;
-        padding-bottom: 3px;
-      }
-      .nav-btn {
-        width: auto;
-        white-space: nowrap;
-        margin: 0;
-        padding: 9px 11px;
-      }
-      .side-title, .side-stats { display: none; }
-      .login-card { padding: 27px 16px; }
-    }
+    /* Icons (using generic unicode/emojis for standalone html, you can add fontawesome if you link it) */
   </style>
 </head>
 <body>
 
-  <div class="shell">
-    <div class="topbar">
+  <div class="app-container">
+    
+    <!-- Topbar -->
+    <header class="topbar">
       <div class="brand">
         <div class="logo">D</div>
         <div>
           <h1>DriveVault</h1>
-          <p>Private Google Drive file dashboard</p>
+          <p>Secure Enterprise Storage</p>
         </div>
       </div>
-
       <div class="account" id="accountBox">
-        <img id="accountPhoto" alt="Google account" />
+        <img id="accountPhoto" src="https://via.placeholder.com/40" alt="Profile" />
         <div class="account-info">
-          <div class="account-name" id="accountName">Google user</div>
-          <div class="account-email" id="accountEmail">—</div>
+          <span class="account-name" id="accountName">Loading...</span>
+          <span class="account-email" id="accountEmail">...</span>
         </div>
-        <button class="btn btn-icon" id="logoutBtn" title="Sign out">↪</button>
+        <button class="btn btn-icon" id="logoutBtn" style="border:none; box-shadow:none;" title="Logout">🚪</button>
       </div>
-    </div>
+    </header>
 
-    <section class="hero login-view" id="loginView">
+    <!-- Login View -->
+    <section class="login-view" id="loginView">
       <div class="login-card">
-        <div class="login-mark">D</div>
-        <h2>Your files. One clean dashboard.</h2>
-        <p>
-          Sign in with Google and manage your Drive files from a fast, mobile-friendly dashboard:
-          upload, auto-sort, search, preview, create folders and delete files.
-        </p>
-
+        <div class="logo" style="margin: 0 auto 20px; width: 64px; height: 64px; font-size: 32px;">D</div>
+        <h2>Welcome to DriveVault</h2>
+        <p>A highly secure, deeply integrated professional dashboard to manage your Google Drive files elegantly.</p>
         <button class="google-btn" id="googleLoginBtn">
-          <span class="google-g">G</span>
-          Continue with Google
+          <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G">
+          Sign in with Google
         </button>
-
-        <p class="note">
-          Your files are sent directly to your Google Drive. This dashboard does not upload your files to another server.
-        </p>
       </div>
     </section>
 
+    <!-- Main Dashboard -->
     <section class="dashboard" id="dashboard">
-      <div class="grid">
+      <div class="grid-layout">
+        
+        <!-- Sidebar -->
         <aside class="sidebar">
-          <div class="side-title">Workspace</div>
-          <div class="nav-row">
-            <button class="nav-btn active" data-filter="all">▦ All files</button>
-            <button class="nav-btn" data-filter="image">▧ Photos</button>
-            <button class="nav-btn" data-filter="video">▶ Videos</button>
-            <button class="nav-btn" data-filter="document">▤ Documents</button>
+          <div class="side-section">
+            <button class="btn btn-primary" id="uploadBtn" style="width:100%; margin-bottom: 16px; padding: 12px; font-size: 15px;">
+              ➕ New Upload
+            </button>
+            <div class="side-title">Quick Filters</div>
+            <button class="nav-btn active" data-sys-filter="all">📂 All Files</button>
+            <button class="nav-btn" data-sys-filter="image">🖼️ Photos</button>
+            <button class="nav-btn" data-sys-filter="video">🎥 Videos</button>
+            <button class="nav-btn" data-sys-filter="document">📄 Documents</button>
           </div>
 
-          <div class="side-title" style="margin-top: 8px;">Quick upload routing</div>
-          <div class="side-stats">
-            <div class="mini-label">Auto folders</div>
-            <div class="mini-value">Photos · Videos · Documents</div>
+          <div class="side-section" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+            <div class="side-title" style="display:flex; justify-content:space-between; align-items:center;">
+              My Folders
+              <button id="folderBtn" title="Create Folder" style="color:var(--primary); font-size:16px;">+</button>
+            </div>
+            <div class="folder-search">
+              <input type="text" id="folderSearchInput" placeholder="🔍 Search folders..." />
+            </div>
+            <div class="folder-list-container" id="sidebarFolderList">
+              <!-- Folders injected here -->
+            </div>
           </div>
-          <button class="btn" id="refreshBtn" style="width:100%;margin-top:10px;">↻ Refresh Drive</button>
         </aside>
 
-        <main class="main">
+        <!-- Main Content -->
+        <main>
           <div class="toolbar">
-            <label class="search">
-              <span>⌕</span>
-              <input id="searchInput" type="search" placeholder="Search file names..." autocomplete="off" />
-            </label>
-            <div class="toolbar-actions">
-              <button class="btn" id="folderBtn">＋ New folder</button>
-              <button class="btn btn-primary" id="uploadBtn">↑ Upload</button>
+            <div class="breadcrumbs" id="breadcrumbArea">
+              <span class="path-muted" id="bcHome">My Drive</span>
+              <span id="bcArrow" style="display:none; color:var(--text-muted); font-size:14px;">›</span>
+              <span id="bcCurrent" style="display:none; color:var(--primary);">Folder Name</span>
+            </div>
+            <div class="search-box">
+              <span>🔍</span>
+              <input type="text" id="searchInput" placeholder="Search files in Drive..." />
             </div>
           </div>
 
-          <div class="stats">
-            <div class="stat">
-              <div class="stat-icon">▦</div>
-              <div class="stat-num" id="statTotal">0</div>
-              <div class="stat-label">Visible files</div>
+          <div class="content-card">
+            <div class="content-header">
+              <div style="font-size: 13px; color: var(--text-muted); font-weight:500;" id="resultCount">Loading files...</div>
+              <div class="view-toggle">
+                <button id="viewListBtn" class="active">☰</button>
+                <button id="viewGridBtn">⊞</button>
+              </div>
             </div>
-            <div class="stat">
-              <div class="stat-icon">▧</div>
-              <div class="stat-num" id="statPhotos">0</div>
-              <div class="stat-label">Photos</div>
-            </div>
-            <div class="stat">
-              <div class="stat-icon">▶</div>
-              <div class="stat-num" id="statVideos">0</div>
-              <div class="stat-label">Videos</div>
-            </div>
-            <div class="stat">
-              <div class="stat-icon">▤</div>
-              <div class="stat-num" id="statDocs">0</div>
-              <div class="stat-label">Documents</div>
+            <div id="fileList" class="file-container view-list">
+               <!-- Files injected here -->
             </div>
           </div>
-
-          <section class="content-card">
-            <div class="content-head">
-              <div>
-                <div class="content-title">Your Drive files</div>
-                <div class="content-subtitle" id="resultSubtitle">Loading...</div>
-              </div>
-              <div class="filters">
-                <button class="chip active" data-filter="all">All</button>
-                <button class="chip" data-filter="image">Images</button>
-                <button class="chip" data-filter="video">Videos</button>
-                <button class="chip" data-filter="document">Docs</button>
-              </div>
-            </div>
-
-            <div id="fileList" class="file-list"></div>
-          </section>
         </main>
       </div>
     </section>
   </div>
 
-  <!-- Upload drawer -->
-  <div class="drawer" id="uploadDrawer">
-    <div class="drawer-card">
-      <div class="content-head" style="padding:0 0 12px;border:0;">
-        <div>
-          <div class="content-title">Upload to Google Drive</div>
-          <div class="content-subtitle">Choose Auto route or a specific folder.</div>
-        </div>
-        <button class="btn btn-icon" id="closeUpload">×</button>
-      </div>
-
-      <div class="dropzone" id="dropzone">
-        <div class="dropzone-icon">⇧</div>
-        <strong>Tap to choose files or drag them here</strong>
-        <small>Photos, videos, PDFs, Word/Excel files and other documents are supported.</small>
-        <input id="fileInput" type="file" multiple />
-      </div>
-
-      <div class="row">
-        <select class="field" id="destinationSelect">
-          <option value="auto">Auto route by file type</option>
-        </select>
-        <button class="btn" id="newUploadFolder">＋ Folder</button>
-      </div>
-
-      <div id="uploadList" class="upload-list"></div>
-
-      <div class="row" style="justify-content:flex-end;">
-        <button class="btn" id="cancelUpload">Close</button>
-        <button class="btn btn-primary" id="startUpload">Start upload</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Preview modal -->
-  <div class="modal-backdrop" id="previewModal">
-    <div class="modal">
+  <!-- Upload Modal -->
+  <div class="modal-backdrop" id="uploadModal">
+    <div class="modal" style="width: 600px;">
       <div class="modal-head">
-        <div class="modal-title" id="previewTitle">Preview</div>
-        <button class="btn btn-icon" id="closePreview">×</button>
+        <h3>Upload Files</h3>
+        <button class="btn btn-icon" style="border:none;" id="closeUpload">✖</button>
       </div>
-      <div class="modal-body" id="previewBody">
-        <div class="empty">
-          <div class="empty-big">◌</div>
-          Loading preview...
+      <div class="modal-body">
+        <div class="dropzone" id="dropzone">
+          <i>☁️</i>
+          <h4 style="margin:0 0 8px; color:var(--text-main);">Click or drag files to upload</h4>
+          <p style="margin:0; font-size:13px; color:var(--text-muted);">Supports all file types. Will route based on selection below.</p>
+          <input type="file" id="fileInput" multiple style="display:none;" />
         </div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn" id="openDriveBtn">Open in Google Drive</button>
-        <button class="btn btn-danger" id="deleteFromPreview">Delete</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Folder modal -->
-  <div class="modal-backdrop" id="folderModal">
-    <div class="modal" style="width:min(520px,100%);">
-      <div class="modal-head">
-        <div class="modal-title">Create a Drive folder</div>
-        <button class="btn btn-icon" id="closeFolder">×</button>
-      </div>
-      <div style="padding:18px;">
-        <input class="field" id="folderName" placeholder="Folder name e.g. Family Photos" style="width:100%;" maxlength="120" />
-        <div class="row">
-          <select class="field" id="folderParent">
-            <option value="">My Drive (root)</option>
+        <div style="margin-top:20px;">
+          <label style="font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px; display:block;">Destination Folder</label>
+          <select id="destinationSelect" class="input-field" style="margin-bottom:0;">
+            <option value="auto">⚡ Auto-Sort by File Type</option>
+            <option value="root">🏠 My Drive (Root)</option>
+            <!-- Folders here -->
           </select>
         </div>
+        <div id="uploadProgressArea" style="margin-top:16px;"></div>
       </div>
       <div class="modal-foot">
-        <button class="btn" id="cancelFolder">Cancel</button>
-        <button class="btn btn-primary" id="createFolderBtn">Create folder</button>
+        <button class="btn" id="cancelUploadBtn">Cancel</button>
+        <button class="btn btn-primary" id="startUploadBtn">Start Upload</button>
       </div>
     </div>
   </div>
 
-  <div class="toast-wrap" id="toastWrap"></div>
-
-<script>
-(() => {
-  "use strict";
-
-  // ============================================================
-  // 1) PUT YOUR GOOGLE OAUTH CLIENT ID HERE
-  // ============================================================
-  const GOOGLE_CLIENT_ID = "877229361949-e9vnlfovp5gb5l9d13ul1ll7p1gshr07.apps.googleusercontent.com";
-
-  // Drive access is required for listing/searching/deleting existing files.
-  // This is intentionally broad because the dashboard manages the user's Drive.
-  const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
-
-  const API = "https://www.googleapis.com/drive/v3";
-  const UPLOAD_API = "https://www.googleapis.com/upload/drive/v3/files";
-
-  const state = {
-    accessToken: null,
-    user: null,
-    files: [],
-    folders: [],
-    filter: "all",
-    search: "",
-    selectedFiles: [],
-    previewFile: null,
-    previewObjectUrl: null,
-    isBusy: false,
-    tokenClient: null
-  };
-
-  const $ = (id) => document.getElementById(id);
-
-  // ---------------- UI helpers ----------------
-  function toast(message, type = "success") {
-    const el = document.createElement("div");
-    el.className = `toast ${type}`;
-    el.textContent = message;
-    $("toastWrap").appendChild(el);
-    setTimeout(() => el.remove(), 4200);
-  }
-
-  function escapeHtml(str = "") {
-    return String(str).replace(/[&<>"']/g, c => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
-    }[c]));
-  }
-
-  function formatBytes(bytes = 0) {
-    if (!bytes) return "—";
-    const units = ["B","KB","MB","GB","TB"];
-    const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-    return `${(bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0)} ${units[i]}`;
-  }
-
-  function formatDate(iso) {
-    if (!iso) return "—";
-    try {
-      return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
-    } catch {
-      return iso;
-    }
-  }
-
-  function iconFor(file) {
-    if (file.mimeType === "application/vnd.google-apps.folder") return "▣";
-    if ((file.mimeType || "").startsWith("image/")) return "▧";
-    if ((file.mimeType || "").startsWith("video/")) return "▶";
-    if ((file.mimeType || "").startsWith("audio/")) return "♫";
-    if (file.mimeType === "application/pdf") return "PDF";
-    if ((file.mimeType || "").includes("spreadsheet")) return "XLS";
-    if ((file.mimeType || "").includes("presentation")) return "PPT";
-    if ((file.mimeType || "").includes("word")) return "DOC";
-    return "▤";
-  }
-
-  function kindOf(file) {
-    const m = file.mimeType || "";
-    if (m.startsWith("image/")) return "image";
-    if (m.startsWith("video/")) return "video";
-    if (m === "application/vnd.google-apps.folder") return "folder";
-    return "document";
-  }
-
-  function dateSortDesc(a,b) {
-    return new Date(b.modifiedTime || 0) - new Date(a.modifiedTime || 0);
-  }
-
-  function driveOpenUrl(file) {
-    return file.webViewLink || `https://drive.google.com/file/d/${encodeURIComponent(file.id)}/view`;
-  }
-
-  function selectedDestinationName(file, selectedValue) {
-    if (selectedValue !== "auto") return selectedValue;
-    const kind = kindOf({ mimeType: file.type || "" });
-    if (kind === "image") return "Photos";
-    if (kind === "video") return "Videos";
-    return "Documents";
-  }
-
-  // ---------------- Google OAuth ----------------
-  function initGoogleAuth() {
-    if (typeof google === "undefined" || !google.accounts?.oauth2) {
-      setTimeout(initGoogleAuth, 300);
-      return;
-    }
-
-    state.tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: DRIVE_SCOPE,
-      callback: async (response) => {
-        if (response.error) {
-          toast(response.error_description || "Google authorization failed.", "error");
-          return;
-        }
-        state.accessToken = response.access_token;
-        await afterLogin();
-      }
-    });
-
-    $("googleLoginBtn").disabled = GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID");
-  }
-
-  async function login() {
-    if (GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID")) {
-      toast("First add your Google OAuth Client ID in the code.", "warning");
-      return;
-    }
-    if (!state.tokenClient) {
-      toast("Google login is still loading. Please try again.", "warning");
-      return;
-    }
-
-    state.tokenClient.requestAccessToken({ prompt: "consent" });
-  }
-
-  async function afterLogin() {
-    $("loginView").style.display = "none";
-    $("dashboard").style.display = "block";
-    $("accountBox").style.display = "flex";
-
-    try {
-      const about = await driveFetch("/about?fields=user");
-      state.user = about.user;
-
-      $("accountName").textContent = state.user?.displayName || "Google user";
-      $("accountEmail").textContent = state.user?.emailAddress || "";
-      $("accountPhoto").src = state.user?.photoLink || makeAvatarSvg(state.user?.displayName || "G");
-
-      await loadAll();
-      toast("Google Drive connected.");
-    } catch (err) {
-      console.error(err);
-      toast(err.message || "Could not connect to Google Drive.", "error");
-    }
-  }
-
-  function logout() {
-    try {
-      if (state.accessToken && google?.accounts?.oauth2) {
-        google.accounts.oauth2.revoke(state.accessToken, () => {});
-      }
-    } catch {}
-    state.accessToken = null;
-    state.user = null;
-    state.files = [];
-    state.folders = [];
-    $("dashboard").style.display = "none";
-    $("accountBox").style.display = "none";
-    $("loginView").style.display = "grid";
-    $("googleLoginBtn").disabled = GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID");
-  }
-
-  function makeAvatarSvg(text) {
-    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
-        <rect width="64" height="64" rx="32" fill="#14291d"/>
-        <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
-              fill="#77ffad" font-family="Arial" font-size="28" font-weight="700">${escapeHtml(text.slice(0,1).toUpperCase())}</text>
-      </svg>`
-    );
-  }
-
-  // ---------------- Drive API ----------------
-  async function driveFetch(path, options = {}) {
-    if (!state.accessToken) throw new Error("Google Drive is not connected.");
-
-    const headers = new Headers(options.headers || {});
-    headers.set("Authorization", `Bearer ${state.accessToken}`);
-
-    let response;
-    try {
-      response = await fetch(API + path, { ...options, headers });
-    } catch {
-      throw new Error("Network error. Check your internet connection.");
-    }
-
-    if (response.status === 401) {
-      state.accessToken = null;
-      throw new Error("Google session expired. Please sign in again.");
-    }
-
-    if (!response.ok) {
-      let detail = "";
-      try {
-        const data = await response.json();
-        detail = data?.error?.message ? ` — ${data.error.message}` : "";
-      } catch {}
-      throw new Error(`Drive API error (${response.status})${detail}`);
-    }
-
-    const type = response.headers.get("content-type") || "";
-    if (type.includes("application/json")) return response.json();
-    return response;
-  }
-
-  async function listFiles() {
-    const fields = [
-      "nextPageToken",
-      "files(id,name,mimeType,size,modifiedTime,createdTime,webViewLink,thumbnailLink,iconLink,parents,trashed)"
-    ].join(",");
-
-    let all = [];
-    let pageToken = "";
-
-    // Fetch several pages, with a safety limit so a giant Drive does not freeze mobile.
-    for (let page = 0; page < 5; page++) {
-      const q = encodeURIComponent("trashed = false");
-      const params =
-        `?pageSize=100&orderBy=modifiedTime desc&q=${q}` +
-        `&fields=${encodeURIComponent(fields)}` +
-        (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : "");
-
-      const data = await driveFetch(`/files${params}`);
-      all = all.concat(data.files || []);
-      pageToken = data.nextPageToken || "";
-      if (!pageToken) break;
-    }
-    return all;
-  }
-
-  async function listFolders() {
-    const q = encodeURIComponent("mimeType = 'application/vnd.google-apps.folder' and trashed = false");
-    const fields = encodeURIComponent("files(id,name,parents,createdTime),nextPageToken");
-    const data = await driveFetch(`/files?pageSize=1000&orderBy=name&q=${q}&fields=${fields}`);
-    return data.files || [];
-  }
-
-  async function loadAll() {
-    $("fileList").innerHTML = `<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>`;
-    const [files, folders] = await Promise.all([listFiles(), listFolders()]);
-    state.files = files.filter(f => f.mimeType !== "application/vnd.google-apps.folder");
-    state.folders = folders.sort((a,b) => a.name.localeCompare(b.name));
-    refreshFolderSelects();
-    render();
-  }
-
-  async function searchDriveFiles() {
-    const text = state.search.trim();
-    if (!text) {
-      await loadAll();
-      return;
-    }
-
-    $("resultSubtitle").textContent = "Searching...";
-    const safe = text.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-    const q = encodeURIComponent(`trashed = false and name contains '${safe}'`);
-    const fields = encodeURIComponent("files(id,name,mimeType,size,modifiedTime,createdTime,webViewLink,thumbnailLink,iconLink,parents,trashed)");
-    try {
-      const data = await driveFetch(`/files?pageSize=100&orderBy=modifiedTime desc&q=${q}&fields=${fields}`);
-      state.files = (data.files || []).filter(f => f.mimeType !== "application/vnd.google-apps.folder");
-      render();
-    } catch (err) {
-      toast(err.message, "error");
-    }
-  }
-
-  function refreshFolderSelects() {
-    const upload = $("destinationSelect");
-    const parent = $("folderParent");
-    const currentUpload = upload.value;
-
-    upload.innerHTML = `<option value="auto">Auto route by file type</option>`;
-    for (const f of state.folders) {
-      const opt = document.createElement("option");
-      opt.value = f.id;
-      opt.dataset.folderName = f.name;
-      opt.textContent = `Folder: ${f.name}`;
-      upload.appendChild(opt);
-    }
-    if ([...upload.options].some(o => o.value === currentUpload)) upload.value = currentUpload;
-
-    parent.innerHTML = `<option value="">My Drive (root)</option>`;
-    for (const f of state.folders) {
-      const opt = document.createElement("option");
-      opt.value = f.id;
-      opt.textContent = f.name;
-      parent.appendChild(opt);
-    }
-  }
-
-  // ---------------- Rendering ----------------
-  function filteredFiles() {
-    let list = [...state.files];
-    if (state.filter !== "all") {
-      list = list.filter(f => kindOf(f) === state.filter);
-    }
-    return list.sort(dateSortDesc);
-  }
-
-  function render() {
-    const list = filteredFiles();
-
-    $("statTotal").textContent = state.files.length;
-    $("statPhotos").textContent = state.files.filter(f => kindOf(f) === "image").length;
-    $("statVideos").textContent = state.files.filter(f => kindOf(f) === "video").length;
-    $("statDocs").textContent = state.files.filter(f => kindOf(f) === "document").length;
-    $("resultSubtitle").textContent =
-      `${list.length} ${list.length === 1 ? "file" : "files"} shown` +
-      (state.search.trim() ? ` for “${state.search.trim()}”` : "");
-
-    if (!list.length) {
-      $("fileList").innerHTML = `
-        <div class="empty">
-          <div class="empty-big">◍</div>
-          <div>No matching files found.</div>
-          <div style="font-size:11px;margin-top:5px;">Upload something or try another search.</div>
-        </div>`;
-      return;
-    }
-
-    $("fileList").innerHTML = list.map(file => `
-      <div class="file-row">
-        <div class="file-icon">${escapeHtml(iconFor(file))}</div>
-        <div class="file-main">
-          <div class="file-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
-          <div class="file-meta">
-            <span>${kindOf(file)}</span>
-            <span>•</span>
-            <span>${formatBytes(Number(file.size || 0))}</span>
-            <span>•</span>
-            <span>${escapeHtml(formatDate(file.modifiedTime))}</span>
-          </div>
-        </div>
-        <div class="file-actions">
-          <button class="btn btn-icon" data-action="preview" data-id="${file.id}" title="Preview">◉</button>
-          <button class="btn btn-icon" data-action="open" data-id="${file.id}" title="Open in Drive">↗</button>
-          <button class="btn btn-danger btn-icon" data-action="delete" data-id="${file.id}" title="Delete">⌫</button>
-        </div>
+  <!-- Folder Creation Modal -->
+  <div class="modal-backdrop" id="folderModal">
+    <div class="modal" style="width: 450px;">
+      <div class="modal-head">
+        <h3>New Folder</h3>
+        <button class="btn btn-icon" style="border:none;" id="closeFolder">✖</button>
       </div>
-    `).join("");
-  }
-
-  function setFilter(filter) {
-    state.filter = filter;
-    document.querySelectorAll("[data-filter]").forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.filter === filter);
-    });
-    render();
-  }
-
-  // ---------------- Upload ----------------
-  function openUpload() {
-    $("uploadDrawer").style.display = "flex";
-    document.body.style.overflow = "hidden";
-  }
-
-  function closeUpload() {
-    $("uploadDrawer").style.display = "none";
-    document.body.style.overflow = "";
-  }
-
-  function addFilesToUploadList(files) {
-    state.selectedFiles = [...state.selectedFiles, ...Array.from(files)];
-    renderUploadList();
-  }
-
-  function renderUploadList() {
-    $("uploadList").innerHTML = state.selectedFiles.map((file, index) => `
-      <div class="upload-item">
-        <div class="upload-top">
-          <span title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
-          <span>${formatBytes(file.size)}</span>
-        </div>
-        <div style="font-size:10px;color:#7e9486;margin-top:4px;">
-          ${escapeHtml(file.type || "Unknown type")} · ${escapeHtml(selectedDestinationName(file, $("destinationSelect").value))}
-        </div>
-        <div class="progress"><span id="progress_${index}"></span></div>
+      <div class="modal-body">
+        <input type="text" id="newFolderName" class="input-field" placeholder="e.g. Project Documents" />
       </div>
-    `).join("");
-  }
+      <div class="modal-foot">
+        <button class="btn" id="cancelFolderBtn">Cancel</button>
+        <button class="btn btn-primary" id="createFolderBtn">Create</button>
+      </div>
+    </div>
+  </div>
 
-  async function ensureAutoFolder(folderName) {
-    let found = state.folders.find(f => f.name.toLowerCase() === folderName.toLowerCase());
-    if (found) return found;
+  <div class="toast-container" id="toastWrap"></div>
 
-    const body = JSON.stringify({
-      name: folderName,
-      mimeType: "application/vnd.google-apps.folder"
-    });
+  <script>
+  (() => {
+    "use strict";
 
-    const created = await driveFetch("/files?fields=id,name,parents,createdTime", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body
-    });
+    // ==========================================
+    // CLIENT ID & SETUP (from your previous code)
+    // ==========================================
+    const GOOGLE_CLIENT_ID = "877229361949-e9vnlfovp5gb5l9d13ul1ll7p1gshr07.apps.googleusercontent.com";
+    const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
+    const API = "https://www.googleapis.com/drive/v3";
+    const UPLOAD_API = "https://www.googleapis.com/upload/drive/v3/files";
 
-    state.folders.push(created);
-    state.folders.sort((a,b) => a.name.localeCompare(b.name));
-    refreshFolderSelects();
-    toast(`Created folder “${folderName}”.`);
-    return created;
-  }
-
-  async function resolveUploadParent(file, selectedValue) {
-    if (selectedValue !== "auto") return selectedValue || null;
-
-    const folderName = selectedDestinationName(file, "auto");
-    const folder = await ensureAutoFolder(folderName);
-    return folder.id;
-  }
-
-  async function uploadFileResumable(file, parentId, progressEl) {
-    const metadata = {
-      name: file.name,
-      mimeType: file.type || "application/octet-stream"
+    const state = {
+      accessToken: null, user: null,
+      files: [], folders: [],
+      sysFilter: "all",      // all, image, video, document
+      currentFolderId: null, // null means root/all
+      currentFolderName: "",
+      searchQuery: "",
+      folderSearchQuery: "",
+      viewMode: "list",      // list, grid
+      selectedFiles: []
     };
 
-    if (parentId) metadata.parents = [parentId];
+    const $ = (id) => document.getElementById(id);
 
-    // Start resumable upload session
-    const startResponse = await fetch(`${UPLOAD_API}?uploadType=resumable&fields=id,name,mimeType,size,modifiedTime,createdTime,webViewLink,parents`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${state.accessToken}`,
-        "Content-Type": "application/json; charset=UTF-8",
-        "X-Upload-Content-Type": file.type || "application/octet-stream",
-        "X-Upload-Content-Length": String(file.size)
-      },
-      body: JSON.stringify(metadata)
-    });
-
-    if (!startResponse.ok) {
-      let msg = "Could not start upload.";
-      try {
-        const data = await startResponse.json();
-        msg = data?.error?.message || msg;
-      } catch {}
-      throw new Error(msg);
+    // --- UTILS ---
+    function toast(message, type = "success") {
+      const el = document.createElement("div");
+      el.className = "toast";
+      const icon = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : '✅';
+      el.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+      $("toastWrap").appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+      }, 4000);
     }
 
-    const location = startResponse.headers.get("Location");
-    if (!location) throw new Error("Google did not return an upload URL.");
-
-    return await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", location);
-      xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-      xhr.setRequestHeader("Authorization", `Bearer ${state.accessToken}`);
-
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable && progressEl) {
-          progressEl.style.width = `${Math.round((e.loaded / e.total) * 100)}%`;
-        }
-      };
-
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          if (progressEl) progressEl.style.width = "100%";
-          try {
-            resolve(JSON.parse(xhr.responseText));
-          } catch {
-            resolve({ name: file.name, mimeType: file.type, size: file.size });
-          }
-        } else {
-          let msg = `Upload failed (${xhr.status}).`;
-          try {
-            const data = JSON.parse(xhr.responseText);
-            msg = data?.error?.message || msg;
-          } catch {}
-          reject(new Error(msg));
-        }
-      };
-
-      xhr.onerror = () => reject(new Error("Upload network error."));
-      xhr.onabort = () => reject(new Error("Upload was cancelled."));
-      xhr.send(file);
-    });
-  }
-
-  async function startUpload() {
-    if (!state.selectedFiles.length) {
-      toast("Choose at least one file first.", "warning");
-      return;
+    function escapeHtml(str = "") {
+      return String(str).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+    }
+    
+    function formatBytes(bytes = 0) {
+      if (!bytes) return "—";
+      const units = ["B","KB","MB","GB","TB"];
+      const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+      return `${(bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0)} ${units[i]}`;
+    }
+    function formatDate(iso) {
+      if (!iso) return "—";
+      return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(iso));
     }
 
-    const selectedValue = $("destinationSelect").value;
-    $("startUpload").disabled = true;
+    function getFileCategory(mime) {
+      if (!mime) return "document";
+      if (mime.startsWith("image/")) return "image";
+      if (mime.startsWith("video/")) return "video";
+      if (mime === "application/vnd.google-apps.folder") return "folder";
+      return "document";
+    }
 
-    try {
-      for (let i = 0; i < state.selectedFiles.length; i++) {
-        const file = state.selectedFiles[i];
-        const progressEl = $(`progress_${i}`);
-        const parentId = await resolveUploadParent(file, selectedValue);
+    function getFileIcon(file) {
+      const cat = getFileCategory(file.mimeType);
+      if (cat === 'image') return '🖼️';
+      if (cat === 'video') return '🎥';
+      if (file.mimeType.includes('pdf')) return '📕';
+      if (file.mimeType.includes('spreadsheet') || file.mimeType.includes('excel')) return '📗';
+      return '📄';
+    }
 
-        await uploadFileResumable(file, parentId, progressEl);
-
-        toast(`Uploaded: ${file.name}`);
+    // --- AUTH ---
+    let tokenClient;
+    function initGoogleAuth() {
+      if (typeof google === "undefined" || !google.accounts?.oauth2) {
+        setTimeout(initGoogleAuth, 300); return;
       }
-
-      state.selectedFiles = [];
-      renderUploadList();
-      await loadAll();
-      closeUpload();
-    } catch (err) {
-      console.error(err);
-      toast(err.message || "Upload failed.", "error");
-    } finally {
-      $("startUpload").disabled = false;
-    }
-  }
-
-  // ---------------- Folders ----------------
-  function openFolderModal() {
-    $("folderName").value = "";
-    refreshFolderSelects();
-    $("folderModal").style.display = "flex";
-    document.body.style.overflow = "hidden";
-    setTimeout(() => $("folderName").focus(), 50);
-  }
-
-  function closeFolderModal() {
-    $("folderModal").style.display = "none";
-    document.body.style.overflow = "";
-  }
-
-  async function createFolder() {
-    const name = $("folderName").value.trim();
-    const parentId = $("folderParent").value;
-
-    if (!name) {
-      toast("Enter a folder name.", "warning");
-      return;
-    }
-
-    $("createFolderBtn").disabled = true;
-    try {
-      const body = {
-        name,
-        mimeType: "application/vnd.google-apps.folder"
-      };
-      if (parentId) body.parents = [parentId];
-
-      const folder = await driveFetch("/files?fields=id,name,parents,createdTime", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify(body)
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID, scope: DRIVE_SCOPE,
+        callback: async (resp) => {
+          if (resp.error) { toast(resp.error_description, "error"); return; }
+          state.accessToken = resp.access_token;
+          await afterLogin();
+        }
       });
-
-      state.folders.push(folder);
-      state.folders.sort((a,b) => a.name.localeCompare(b.name));
-      refreshFolderSelects();
-      toast(`Folder “${name}” created.`);
-      closeFolderModal();
-    } catch (err) {
-      toast(err.message, "error");
-    } finally {
-      $("createFolderBtn").disabled = false;
-    }
-  }
-
-  // ---------------- Preview / delete ----------------
-  async function openPreview(file) {
-    state.previewFile = file;
-    if (state.previewObjectUrl) {
-      URL.revokeObjectURL(state.previewObjectUrl);
-      state.previewObjectUrl = null;
     }
 
-    $("previewTitle").textContent = file.name;
-    $("previewBody").innerHTML = `<div class="empty"><div class="empty-big">◌</div>Loading preview...</div>`;
-    $("previewModal").style.display = "flex";
-    document.body.style.overflow = "hidden";
+    async function login() { tokenClient.requestAccessToken({ prompt: "consent" }); }
+    function logout() {
+      if (state.accessToken && google?.accounts?.oauth2) google.accounts.oauth2.revoke(state.accessToken, ()=>{});
+      state.accessToken = null;
+      $("dashboard").style.display = "none";
+      $("accountBox").style.display = "none";
+      $("loginView").style.display = "grid";
+    }
 
-    $("openDriveBtn").onclick = () => window.open(driveOpenUrl(file), "_blank", "noopener,noreferrer");
-    $("deleteFromPreview").onclick = () => deleteFile(file);
-
-    const mime = file.mimeType || "";
-
-    try {
-      if (mime.startsWith("image/") || mime.startsWith("video/") || mime === "application/pdf") {
-        const response = await fetch(`${API}/files/${encodeURIComponent(file.id)}?alt=media`, {
-          headers: { "Authorization": `Bearer ${state.accessToken}` }
-        });
-        if (!response.ok) throw new Error("Preview could not be loaded.");
-        const blob = await response.blob();
-        state.previewObjectUrl = URL.createObjectURL(blob);
-
-        if (mime.startsWith("image/")) {
-          $("previewBody").innerHTML = `<img class="preview-media" src="${state.previewObjectUrl}" alt="${escapeHtml(file.name)}">`;
-        } else if (mime.startsWith("video/")) {
-          $("previewBody").innerHTML = `
-            <video class="preview-media" controls playsinline preload="metadata">
-              <source src="${state.previewObjectUrl}" type="${escapeHtml(mime)}">
-            </video>`;
-        } else {
-          $("previewBody").innerHTML = `<iframe class="preview-frame" src="${state.previewObjectUrl}" title="PDF preview"></iframe>`;
-        }
-      } else {
-        const url = driveOpenUrl(file);
-        $("previewBody").innerHTML = `
-          <iframe class="preview-frame" src="${escapeHtml(url)}" title="Google Drive preview"></iframe>`;
+    async function afterLogin() {
+      $("loginView").style.display = "none";
+      $("dashboard").style.display = "block";
+      $("accountBox").style.display = "flex";
+      
+      try {
+        const res = await fetch(`${API}/about?fields=user`, { headers: { "Authorization": `Bearer ${state.accessToken}` }});
+        const data = await res.json();
+        state.user = data.user;
+        $("accountName").textContent = state.user.displayName;
+        $("accountEmail").textContent = state.user.emailAddress;
+        $("accountPhoto").src = state.user.photoLink || "https://via.placeholder.com/40";
+        
+        await fetchAllDriveData();
+      } catch (err) {
+        toast("Failed to connect to Drive", "error");
       }
-    } catch (err) {
-      $("previewBody").innerHTML = `
-        <div class="empty">
-          <div class="empty-big">!</div>
-          <div>${escapeHtml(err.message || "Preview unavailable.")}</div>
-          <div style="font-size:11px;margin-top:7px;">Use “Open in Google Drive” to view this file.</div>
-        </div>`;
     }
-  }
 
-  function closePreview() {
-    $("previewModal").style.display = "none";
-    document.body.style.overflow = "";
-    if (state.previewObjectUrl) {
-      URL.revokeObjectURL(state.previewObjectUrl);
-      state.previewObjectUrl = null;
+    // --- API CALLS ---
+    async function apiGet(path) {
+      const res = await fetch(API + path, { headers: { "Authorization": `Bearer ${state.accessToken}` }});
+      if(!res.ok) throw new Error("API Error");
+      return res.json();
     }
-    state.previewFile = null;
-  }
 
-  async function deleteFile(file) {
-    const yes = confirm(`Delete “${file.name}” from Google Drive?`);
-    if (!yes) return;
-
-    try {
-      await driveFetch(`/files/${encodeURIComponent(file.id)}`, { method: "DELETE" });
-      state.files = state.files.filter(f => f.id !== file.id);
-      if (state.previewFile?.id === file.id) closePreview();
-      render();
-      toast(`Deleted: ${file.name}`);
-    } catch (err) {
-      toast(err.message, "error");
+    // Single mega-fetch to make navigation instant
+    async function fetchAllDriveData() {
+      $("fileList").innerHTML = `<div class="empty-state">Loading your Drive...</div>`;
+      
+      const fields = encodeURIComponent("files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,parents)");
+      const q = encodeURIComponent("trashed = false");
+      
+      try {
+        // Fetch max 1000 items to keep it responsive (can be paginated for huge drives)
+        const data = await apiGet(`/files?pageSize=1000&orderBy=modifiedTime desc&q=${q}&fields=${fields}`);
+        const allFiles = data.files || [];
+        
+        state.folders = allFiles.filter(f => f.mimeType === "application/vnd.google-apps.folder");
+        state.files = allFiles.filter(f => f.mimeType !== "application/vnd.google-apps.folder");
+        
+        // Sort folders alphabetically
+        state.folders.sort((a,b) => a.name.localeCompare(b.name));
+        
+        renderSidebarFolders();
+        populateUploadFolderSelect();
+        renderMainFiles();
+      } catch (err) {
+        toast("Error fetching files.", "error");
+      }
     }
-  }
 
-  // ---------------- Events ----------------
-  $("googleLoginBtn").addEventListener("click", login);
-  $("logoutBtn").addEventListener("click", logout);
+    // --- RENDER SIDEBAR ---
+    function renderSidebarFolders() {
+      const term = state.folderSearchQuery.toLowerCase();
+      const filtered = state.folders.filter(f => f.name.toLowerCase().includes(term));
+      
+      const container = $("sidebarFolderList");
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--text-muted);">No folders found.</div>`;
+        return;
+      }
 
-  $("uploadBtn").addEventListener("click", openUpload);
-  $("closeUpload").addEventListener("click", closeUpload);
-  $("cancelUpload").addEventListener("click", closeUpload);
-  $("startUpload").addEventListener("click", startUpload);
-
-  $("folderBtn").addEventListener("click", openFolderModal);
-  $("newUploadFolder").addEventListener("click", openFolderModal);
-  $("closeFolder").addEventListener("click", closeFolderModal);
-  $("cancelFolder").addEventListener("click", closeFolderModal);
-  $("createFolderBtn").addEventListener("click", createFolder);
-
-  $("refreshBtn").addEventListener("click", async () => {
-    try {
-      await loadAll();
-      toast("Drive refreshed.");
-    } catch (err) {
-      toast(err.message, "error");
+      container.innerHTML = filtered.map(f => `
+        <button class="folder-item ${state.currentFolderId === f.id ? 'active' : ''}" data-folder-id="${f.id}" title="${escapeHtml(f.name)}">
+          <i>📁</i> ${escapeHtml(f.name)}
+        </button>
+      `).join("");
     }
-  });
 
-  $("closePreview").addEventListener("click", closePreview);
+    // --- RENDER MAIN ---
+    function renderMainFiles() {
+      // Apply filters
+      let result = state.files;
 
-  $("fileInput").addEventListener("change", e => {
-    addFilesToUploadList(e.target.files);
-    e.target.value = "";
-  });
+      // 1. System Filter (All, Photos, etc)
+      if (state.sysFilter !== 'all') {
+        result = result.filter(f => getFileCategory(f.mimeType) === state.sysFilter);
+      }
 
-  $("dropzone").addEventListener("click", () => $("fileInput").click());
-  ["dragenter","dragover"].forEach(evt => {
-    $("dropzone").addEventListener(evt, e => {
-      e.preventDefault();
-      $("dropzone").classList.add("drag");
+      // 2. Folder Navigation Filter
+      if (state.currentFolderId) {
+        result = result.filter(f => (f.parents || []).includes(state.currentFolderId));
+        // Update Breadcrumbs
+        $("bcArrow").style.display = "inline";
+        $("bcCurrent").style.display = "inline";
+        $("bcCurrent").textContent = state.currentFolderName;
+      } else {
+        $("bcArrow").style.display = "none";
+        $("bcCurrent").style.display = "none";
+      }
+
+      // 3. Text Search
+      if (state.searchQuery) {
+        const term = state.searchQuery.toLowerCase();
+        result = result.filter(f => f.name.toLowerCase().includes(term));
+      }
+
+      // Render
+      $("resultCount").textContent = `${result.length} files`;
+      const container = $("fileList");
+      
+      if (result.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🏜️</div>
+            <div class="empty-title">Nothing here</div>
+            <div style="font-size:13px;">No files match your current view.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.className = `file-container view-${state.viewMode}`;
+      
+      container.innerHTML = result.map(f => `
+        <div class="file-row">
+          <div class="file-icon">${getFileIcon(f)}</div>
+          <div style="flex:1; min-width:0;">
+            <div class="file-name" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</div>
+            <div class="file-meta">
+              <span>${formatBytes(f.size)}</span> • <span>${formatDate(f.modifiedTime)}</span>
+            </div>
+          </div>
+          <div class="file-actions">
+            <button class="action-btn" data-act="view" data-id="${f.id}" title="Preview/Open">👁</button>
+            <button class="action-btn" data-act="down" data-id="${f.id}" title="Download">⬇</button>
+            <button class="action-btn del" data-act="del" data-id="${f.id}" title="Delete">🗑</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    // --- ACTIONS ---
+    async function handleFileAction(e) {
+      const btn = e.target.closest('.action-btn');
+      if (!btn) return;
+      const file = state.files.find(f => f.id === btn.dataset.id);
+      if (!file) return;
+
+      const act = btn.dataset.act;
+      if (act === 'view') {
+        window.open(file.webViewLink, '_blank');
+      } 
+      else if (act === 'down') {
+        // webContentLink directly downloads the file.
+        // Google Docs/Sheets don't have this, so fallback to webViewLink
+        if (file.webContentLink) {
+          window.open(file.webContentLink, '_blank');
+        } else {
+          toast("Opening format to allow export/download.", "warning");
+          window.open(file.webViewLink, '_blank');
+        }
+      }
+      else if (act === 'del') {
+        if(confirm(`Permanently delete "${file.name}"?`)) {
+          try {
+            await fetch(`${API}/files/${file.id}`, { 
+              method: 'DELETE', 
+              headers: { "Authorization": `Bearer ${state.accessToken}` }
+            });
+            state.files = state.files.filter(f => f.id !== file.id);
+            renderMainFiles();
+            toast("File deleted");
+          } catch(e) { toast("Failed to delete", "error"); }
+        }
+      }
+    }
+
+    // --- EVENT LISTENERS ---
+    $("googleLoginBtn").onclick = login;
+    $("logoutBtn").onclick = logout;
+
+    // View Toggles
+    $("viewListBtn").onclick = () => { state.viewMode = 'list'; $("viewListBtn").classList.add('active'); $("viewGridBtn").classList.remove('active'); renderMainFiles(); };
+    $("viewGridBtn").onclick = () => { state.viewMode = 'grid'; $("viewGridBtn").classList.add('active'); $("viewListBtn").classList.remove('active'); renderMainFiles(); };
+
+    // Search & Filters
+    $("searchInput").oninput = (e) => { state.searchQuery = e.target.value; renderMainFiles(); };
+    $("folderSearchInput").oninput = (e) => { state.folderSearchQuery = e.target.value; renderSidebarFolders(); };
+
+    // Sidebar System Nav (All, Photos...)
+    document.querySelectorAll('[data-sys-filter]').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.sysFilter = btn.dataset.sysFilter;
+        // Reset folder filter when clicking main nav
+        state.currentFolderId = null; 
+        document.querySelectorAll('.folder-item').forEach(b => b.classList.remove('active'));
+        renderMainFiles();
+      }
     });
-  });
-  ["dragleave","drop"].forEach(evt => {
-    $("dropzone").addEventListener(evt, e => {
-      e.preventDefault();
-      $("dropzone").classList.remove("drag");
-    });
-  });
-  $("dropzone").addEventListener("drop", e => addFilesToUploadList(e.dataTransfer.files));
 
-  document.querySelectorAll("[data-filter]").forEach(btn => {
-    btn.addEventListener("click", () => setFilter(btn.dataset.filter));
-  });
+    // Dynamic Folder Clicks
+    $("sidebarFolderList").onclick = (e) => {
+      const btn = e.target.closest('.folder-item');
+      if(!btn) return;
+      document.querySelectorAll('.folder-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      state.currentFolderId = btn.dataset.folderId;
+      state.currentFolderName = btn.innerText.replace('📁', '').trim();
+      
+      // Clear sys filters
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      state.sysFilter = 'all';
+      renderMainFiles();
+    };
 
-  $("searchInput").addEventListener("input", e => {
-    state.search = e.target.value;
-    clearTimeout(window.__searchTimer);
-    window.__searchTimer = setTimeout(searchDriveFiles, 350);
-  });
-
-  $("fileList").addEventListener("click", async e => {
-    const btn = e.target.closest("[data-action]");
-    if (!btn) return;
-    const file = state.files.find(f => f.id === btn.dataset.id);
-    if (!file) return;
-
-    if (btn.dataset.action === "preview") openPreview(file);
-    if (btn.dataset.action === "open") window.open(driveOpenUrl(file), "_blank", "noopener,noreferrer");
-    if (btn.dataset.action === "delete") await deleteFile(file);
-  });
-
-  // Modal click-outside
-  $("previewModal").addEventListener("click", e => {
-    if (e.target === $("previewModal")) closePreview();
-  });
-  $("folderModal").addEventListener("click", e => {
-    if (e.target === $("folderModal")) closeFolderModal();
-  });
-  $("uploadDrawer").addEventListener("click", e => {
-    if (e.target === $("uploadDrawer")) closeUpload();
-  });
-
-  // ESC closes dialogs
-  document.addEventListener("keydown", e => {
-    if (e.key === "Escape") {
-      closePreview();
-      closeFolderModal();
-      closeUpload();
+    $("bcHome").onclick = () => {
+      state.currentFolderId = null;
+      document.querySelectorAll('.folder-item').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-sys-filter="all"]').click(); // Reset to root All Files
     }
-  });
 
-  // Initial state
-  initGoogleAuth();
-})();
-</script>
+    $("fileList").onclick = handleFileAction;
+
+    // --- UPLOAD & FOLDER LOGIC ---
+    // (Simplified logic leveraging the updated UI)
+    $("uploadBtn").onclick = () => { $("uploadModal").style.display = "flex"; };
+    $("closeUpload").onclick = $("cancelUploadBtn").onclick = () => { $("uploadModal").style.display = "none"; };
+    
+    $("folderBtn").onclick = () => { $("folderModal").style.display = "flex"; $("newFolderName").value=""; $("newFolderName").focus(); };
+    $("closeFolder").onclick = $("cancelFolderBtn").onclick = () => { $("folderModal").style.display = "none"; };
+
+    function populateUploadFolderSelect() {
+      const sel = $("destinationSelect");
+      sel.innerHTML = `<option value="auto">⚡ Auto-Sort by File Type</option><option value="root">🏠 My Drive (Root)</option>`;
+      state.folders.forEach(f => {
+        sel.innerHTML += `<option value="${f.id}">📁 ${escapeHtml(f.name)}</option>`;
+      });
+    }
+
+    $("createFolderBtn").onclick = async () => {
+      const name = $("newFolderName").value.trim();
+      if(!name) return;
+      $("createFolderBtn").disabled = true;
+      try {
+        const body = JSON.stringify({ name, mimeType: "application/vnd.google-apps.folder" });
+        const res = await fetch(`${API}/files?fields=id,name`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${state.accessToken}`, "Content-Type": "application/json" },
+          body
+        });
+        const newFolder = await res.json();
+        state.folders.push({id: newFolder.id, name: newFolder.name, mimeType: "application/vnd.google-apps.folder"});
+        state.folders.sort((a,b) => a.name.localeCompare(b.name));
+        renderSidebarFolders();
+        populateUploadFolderSelect();
+        $("folderModal").style.display = "none";
+        toast(`Folder "${name}" created`);
+      } catch(e) { toast("Failed to create folder", "error"); }
+      $("createFolderBtn").disabled = false;
+    };
+
+    // Drag and Drop Upload Setup
+    const dropzone = $("dropzone"), fileInput = $("fileInput");
+    dropzone.onclick = () => fileInput.click();
+    ['dragover','dragenter'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('drag'); }));
+    ['dragleave','drop'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.remove('drag'); }));
+    
+    fileInput.onchange = (e) => handleUploadSelection(e.target.files);
+    dropzone.ondrop = (e) => handleUploadSelection(e.dataTransfer.files);
+    
+    function handleUploadSelection(files) {
+      if(!files.length) return;
+      state.selectedFiles = Array.from(files);
+      $("uploadProgressArea").innerHTML = `<div style="font-size:13px; font-weight:600; color:var(--primary); text-align:center;">${files.length} file(s) selected for upload.</div>`;
+    }
+
+    $("startUploadBtn").onclick = async () => {
+      if(!state.selectedFiles.length) return toast("Select files first", "warning");
+      const dest = $("destinationSelect").value;
+      $("startUploadBtn").disabled = true;
+      $("uploadProgressArea").innerHTML = `<div style="font-size:13px; text-align:center;">Uploading... Please wait.</div>`;
+
+      try {
+        for(const file of state.selectedFiles) {
+          // Metadata
+          const meta = { name: file.name, mimeType: file.type || 'application/octet-stream' };
+          
+          let parentId = null;
+          if (dest !== 'auto' && dest !== 'root') parentId = dest;
+          else if (dest === 'auto') {
+             // Basic Auto sort logic (ensure folders exist or put in root)
+             // For production, you can create 'Photos' folder dynamically here.
+          }
+          if (parentId) meta.parents = [parentId];
+
+          const form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
+          form.append('file', file);
+
+          await fetch(`${UPLOAD_API}?uploadType=multipart&fields=id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,parents`, {
+            method: 'POST',
+            headers: { "Authorization": `Bearer ${state.accessToken}` },
+            body: form
+          });
+        }
+        toast("All files uploaded!");
+        $("uploadModal").style.display = "none";
+        state.selectedFiles = [];
+        $("uploadProgressArea").innerHTML = '';
+        fetchAllDriveData(); // Refresh UI
+      } catch(e) {
+        toast("Upload error occurred", "error");
+      }
+      $("startUploadBtn").disabled = false;
+    };
+
+    initGoogleAuth();
+  })();
+  </script>
 </body>
 </html>
