@@ -3,1002 +3,708 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
-  <title>DriveVault — Professional Cloud Storage</title>
+  <meta name="theme-color" content="#09090b" />
+  <title>DriveVault — Premium Cloud Storage</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Phosphor Icons for ultra-modern minimal icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
   <style>
     :root {
-      /* Clean Corporate White & Blue Theme */
-      --bg-body: #f8fafc;
-      --bg-panel: #ffffff;
-      --bg-hover: #f1f5f9;
-      --border: #e2e8f0;
-      --border-strong: #cbd5e1;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
+      /* Premium Dark Theme Colors */
+      --bg-base: #09090b;       /* Deepest black/zinc */
+      --bg-panel: #18181b;      /* Dark zinc for cards */
+      --bg-hover: #27272a;      /* Hover state */
+      --border: #27272a;        /* Subtle borders */
+      --border-focus: #3f3f46;
       
-      /* Brand Colors */
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --primary-light: #eff6ff;
-      --danger: #ef4444;
-      --danger-bg: #fee2e2;
-      --success: #10b981;
+      --text-main: #f4f4f5;     /* Off-white text */
+      --text-muted: #a1a1aa;    /* Gray text */
       
-      /* UI Elements */
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      --radius: 12px;
+      --primary: #10b981;       /* Emerald Green accent */
+      --primary-hover: #059669;
+      --primary-glow: rgba(16, 185, 129, 0.15);
+      
+      --danger: #f43f5e;
+      --danger-hover: #e11d48;
+      
+      --radius-lg: 16px;
+      --radius-md: 12px;
       --radius-sm: 8px;
+      
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
 
-    * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      color: var(--text-main);
-      background-color: var(--bg-body);
-      -webkit-font-smoothing: antialiased;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100vh; background-color: var(--bg-base); color: var(--text-main); font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    
+    button, input, select { font: inherit; outline: none; border: none; background: none; color: inherit; }
+    button { cursor: pointer; transition: 0.2s ease; }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-focus); }
+
+    /* Main Container */
+    .app-wrapper {
+      max-width: 1600px; margin: 0 auto; padding: 24px;
+      display: flex; flex-direction: column; height: 100vh;
     }
 
-    button, input, select { font: inherit; outline: none; }
-    button { cursor: pointer; border: none; background: transparent; }
-    a { color: inherit; text-decoration: none; }
-
-    /* Layout */
-    .app-container {
-      max-width: 1500px;
-      margin: 0 auto;
-      padding: 20px 24px;
+    /* Top Navigation */
+    .top-nav {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--bg-panel); padding: 16px 24px; border-radius: var(--radius-lg);
+      border: 1px solid var(--border); margin-bottom: 24px; box-shadow: var(--shadow);
     }
-
-    /* Topbar */
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-      background: var(--bg-panel);
-      padding: 16px 24px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--border);
+    
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .brand-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), #059669);
+      display: grid; place-items: center; font-size: 24px; font-weight: bold; color: #fff;
+      box-shadow: 0 0 20px var(--primary-glow);
     }
+    .brand-text h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .brand-text p { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
+    .user-profile {
+      display: none; align-items: center; gap: 12px; background: var(--bg-base);
+      padding: 8px 16px 8px 8px; border-radius: 50px; border: 1px solid var(--border);
     }
-
-    .logo {
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
-      display: grid;
-      place-items: center;
-      color: white;
-      font-size: 20px;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--primary), #60a5fa);
-      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
-    }
-
-    .brand h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
-    .brand p { margin: 2px 0 0; color: var(--text-muted); font-size: 12px; font-weight: 500; }
-
-    /* Account Profile */
-    .account {
-      display: none;
-      align-items: center;
-      gap: 12px;
-      padding: 6px 12px 6px 6px;
-      background: var(--bg-body);
-      border: 1px solid var(--border);
-      border-radius: 50px;
-      transition: 0.2s;
-    }
-    .account:hover { border-color: var(--border-strong); }
-
-    .account img {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .account-info { display: flex; flex-direction: column; max-width: 150px; }
-    .account-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .account-email { color: var(--text-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-profile img { width: 36px; height: 36px; border-radius: 50%; }
+    .user-info { display: flex; flex-direction: column; }
+    .user-name { font-size: 13px; font-weight: 600; }
+    .user-email { font-size: 11px; color: var(--text-muted); }
+    
+    .logout-btn { padding: 6px; margin-left: 8px; color: var(--text-muted); font-size: 20px; }
+    .logout-btn:hover { color: var(--danger); }
 
     /* Buttons */
     .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg-panel);
-      color: var(--text-main);
-      min-height: 40px;
-      padding: 0 16px;
-      border-radius: var(--radius-sm);
-      font-weight: 600;
-      font-size: 13px;
-      transition: all 0.2s ease;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+      background: var(--bg-hover); border: 1px solid var(--border);
     }
-    .btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-      border: none;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-    }
-    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3); }
-
-    .btn-icon { width: 40px; padding: 0; flex-shrink: 0; border-radius: var(--radius-sm); font-size: 16px; }
+    .btn:hover { background: var(--border); }
+    .btn-primary { background: var(--primary); color: #000; border: none; }
+    .btn-primary:hover { background: var(--primary-hover); color: #fff; box-shadow: 0 0 15px var(--primary-glow); }
 
     /* Login Screen */
-    .login-view {
-      min-height: 70vh;
-      display: grid;
-      place-items: center;
+    .login-screen { display: grid; place-items: center; height: 70vh; }
+    .login-box {
+      background: var(--bg-panel); padding: 48px; border-radius: var(--radius-lg);
+      border: 1px solid var(--border); text-align: center; max-width: 440px; width: 100%;
+      box-shadow: var(--shadow);
     }
-    .login-card {
-      background: var(--bg-panel);
-      width: min(500px, 100%);
-      text-align: center;
-      padding: 48px 40px;
-      border-radius: 24px;
-      box-shadow: var(--shadow-lg);
-      border: 1px solid var(--border);
-    }
-    .login-card h2 { margin: 0 0 12px; font-size: 28px; font-weight: 800; color: var(--text-main); }
-    .login-card p { color: var(--text-muted); margin: 0 auto 32px; font-size: 14px; line-height: 1.6; }
+    .login-box i { font-size: 64px; color: var(--primary); margin-bottom: 24px; display: block; }
+    .login-box h2 { font-size: 24px; margin-bottom: 12px; }
+    .login-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; line-height: 1.6; }
     
-    .google-btn {
-      width: 100%;
-      height: 54px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      background: white;
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius);
-      font-weight: 600;
-      font-size: 15px;
-      color: #3c4043;
-      box-shadow: var(--shadow-sm);
-      transition: 0.2s;
+    .google-auth-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
+      background: #fff; color: #000; padding: 14px; border-radius: var(--radius-sm);
+      font-weight: 600; font-size: 16px;
     }
-    .google-btn:hover { background: #f8f9fa; box-shadow: var(--shadow); }
-    .google-btn img { width: 20px; }
+    .google-auth-btn img { width: 24px; }
+    .google-auth-btn:hover { background: #e4e4e7; }
 
-    /* Main Dashboard Grid */
-    .dashboard { display: none; }
-    .grid-layout {
-      display: grid;
-      grid-template-columns: 280px minmax(0, 1fr);
-      gap: 24px;
-      align-items: start;
-    }
+    /* Dashboard Layout */
+    .dashboard-layout { display: none; grid-template-columns: 280px 1fr; gap: 24px; flex: 1; overflow: hidden; }
 
     /* Sidebar */
     .sidebar {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      box-shadow: var(--shadow-sm);
-      display: flex;
-      flex-direction: column;
-      height: calc(100vh - 120px);
-      position: sticky;
-      top: 20px;
+      background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 20px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto;
     }
-
-    .side-section { margin-bottom: 20px; }
-    .side-title {
-      font-size: 11px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      font-weight: 700;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      padding: 0 10px;
-    }
-
-    .nav-btn {
-      width: 100%;
-      text-align: left;
-      padding: 10px 12px;
-      border-radius: var(--radius-sm);
-      margin-bottom: 2px;
-      font-weight: 500;
-      font-size: 14px;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .nav-btn:hover { background: var(--bg-hover); }
-    .nav-btn.active {
-      background: var(--primary-light);
-      color: var(--primary);
-      font-weight: 600;
-    }
-
-    /* Folder List in Sidebar */
-    .folder-search {
-      padding: 0 10px;
-      margin-bottom: 10px;
-    }
-    .folder-search input {
-      width: 100%;
-      background: var(--bg-body);
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      transition: 0.2s;
-    }
-    .folder-search input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px var(--primary-light); }
+    .upload-main-btn { width: 100%; padding: 14px; font-size: 15px; border-radius: var(--radius-md); }
     
-    .folder-list-container {
-      flex: 1;
-      overflow-y: auto;
-      padding-right: 4px;
+    .nav-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; margin-bottom: 12px; padding: 0 8px; display: flex; justify-content: space-between; align-items: center; }
+    
+    .nav-item {
+      width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+      border-radius: var(--radius-sm); color: var(--text-muted); font-size: 14px; font-weight: 500;
     }
-    .folder-list-container::-webkit-scrollbar { width: 4px; }
-    .folder-list-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .nav-item i { font-size: 20px; }
+    .nav-item:hover { background: var(--bg-hover); color: var(--text-main); }
+    .nav-item.active { background: var(--primary-glow); color: var(--primary); }
 
-    .folder-item {
-      font-size: 13px;
-      padding: 8px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border-radius: 6px;
-      color: var(--text-main);
-      margin-bottom: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .search-input {
+      width: 100%; background: var(--bg-base); border: 1px solid var(--border);
+      padding: 10px 12px; border-radius: var(--radius-sm); color: var(--text-main);
+      font-size: 13px; transition: 0.2s;
     }
-    .folder-item i { color: #94a3b8; font-size: 16px; }
-    .folder-item:hover { background: var(--bg-hover); }
-    .folder-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
-    .folder-item.active i { color: var(--primary); }
+    .search-input:focus { border-color: var(--primary); }
+
+    .folder-list { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; flex: 1; overflow-y: auto; }
 
     /* Main Content Area */
-    .toolbar {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-
-    .search-box {
-      display: flex;
-      align-items: center;
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 50px;
-      padding: 0 16px;
-      flex: 1;
-      max-width: 500px;
-      box-shadow: var(--shadow-sm);
-      transition: 0.2s;
-    }
-    .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
-    .search-box input { border: none; width: 100%; height: 46px; font-size: 14px; background: transparent; }
-    .search-box input::placeholder { color: #94a3b8; }
-    .search-box i { color: #94a3b8; margin-right: 10px; }
-
-    /* Breadcrumbs */
-    .breadcrumbs {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .breadcrumbs span.path-muted { color: var(--text-muted); font-weight: 500; cursor: pointer; }
-    .breadcrumbs span.path-muted:hover { text-decoration: underline; color: var(--primary); }
-
-    /* File Area */
-    .content-card {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-sm);
-      min-height: 400px;
-    }
-
-    .content-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #fcfcfd;
-      border-radius: var(--radius) var(--radius) 0 0;
-    }
-
-    /* Grid/List Toggle */
-    .view-toggle { display: flex; gap: 4px; background: var(--border); padding: 4px; border-radius: 8px; }
-    .view-toggle button { padding: 6px 10px; border-radius: 6px; font-size: 14px; color: var(--text-muted); }
-    .view-toggle button.active { background: white; color: var(--text-main); box-shadow: var(--shadow-sm); }
-
-    .file-container { padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+    .main-area { display: flex; flex-direction: column; gap: 24px; overflow: hidden; }
     
-    /* View: LIST */
-    .file-container.view-list .file-row {
-      display: grid;
-      grid-template-columns: 48px minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 16px;
-      padding: 12px;
-      border-radius: var(--radius-sm);
-      border: 1px solid transparent;
-      transition: 0.15s;
-    }
-    .file-container.view-list .file-row:hover { background: var(--bg-hover); border-color: var(--border); }
+    .action-bar { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+    .breadcrumbs { font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .bc-muted { color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+    .bc-muted:hover { color: var(--primary); }
     
-    /* View: GRID */
-    .file-container.view-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 16px;
-      padding: 20px;
+    .global-search {
+      flex: 1; max-width: 400px; display: flex; align-items: center; gap: 10px;
+      background: var(--bg-panel); border: 1px solid var(--border); padding: 0 16px;
+      border-radius: 50px; height: 44px;
     }
-    .file-container.view-grid .file-row {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      padding: 24px 16px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      transition: 0.2s;
-    }
-    .file-container.view-grid .file-row:hover { border-color: var(--primary); box-shadow: var(--shadow); transform: translateY(-2px); }
-    .file-container.view-grid .file-icon { margin-bottom: 12px; width: 64px; height: 64px; font-size: 32px; }
-    .file-container.view-grid .file-meta { justify-content: center; margin-top: 6px; }
-    .file-container.view-grid .file-actions { margin-top: 16px; width: 100%; justify-content: center; }
+    .global-search i { color: var(--text-muted); font-size: 18px; }
+    .global-search input { flex: 1; height: 100%; }
 
-    /* Common File Elements */
-    .file-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: grid;
-      place-items: center;
-      background: var(--bg-body);
-      border: 1px solid var(--border);
-      font-size: 20px;
-      color: var(--primary);
+    .files-container {
+      background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      flex: 1; overflow-y: auto; display: flex; flex-direction: column;
     }
-    .file-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .file-meta { display: flex; gap: 8px; color: var(--text-muted); font-size: 11px; margin-top: 4px; }
     
-    .file-actions { display: flex; gap: 6px; opacity: 0; transition: 0.2s; }
-    .file-row:hover .file-actions { opacity: 1; }
-    .action-btn { 
-      width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); 
-      background: white; color: var(--text-muted); display: grid; place-items: center; transition: 0.2s;
+    .files-header {
+      padding: 16px 24px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; background: var(--bg-panel); z-index: 10;
     }
-    .action-btn:hover { background: var(--bg-hover); color: var(--text-main); }
-    .action-btn.del:hover { background: var(--danger-bg); color: var(--danger); border-color: #fca5a5; }
+    
+    .view-toggles { display: flex; gap: 4px; background: var(--bg-base); padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+    .view-toggles button { padding: 6px 12px; border-radius: 4px; color: var(--text-muted); }
+    .view-toggles button.active { background: var(--bg-panel); color: var(--text-main); }
 
-    /* Empty States */
-    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-    .empty-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 4px; }
+    /* File List/Grid Views */
+    .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; padding: 24px; }
+    .file-list-view { display: flex; flex-direction: column; padding: 12px; }
 
-    /* Modals & Upload Drawer */
-    .modal-backdrop {
-      display: none; position: fixed; inset: 0; z-index: 1000;
-      background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
-      align-items: center; justify-content: center; padding: 20px;
+    .file-card {
+      border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-base);
+      transition: 0.2s; position: relative; overflow: hidden;
     }
-    .modal {
-      background: white; border-radius: 20px; width: min(500px, 100%);
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden;
+    .file-card:hover { border-color: var(--border-focus); transform: translateY(-2px); box-shadow: var(--shadow); }
+    
+    /* Grid Mode Specifics */
+    .file-grid .file-card { padding: 24px 16px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+    .file-grid .file-icon-wrap { width: 64px; height: 64px; border-radius: 16px; background: var(--bg-hover); display: grid; place-items: center; font-size: 32px; margin-bottom: 16px; }
+    
+    /* List Mode Specifics */
+    .file-list-view .file-card { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; padding: 12px 16px; margin-bottom: 8px; transform: none; }
+    .file-list-view .file-card:hover { transform: translateX(4px); }
+    .file-list-view .file-icon-wrap { width: 44px; height: 44px; border-radius: 10px; background: var(--bg-hover); display: grid; place-items: center; font-size: 24px; }
+
+    .file-details { flex: 1; min-width: 0; text-align: left; }
+    .file-name { font-size: 14px; font-weight: 600; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 8px; justify-content: flex-start; }
+    .file-grid .file-meta { justify-content: center; }
+
+    .file-actions { display: flex; gap: 8px; opacity: 0; transition: 0.2s; }
+    .file-card:hover .file-actions { opacity: 1; }
+    .file-grid .file-actions { margin-top: 20px; justify-content: center; width: 100%; }
+    
+    .action-icon {
+      width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--bg-panel);
+      border: 1px solid var(--border); display: grid; place-items: center; color: var(--text-muted); font-size: 18px;
     }
-    .modal-head { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-    .modal-head h3 { margin: 0; font-size: 18px; }
+    .action-icon:hover { background: var(--bg-hover); color: var(--text-main); }
+    .action-icon.del:hover { background: rgba(244, 63, 94, 0.1); color: var(--danger); border-color: rgba(244, 63, 94, 0.3); }
+
+    /* Modals */
+    .overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+      z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal { background: var(--bg-panel); border: 1px solid var(--border); width: 100%; max-width: 500px; border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
     .modal-body { padding: 24px; }
-    .modal-foot { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-body); }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); background: var(--bg-base); display: flex; justify-content: flex-end; gap: 12px; }
 
-    /* Dropzone */
-    .dropzone {
-      border: 2px dashed var(--border-strong); border-radius: 16px; padding: 40px 20px;
-      text-align: center; background: var(--bg-body); transition: 0.2s; cursor: pointer;
+    .drop-area {
+      border: 2px dashed var(--border); border-radius: var(--radius-md); padding: 40px 20px;
+      text-align: center; cursor: pointer; transition: 0.2s; background: var(--bg-base);
     }
-    .dropzone:hover, .dropzone.drag { border-color: var(--primary); background: var(--primary-light); }
-    .dropzone i { font-size: 40px; color: var(--primary); margin-bottom: 12px; }
+    .drop-area:hover, .drop-area.dragover { border-color: var(--primary); background: var(--primary-glow); }
+    .drop-area i { font-size: 48px; color: var(--primary); margin-bottom: 16px; }
 
-    .input-field { width: 100%; border: 1px solid var(--border-strong); padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
-    .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
-
-    /* Toasts */
-    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+    /* Toast */
+    .toast-box { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; }
     .toast {
-      background: white; border-left: 4px solid var(--primary); padding: 14px 20px; border-radius: 8px;
-      box-shadow: var(--shadow-lg); font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 12px;
-      animation: slideIn 0.3s ease forwards;
+      background: var(--bg-panel); border: 1px solid var(--border); border-left: 4px solid var(--primary);
+      padding: 16px 20px; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 12px;
+      box-shadow: var(--shadow); animation: slideUp 0.3s ease;
     }
-    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-    /* Icons (using generic unicode/emojis for standalone html, you can add fontawesome if you link it) */
+    .empty-state { padding: 60px 20px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; }
+    .empty-state i { font-size: 64px; opacity: 0.2; margin-bottom: 16px; }
   </style>
 </head>
 <body>
 
-  <div class="app-container">
+  <div class="app-wrapper">
     
     <!-- Topbar -->
-    <header class="topbar">
+    <header class="top-nav">
       <div class="brand">
-        <div class="logo">D</div>
-        <div>
+        <div class="brand-icon"><i class="ph ph-cloud-arrow-up"></i></div>
+        <div class="brand-text">
           <h1>DriveVault</h1>
-          <p>Secure Enterprise Storage</p>
+          <p>Pro Workspace</p>
         </div>
       </div>
-      <div class="account" id="accountBox">
-        <img id="accountPhoto" src="https://via.placeholder.com/40" alt="Profile" />
-        <div class="account-info">
-          <span class="account-name" id="accountName">Loading...</span>
-          <span class="account-email" id="accountEmail">...</span>
+      <div class="user-profile" id="userProfile">
+        <img id="userImg" src="" alt="Profile">
+        <div class="user-info">
+          <span class="user-name" id="userName">Loading...</span>
+          <span class="user-email" id="userEmail"></span>
         </div>
-        <button class="btn btn-icon" id="logoutBtn" style="border:none; box-shadow:none;" title="Logout">🚪</button>
+        <button class="logout-btn" id="logoutBtn" title="Logout"><i class="ph ph-sign-out"></i></button>
       </div>
     </header>
 
-    <!-- Login View -->
-    <section class="login-view" id="loginView">
-      <div class="login-card">
-        <div class="logo" style="margin: 0 auto 20px; width: 64px; height: 64px; font-size: 32px;">D</div>
-        <h2>Welcome to DriveVault</h2>
-        <p>A highly secure, deeply integrated professional dashboard to manage your Google Drive files elegantly.</p>
-        <button class="google-btn" id="googleLoginBtn">
+    <!-- Login -->
+    <div class="login-screen" id="loginScreen">
+      <div class="login-box">
+        <i class="ph ph-shield-check"></i>
+        <h2>Secure Authentication</h2>
+        <p>Login once and your session will be saved. Seamlessly manage your Google Drive files in a premium dark environment.</p>
+        <button class="google-auth-btn" id="loginBtn">
           <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G">
-          Sign in with Google
+          Continue with Google
         </button>
       </div>
-    </section>
+    </div>
 
-    <!-- Main Dashboard -->
-    <section class="dashboard" id="dashboard">
-      <div class="grid-layout">
-        
-        <!-- Sidebar -->
-        <aside class="sidebar">
-          <div class="side-section">
-            <button class="btn btn-primary" id="uploadBtn" style="width:100%; margin-bottom: 16px; padding: 12px; font-size: 15px;">
-              ➕ New Upload
-            </button>
-            <div class="side-title">Quick Filters</div>
-            <button class="nav-btn active" data-sys-filter="all">📂 All Files</button>
-            <button class="nav-btn" data-sys-filter="image">🖼️ Photos</button>
-            <button class="nav-btn" data-sys-filter="video">🎥 Videos</button>
-            <button class="nav-btn" data-sys-filter="document">📄 Documents</button>
+    <!-- Dashboard -->
+    <div class="dashboard-layout" id="dashboardUI">
+      
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <button class="btn btn-primary upload-main-btn" id="openUploadBtn">
+          <i class="ph ph-upload-simple"></i> Upload Files
+        </button>
+
+        <div>
+          <div class="nav-section-title">Views</div>
+          <button class="nav-item active" data-sys="all"><i class="ph ph-squares-four"></i> All Files</button>
+          <button class="nav-item" data-sys="image"><i class="ph ph-image"></i> Photos</button>
+          <button class="nav-item" data-sys="video"><i class="ph ph-video-camera"></i> Videos</button>
+          <button class="nav-item" data-sys="document"><i class="ph ph-file-text"></i> Documents</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+          <div class="nav-section-title">
+            My Folders
+            <button id="addFolderBtn" title="New Folder" style="color: var(--primary); font-size: 18px;"><i class="ph ph-plus-circle"></i></button>
           </div>
-
-          <div class="side-section" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
-            <div class="side-title" style="display:flex; justify-content:space-between; align-items:center;">
-              My Folders
-              <button id="folderBtn" title="Create Folder" style="color:var(--primary); font-size:16px;">+</button>
-            </div>
-            <div class="folder-search">
-              <input type="text" id="folderSearchInput" placeholder="🔍 Search folders..." />
-            </div>
-            <div class="folder-list-container" id="sidebarFolderList">
-              <!-- Folders injected here -->
-            </div>
+          <input type="text" class="search-input" id="folderSearch" placeholder="Search folders (e.g. P)..." style="margin-bottom: 12px;">
+          <div class="folder-list" id="folderListArea">
+            <!-- Folders here -->
           </div>
-        </aside>
+        </div>
+      </aside>
 
-        <!-- Main Content -->
-        <main>
-          <div class="toolbar">
-            <div class="breadcrumbs" id="breadcrumbArea">
-              <span class="path-muted" id="bcHome">My Drive</span>
-              <span id="bcArrow" style="display:none; color:var(--text-muted); font-size:14px;">›</span>
-              <span id="bcCurrent" style="display:none; color:var(--primary);">Folder Name</span>
-            </div>
-            <div class="search-box">
-              <span>🔍</span>
-              <input type="text" id="searchInput" placeholder="Search files in Drive..." />
-            </div>
+      <!-- Main Area -->
+      <main class="main-area">
+        <div class="action-bar">
+          <div class="breadcrumbs" id="breadcrumbs">
+            <span class="bc-muted" id="bcHome">My Drive</span>
+            <i class="ph ph-caret-right" id="bcArrow" style="display: none; color: var(--text-muted); font-size: 16px;"></i>
+            <span id="bcCurrent" style="display: none; color: var(--primary);"></span>
           </div>
+          <div class="global-search">
+            <i class="ph ph-magnifying-glass"></i>
+            <input type="text" id="fileSearch" placeholder="Search files...">
+          </div>
+        </div>
 
-          <div class="content-card">
-            <div class="content-header">
-              <div style="font-size: 13px; color: var(--text-muted); font-weight:500;" id="resultCount">Loading files...</div>
-              <div class="view-toggle">
-                <button id="viewListBtn" class="active">☰</button>
-                <button id="viewGridBtn">⊞</button>
-              </div>
-            </div>
-            <div id="fileList" class="file-container view-list">
-               <!-- Files injected here -->
+        <div class="files-container">
+          <div class="files-header">
+            <span style="font-size: 13px; color: var(--text-muted);" id="fileCount">0 items</span>
+            <div class="view-toggles">
+              <button id="viewGrid" class="active"><i class="ph ph-grid-four"></i></button>
+              <button id="viewList"><i class="ph ph-list"></i></button>
             </div>
           </div>
-        </main>
-      </div>
-    </section>
+          <div id="fileArea" class="file-grid">
+            <!-- Files injected here -->
+          </div>
+        </div>
+      </main>
+
+    </div>
   </div>
 
   <!-- Upload Modal -->
-  <div class="modal-backdrop" id="uploadModal">
-    <div class="modal" style="width: 600px;">
-      <div class="modal-head">
-        <h3>Upload Files</h3>
-        <button class="btn btn-icon" style="border:none;" id="closeUpload">✖</button>
+  <div class="overlay" id="uploadModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 style="font-size: 18px;">Upload to Drive</h3>
+        <button class="action-icon" id="closeUpload" style="border:none;"><i class="ph ph-x"></i></button>
       </div>
       <div class="modal-body">
-        <div class="dropzone" id="dropzone">
-          <i>☁️</i>
-          <h4 style="margin:0 0 8px; color:var(--text-main);">Click or drag files to upload</h4>
-          <p style="margin:0; font-size:13px; color:var(--text-muted);">Supports all file types. Will route based on selection below.</p>
-          <input type="file" id="fileInput" multiple style="display:none;" />
+        <div class="drop-area" id="dropArea">
+          <i class="ph ph-cloud-arrow-up"></i>
+          <h4 style="margin-bottom: 8px;">Click or Drag files here</h4>
+          <p style="font-size: 13px; color: var(--text-muted);">Files will be auto-categorized or placed in the selected folder.</p>
+          <input type="file" id="fileInput" multiple style="display: none;">
         </div>
-        <div style="margin-top:20px;">
-          <label style="font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px; display:block;">Destination Folder</label>
-          <select id="destinationSelect" class="input-field" style="margin-bottom:0;">
-            <option value="auto">⚡ Auto-Sort by File Type</option>
-            <option value="root">🏠 My Drive (Root)</option>
-            <!-- Folders here -->
+        <div style="margin-top: 20px;">
+          <label style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: block;">Destination</label>
+          <select id="uploadDest" class="search-input">
+            <option value="auto">⚡ Auto-Sort (Photos/Videos/Docs)</option>
+            <option value="root">🏠 Root (My Drive)</option>
+            <!-- dynamic folders -->
           </select>
         </div>
-        <div id="uploadProgressArea" style="margin-top:16px;"></div>
+        <div id="uploadStatus" style="margin-top: 16px; font-size: 13px; color: var(--primary); text-align: center; font-weight: 600;"></div>
       </div>
-      <div class="modal-foot">
-        <button class="btn" id="cancelUploadBtn">Cancel</button>
-        <button class="btn btn-primary" id="startUploadBtn">Start Upload</button>
+      <div class="modal-footer">
+        <button class="btn" id="cancelUpload">Cancel</button>
+        <button class="btn btn-primary" id="startUploadBtn">Upload Now</button>
       </div>
     </div>
   </div>
 
-  <!-- Folder Creation Modal -->
-  <div class="modal-backdrop" id="folderModal">
-    <div class="modal" style="width: 450px;">
-      <div class="modal-head">
-        <h3>New Folder</h3>
-        <button class="btn btn-icon" style="border:none;" id="closeFolder">✖</button>
+  <!-- Folder Modal -->
+  <div class="overlay" id="folderModal">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 style="font-size: 18px;">Create Folder</h3>
+        <button class="action-icon" id="closeFolder" style="border:none;"><i class="ph ph-x"></i></button>
       </div>
       <div class="modal-body">
-        <input type="text" id="newFolderName" class="input-field" placeholder="e.g. Project Documents" />
+        <input type="text" class="search-input" id="newFolderName" placeholder="Folder Name (e.g. Pakistan)">
       </div>
-      <div class="modal-foot">
-        <button class="btn" id="cancelFolderBtn">Cancel</button>
+      <div class="modal-footer">
+        <button class="btn" id="cancelFolder">Cancel</button>
         <button class="btn btn-primary" id="createFolderBtn">Create</button>
       </div>
     </div>
   </div>
 
-  <div class="toast-container" id="toastWrap"></div>
+  <div class="toast-box" id="toastBox"></div>
 
   <script>
   (() => {
     "use strict";
 
-    // ==========================================
-    // CLIENT ID & SETUP (from your previous code)
-    // ==========================================
-    const GOOGLE_CLIENT_ID = "877229361949-e9vnlfovp5gb5l9d13ul1ll7p1gshr07.apps.googleusercontent.com";
-    const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
-    const API = "https://www.googleapis.com/drive/v3";
-    const UPLOAD_API = "https://www.googleapis.com/upload/drive/v3/files";
+    const CLIENT_ID = "877229361949-e9vnlfovp5gb5l9d13ul1ll7p1gshr07.apps.googleusercontent.com";
+    const SCOPE = "https://www.googleapis.com/auth/drive";
+    const API_BASE = "https://www.googleapis.com/drive/v3";
+    const UPLOAD_BASE = "https://www.googleapis.com/upload/drive/v3/files";
 
     const state = {
-      accessToken: null, user: null,
-      files: [], folders: [],
-      sysFilter: "all",      // all, image, video, document
-      currentFolderId: null, // null means root/all
-      currentFolderName: "",
-      searchQuery: "",
-      folderSearchQuery: "",
-      viewMode: "list",      // list, grid
-      selectedFiles: []
+      token: null, user: null, allFiles: [], folders: [],
+      sysFilter: "all", folderFilterId: null, folderFilterName: "",
+      searchQuery: "", viewMode: "grid", selectedFiles: []
     };
 
-    const $ = (id) => document.getElementById(id);
+    const $ = id => document.getElementById(id);
 
-    // --- UTILS ---
-    function toast(message, type = "success") {
+    // --- UI Helpers ---
+    function toast(msg, type = "success") {
       const el = document.createElement("div");
       el.className = "toast";
-      const icon = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : '✅';
-      el.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-      $("toastWrap").appendChild(el);
-      setTimeout(() => {
-        el.style.opacity = '0';
-        setTimeout(() => el.remove(), 300);
-      }, 4000);
-    }
-
-    function escapeHtml(str = "") {
-      return String(str).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+      const icon = type === 'error' ? '<i class="ph-fill ph-warning-circle" style="color:var(--danger);font-size:24px;"></i>' : '<i class="ph-fill ph-check-circle" style="color:var(--primary);font-size:24px;"></i>';
+      el.innerHTML = `${icon} <span>${msg}</span>`;
+      $("toastBox").appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
     }
     
-    function formatBytes(bytes = 0) {
-      if (!bytes) return "—";
-      const units = ["B","KB","MB","GB","TB"];
-      const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-      return `${(bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0)} ${units[i]}`;
+    function formatSize(bytes) {
+      if(!bytes) return "—";
+      const u = ["B","KB","MB","GB"];
+      const i = Math.min(Math.floor(Math.log(bytes)/Math.log(1024)), 3);
+      return `${(bytes/Math.pow(1024,i)).toFixed(1)} ${u[i]}`;
     }
+    
     function formatDate(iso) {
-      if (!iso) return "—";
-      return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(iso));
+      if(!iso) return "—";
+      return new Intl.DateTimeFormat('en-US',{month:'short', day:'numeric', year:'numeric'}).format(new Date(iso));
     }
 
-    function getFileCategory(mime) {
-      if (!mime) return "document";
-      if (mime.startsWith("image/")) return "image";
-      if (mime.startsWith("video/")) return "video";
-      if (mime === "application/vnd.google-apps.folder") return "folder";
+    function getCat(mime) {
+      if(mime.startsWith("image/")) return "image";
+      if(mime.startsWith("video/")) return "video";
+      if(mime === "application/vnd.google-apps.folder") return "folder";
       return "document";
     }
 
-    function getFileIcon(file) {
-      const cat = getFileCategory(file.mimeType);
-      if (cat === 'image') return '🖼️';
-      if (cat === 'video') return '🎥';
-      if (file.mimeType.includes('pdf')) return '📕';
-      if (file.mimeType.includes('spreadsheet') || file.mimeType.includes('excel')) return '📗';
-      return '📄';
+    function getIcon(mime) {
+      const c = getCat(mime);
+      if(c === 'image') return '<i class="ph ph-image"></i>';
+      if(c === 'video') return '<i class="ph ph-video-camera"></i>';
+      if(mime.includes('pdf')) return '<i class="ph ph-file-pdf" style="color:#f43f5e"></i>';
+      if(mime.includes('sheet')||mime.includes('excel')) return '<i class="ph ph-file-xls" style="color:#10b981"></i>';
+      return '<i class="ph ph-file-text"></i>';
     }
 
-    // --- AUTH ---
+    // --- Google Auth & Persistent Login ---
     let tokenClient;
-    function initGoogleAuth() {
+    
+    function initAuth() {
       if (typeof google === "undefined" || !google.accounts?.oauth2) {
-        setTimeout(initGoogleAuth, 300); return;
+        setTimeout(initAuth, 300); return;
       }
       tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID, scope: DRIVE_SCOPE,
+        client_id: CLIENT_ID, scope: SCOPE,
         callback: async (resp) => {
-          if (resp.error) { toast(resp.error_description, "error"); return; }
-          state.accessToken = resp.access_token;
-          await afterLogin();
+          if (resp.error) return toast("Login Failed", "error");
+          
+          // Save session to LocalStorage (Expires in 1 hour)
+          state.token = resp.access_token;
+          localStorage.setItem("drive_token", state.token);
+          localStorage.setItem("drive_expiry", Date.now() + 3500000); 
+          
+          await proceedToDashboard();
         }
       });
+
+      checkSavedSession();
     }
 
-    async function login() { tokenClient.requestAccessToken({ prompt: "consent" }); }
-    function logout() {
-      if (state.accessToken && google?.accounts?.oauth2) google.accounts.oauth2.revoke(state.accessToken, ()=>{});
-      state.accessToken = null;
-      $("dashboard").style.display = "none";
-      $("accountBox").style.display = "none";
-      $("loginView").style.display = "grid";
-    }
-
-    async function afterLogin() {
-      $("loginView").style.display = "none";
-      $("dashboard").style.display = "block";
-      $("accountBox").style.display = "flex";
+    function checkSavedSession() {
+      const savedToken = localStorage.getItem("drive_token");
+      const expiry = localStorage.getItem("drive_expiry");
       
-      try {
-        const res = await fetch(`${API}/about?fields=user`, { headers: { "Authorization": `Bearer ${state.accessToken}` }});
-        const data = await res.json();
-        state.user = data.user;
-        $("accountName").textContent = state.user.displayName;
-        $("accountEmail").textContent = state.user.emailAddress;
-        $("accountPhoto").src = state.user.photoLink || "https://via.placeholder.com/40";
-        
-        await fetchAllDriveData();
-      } catch (err) {
-        toast("Failed to connect to Drive", "error");
+      if (savedToken && expiry && Date.now() < parseInt(expiry)) {
+        state.token = savedToken;
+        proceedToDashboard();
       }
     }
 
-    // --- API CALLS ---
-    async function apiGet(path) {
-      const res = await fetch(API + path, { headers: { "Authorization": `Bearer ${state.accessToken}` }});
-      if(!res.ok) throw new Error("API Error");
-      return res.json();
-    }
+    $("loginBtn").onclick = () => tokenClient.requestAccessToken({prompt: "consent"});
+    
+    $("logoutBtn").onclick = () => {
+      localStorage.removeItem("drive_token");
+      localStorage.removeItem("drive_expiry");
+      if(state.token) google.accounts.oauth2.revoke(state.token, ()=>{});
+      location.reload();
+    };
 
-    // Single mega-fetch to make navigation instant
-    async function fetchAllDriveData() {
-      $("fileList").innerHTML = `<div class="empty-state">Loading your Drive...</div>`;
-      
-      const fields = encodeURIComponent("files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,parents)");
-      const q = encodeURIComponent("trashed = false");
+    async function proceedToDashboard() {
+      $("loginScreen").style.display = "none";
+      $("dashboardUI").style.display = "grid";
+      $("userProfile").style.display = "flex";
       
       try {
-        // Fetch max 1000 items to keep it responsive (can be paginated for huge drives)
-        const data = await apiGet(`/files?pageSize=1000&orderBy=modifiedTime desc&q=${q}&fields=${fields}`);
-        const allFiles = data.files || [];
+        const res = await fetch(`${API_BASE}/about?fields=user`, {headers: {"Authorization": `Bearer ${state.token}`}});
+        const data = await res.json();
+        $("userName").innerText = data.user.displayName;
+        $("userEmail").innerText = data.user.emailAddress;
+        $("userImg").src = data.user.photoLink || "https://via.placeholder.com/40";
+        await loadDriveData();
+      } catch(e) {
+        toast("Session expired. Please login again.", "error");
+        localStorage.removeItem("drive_token");
+        location.reload();
+      }
+    }
+
+    // --- Fetch Data ---
+    async function loadDriveData() {
+      $("fileArea").innerHTML = `<div class="empty-state"><i class="ph ph-spinner-gap ph-spin"></i><h2>Loading Workspace...</h2></div>`;
+      try {
+        const fields = encodeURIComponent("files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,parents)");
+        const q = encodeURIComponent("trashed = false");
+        const res = await fetch(`${API_BASE}/files?pageSize=1000&orderBy=modifiedTime desc&q=${q}&fields=${fields}`, {
+          headers: {"Authorization": `Bearer ${state.token}`}
+        });
+        const data = await res.json();
         
-        state.folders = allFiles.filter(f => f.mimeType === "application/vnd.google-apps.folder");
-        state.files = allFiles.filter(f => f.mimeType !== "application/vnd.google-apps.folder");
-        
-        // Sort folders alphabetically
+        state.allFiles = data.files || [];
+        state.folders = state.allFiles.filter(f => f.mimeType === "application/vnd.google-apps.folder");
         state.folders.sort((a,b) => a.name.localeCompare(b.name));
         
-        renderSidebarFolders();
-        populateUploadFolderSelect();
-        renderMainFiles();
-      } catch (err) {
-        toast("Error fetching files.", "error");
-      }
+        renderFolders();
+        populateDestSelect();
+        renderFiles();
+      } catch(e) { toast("Error loading files", "error"); }
     }
 
-    // --- RENDER SIDEBAR ---
-    function renderSidebarFolders() {
-      const term = state.folderSearchQuery.toLowerCase();
-      const filtered = state.folders.filter(f => f.name.toLowerCase().includes(term));
+    // --- Rendering ---
+    function renderFolders(searchTerm = "") {
+      const term = searchTerm.toLowerCase();
+      const list = state.folders.filter(f => f.name.toLowerCase().includes(term));
       
-      const container = $("sidebarFolderList");
-      if (filtered.length === 0) {
-        container.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--text-muted);">No folders found.</div>`;
+      if(!list.length) {
+        $("folderListArea").innerHTML = `<div style="padding:10px; font-size:12px; color:var(--text-muted); text-align:center;">No folders found</div>`;
         return;
       }
-
-      container.innerHTML = filtered.map(f => `
-        <button class="folder-item ${state.currentFolderId === f.id ? 'active' : ''}" data-folder-id="${f.id}" title="${escapeHtml(f.name)}">
-          <i>📁</i> ${escapeHtml(f.name)}
+      
+      $("folderListArea").innerHTML = list.map(f => `
+        <button class="nav-item ${state.folderFilterId === f.id ? 'active' : ''}" data-fid="${f.id}" data-fname="${f.name}">
+          <i class="ph-fill ph-folder" style="color:var(--primary)"></i> <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.name}</span>
         </button>
       `).join("");
     }
 
-    // --- RENDER MAIN ---
-    function renderMainFiles() {
-      // Apply filters
-      let result = state.files;
-
-      // 1. System Filter (All, Photos, etc)
-      if (state.sysFilter !== 'all') {
-        result = result.filter(f => getFileCategory(f.mimeType) === state.sysFilter);
-      }
-
-      // 2. Folder Navigation Filter
-      if (state.currentFolderId) {
-        result = result.filter(f => (f.parents || []).includes(state.currentFolderId));
-        // Update Breadcrumbs
-        $("bcArrow").style.display = "inline";
-        $("bcCurrent").style.display = "inline";
-        $("bcCurrent").textContent = state.currentFolderName;
-      } else {
-        $("bcArrow").style.display = "none";
-        $("bcCurrent").style.display = "none";
-      }
-
-      // 3. Text Search
-      if (state.searchQuery) {
-        const term = state.searchQuery.toLowerCase();
-        result = result.filter(f => f.name.toLowerCase().includes(term));
-      }
-
-      // Render
-      $("resultCount").textContent = `${result.length} files`;
-      const container = $("fileList");
+    function renderFiles() {
+      let filtered = state.allFiles.filter(f => f.mimeType !== "application/vnd.google-apps.folder");
       
-      if (result.length === 0) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">🏜️</div>
-            <div class="empty-title">Nothing here</div>
-            <div style="font-size:13px;">No files match your current view.</div>
-          </div>
-        `;
+      if (state.sysFilter !== 'all') filtered = filtered.filter(f => getCat(f.mimeType) === state.sysFilter);
+      
+      if (state.folderFilterId) {
+        filtered = filtered.filter(f => (f.parents || []).includes(state.folderFilterId));
+        $("bcArrow").style.display = "block"; $("bcCurrent").style.display = "block";
+        $("bcCurrent").innerText = state.folderFilterName;
+      } else {
+        $("bcArrow").style.display = "none"; $("bcCurrent").style.display = "none";
+      }
+
+      if (state.searchQuery) {
+        filtered = filtered.filter(f => f.name.toLowerCase().includes(state.searchQuery.toLowerCase()));
+      }
+
+      $("fileCount").innerText = `${filtered.length} items`;
+      const area = $("fileArea");
+      
+      if(!filtered.length) {
+        area.className = "files-container";
+        area.innerHTML = `<div class="empty-state"><i class="ph ph-ghost"></i><h3>No files found</h3><p style="font-size:13px; margin-top:8px;">Try uploading some files or changing filters.</p></div>`;
         return;
       }
 
-      container.className = `file-container view-${state.viewMode}`;
-      
-      container.innerHTML = result.map(f => `
-        <div class="file-row">
-          <div class="file-icon">${getFileIcon(f)}</div>
-          <div style="flex:1; min-width:0;">
-            <div class="file-name" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</div>
-            <div class="file-meta">
-              <span>${formatBytes(f.size)}</span> • <span>${formatDate(f.modifiedTime)}</span>
-            </div>
+      area.className = state.viewMode === 'grid' ? 'file-grid' : 'file-list-view';
+      area.innerHTML = filtered.map(f => `
+        <div class="file-card">
+          <div class="file-icon-wrap">${getIcon(f.mimeType)}</div>
+          <div class="file-details">
+            <div class="file-name" title="${f.name}">${f.name}</div>
+            <div class="file-meta"><span>${formatSize(f.size)}</span> • <span>${formatDate(f.modifiedTime)}</span></div>
           </div>
           <div class="file-actions">
-            <button class="action-btn" data-act="view" data-id="${f.id}" title="Preview/Open">👁</button>
-            <button class="action-btn" data-act="down" data-id="${f.id}" title="Download">⬇</button>
-            <button class="action-btn del" data-act="del" data-id="${f.id}" title="Delete">🗑</button>
+            <button class="action-icon" onclick="window.open('${f.webViewLink}', '_blank')" title="Preview"><i class="ph ph-eye"></i></button>
+            <button class="action-icon" onclick="window.open('${f.webContentLink || f.webViewLink}', '_blank')" title="Download"><i class="ph ph-download-simple"></i></button>
+            <button class="action-icon del" data-delid="${f.id}" data-delname="${f.name}" title="Delete"><i class="ph ph-trash"></i></button>
           </div>
         </div>
       `).join("");
     }
 
-    // --- ACTIONS ---
-    async function handleFileAction(e) {
-      const btn = e.target.closest('.action-btn');
-      if (!btn) return;
-      const file = state.files.find(f => f.id === btn.dataset.id);
-      if (!file) return;
+    // --- Interactions ---
+    $("folderSearch").oninput = e => renderFolders(e.target.value);
+    $("fileSearch").oninput = e => { state.searchQuery = e.target.value; renderFiles(); };
+    
+    $("viewGrid").onclick = () => { state.viewMode = 'grid'; $("viewGrid").classList.add('active'); $("viewList").classList.remove('active'); renderFiles(); };
+    $("viewList").onclick = () => { state.viewMode = 'list'; $("viewList").classList.add('active'); $("viewGrid").classList.remove('active'); renderFiles(); };
 
-      const act = btn.dataset.act;
-      if (act === 'view') {
-        window.open(file.webViewLink, '_blank');
-      } 
-      else if (act === 'down') {
-        // webContentLink directly downloads the file.
-        // Google Docs/Sheets don't have this, so fallback to webViewLink
-        if (file.webContentLink) {
-          window.open(file.webContentLink, '_blank');
-        } else {
-          toast("Opening format to allow export/download.", "warning");
-          window.open(file.webViewLink, '_blank');
-        }
-      }
-      else if (act === 'del') {
-        if(confirm(`Permanently delete "${file.name}"?`)) {
-          try {
-            await fetch(`${API}/files/${file.id}`, { 
-              method: 'DELETE', 
-              headers: { "Authorization": `Bearer ${state.accessToken}` }
-            });
-            state.files = state.files.filter(f => f.id !== file.id);
-            renderMainFiles();
-            toast("File deleted");
-          } catch(e) { toast("Failed to delete", "error"); }
-        }
-      }
-    }
-
-    // --- EVENT LISTENERS ---
-    $("googleLoginBtn").onclick = login;
-    $("logoutBtn").onclick = logout;
-
-    // View Toggles
-    $("viewListBtn").onclick = () => { state.viewMode = 'list'; $("viewListBtn").classList.add('active'); $("viewGridBtn").classList.remove('active'); renderMainFiles(); };
-    $("viewGridBtn").onclick = () => { state.viewMode = 'grid'; $("viewGridBtn").classList.add('active'); $("viewListBtn").classList.remove('active'); renderMainFiles(); };
-
-    // Search & Filters
-    $("searchInput").oninput = (e) => { state.searchQuery = e.target.value; renderMainFiles(); };
-    $("folderSearchInput").oninput = (e) => { state.folderSearchQuery = e.target.value; renderSidebarFolders(); };
-
-    // Sidebar System Nav (All, Photos...)
-    document.querySelectorAll('[data-sys-filter]').forEach(btn => {
+    document.querySelectorAll('[data-sys]').forEach(btn => {
       btn.onclick = () => {
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        state.sysFilter = btn.dataset.sysFilter;
-        // Reset folder filter when clicking main nav
-        state.currentFolderId = null; 
-        document.querySelectorAll('.folder-item').forEach(b => b.classList.remove('active'));
-        renderMainFiles();
+        state.sysFilter = btn.dataset.sys;
+        state.folderFilterId = null;
+        renderFiles();
       }
     });
 
-    // Dynamic Folder Clicks
-    $("sidebarFolderList").onclick = (e) => {
-      const btn = e.target.closest('.folder-item');
+    $("folderListArea").onclick = e => {
+      const btn = e.target.closest('.nav-item');
       if(!btn) return;
-      document.querySelectorAll('.folder-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      
-      state.currentFolderId = btn.dataset.folderId;
-      state.currentFolderName = btn.innerText.replace('📁', '').trim();
-      
-      // Clear sys filters
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      state.folderFilterId = btn.dataset.fid;
+      state.folderFilterName = btn.dataset.fname;
       state.sysFilter = 'all';
-      renderMainFiles();
+      renderFiles();
     };
 
     $("bcHome").onclick = () => {
-      state.currentFolderId = null;
-      document.querySelectorAll('.folder-item').forEach(b => b.classList.remove('active'));
-      document.querySelector('[data-sys-filter="all"]').click(); // Reset to root All Files
-    }
+      document.querySelector('[data-sys="all"]').click();
+    };
 
-    $("fileList").onclick = handleFileAction;
+    $("fileArea").onclick = async e => {
+      const delBtn = e.target.closest('.del');
+      if(delBtn) {
+        if(confirm(`Permanently delete "${delBtn.dataset.delname}"?`)) {
+          try {
+            await fetch(`${API_BASE}/files/${delBtn.dataset.delid}`, {method: 'DELETE', headers: {"Authorization": `Bearer ${state.token}`}});
+            state.allFiles = state.allFiles.filter(f => f.id !== delBtn.dataset.delid);
+            renderFiles();
+            toast("File deleted successfully");
+          } catch(err) { toast("Delete failed", "error"); }
+        }
+      }
+    };
 
-    // --- UPLOAD & FOLDER LOGIC ---
-    // (Simplified logic leveraging the updated UI)
-    $("uploadBtn").onclick = () => { $("uploadModal").style.display = "flex"; };
-    $("closeUpload").onclick = $("cancelUploadBtn").onclick = () => { $("uploadModal").style.display = "none"; };
-    
-    $("folderBtn").onclick = () => { $("folderModal").style.display = "flex"; $("newFolderName").value=""; $("newFolderName").focus(); };
-    $("closeFolder").onclick = $("cancelFolderBtn").onclick = () => { $("folderModal").style.display = "none"; };
+    // --- Upload & Folder Modals ---
+    $("openUploadBtn").onclick = () => $("uploadModal").style.display = "flex";
+    $("closeUpload").onclick = $("cancelUpload").onclick = () => { $("uploadModal").style.display = "none"; state.selectedFiles=[]; $("uploadStatus").innerText=""; };
 
-    function populateUploadFolderSelect() {
-      const sel = $("destinationSelect");
-      sel.innerHTML = `<option value="auto">⚡ Auto-Sort by File Type</option><option value="root">🏠 My Drive (Root)</option>`;
-      state.folders.forEach(f => {
-        sel.innerHTML += `<option value="${f.id}">📁 ${escapeHtml(f.name)}</option>`;
-      });
+    $("addFolderBtn").onclick = () => { $("folderModal").style.display = "flex"; $("newFolderName").value=""; $("newFolderName").focus(); };
+    $("closeFolder").onclick = $("cancelFolder").onclick = () => $("folderModal").style.display = "none";
+
+    function populateDestSelect() {
+      const sel = $("uploadDest");
+      sel.innerHTML = `<option value="auto">⚡ Auto-Sort (Photos/Videos/Docs)</option><option value="root">🏠 Root (My Drive)</option>`;
+      state.folders.forEach(f => sel.innerHTML += `<option value="${f.id}">📁 ${f.name}</option>`);
     }
 
     $("createFolderBtn").onclick = async () => {
       const name = $("newFolderName").value.trim();
       if(!name) return;
-      $("createFolderBtn").disabled = true;
+      $("createFolderBtn").innerText = "Creating...";
       try {
-        const body = JSON.stringify({ name, mimeType: "application/vnd.google-apps.folder" });
-        const res = await fetch(`${API}/files?fields=id,name`, {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${state.accessToken}`, "Content-Type": "application/json" },
-          body
+        const res = await fetch(`${API_BASE}/files?fields=id,name`, {
+          method: "POST", headers: {"Authorization": `Bearer ${state.token}`, "Content-Type": "application/json"},
+          body: JSON.stringify({name, mimeType: "application/vnd.google-apps.folder"})
         });
-        const newFolder = await res.json();
-        state.folders.push({id: newFolder.id, name: newFolder.name, mimeType: "application/vnd.google-apps.folder"});
+        const nf = await res.json();
+        state.folders.push({id: nf.id, name: nf.name, mimeType: "application/vnd.google-apps.folder"});
         state.folders.sort((a,b) => a.name.localeCompare(b.name));
-        renderSidebarFolders();
-        populateUploadFolderSelect();
+        renderFolders(); populateDestSelect();
         $("folderModal").style.display = "none";
-        toast(`Folder "${name}" created`);
-      } catch(e) { toast("Failed to create folder", "error"); }
-      $("createFolderBtn").disabled = false;
+        toast("Folder Created");
+      } catch(e) { toast("Folder creation failed", "error"); }
+      $("createFolderBtn").innerText = "Create";
     };
 
-    // Drag and Drop Upload Setup
-    const dropzone = $("dropzone"), fileInput = $("fileInput");
-    dropzone.onclick = () => fileInput.click();
-    ['dragover','dragenter'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('drag'); }));
-    ['dragleave','drop'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.remove('drag'); }));
+    // Drag & Drop
+    const dropArea = $("dropArea"), fileInput = $("fileInput");
+    dropArea.onclick = () => fileInput.click();
+    ['dragover','dragenter'].forEach(e => dropArea.addEventListener(e, ev => { ev.preventDefault(); dropArea.classList.add('dragover'); }));
+    ['dragleave','drop'].forEach(e => dropArea.addEventListener(e, ev => { ev.preventDefault(); dropArea.classList.remove('dragover'); }));
     
-    fileInput.onchange = (e) => handleUploadSelection(e.target.files);
-    dropzone.ondrop = (e) => handleUploadSelection(e.dataTransfer.files);
-    
-    function handleUploadSelection(files) {
+    fileInput.onchange = e => handleSelect(e.target.files);
+    dropArea.ondrop = e => handleSelect(e.dataTransfer.files);
+
+    function handleSelect(files) {
       if(!files.length) return;
       state.selectedFiles = Array.from(files);
-      $("uploadProgressArea").innerHTML = `<div style="font-size:13px; font-weight:600; color:var(--primary); text-align:center;">${files.length} file(s) selected for upload.</div>`;
+      $("uploadStatus").innerText = `${files.length} file(s) ready to upload`;
     }
 
     $("startUploadBtn").onclick = async () => {
-      if(!state.selectedFiles.length) return toast("Select files first", "warning");
-      const dest = $("destinationSelect").value;
-      $("startUploadBtn").disabled = true;
-      $("uploadProgressArea").innerHTML = `<div style="font-size:13px; text-align:center;">Uploading... Please wait.</div>`;
-
+      if(!state.selectedFiles.length) return toast("No files selected", "error");
+      const dest = $("uploadDest").value;
+      $("startUploadBtn").innerText = "Uploading...";
+      
       try {
-        for(const file of state.selectedFiles) {
-          // Metadata
-          const meta = { name: file.name, mimeType: file.type || 'application/octet-stream' };
-          
-          let parentId = null;
-          if (dest !== 'auto' && dest !== 'root') parentId = dest;
-          else if (dest === 'auto') {
-             // Basic Auto sort logic (ensure folders exist or put in root)
-             // For production, you can create 'Photos' folder dynamically here.
+        for(let f of state.selectedFiles) {
+          const meta = { name: f.name, mimeType: f.type || 'application/octet-stream' };
+          let pid = dest;
+          if(dest === 'auto') {
+            // Can be expanded to create dynamic folders, using root for unmapped in this demo
+            pid = 'root'; 
           }
-          if (parentId) meta.parents = [parentId];
+          if(pid !== 'root') meta.parents = [pid];
 
           const form = new FormData();
           form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
-          form.append('file', file);
+          form.append('file', f);
 
-          await fetch(`${UPLOAD_API}?uploadType=multipart&fields=id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,parents`, {
-            method: 'POST',
-            headers: { "Authorization": `Bearer ${state.accessToken}` },
-            body: form
+          await fetch(`${UPLOAD_BASE}?uploadType=multipart&fields=id`, {
+            method: 'POST', headers: {"Authorization": `Bearer ${state.token}`}, body: form
           });
         }
-        toast("All files uploaded!");
+        toast("Upload Complete!");
         $("uploadModal").style.display = "none";
-        state.selectedFiles = [];
-        $("uploadProgressArea").innerHTML = '';
-        fetchAllDriveData(); // Refresh UI
-      } catch(e) {
-        toast("Upload error occurred", "error");
-      }
-      $("startUploadBtn").disabled = false;
+        state.selectedFiles = []; $("uploadStatus").innerText = "";
+        loadDriveData();
+      } catch(e) { toast("Upload Failed", "error"); }
+      $("startUploadBtn").innerText = "Upload Now";
     };
 
-    initGoogleAuth();
+    initAuth();
   })();
   </script>
 </body>
