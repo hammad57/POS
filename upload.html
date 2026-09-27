@@ -1072,7 +1072,7 @@
       const all = [];
       do {
         const join = baseUrl.includes("?") ? "&" : "?";
-        const url = `${baseUrl}${join}pageSize=1000&fields=nextPageToken,files(id,name,mimeType,size,createdTime,modifiedTime,trashed,starred,parents,webViewLink,webContentLink,thumbnailLink,hasThumbnail,description,owners(displayName,emailAddress,photoLink),capabilities(canEdit,canTrash,canRename,canMoveItem,canShare))${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ""}`;
+        const url = `${baseUrl}${join}pageSize=1000&fields=nextPageToken,files(id,name,mimeType,size,createdTime,modifiedTime,trashed,starred,parents,webViewLink,webContentLink,thumbnailLink,hasThumbnail,description,owners(displayName,emailAddress,photoLink),capabilities(canEdit,canTrash,canRename,canShare,canDelete,canUntrash))${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ""}`;
         const data = await apiJson(url);
         all.push(...(data.files || []));
         pageToken = data.nextPageToken || "";
