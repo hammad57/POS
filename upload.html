@@ -181,6 +181,109 @@
     }
     .file-card:hover { border-color: var(--border-focus); transform: translateY(-2px); box-shadow: var(--shadow); }
     
+
+    /* Media Preview Thumbnails */
+    .file-preview {
+      width: 100%;
+      height: 150px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--bg-hover);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .file-preview img.media-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: var(--bg-hover);
+    }
+
+    .file-preview .preview-placeholder {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      font-size: 42px;
+      color: var(--text-muted);
+    }
+
+    .file-preview .video-play {
+      position: absolute;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(0,0,0,.72);
+      border: 1px solid rgba(255,255,255,.25);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 27px;
+      pointer-events: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,.45);
+    }
+
+    .file-preview .media-type-badge {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      padding: 4px 7px;
+      border-radius: 6px;
+      background: rgba(0,0,0,.68);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    /* In list view, use a compact Google-Drive-like thumbnail */
+    .file-list-view .file-preview {
+      width: 56px;
+      height: 44px;
+      margin: 0;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .file-list-view .file-preview .preview-placeholder {
+      font-size: 23px;
+    }
+
+    .file-list-view .file-preview .video-play {
+      width: 28px;
+      height: 28px;
+      font-size: 15px;
+    }
+
+    .file-list-view .file-preview .media-type-badge {
+      display: none;
+    }
+
+    .file-card.media-card {
+      cursor: default;
+    }
+
+    .file-card.media-card .file-preview {
+      cursor: pointer;
+    }
+
+    .file-card.media-card .file-preview:hover img.media-thumb {
+      transform: scale(1.03);
+      transition: transform .2s ease;
+    }
+
+    .file-card.media-card .file-preview img.media-thumb {
+      transition: transform .2s ease;
+    }
+
     /* Grid Mode Specifics */
     .file-grid .file-card { padding: 24px 16px; text-align: center; display: flex; flex-direction: column; align-items: center; }
     .file-grid .file-icon-wrap { width: 64px; height: 64px; border-radius: 16px; background: var(--bg-hover); display: grid; place-items: center; font-size: 32px; margin-bottom: 16px; }
@@ -231,6 +334,40 @@
       box-shadow: var(--shadow); animation: slideUp 0.3s ease;
     }
     @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+
+    @media (max-width: 900px) {
+      .file-grid {
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 12px;
+        padding: 16px;
+      }
+
+      .file-preview {
+        height: 125px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .file-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        padding: 12px;
+      }
+
+      .file-grid .file-card {
+        padding: 12px 10px;
+      }
+
+      .file-preview {
+        height: 115px;
+        margin-bottom: 10px;
+      }
+
+      .file-grid .file-actions {
+        margin-top: 12px;
+      }
+    }
 
     .empty-state { padding: 60px 20px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; }
     .empty-state i { font-size: 64px; opacity: 0.2; margin-bottom: 16px; }
@@ -503,7 +640,7 @@
     async function loadDriveData() {
       $("fileArea").innerHTML = `<div class="empty-state"><i class="ph ph-spinner-gap ph-spin"></i><h2>Loading Workspace...</h2></div>`;
       try {
-        const fields = encodeURIComponent("files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,parents)");
+        const fields = encodeURIComponent("files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,thumbnailLink,hasThumbnail,parents)");
         const q = encodeURIComponent("trashed = false");
         const res = await fetch(`${API_BASE}/files?pageSize=1000&orderBy=modifiedTime desc&q=${q}&fields=${fields}`, {
           headers: {"Authorization": `Bearer ${state.token}`}
@@ -537,48 +674,175 @@
       `).join("");
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function getPreviewMarkup(f) {
+      const cat = getCat(f.mimeType);
+      const safeName = escapeHtml(f.name);
+
+      if (cat === "image" && f.thumbnailLink) {
+        return `
+          <div class="file-preview" data-preview-id="${f.id}" title="Open ${safeName}">
+            <img
+              class="media-thumb"
+              src="${f.thumbnailLink}"
+              alt="${safeName}"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';"
+            >
+            <div class="preview-placeholder" style="display:none;">
+              <i class="ph ph-image"></i>
+            </div>
+            <span class="media-type-badge">Photo</span>
+          </div>
+        `;
+      }
+
+      if (cat === "video" && f.thumbnailLink) {
+        return `
+          <div class="file-preview" data-preview-id="${f.id}" title="Open ${safeName}">
+            <img
+              class="media-thumb"
+              src="${f.thumbnailLink}"
+              alt="${safeName}"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';"
+            >
+            <div class="preview-placeholder" style="display:none;">
+              <i class="ph ph-video-camera"></i>
+            </div>
+            <div class="video-play"><i class="ph-fill ph-play"></i></div>
+            <span class="media-type-badge">Video</span>
+          </div>
+        `;
+      }
+
+      if (cat === "image") {
+        return `
+          <div class="file-preview" data-preview-id="${f.id}" title="Open ${safeName}">
+            <div class="preview-placeholder"><i class="ph ph-image"></i></div>
+            <span class="media-type-badge">Photo</span>
+          </div>
+        `;
+      }
+
+      if (cat === "video") {
+        return `
+          <div class="file-preview" data-preview-id="${f.id}" title="Open ${safeName}">
+            <div class="preview-placeholder"><i class="ph ph-video-camera"></i></div>
+            <div class="video-play"><i class="ph-fill ph-play"></i></div>
+            <span class="media-type-badge">Video</span>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="file-icon-wrap">${getIcon(f.mimeType)}</div>
+      `;
+    }
+
     function renderFiles() {
       let filtered = state.allFiles.filter(f => f.mimeType !== "application/vnd.google-apps.folder");
-      
-      if (state.sysFilter !== 'all') filtered = filtered.filter(f => getCat(f.mimeType) === state.sysFilter);
-      
+
+      if (state.sysFilter !== 'all') {
+        filtered = filtered.filter(f => getCat(f.mimeType) === state.sysFilter);
+      }
+
       if (state.folderFilterId) {
         filtered = filtered.filter(f => (f.parents || []).includes(state.folderFilterId));
-        $("bcArrow").style.display = "block"; $("bcCurrent").style.display = "block";
+        $("bcArrow").style.display = "block";
+        $("bcCurrent").style.display = "block";
         $("bcCurrent").innerText = state.folderFilterName;
       } else {
-        $("bcArrow").style.display = "none"; $("bcCurrent").style.display = "none";
+        $("bcArrow").style.display = "none";
+        $("bcCurrent").style.display = "none";
       }
 
       if (state.searchQuery) {
-        filtered = filtered.filter(f => f.name.toLowerCase().includes(state.searchQuery.toLowerCase()));
+        filtered = filtered.filter(f =>
+          f.name.toLowerCase().includes(state.searchQuery.toLowerCase())
+        );
       }
 
       $("fileCount").innerText = `${filtered.length} items`;
       const area = $("fileArea");
-      
-      if(!filtered.length) {
-        area.className = "files-container";
-        area.innerHTML = `<div class="empty-state"><i class="ph ph-ghost"></i><h3>No files found</h3><p style="font-size:13px; margin-top:8px;">Try uploading some files or changing filters.</p></div>`;
+
+      if (!filtered.length) {
+        area.className = "file-grid";
+        area.innerHTML = `
+          <div class="empty-state">
+            <i class="ph ph-ghost"></i>
+            <h3>No files found</h3>
+            <p style="font-size:13px; margin-top:8px;">
+              Try uploading some files or changing filters.
+            </p>
+          </div>
+        `;
         return;
       }
 
       area.className = state.viewMode === 'grid' ? 'file-grid' : 'file-list-view';
-      area.innerHTML = filtered.map(f => `
-        <div class="file-card">
-          <div class="file-icon-wrap">${getIcon(f.mimeType)}</div>
-          <div class="file-details">
-            <div class="file-name" title="${f.name}">${f.name}</div>
-            <div class="file-meta"><span>${formatSize(f.size)}</span> • <span>${formatDate(f.modifiedTime)}</span></div>
+
+      area.innerHTML = filtered.map(f => {
+        const cat = getCat(f.mimeType);
+        const isMedia = cat === "image" || cat === "video";
+        const safeName = escapeHtml(f.name);
+        const safeViewLink = f.webViewLink || "#";
+        const safeContentLink = f.webContentLink || f.webViewLink || "#";
+
+        return `
+          <div class="file-card ${isMedia ? 'media-card' : ''}" data-file-id="${f.id}">
+            ${getPreviewMarkup(f)}
+
+            <div class="file-details">
+              <div class="file-name" title="${safeName}">${safeName}</div>
+              <div class="file-meta">
+                <span>${formatSize(f.size)}</span>
+                <span>•</span>
+                <span>${formatDate(f.modifiedTime)}</span>
+              </div>
+            </div>
+
+            <div class="file-actions">
+              <button
+                class="action-icon preview-file"
+                data-view="${escapeHtml(safeViewLink)}"
+                title="Preview"
+              >
+                <i class="ph ph-eye"></i>
+              </button>
+
+              <button
+                class="action-icon download-file"
+                data-download="${escapeHtml(safeContentLink)}"
+                title="Download"
+              >
+                <i class="ph ph-download-simple"></i>
+              </button>
+
+              <button
+                class="action-icon del"
+                data-delid="${escapeHtml(f.id)}"
+                data-delname="${safeName}"
+                title="Delete"
+              >
+                <i class="ph ph-trash"></i>
+              </button>
+            </div>
           </div>
-          <div class="file-actions">
-            <button class="action-icon" onclick="window.open('${f.webViewLink}', '_blank')" title="Preview"><i class="ph ph-eye"></i></button>
-            <button class="action-icon" onclick="window.open('${f.webContentLink || f.webViewLink}', '_blank')" title="Download"><i class="ph ph-download-simple"></i></button>
-            <button class="action-icon del" data-delid="${f.id}" data-delname="${f.name}" title="Delete"><i class="ph ph-trash"></i></button>
-          </div>
-        </div>
-      `).join("");
+        `;
+      }).join("");
     }
+
 
     // --- Interactions ---
     $("folderSearch").oninput = e => renderFolders(e.target.value);
@@ -613,15 +877,60 @@
     };
 
     $("fileArea").onclick = async e => {
-      const delBtn = e.target.closest('.del');
-      if(delBtn) {
-        if(confirm(`Permanently delete "${delBtn.dataset.delname}"?`)) {
+      // Open image/video/file preview when clicking the thumbnail.
+      const mediaPreview = e.target.closest(".file-preview");
+      if (mediaPreview) {
+        const card = mediaPreview.closest(".file-card");
+        const fileId = card?.dataset.fileId;
+        const file = state.allFiles.find(f => f.id === fileId);
+
+        if (file) {
+          if (file.webViewLink) {
+            window.open(file.webViewLink, "_blank", "noopener,noreferrer");
+          } else {
+            toast("Preview link is not available", "error");
+          }
+        }
+        return;
+      }
+
+      // Preview button.
+      const previewBtn = e.target.closest(".preview-file");
+      if (previewBtn) {
+        const url = previewBtn.dataset.view;
+        if (url && url !== "#") window.open(url, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      // Download button.
+      const downloadBtn = e.target.closest(".download-file");
+      if (downloadBtn) {
+        const url = downloadBtn.dataset.download;
+        if (url && url !== "#") window.open(url, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      // Delete button.
+      const delBtn = e.target.closest(".del");
+      if (delBtn) {
+        if (confirm(`Permanently delete "${delBtn.dataset.delname}"?`)) {
           try {
-            await fetch(`${API_BASE}/files/${delBtn.dataset.delid}`, {method: 'DELETE', headers: {"Authorization": `Bearer ${state.token}`}});
+            const res = await fetch(
+              `${API_BASE}/files/${delBtn.dataset.delid}`,
+              {
+                method: "DELETE",
+                headers: {"Authorization": `Bearer ${state.token}`}
+              }
+            );
+
+            if (!res.ok) throw new Error("Delete request failed");
+
             state.allFiles = state.allFiles.filter(f => f.id !== delBtn.dataset.delid);
             renderFiles();
             toast("File deleted successfully");
-          } catch(err) { toast("Delete failed", "error"); }
+          } catch(err) {
+            toast("Delete failed", "error");
+          }
         }
       }
     };
@@ -692,9 +1001,16 @@
           form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
           form.append('file', f);
 
-          await fetch(`${UPLOAD_BASE}?uploadType=multipart&fields=id`, {
-            method: 'POST', headers: {"Authorization": `Bearer ${state.token}`}, body: form
+          const uploadRes = await fetch(`${UPLOAD_BASE}?uploadType=multipart&fields=id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,thumbnailLink,hasThumbnail,parents`, {
+            method: 'POST',
+            headers: {"Authorization": `Bearer ${state.token}`},
+            body: form
           });
+
+          if (!uploadRes.ok) {
+            const errText = await uploadRes.text();
+            throw new Error(errText || "Upload failed");
+          }
         }
         toast("Upload Complete!");
         $("uploadModal").style.display = "none";
