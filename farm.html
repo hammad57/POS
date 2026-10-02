@@ -6,108 +6,470 @@
 <title>Green Land Poultry - System Upgrade</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐔</text></svg>">
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
+:root {
+    --primary: #f97316; 
+    --primary-dark: #ea580c; 
+    --accent: #10b981; 
+}
+
 body { 
     font-family: 'Plus Jakarta Sans', sans-serif; 
-    background-color: #0f172a; 
+    background-color: #0f172a; /* Dark theme for maintenance */
     color: #f8fafc; 
-    overflow: hidden; 
+    overflow-x: hidden; 
 }
 
-/* Premium Glassmorphism Card */
-.glass-card {
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-}
+/* Original App Form & Modal Styles */
+.bottom-sheet-overlay { background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); animation: fadeIn 0.2s ease-out; }
+.bottom-sheet { border-radius: 28px 28px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
+.btn-primary { background: linear-gradient(135deg, var(--primary) 0%, #fb923c 100%); color: white; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3); transition: all 0.2s; }
+.btn-primary:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3); }
+.btn-secondary { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); color: white; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); transition: all 0.2s; }
+.btn-secondary:active { transform: scale(0.97); }
+input, select, textarea { background-color: #f1f5f9; border: 1px solid #e2e8f0; color: #0f172a; transition: all 0.2s; }
+input:focus, select:focus, textarea:focus { background-color: #ffffff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); outline: none; }
+.custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+.custom-scroll::-webkit-scrollbar-track { background: transparent; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
-/* Vibrant Text Gradient */
-.gradient-text {
-    background: linear-gradient(135deg, #f97316 0%, #fcd34d 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
+/* Premium Glassmorphism UI Styles */
+.glass-card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6); }
+.gradient-text { background: linear-gradient(135deg, #f97316 0%, #fcd34d 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.blob { position: absolute; filter: blur(90px); z-index: -1; opacity: 0.3; animation: float 8s ease-in-out infinite; border-radius: 50%; }
 
-/* Glowing Background Orbs */
-.blob {
-    position: absolute; 
-    filter: blur(90px); 
-    z-index: -1; 
-    opacity: 0.3; 
-    animation: float 8s ease-in-out infinite;
-    border-radius: 50%;
-}
-
-@keyframes float { 
-    0%, 100% { transform: translate(0, 0) scale(1); } 
-    50% { transform: translate(20px, -20px) scale(1.1); } 
-}
-
-@keyframes pulse-dot { 
-    0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 
-    50% { transform: scale(1.2); opacity: 0.8; box-shadow: 0 0 10px 4px rgba(249, 115, 22, 0); } 
-}
+/* Animations */
+@keyframes slideUp { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(20px, -20px) scale(1.1); } }
+@keyframes pulse-dot { 0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 50% { transform: scale(1.2); opacity: 0.8; box-shadow: 0 0 10px 4px rgba(249, 115, 22, 0); } }
+.slide-up { animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.fade-in { animation: fadeIn 0.3s ease-out; }
 .dot { animation: pulse-dot 2s infinite; }
-
-/* Interactive Button */
 .btn-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.btn-hover:hover { 
-    transform: translateY(-3px); 
-    box-shadow: 0 15px 30px -5px rgba(249, 115, 22, 0.4); 
-}
+.btn-hover:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -5px rgba(249, 115, 22, 0.4); }
 .btn-hover:active { transform: scale(0.97); }
 </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center relative px-5">
+<body class="min-h-screen relative w-full">
 
-<!-- Cinematic Background Glow -->
-<div class="blob bg-orange-600 w-[300px] h-[300px] top-[-50px] left-[-50px]"></div>
-<div class="blob bg-emerald-600 w-[250px] h-[250px] bottom-[-50px] right-[-20px]" style="animation-delay: -4s;"></div>
+<!-- TOAST -->
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-xl text-sm font-semibold transition-all duration-300 opacity-0 pointer-events-none z-[10000] flex items-center gap-2"></div>
 
-<!-- Main Glass Card -->
-<div class="w-full max-w-[420px] glass-card rounded-[2.5rem] p-8 sm:p-10 relative z-10 text-center">
-    
-    <!-- Sophisticated App Icon -->
-    <div class="w-24 h-24 mx-auto bg-gradient-to-tr from-slate-800 to-slate-700 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center border border-slate-600 mb-8 relative">
-        <div class="absolute inset-0 bg-white/5 rounded-3xl"></div>
-        <span class="text-5xl drop-shadow-xl z-10">🐔</span>
+<!-- CUSTOM ALERT MODAL -->
+<div id="customAlertModal" class="fixed inset-0 bottom-sheet-overlay hidden items-end sm:items-center justify-center z-[9999]">
+    <div class="bg-white w-full max-w-md p-6 sm:rounded-3xl bottom-sheet sm:bottom-auto relative text-center slide-up">
+        <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">ℹ️</div>
+        <h3 id="customAlertTitle" class="text-xl font-bold text-slate-800 mb-2">Notification</h3>
+        <p id="customAlertMessage" class="text-slate-500 text-sm mb-6 leading-relaxed"></p>
+        <button id="customAlertBtn" class="w-full btn-primary font-bold py-3.5 rounded-2xl">Got it</button>
     </div>
-
-    <!-- Live Status Pill -->
-    <div class="inline-flex items-center gap-2 bg-slate-900/80 px-4 py-2.5 rounded-full border border-slate-700/50 mb-6 shadow-inner">
-        <span class="w-2.5 h-2.5 bg-orange-500 rounded-full dot"></span>
-        <span class="text-[10px] font-bold text-slate-300 tracking-widest uppercase">System Maintenance</span>
-    </div>
-
-    <!-- Premium Typography -->
-    <h1 class="text-[28px] leading-tight font-extrabold mb-4 text-white tracking-tight">
-        Platform is <br><span class="gradient-text">Upgrading.</span>
-    </h1>
-    
-    <p class="text-[13px] text-slate-400 leading-relaxed mb-8 font-medium px-2">
-        Aapko behtar experience dene ke liye hamari website par ahem updates ki ja rahi hain. Takleef ke liye mazrat, hum jald wapas aayenge. 
-    </p>
-
-    <!-- Professional CTA Button -->
-    <a href="https://wa.me/923423944508?text=Hello%20Admin,%20I%20visited%20Green%20Land%20Farm%20and%20want%20to%20know%20more." 
-       class="btn-hover w-full bg-gradient-to-r from-orange-500 to-orange-400 text-white font-bold py-4 rounded-2xl text-[15px] flex items-center justify-center gap-3">
-        <!-- SVG WhatsApp Icon -->
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-        </svg>
-        Contact Support
-    </a>
 </div>
 
-<!-- Subtle Footer -->
-<div class="absolute bottom-6 w-full text-center z-10 flex flex-col gap-1">
-    <p class="text-[11px] text-slate-500 font-medium tracking-wide uppercase">Official Help Desk</p>
-    <p class="text-sm font-bold text-white tracking-widest">+92 342 3944508</p>
+<!-- ================= AUTH SCREEN ================= -->
+<div id="authContainer" class="min-h-screen flex flex-col items-center justify-center px-6 bg-slate-50 relative hidden w-full">
+    <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-50"></div>
+    <div class="w-full max-w-sm relative z-10 fade-in text-slate-800">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-white rounded-3xl shadow-lg flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                <span class="text-4xl">🥚</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Green Land Farm</h1>
+            <p class="text-xs text-slate-500 font-medium uppercase tracking-widest mt-2">Invest • Earn • Grow</p>
+        </div>
+
+        <div class="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100">
+            <div class="text-center mb-6">
+                <h2 id="authTitle" class="text-xl font-bold text-slate-800">Welcome Back</h2>
+                <p id="authSubtitle" class="text-sm text-slate-500 mt-1">Sign in to your account</p>
+            </div>
+
+            <div id="refInfoBanner" class="hidden mb-4 p-3 bg-orange-50 border border-orange-100 rounded-xl text-xs text-center text-orange-600 font-medium">
+                Invited by: <span id="refNameDisplay" class="font-bold text-orange-700">...</span>
+            </div>
+
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <input type="email" id="loginEmail" placeholder="Email Address" required class="w-full rounded-2xl px-4 py-3.5 text-sm">
+                </div>
+                <div>
+                    <input type="password" id="loginPassword" placeholder="Password" required class="w-full rounded-2xl px-4 py-3.5 text-sm">
+                </div>
+                <div class="flex justify-between items-center px-1 text-xs font-medium">
+                    <span class="text-slate-500">New? <button type="button" onclick="toggleAuthMode(true)" class="text-orange-500 font-bold">Create Account</button></span>
+                    <button type="button" onclick="forgotPassword()" class="text-slate-400 hover:text-slate-600">Forgot?</button>
+                </div>
+                <button type="submit" class="w-full btn-primary font-bold py-3.5 rounded-2xl text-sm mt-2">Sign In</button>
+            </form>
+
+            <form id="registerForm" class="space-y-4 hidden">
+                <input type="text" id="regName" placeholder="Full Name" required class="w-full rounded-2xl px-4 py-3 text-sm">
+                <input type="tel" id="regMobile" placeholder="Mobile Number" required class="w-full rounded-2xl px-4 py-3 text-sm">
+                <input type="email" id="regEmail" placeholder="Email Address" required class="w-full rounded-2xl px-4 py-3 text-sm">
+                <input type="password" id="regPassword" placeholder="Password (min 6 chars)" required class="w-full rounded-2xl px-4 py-3 text-sm">
+                <button type="submit" class="w-full btn-primary font-bold py-3.5 rounded-2xl text-sm mt-2">Sign Up</button>
+                <p class="text-xs text-center text-slate-500 font-medium pt-2">Have an account? <button type="button" onclick="toggleAuthMode(false)" class="text-orange-500 font-bold">Sign In</button></p>
+            </form>
+        </div>
+    </div>
 </div>
 
+<!-- ================= PREMIUM MAINTENANCE SCREEN ================= -->
+<div id="maintenanceContainer" class="hidden min-h-screen flex-col items-center justify-center relative px-5 w-full">
+    <!-- Cinematic Background Glow -->
+    <div class="blob bg-orange-600 w-[300px] h-[300px] absolute top-[-50px] left-[-50px]"></div>
+    <div class="blob bg-emerald-600 w-[250px] h-[250px] absolute bottom-[-50px] right-[-20px]" style="animation-delay: -4s;"></div>
+
+    <!-- Main Glass Card -->
+    <div class="w-full max-w-[420px] glass-card rounded-[2.5rem] p-8 sm:p-10 relative z-10 text-center mx-auto">
+        
+        <div class="w-24 h-24 mx-auto bg-gradient-to-tr from-slate-800 to-slate-700 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center border border-slate-600 mb-8 relative">
+            <div class="absolute inset-0 bg-white/5 rounded-3xl"></div>
+            <span class="text-5xl drop-shadow-xl z-10">🐔</span>
+        </div>
+
+        <div class="inline-flex items-center gap-2 bg-slate-900/80 px-4 py-2.5 rounded-full border border-slate-700/50 mb-6 shadow-inner">
+            <span class="w-2.5 h-2.5 bg-orange-500 rounded-full dot"></span>
+            <span class="text-[10px] font-bold text-slate-300 tracking-widest uppercase">System Maintenance</span>
+        </div>
+
+        <h1 class="text-[28px] leading-tight font-extrabold mb-4 text-white tracking-tight">
+            Platform is <br><span class="gradient-text">Upgrading.</span>
+        </h1>
+        
+        <p class="text-[13px] text-slate-400 leading-relaxed mb-6 font-medium px-2">
+            Aapko behtar experience dene ke liye hamari website par ahem updates ki ja rahi hain. Takleef ke liye mazrat. <br><br>
+            <span class="text-emerald-400 font-bold tracking-wide">Aap abhi bhi Hens purchase kar sakte hain! 👇</span>
+        </p>
+
+        <div class="space-y-4">
+            <!-- Purchase Button -->
+            <button onclick="openPurchaseModal()" class="btn-hover w-full bg-gradient-to-r from-emerald-500 to-emerald-400 text-white font-bold py-4 rounded-2xl text-[15px] flex items-center justify-center gap-3 shadow-[0_4px_14px_rgba(16,185,129,0.3)]">
+                <span class="text-xl">🛒</span> Purchase Hens
+            </button>
+
+            <!-- WhatsApp Support -->
+            <a id="btnContactSupport" href="#" target="_blank" class="btn-hover w-full bg-gradient-to-r from-orange-500 to-orange-400 text-white font-bold py-4 rounded-2xl text-[15px] flex items-center justify-center gap-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Contact Support
+            </a>
+
+            <!-- Logout -->
+            <button onclick="logout()" class="w-full text-slate-400 font-bold py-2 rounded-2xl text-[13px] hover:text-white transition-colors mt-2">
+                Sign Out
+            </button>
+        </div>
+    </div>
+
+    <div class="absolute bottom-6 w-full text-center z-10 flex flex-col gap-1">
+        <p class="text-[11px] text-slate-500 font-medium tracking-wide uppercase">Official Help Desk</p>
+        <p id="footerWaNumber" class="text-sm font-bold text-white tracking-widest">+92 342 3944508</p>
+    </div>
+</div>
+
+<!-- ================= MANUAL PURCHASE MODAL (ORIGINAL) ================= -->
+<div id="purchaseModal" class="fixed inset-0 bottom-sheet-overlay hidden items-end justify-center z-[9994] text-slate-800">
+    <div class="bg-white w-full max-w-md p-6 bottom-sheet h-[90vh] flex flex-col slide-up">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+            <h3 class="text-lg font-bold text-slate-800">Purchase Hens</h3>
+            <button onclick="closeModal('purchaseModal')" class="bg-slate-100 text-slate-500 w-8 h-8 rounded-full font-bold">&times;</button>
+        </div>
+
+        <!-- Step 1 -->
+        <div id="purchaseStep1" class="flex-1 overflow-y-auto custom-scroll pb-4 block">
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <div class="text-[10px] text-slate-500 font-bold uppercase">Plan 1</div>
+                    <div class="text-xs font-medium text-slate-700 my-1">1-5 Hens</div>
+                    <div class="text-sm font-black text-orange-500">Rs. 499</div>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <div class="text-[10px] text-slate-500 font-bold uppercase">Plan 2</div>
+                    <div class="text-xs font-medium text-slate-700 my-1">6-10 Hens</div>
+                    <div class="text-sm font-black text-orange-500">Rs. 450</div>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <div class="text-[10px] text-slate-500 font-bold uppercase">Plan 3</div>
+                    <div class="text-xs font-medium text-slate-700 my-1">11-50 Hens</div>
+                    <div class="text-sm font-black text-orange-500">Rs. 399</div>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <div class="text-[10px] text-slate-500 font-bold uppercase">Plan 4</div>
+                    <div class="text-xs font-medium text-slate-700 my-1">51+ Hens</div>
+                    <div class="text-sm font-black text-orange-500">Rs. 250</div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-2">Hen Quantity</label>
+                    <input type="number" id="purchaseQty" min="1" value="1" oninput="updateHenPriceValue(this.value)" class="w-full text-lg font-black text-slate-800 rounded-xl px-4 py-3 border-2 focus:border-orange-500">
+                </div>
+                <div class="bg-orange-50 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <span class="text-slate-500 text-xs block mb-1">Total Cost:</span>
+                        <span id="activePlanBadge" class="bg-white text-orange-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase shadow-sm">Plan 1</span>
+                    </div>
+                    <span id="purchaseTotalCost" class="text-xl font-black text-slate-800">499 PKR</span>
+                </div>
+                <button onclick="proceedToPaymentProof()" class="w-full btn-primary font-bold py-4 rounded-xl">Next Step →</button>
+            </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div id="purchaseStep2" class="flex-1 overflow-y-auto custom-scroll pb-4 hidden">
+            <button type="button" onclick="document.getElementById('purchaseStep2').classList.add('hidden');document.getElementById('purchaseStep1').classList.remove('hidden');" class="text-xs text-slate-500 font-bold mb-4 bg-slate-100 px-3 py-1.5 rounded-full inline-flex items-center gap-1">← Back</button>
+            
+            <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-6 text-center">
+                <p class="text-xs font-medium text-blue-800 mb-1">Send payment via Easypaisa to:</p>
+                <p class="text-sm font-bold text-blue-900">Muluk Hussain</p>
+                <p class="text-lg font-black text-blue-600 tracking-wider mt-1">03423944508</p>
+            </div>
+            
+            <form id="paymentProofForm" class="space-y-4">
+                <div>
+                    <label class="block font-bold text-xs text-slate-600 mb-1">Transaction ID (Trx ID)</label>
+                    <input type="text" id="proofTrxId" required class="w-full rounded-xl px-4 py-3 text-sm">
+                </div>
+                <div>
+                    <label class="block font-bold text-xs text-slate-600 mb-1">Sender Account Name</label>
+                    <input type="text" id="proofHolderName" required class="w-full rounded-xl px-4 py-3 text-sm">
+                </div>
+                <button type="submit" class="w-full btn-secondary font-bold py-4 rounded-xl mt-2">Submit Request</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+/* =========================================================
+   GREEN LAND POULTRY FARM — MAINTENANCE WITH PURCHASE
+   ========================================================= */
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
+    authDomain: "own-live-steam-web-default.firebaseapp.com",
+    databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
+    projectId: "own-live-steam-web-default",
+    storageBucket: "own-live-steam-web-default.appspot.com",
+    messagingSenderId: "xxxxxxxxxxx",
+    appId: "xxxxxxxxxxx"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+let currentUid = null;
+let currentUserData = null;
+let globalActiveWaNumber = "923423944508";
+
+const $ = id => document.getElementById(id);
+const int = v => { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; };
+
+// Helpers
+function showToast(msg, duration = 3000) {
+    const t = $('toast');
+    t.innerHTML = `<span>🚀</span> <span>${msg}</span>`;
+    t.classList.remove('opacity-0', 'translate-y-4');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), duration);
+}
+
+function showCustomAlert(title, message, callback = null, btnText = "Got it") {
+    $('customAlertTitle').innerText = title;
+    $('customAlertMessage').innerText = message;
+    const btn = $('customAlertBtn');
+    btn.innerText = btnText;
+    btn.onclick = () => {
+        closeCustomAlert();
+        if (callback) callback();
+        setTimeout(() => btn.innerText = "Got it", 300);
+    };
+    $('customAlertModal').classList.remove('hidden');$('customAlertModal').classList.add('flex');
+}
+function closeCustomAlert() {
+    $('customAlertModal').classList.remove('flex');$('customAlertModal').classList.add('hidden');
+}
+
+function closeModal(id) {
+    const m = $(id);
+    if (!m) return;
+    const sheet = m.querySelector('.bottom-sheet');
+    if (sheet) {
+        sheet.style.animation = 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) reverse forwards';
+        setTimeout(() => {
+            m.classList.remove('flex');
+            m.classList.add('hidden');
+            sheet.style.animation = '';
+        }, 280);
+    } else {
+        m.classList.remove('flex');
+        m.classList.add('hidden');
+    }
+}
+
+// WhatsApp Config 
+function computeWaNumber(config) {
+    const now = new Date();
+    const override = config.manualOverride;
+    if (override && override.expireTime > now.getTime()) return override.number;
+    const day = now.getDay(), hours = now.getHours();
+    if (day >= 1 && day <= 5 && hours >= 7 && hours < 20) return "923423944508";
+    return "923485465097";
+}
+function applyWaNumber(n) {
+    globalActiveWaNumber = n;
+    const btn = $('btnContactSupport');
+    if (btn) btn.href = `https://wa.me/${n}?text=Hello%20Admin,%20I%20want%20to%20know%20more.`;
+    const footer = $('footerWaNumber');
+    if (footer) footer.innerText = n;
+}
+db.ref('settings/whatsappConfig').on('value', snap => applyWaNumber(computeWaNumber(snap.val() || {})));
+
+// Referral handling
+const urlParams = new URLSearchParams(window.location.search);
+const refIdParam = urlParams.get('ref');
+const refNameParam = urlParams.get('n');
+if (refNameParam) {
+    $('refInfoBanner').classList.remove('hidden');$('refNameDisplay').innerText = decodeURIComponent(refNameParam);
+    toggleAuthMode(true);
+}
+
+// Auth Handlers
+function handleAuthError(err) {
+    const map = {
+        'auth/weak-password': 'Password must be at least 6 characters.',
+        'auth/email-already-in-use': 'Email is already registered.',
+        'auth/user-not-found': 'Invalid email or password.',
+        'auth/wrong-password': 'Invalid email or password.'
+    };
+    showCustomAlert("Auth Error", map[err.code] || err.message);
+}
+
+function toggleAuthMode(isRegister) {
+    $('authTitle').innerText = isRegister ? "Create Account" : "Welcome Back";
+    $('authSubtitle').innerText = isRegister ? "Join and start earning" : "Sign in to your account";
+    $('registerForm').classList.toggle('hidden', !isRegister);$('loginForm').classList.toggle('hidden', isRegister);
+}
+
+function forgotPassword() {
+    const email = $('loginEmail').value.trim();
+    const text = `Hello Admin, I forgot my password. My email is: ${email || '[insert email]'}. Please help.`;
+    window.open(`https://wa.me/${globalActiveWaNumber}?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+$('registerForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('regName').value.trim(), mobile =$('regMobile').value.trim(), email = $('regEmail').value.trim(), password =$('regPassword').value;
+    if (password.length < 6) return handleAuthError({ code: 'auth/weak-password' });
+
+    auth.createUserWithEmailAndPassword(email, password).then(cred => {
+        return db.ref('users/' + cred.user.uid).set({
+            name, mobile, email, totalHens: 0, availableEggs: 0, giftEggs: 0, totalExpense: 0, totalWithdrawal: 0, selfPurchasedHens: 0, status: "active", createdAt: firebase.database.ServerValue.TIMESTAMP, referredBy: refIdParam ? refIdParam : "none", hasRewardedInviter: false
+        });
+    }).catch(err => handleAuthError(err));
+});
+
+$('loginForm').addEventListener('submit', e => {
+    e.preventDefault();
+    auth.signInWithEmailAndPassword($('loginEmail').value.trim(),$('loginPassword').value).catch(err => handleAuthError(err));
+});
+
+function logout() {
+    if (!confirm("Sign out?")) return;
+    auth.signOut();
+}
+
+// Firebase Auth State
+auth.onAuthStateChanged(user => {
+    if (user) {
+        currentUid = user.uid;
+        
+        // Hide Auth, Show Maintenance UI
+        $('authContainer').classList.add('hidden');$('authContainer').classList.remove('flex');
+        
+        $('maintenanceContainer').classList.remove('hidden');$('maintenanceContainer').classList.add('flex');
+        
+        db.ref('users/' + currentUid).once('value', snapshot => {
+            const val = snapshot.val();
+            if (val && val.status === 'blocked') {
+                showCustomAlert("Suspended", "Your account is blocked.");
+                auth.signOut(); return;
+            }
+            currentUserData = val;
+        });
+
+    } else {
+        currentUid = null; currentUserData = null;
+        
+        // Hide Maintenance UI, Show Auth
+        $('maintenanceContainer').classList.add('hidden');$('maintenanceContainer').classList.remove('flex');
+
+        $('authContainer').classList.remove('hidden');$('authContainer').classList.add('flex');
+        
+        toggleAuthMode(refNameParam ? true : false);
+    }
+});
+
+/* ============ PURCHASE LOGIC ============ */
+function getHenCostByPlan(qty) {
+    qty = int(qty);
+    if (qty <= 0) return { pricePerHen: 499, planName: "Plan 1", totalCost: 0 };
+    if (qty <= 5) return { pricePerHen: 499, planName: "Plan 1", totalCost: qty * 499 };
+    if (qty <= 10) return { pricePerHen: 450, planName: "Plan 2", totalCost: qty * 450 };
+    if (qty <= 50) return { pricePerHen: 399, planName: "Plan 3", totalCost: qty * 399 };
+    return { pricePerHen: 250, planName: "Plan 4", totalCost: qty * 250 };
+}
+
+function openPurchaseModal() {
+    $('purchaseStep1').classList.remove('hidden'); 
+    $('purchaseStep2').classList.add('hidden');$('purchaseQty').value = 1; 
+    updateHenPriceValue(1);
+    
+    $('purchaseModal').classList.remove('hidden');$('purchaseModal').classList.add('flex');
+}
+
+function updateHenPriceValue(val) {
+    const p = getHenCostByPlan(val);
+    $('purchaseTotalCost').innerText = p.totalCost + " PKR"; 
+    $('activePlanBadge').innerText = p.planName;
+}
+
+function proceedToPaymentProof() { 
+    $('purchaseStep1').classList.add('hidden');$('purchaseStep2').classList.remove('hidden'); 
+}
+
+$('paymentProofForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const qty = int($('purchaseQty').value) || 1, plan = getHenCostByPlan(qty);
+    const trx = $('proofTrxId').value.trim(), holder =$('proofHolderName').value.trim();
+    if (!trx || !holder) return showCustomAlert("Error", "Fill all fields.");
+
+    db.ref('purchase_requests').push({ 
+        uid: currentUid, 
+        quantity: qty, 
+        amount: plan.totalCost, 
+        planName: plan.planName, 
+        transactionId: trx, 
+        accountHolderName: holder, 
+        status: 'pending', 
+        timestamp: firebase.database.ServerValue.TIMESTAMP 
+    })
+    .then(() => {
+        closeModal('purchaseModal');
+        showCustomAlert("Submitted", "Purchase request sent successfully. Admin will approve it shortly.", () => {
+            window.open(`https://wa.me/${globalActiveWaNumber}?text=New Purchase Request:%20${qty}%20Hens`, '_blank');
+        }, "WhatsApp Admin");
+    }).catch(e => showCustomAlert("Error", e.message));
+});
+
+</script>
 </body>
 </html>
