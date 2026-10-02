@@ -1,994 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Green Land Poultry Farm — Dashboard</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐔</text></svg>">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<style>
-:root {
-    --primary: #10b981;
-    --gold: #fbbf24;
-    --dark: #051a0f;
-    --card: #0a2a1a;
-}
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body {
-    background: linear-gradient(180deg, #0a331d 0%, #051a0f 60%, #020b06 100%);
-    background-attachment: fixed;
-    color: #f3f4f6;
-    font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
-    min-height: 100vh;
-}
-.neon-border { box-shadow: 0 0 20px rgba(16,185,129,.25), inset 0 1px 0 rgba(255,255,255,.05); }
-.neon-text { text-shadow: 0 0 12px rgba(234,179,8,.55); }
-.gold-text {
-    background: linear-gradient(135deg, #fde68a 0%, #fbbf24 50%, #f59e0b 100%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; color: transparent;
-}
-.custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
-.custom-scroll::-webkit-scrollbar-track { background: #062314; }
-.custom-scroll::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
-.glass { background: rgba(10,42,26,.72); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-.card-glow { box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 0 1px rgba(16,185,129,.12); }
-@keyframes rotateBox {
-    0% { transform: translate(-50%,-50%) rotate(0deg); }
-    100% { transform: translate(-50%,-50%) rotate(360deg); }
-}
-.rotating-bg-box {
-    position: absolute; top: 50%; left: 50%;
-    width: 340px; height: 340px;
-    background: linear-gradient(135deg, rgba(16,185,129,.22), rgba(234,179,8,.12));
-    border-radius: 48px;
-    animation: rotateBox 20s linear infinite;
-    z-index: 0; pointer-events: none;
-    box-shadow: 0 0 60px rgba(16,185,129,.18);
-}
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-.fade-in { animation: fadeIn .3s ease-out; }
-@keyframes pulse-dot {
-    0%,100% { opacity: 1; }
-    50% { opacity: .35; }
-}
-.pulse-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
-.toast-enter { animation: slideDown .3s ease-out; }
-@keyframes slideDown { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }
-.hover-lift { transition: transform .15s ease, box-shadow .15s ease; }
-.hover-lift:active { transform: scale(.97); }
-.btn-primary {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    box-shadow: 0 4px 15px rgba(245,158,11,.35);
-}
-.btn-primary:active { transform: scale(.98); }
-.btn-emerald {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    box-shadow: 0 4px 15px rgba(16,185,129,.35);
-}
-.btn-emerald:active { transform: scale(.98); }
-.modal-overlay { animation: fadeIn .2s ease-out; }
-.modal-panel { animation: fadeIn .3s ease-out; }
-input, select, textarea { color-scheme: dark; }
-</style>
-</head>
-<body class="p-3 max-w-md mx-auto min-h-screen pb-24 relative overflow-x-hidden">
-
-<!-- TOAST -->
-<div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-5 py-2.5 rounded-full shadow-2xl text-xs font-bold transition-all duration-300 opacity-0 pointer-events-none z-[10000] toast-enter"></div>
-
-<!-- CUSTOM ALERT MODAL -->
-<div id="customAlertModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9999] modal-overlay">
-    <div class="glass border border-emerald-700/50 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative text-center card-glow modal-panel">
-        <div class="w-12 h-12 bg-yellow-500/10 border border-yellow-500/30 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">ℹ️</div>
-        <h3 id="customAlertTitle" class="text-lg font-bold text-yellow-400 mb-2">Notification</h3>
-        <p id="customAlertMessage" class="text-zinc-300 text-sm mb-6 leading-relaxed"></p>
-        <button id="customAlertBtn" class="w-full btn-primary text-zinc-950 font-bold py-3 rounded-xl transition-all">OK</button>
-    </div>
-</div>
-
-<!-- DAILY NOTICE MODAL -->
-<div id="dailyNoticeModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9999] modal-overlay">
-    <div class="glass border border-emerald-500/40 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative text-center card-glow modal-panel">
-        <div class="w-16 h-16 bg-gradient-to-br from-emerald-800/60 to-emerald-950 border border-yellow-400/40 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg text-3xl">🐔</div>
-        <span class="bg-emerald-500/15 text-emerald-300 text-[10px] font-bold px-3 py-1 rounded-full border border-emerald-500/30 uppercase tracking-widest">Daily Notice</span>
-        <h3 id="dailyNoticeTitle" class="text-lg font-extrabold text-yellow-400 mt-3 mb-2">Maximize Your Egg Yield!</h3>
-        <p id="dailyNoticeMessage" class="text-zinc-300 text-xs leading-relaxed mb-6">Welcome back! Every hen generates 1 egg per 24 hours automatically.</p>
-        <div class="space-y-2">
-            <button onclick="closeModal('dailyNoticeModal'); openPurchaseModal();" class="w-full btn-primary text-zinc-950 font-bold py-3 rounded-xl text-xs uppercase tracking-wider">🛒 Purchase Hen Asset</button>
-            <button onclick="closeModal('dailyNoticeModal')" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 text-zinc-300 py-2.5 rounded-xl border border-emerald-700/40 text-xs">Dismiss</button>
-        </div>
-    </div>
-</div>
-
-<!-- SIDE MENU -->
-<div id="sideMenuOverlay" onclick="toggleSideMenu()" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9000] hidden"></div>
-<div id="sideMenuPanel" class="fixed top-0 left-0 w-72 h-full glass border-r border-emerald-800/60 shadow-2xl z-[9001] -translate-x-full transition-transform duration-300 ease-out p-5 flex flex-col justify-between">
-    <div>
-        <div class="flex justify-between items-center border-b border-emerald-800/60 pb-3 mb-4">
-            <h3 class="font-bold text-yellow-400 text-sm flex items-center gap-2"><span class="text-lg">🐔</span><span>Navigation</span></h3>
-            <button onclick="toggleSideMenu()" class="text-zinc-400 hover:text-white text-2xl leading-none">&times;</button>
-        </div>
-        <div class="space-y-1.5 text-xs">
-            <button onclick="toggleSideMenu(); window.scrollTo({top:0,behavior:'smooth'})" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🏠</span><span class="font-semibold text-zinc-200">Dashboard</span></button>
-            <button onclick="toggleSideMenu(); openPurchaseModal()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🐔</span><span class="font-semibold text-zinc-200">Purchase Hens</span></button>
-            <button onclick="toggleSideMenu(); openSaleModal()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">💰</span><span class="font-semibold text-emerald-400">Sale Out Eggs</span></button>
-            <button onclick="toggleSideMenu(); openUserSettingsModal()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">⚙️</span><span class="font-semibold text-zinc-200">Settings</span></button>
-            <button onclick="toggleSideMenu(); openTeamListModal()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">👥</span><span class="font-semibold text-zinc-200">My Team</span></button>
-            <button onclick="toggleSideMenu(); copyReferralLink()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🔗</span><span class="font-semibold text-zinc-200">Copy Invite Link</span></button>
-        </div>
-    </div>
-    <div class="border-t border-emerald-800/60 pt-4">
-        <a id="waSidebarLink" href="https://wa.me/923423944508" target="_blank" class="w-full btn-emerald text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-xs">
-            <span>💬</span><span>WhatsApp Admin</span>
-        </a>
-    </div>
-</div>
-
-<!-- AUTH SCREEN -->
-<div id="authContainer" class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-8 px-4">
-    <div class="rotating-bg-box"></div>
-    <div class="text-center z-10 mb-5 fade-in">
-        <div class="inline-flex items-center justify-center w-14 h-14 glass border border-yellow-500/40 rounded-2xl shadow-lg mb-2.5 neon-border">
-            <span class="text-2xl">🛡️</span>
-        </div>
-        <h1 class="text-xl font-bold text-yellow-400 tracking-wide neon-text">Green Land Poultry Farm</h1>
-        <p class="text-[10px] tracking-[.3em] text-emerald-400 uppercase mt-1">INVEST · EARN · GROW</p>
-    </div>
-
-    <div class="glass border border-emerald-800/60 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative z-10 card-glow fade-in">
-        <div class="text-center mb-5">
-            <span class="inline-block bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-2">🔒 SECURE</span>
-            <h2 id="authTitle" class="text-xl font-bold text-yellow-400">Sign In</h2>
-            <p id="authSubtitle" class="text-xs text-zinc-400 mt-1">Enter your credentials to continue</p>
-        </div>
-
-        <div id="refInfoBanner" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-700/50 rounded-lg text-xs text-center text-emerald-300">
-            Invited by: <span id="refNameDisplay" class="font-bold text-yellow-400">...</span>
-        </div>
-
-        <form id="loginForm" class="space-y-3">
-            <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-emerald-500 text-sm">@</span>
-                <input type="email" id="loginEmail" placeholder="Email Address" required class="w-full bg-emerald-950/60 border border-emerald-800/60 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-200 placeholder-emerald-600/50 focus:outline-none focus:border-yellow-400 transition-colors">
-            </div>
-            <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-emerald-500 text-sm">🔒</span>
-                <input type="password" id="loginPassword" placeholder="Password" required class="w-full bg-emerald-950/60 border border-emerald-800/60 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-200 placeholder-emerald-600/50 focus:outline-none focus:border-yellow-400 transition-colors">
-            </div>
-            <div class="flex justify-between items-center px-1 text-[11px]">
-                <span class="text-zinc-400">New here? <button type="button" onclick="toggleAuthMode(true)" class="text-yellow-400 font-bold hover:underline">Create Account</button></span>
-                <button type="button" onclick="forgotPassword()" class="text-emerald-400 font-bold hover:underline">Forgot?</button>
-            </div>
-            <button type="submit" class="w-full btn-primary text-zinc-950 font-bold py-3.5 rounded-xl transition-all text-sm">Login Now →</button>
-        </form>
-
-        <form id="registerForm" class="space-y-3 hidden">
-            <input type="text" id="regName" placeholder="Full Name" required class="w-full bg-emerald-950/60 border border-emerald-800/60 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-emerald-600/50 focus:outline-none focus:border-yellow-400">
-            <input type="tel" id="regMobile" placeholder="Mobile Number" required class="w-full bg-emerald-950/60 border border-emerald-800/60 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-emerald-600/50 focus:outline-none focus:border-yellow-400">
-            <input type="email" id="regEmail" placeholder="Email Address" required class="w-full bg-emerald-950/60 border border-emerald-800/60 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-emerald-600/50 focus:outline-none focus:border-yellow-400">
-            <input type="password" id="regPassword" placeholder="Password (min 6 chars)" required class="w-full bg-emerald-950/60 border border-emerald-800/60 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-emerald-600/50 focus:outline-none focus:border-yellow-400">
-            <button type="submit" class="w-full btn-primary text-zinc-950 font-bold py-3.5 rounded-xl transition-all text-sm">Create Account</button>
-            <p class="text-[11px] text-center text-zinc-400">Have an account? <button type="button" onclick="toggleAuthMode(false)" class="text-yellow-400 font-bold hover:underline">Sign In</button></p>
-        </form>
-    </div>
-</div>
-
-<!-- DASHBOARD -->
-<div id="dashboardContainer" class="hidden">
-
-    <!-- HEADER -->
-    <header class="flex justify-between items-center mb-5 glass p-3.5 rounded-2xl border border-emerald-800/60 shadow-md">
-        <div class="flex items-center gap-3 min-w-0">
-            <button onclick="toggleSideMenu()" class="bg-emerald-900/60 border border-emerald-700/60 hover:bg-emerald-800/60 text-emerald-300 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1"><span>☰</span></button>
-            <div class="min-w-0">
-                <p class="text-[10px] text-emerald-400 uppercase tracking-wider">Welcome back</p>
-                <h1 id="lblUserName" class="text-base font-bold text-yellow-400 neon-text truncate">Loading...</h1>
-            </div>
-        </div>
-        <div class="flex items-center gap-2">
-            <button onclick="openAnnouncementsModal()" class="relative p-2 bg-emerald-900/80 hover:bg-emerald-800 text-yellow-400 rounded-xl border border-emerald-700 transition-colors active:scale-95 text-lg">
-                🔔
-                <span id="announcementBadge" class="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-emerald-950 hidden pulse-dot">NEW</span>
-            </button>
-            <button onclick="openUserSettingsModal()" class="p-2 bg-emerald-900/80 hover:bg-emerald-800 text-yellow-400 rounded-xl border border-emerald-700 transition-colors active:scale-95 text-lg">⚙️</button>
-            <button onclick="logout()" class="text-[10px] bg-red-900/40 border border-red-700/60 hover:bg-red-800/70 text-red-300 px-2.5 py-2 rounded-lg transition-colors font-bold">OUT</button>
-        </div>
-    </header>
-
-    <!-- BALANCE CARD -->
-    <div class="bg-gradient-to-br from-emerald-900 via-emerald-950 to-zinc-950 border border-emerald-700/60 rounded-2xl p-5 mb-5 shadow-2xl relative overflow-hidden card-glow">
-        <div class="absolute -right-4 -bottom-4 opacity-[0.07] text-9xl">💰</div>
-
-        <div class="relative z-10">
-            <div class="flex items-center justify-between mb-1">
-                <p class="text-[10px] text-emerald-300 font-bold tracking-widest uppercase">Total Balance</p>
-                <div class="flex items-center gap-1.5 bg-black/30 px-2 py-1 rounded-full border border-emerald-800/60">
-                    <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-dot"></span>
-                    <span class="text-[9px] text-emerald-400 font-bold tracking-wider">LIVE</span>
-                </div>
-            </div>
-            <div class="flex items-end gap-2 mb-2">
-                <span class="text-lg text-yellow-500 font-bold mb-1">PKR</span>
-                <h2 id="lblBalancePKR" class="text-4xl font-black gold-text leading-none">0.00</h2>
-            </div>
-            <div class="grid grid-cols-2 gap-2 mb-4 text-[10px]">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-zinc-500">Active Hens:</span>
-                    <span id="lblHenBalance" class="text-emerald-400 font-bold">0</span>
-                </div>
-                <div class="flex items-center gap-1.5 justify-end">
-                    <span class="text-zinc-500">Total Eggs:</span>
-                    <span id="lblTotalEggs" class="text-yellow-400 font-bold">0</span>
-                </div>
-            </div>
-
-            <!-- LIVE TICKER -->
-            <div class="bg-black/40 border border-emerald-800/50 rounded-xl p-3 mb-4 shadow-inner">
-                <div class="flex items-center justify-between mb-2 pb-2 border-b border-emerald-800/40">
-                    <div class="flex items-center gap-2">
-                        <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        <span class="text-zinc-400 text-[9px] uppercase font-bold tracking-widest">Live Market</span>
-                    </div>
-                    <span id="marketRange" class="text-[9px] text-emerald-500 font-mono">-- PKR</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-slate-500 text-[9px] uppercase tracking-wider mb-0.5">1 Egg Value</p>
-                        <div class="flex items-center gap-1.5">
-                            <span id="liveEggRate" class="font-bold text-white text-base font-mono">0</span>
-                            <span id="liveEggArrow" class="text-zinc-500 text-[10px]">−</span>
-                        </div>
-                    </div>
-                    <div class="h-6 w-px bg-emerald-800/50"></div>
-                    <div class="text-right">
-                        <p class="text-slate-500 text-[9px] uppercase tracking-wider mb-0.5">Hen Base Rate</p>
-                        <span class="font-bold text-yellow-400 text-base">Plans Applied</span>
-                    </div>
-                </div>
-            </div>
-
-            <button onclick="openInstantBalancePurchase()" class="w-full btn-primary text-zinc-950 font-extrabold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider hover-lift">
-                <span class="text-base">⚡</span><span>Instantly Buy Hen</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- BINANCE LIVE CRYPTO PORTFOLIO TRACKER SECTION             -->
-    <!-- ========================================================= -->
-    <div class="bg-emerald-950/70 border border-emerald-700/60 rounded-2xl p-4 mb-5 shadow-xl card-glow">
-        <div class="flex justify-between items-center mb-3">
-            <h3 class="text-xs font-bold text-yellow-400 uppercase tracking-wider flex items-center gap-1.5">
-                <span>🪙</span> Binance Coin Rate & Balance Tracker
-            </h3>
-            <span class="text-[9px] text-emerald-400 font-bold bg-emerald-900/80 px-2 py-0.5 rounded-full border border-emerald-700 animate-pulse">WS Live</span>
-        </div>
-
-        <!-- Coin Selector Dropdown -->
-        <div class="mb-3">
-            <label class="block text-[11px] text-zinc-300 font-semibold mb-1">Apna Coin Select Karein:</label>
-            <select id="cryptoCoinSelect" onchange="updateCryptoPortfolioUI()" class="w-full bg-emerald-900/60 border border-emerald-700/80 text-white rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:border-yellow-400">
-                <option value="BTCUSDT">Bitcoin (BTC / USDT)</option>
-                <option value="ETHUSDT">Ethereum (ETH / USDT)</option>
-                <option value="BNBUSDT">Binance Coin (BNB / USDT)</option>
-                <option value="SOLUSDT">Solana (SOL / USDT)</option>
-            </select>
-        </div>
-
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-2 gap-2 mb-3">
-            <div class="bg-emerald-900/40 p-2.5 rounded-xl border border-emerald-800/60">
-                <span class="text-[9px] text-zinc-400 uppercase font-bold block mb-0.5">Live Coin Price</span>
-                <span id="lblCryptoCurrentRate" class="text-sm font-extrabold text-white font-mono">$0.00</span>
-            </div>
-            <div class="bg-emerald-900/40 p-2.5 rounded-xl border border-emerald-800/60">
-                <span class="text-[9px] text-zinc-400 uppercase font-bold block mb-0.5">Current Balance Val</span>
-                <span id="lblCryptoTotalValue" class="text-sm font-extrabold text-yellow-400 font-mono">$0.00</span>
-            </div>
-        </div>
-
-        <!-- Profit / Loss Tracker Box -->
-        <div class="bg-emerald-900/40 p-2.5 rounded-xl border border-emerald-800/60 flex justify-between items-center text-xs">
-            <span class="text-zinc-300 font-bold">Realtime P&L (Faida / Nuksan):</span>
-            <span id="lblCryptoPNL" class="font-black text-zinc-400">$0.00 (0.00%)</span>
-        </div>
-    </div>
-
-    <!-- LIVE PRODUCTION -->
-    <section class="mb-5">
-        <h3 class="text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-2.5 flex items-center gap-2">
-            <span class="text-sm">⏱️</span><span>Live Egg Production</span>
-        </h3>
-        <div id="batchesContainer" class="space-y-2 max-h-56 overflow-y-auto custom-scroll pr-1">
-            <div class="bg-emerald-950/60 p-5 rounded-xl border border-emerald-800/60 text-center text-xs text-emerald-500 italic">Buy hens to start production timers</div>
-        </div>
-    </section>
-
-    <!-- TUTORIAL VIDEO -->
-    <button onclick="window.open('https://www.youtube.com/shorts/RNz_KOfJe7Y?si=amXdr6gHSOtypi2I','_blank')" class="w-full bg-gradient-to-r from-red-700/90 to-red-600/90 hover:from-red-600 hover:to-red-500 text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm border border-red-500/40 mb-4">
-        <span class="text-base">▶️</span><span>مرغی خریدنے کا طریقہ سیکھیں</span>
-    </button>
-
-    <!-- ACTION BUTTONS -->
-    <div class="grid grid-cols-2 gap-3 mb-5">
-        <button onclick="openPurchaseModal()" class="relative overflow-hidden border border-emerald-500/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-lg transition-all hover-lift bg-gradient-to-br from-emerald-900 to-emerald-950">
-            <span class="text-3xl mb-1.5">🐔</span>
-            <span class="font-bold text-sm text-white">Buy via Bank</span>
-            <span class="text-[10px] text-emerald-300 mt-0.5">Manual Payment</span>
-        </button>
-        <button onclick="openSaleModal()" class="border border-amber-700/60 bg-gradient-to-br from-emerald-950 to-emerald-900 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md transition-all hover-lift">
-            <span class="text-3xl mb-1.5">💰</span>
-            <span class="font-bold text-sm text-yellow-400">Sale Out Eggs</span>
-            <span class="text-[10px] text-zinc-400 mt-0.5">Instant Cashout</span>
-        </button>
-    </div>
-
-    <!-- HISTORY ACCORDIONS -->
-    <div class="space-y-3 mb-5">
-        <div class="bg-emerald-950/60 border border-emerald-800/60 rounded-xl overflow-hidden shadow-md">
-            <button onclick="toggleAccordion('purchasesAccordionContent')" class="w-full p-3.5 flex justify-between items-center text-left bg-emerald-950/60 hover:bg-emerald-900/60 transition-colors">
-                <span class="font-bold text-xs text-yellow-400 flex items-center gap-2"><span>📜</span><span>Purchasing History</span></span>
-                <span id="purchasesAccordionArrow" class="text-xs text-zinc-500 transition-transform">▼</span>
-            </button>
-            <div id="purchasesAccordionContent" class="hidden p-3 border-t border-emerald-800/60 bg-emerald-950/80 text-xs space-y-2 max-h-56 overflow-y-auto custom-scroll">
-                <p class="text-zinc-500 italic text-center py-2 text-[11px]">Loading...</p>
-            </div>
-        </div>
-        <div class="bg-emerald-950/60 border border-emerald-800/60 rounded-xl overflow-hidden shadow-md">
-            <button onclick="toggleAccordion('withdrawalsAccordionContent')" class="w-full p-3.5 flex justify-between items-center text-left bg-emerald-950/60 hover:bg-emerald-900/60 transition-colors">
-                <span class="font-bold text-xs text-yellow-400 flex items-center gap-2"><span>💸</span><span>Withdraw History</span></span>
-                <span id="withdrawalsAccordionArrow" class="text-xs text-zinc-500 transition-transform">▼</span>
-            </button>
-            <div id="withdrawalsAccordionContent" class="hidden p-3 border-t border-emerald-800/60 bg-emerald-950/80 text-xs space-y-2 max-h-56 overflow-y-auto custom-scroll">
-                <p class="text-zinc-500 italic text-center py-2 text-[11px]">Loading...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- REFERRAL SECTION -->
-    <div class="bg-emerald-950/60 rounded-xl border border-emerald-800/60 mb-5 overflow-hidden shadow-md">
-        <div class="bg-gradient-to-r from-emerald-900/80 to-emerald-950 p-4 text-center border-b border-emerald-800/60">
-            <h3 class="font-bold text-yellow-400 text-sm">Referral & Team Network</h3>
-            <p class="text-zinc-400 mt-1 text-[11px]">Invite friends and grow your team</p>
-            <button onclick="copyReferralLink()" class="mt-3 w-full btn-emerald text-white text-xs font-bold py-3 rounded-lg shadow flex items-center justify-center gap-2">
-                <span>🔗</span><span>Copy My Referral Link</span>
-            </button>
-        </div>
-        <div class="grid grid-cols-3 divide-x divide-emerald-800/60 text-center p-3 text-xs bg-emerald-950/40">
-            <div class="px-1 cursor-pointer hover:bg-emerald-900/40 transition-colors py-1.5 rounded" onclick="openTeamListModal()">
-                <span class="block text-emerald-400 mb-1 underline decoration-dotted text-[9px] font-bold">JOINED</span>
-                <span id="statTeamJoined" class="font-bold text-emerald-400 text-sm">0</span>
-            </div>
-            <div class="px-1 py-1.5">
-                <span class="block text-emerald-400 mb-1 text-[9px] font-bold">TEAM HENS</span>
-                <span id="statTeamHens" class="font-bold text-yellow-400 text-sm">0</span>
-            </div>
-            <div class="px-1 py-1.5">
-                <span class="block text-emerald-400 mb-1 text-[9px] font-bold">TEAM EGGS</span>
-                <span id="statTeamEggs" class="font-bold text-yellow-400 text-sm">0</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- PENDING -->
-    <div class="grid grid-cols-2 gap-3 mb-5 text-xs">
-        <div class="bg-emerald-950/60 p-3 rounded-xl border border-emerald-800/60">
-            <span class="text-emerald-400 block mb-1 text-[10px] uppercase tracking-wide font-bold">Pending Hens Req</span>
-            <span id="lblPendingPurchase" class="font-bold text-amber-400 text-sm">0</span>
-        </div>
-        <div class="bg-emerald-950/60 p-3 rounded-xl border border-emerald-800/60">
-            <span class="text-emerald-400 block mb-1 text-[10px] uppercase tracking-wide font-bold">Pending Withdrawals</span>
-            <span id="lblPendingWithdraw" class="font-bold text-amber-400 text-sm">0</span>
-        </div>
-    </div>
-
-    <!-- LEDGER -->
-    <div class="bg-emerald-950/60 rounded-xl p-4 border border-emerald-800/60 mb-5 space-y-3 text-xs shadow-md">
-        <h3 class="font-bold text-yellow-400 border-b border-emerald-800/60 pb-2 flex items-center gap-2"><span>📊</span><span>Financial Records</span></h3>
-        <div class="flex justify-between"><span class="text-zinc-400">Total Investment:</span><span id="lblTotalExpense" class="font-bold text-red-400">0 PKR</span></div>
-        <div class="flex justify-between"><span class="text-zinc-400">Total Withdrawn:</span><span id="lblTotalWithdrawal" class="font-bold text-green-400">0 PKR</span></div>
-    </div>
-
-    <!-- SUPPORT -->
-    <div class="bg-emerald-950/60 p-4 rounded-xl border border-emerald-800/60 mb-5 text-xs shadow-md">
-        <h3 class="font-bold text-yellow-400 mb-3 flex items-center gap-2"><span>💬</span><span>Help & Support</span></h3>
-        <div class="space-y-2">
-            <a id="waHelpDeskLink" href="https://wa.me/923423944508" target="_blank" class="flex items-center justify-between bg-emerald-900/50 p-3 rounded-lg hover:bg-emerald-800/60 border border-emerald-700/40 transition-colors">
-                <span class="font-medium text-emerald-300">🟢 Official Admin</span>
-                <span id="waHelpDeskText" class="text-zinc-400 font-mono text-[10px]">03423944508</span>
-            </a>
-            <a href="https://wa.me/923285719803" target="_blank" class="flex items-center justify-between bg-emerald-900/50 p-3 rounded-lg hover:bg-emerald-800/60 border border-emerald-700/40 transition-colors">
-                <span class="font-medium text-emerald-300">🟢 Support Desk</span>
-                <span class="text-zinc-400 font-mono text-[10px]">03285719803</span>
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- ANNOUNCEMENTS MODAL -->
-<div id="announcementsModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9999] modal-overlay">
-    <div class="glass border border-emerald-800/60 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto custom-scroll modal-panel">
-        <button onclick="closeModal('announcementsModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-        <h3 class="text-base font-bold text-yellow-400 border-b border-emerald-800/60 pb-2 flex items-center gap-2 mb-3"><span>🔔</span><span>Announcements</span></h3>
-        <div id="announcementsContainer" class="space-y-3"><p class="text-zinc-500 italic text-center text-xs py-4">Loading...</p></div>
-    </div>
-</div>
-
-<!-- USER SETTINGS MODAL -->
-<div id="userSettingsModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9002] modal-overlay">
-    <div class="glass border border-emerald-800/60 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto custom-scroll space-y-4 modal-panel">
-        <button onclick="closeModal('userSettingsModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-        <h3 class="text-base font-bold text-yellow-400 border-b border-emerald-800/60 pb-2 flex items-center gap-2"><span>⚙️</span><span>Account Settings</span></h3>
-
-        <div class="bg-emerald-900/40 p-3 rounded-xl border border-emerald-700/40 space-y-3">
-            <h4 class="text-xs font-bold text-emerald-300 flex items-center gap-2"><span>🔐</span><span>Change Password</span></h4>
-            <form id="changePasswordForm" class="space-y-2 text-xs">
-                <input type="password" id="newPasswordInput" placeholder="New Password (min 6 chars)" required minlength="6" class="w-full bg-emerald-950/60 border border-emerald-700/60 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-yellow-400">
-                <button type="submit" class="w-full btn-primary text-zinc-950 font-bold py-2.5 rounded-lg">Update Password</button>
-            </form>
-        </div>
-
-        <div class="bg-emerald-900/40 p-3 rounded-xl border border-emerald-700/40 space-y-1.5 text-xs">
-            <h4 class="font-bold text-emerald-300 border-b border-emerald-700/40 pb-1.5 mb-2">Active Assets</h4>
-            <div class="flex justify-between"><span class="text-zinc-400">Plan Status:</span><span class="text-green-400 font-bold">Investor</span></div>
-            <div class="flex justify-between"><span class="text-zinc-400">Total Hens:</span><span id="settingTotalHens" class="text-yellow-400 font-bold">0</span></div>
-            <div class="flex justify-between"><span class="text-zinc-400">Yield Rate:</span><span class="text-zinc-200">1 Egg / 24h / Hen</span></div>
-        </div>
-
-        <div class="bg-emerald-900/40 p-3 rounded-xl border border-emerald-700/40 space-y-2 text-xs">
-            <h4 class="font-bold text-emerald-300 border-b border-emerald-700/40 pb-1.5 mb-2">Eggs Breakdown</h4>
-            <div id="settingsEggsBreakdown" class="space-y-1 max-h-32 overflow-y-auto custom-scroll pr-1 text-[11px]">
-                <p class="text-zinc-500 italic">No active batches</p>
-            </div>
-        </div>
-
-        <div class="bg-emerald-900/40 p-3 rounded-xl border border-emerald-700/40 space-y-2 text-xs">
-            <h4 class="font-bold text-emerald-300 border-b border-emerald-700/40 pb-1.5 mb-2">Download Reports</h4>
-            <button onclick="downloadPDFReport('purchases')" class="w-full bg-emerald-800 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors"><span>📄</span><span>Purchases PDF</span></button>
-            <button onclick="downloadPDFReport('withdrawals')" class="w-full bg-amber-800 hover:bg-amber-700 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors"><span>📄</span><span>Withdrawals PDF</span></button>
-        </div>
-    </div>
-</div>
-
-<div id="pdfExportContainer" class="hidden p-6 bg-white text-black font-sans text-xs"></div>
-
-<!-- INSTANT BALANCE PURCHASE MODAL -->
-<div id="instantBalanceModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9999] modal-overlay">
-    <div class="bg-gradient-to-b from-emerald-900 to-emerald-950 border border-yellow-500/40 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative modal-panel">
-        <button onclick="closeModal('instantBalanceModal')" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl leading-none">&times;</button>
-
-        <div class="text-center mb-5">
-            <div class="w-14 h-14 bg-yellow-500/10 border border-yellow-400/30 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">⚡</div>
-            <h3 class="text-lg font-black text-yellow-400 tracking-wide uppercase">Instantly Buy Hens</h3>
-            <p class="text-[10px] text-emerald-300 mt-1 uppercase tracking-widest" id="instBalRate">Locked Rate: -- PKR / Egg</p>
-        </div>
-
-        <div class="bg-black/40 border border-emerald-800/60 p-4 rounded-xl mb-5 text-center">
-            <p class="text-[10px] text-zinc-400 uppercase tracking-widest mb-1">Available Balance</p>
-            <h4 id="instBalPKR" class="text-2xl font-black text-white neon-text">0.00 PKR</h4>
-        </div>
-
-        <div class="space-y-4">
-            <div>
-                <label class="block text-xs font-semibold text-zinc-300 mb-2">Quantity (Hens)</label>
-                <input type="number" id="instPurchaseQty" min="1" value="1" oninput="updateInstHenPriceValue(this.value)" class="w-full bg-emerald-900/70 border border-emerald-700/80 rounded-xl px-4 py-3 text-lg text-center text-yellow-400 font-black focus:outline-none focus:border-yellow-400 transition-colors shadow-inner">
-            </div>
-            <div class="bg-emerald-900/40 p-3 rounded-xl border border-emerald-700/40 flex justify-between items-center text-xs">
-                <div>
-                    <span class="text-zinc-400 block mb-1">Total Cost:</span>
-                    <span id="instActivePlanBadge" class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-emerald-500/30">Plan 1</span>
-                </div>
-                <div class="text-right">
-                    <span id="instPurchaseTotalCost" class="text-lg font-black text-red-400">499 PKR</span>
-                    <p id="instEggsNeeded" class="text-[10px] text-amber-400 font-mono mt-0.5">~ 0 Eggs</p>
-                </div>
-            </div>
-            <button onclick="processInstantPurchase()" class="w-full btn-emerald text-white font-bold py-3.5 rounded-xl text-sm uppercase tracking-wider border border-emerald-400/40">Pay & Acquire Now</button>
-        </div>
-    </div>
-</div>
-
-<!-- MANUAL PURCHASE MODAL -->
-<div id="purchaseModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9997] modal-overlay">
-    <div class="glass border border-emerald-800/60 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll modal-panel">
-        <button onclick="closeModal('purchaseModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-
-        <div id="purchaseStep1" class="block">
-            <h3 class="text-lg font-bold text-yellow-400 mb-4 flex items-center gap-2"><span>🎯</span><span>Select Purchasing Plan</span></h3>
-
-            <div class="grid grid-cols-2 gap-2 mb-5">
-                <div class="bg-emerald-900/50 p-3 rounded-xl border border-emerald-700/50 text-center">
-                    <div class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Plan 1</div>
-                    <div class="text-[11px] text-white my-1">1-5 Hens</div>
-                    <div class="text-xs font-black text-yellow-400">Rs. 499</div>
-                </div>
-                <div class="bg-emerald-900/50 p-3 rounded-xl border border-emerald-700/50 text-center">
-                    <div class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Plan 2</div>
-                    <div class="text-[11px] text-white my-1">6-10 Hens</div>
-                    <div class="text-xs font-black text-yellow-400">Rs. 450</div>
-                </div>
-                <div class="bg-emerald-900/50 p-3 rounded-xl border border-emerald-700/50 text-center">
-                    <div class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Plan 3</div>
-                    <div class="text-[11px] text-white my-1">11-50 Hens</div>
-                    <div class="text-xs font-black text-yellow-400">Rs. 399</div>
-                </div>
-                <div class="bg-emerald-900/50 p-3 rounded-xl border border-emerald-700/50 text-center">
-                    <div class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Plan 4</div>
-                    <div class="text-[11px] text-white my-1">51+ Hens</div>
-                    <div class="text-xs font-black text-yellow-400">Rs. 250</div>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-emerald-300 mb-1">Hen Quantity</label>
-                    <input type="number" id="purchaseQty" min="1" value="1" oninput="updateHenPriceValue(this.value)" class="w-full bg-emerald-900/70 border border-emerald-700/80 rounded-xl px-4 py-3 text-sm text-yellow-400 font-bold focus:outline-none focus:border-yellow-400">
-                </div>
-                <div class="bg-emerald-900/50 p-3 rounded-xl border border-emerald-700/50 flex justify-between items-center text-xs">
-                    <div>
-                        <span class="text-zinc-400 block mb-1">Total Cost:</span>
-                        <span id="activePlanBadge" class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-amber-500/30">Plan 1</span>
-                    </div>
-                    <span id="purchaseTotalCost" class="text-base font-black text-emerald-400">499 PKR</span>
-                </div>
-                <button onclick="proceedToPaymentProof()" class="w-full btn-primary text-zinc-950 font-bold py-3 rounded-xl">Next: Submit Payment →</button>
-            </div>
-        </div>
-
-        <div id="purchaseStep2" class="hidden">
-            <button onclick="document.getElementById('purchaseStep2').classList.add('hidden');document.getElementById('purchaseStep1').classList.remove('hidden');" class="text-xs text-zinc-400 hover:text-white mb-3 flex items-center gap-1"><span>←</span><span>Back</span></button>
-            <h3 class="text-lg font-bold text-yellow-400 mb-2">Payment Proof</h3>
-            <div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-xl my-3 text-center">
-                <p class="text-[11px] font-bold text-yellow-300 leading-relaxed">Send payment to <span class="text-white">Muluk Hussain</span><br>Easypaisa: <span class="text-white font-mono">03423944508</span></p>
-            </div>
-            <p class="text-[11px] text-zinc-400 mb-4 leading-relaxed">Send the amount and submit the transaction details below.</p>
-            <form id="paymentProofForm" class="space-y-3 text-xs">
-                <div>
-                    <label class="block font-semibold text-emerald-300 mb-1">Transaction ID (Trx ID)</label>
-                    <input type="text" id="proofTrxId" required class="w-full bg-emerald-900/70 border border-emerald-700/60 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-yellow-400">
-                </div>
-                <div>
-                    <label class="block font-semibold text-emerald-300 mb-1">Account Holder Name</label>
-                    <input type="text" id="proofHolderName" required class="w-full bg-emerald-900/70 border border-emerald-700/60 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-yellow-400">
-                </div>
-                <button type="submit" class="w-full btn-emerald text-white font-bold py-3 rounded-xl">Submit Request</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- SALE MODAL -->
-<div id="saleModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9996] modal-overlay">
-    <div class="glass border border-emerald-800/60 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll modal-panel">
-        <button onclick="closeModal('saleModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-
-        <div id="saleStep1Marketplace" class="block">
-            <div class="text-center mb-4">
-                <span class="bg-emerald-900/80 text-emerald-300 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">Marketplace</span>
-                <h3 class="text-lg font-black text-white mt-2">Egg Market</h3>
-                <p class="text-[11px] text-zinc-400">Rate locked for this session</p>
-            </div>
-            <div id="dealersContainer" class="space-y-3">
-                <p class="text-center text-xs text-zinc-500 italic py-4">Fetching dealers...</p>
-            </div>
-        </div>
-
-        <div id="saleStep2Withdrawal" class="hidden">
-            <button onclick="backToMarketplace()" class="text-xs text-zinc-400 hover:text-white mb-3 flex items-center gap-1"><span>←</span><span>Back</span></button>
-            <h3 class="text-base font-bold text-yellow-400 mb-1">Cashout to <span id="lblSelectedDealerName" class="text-white"></span></h3>
-            <div class="flex justify-between items-center bg-emerald-900/50 p-2.5 rounded-lg border border-emerald-800/80 mb-4">
-                <div class="text-[10px] text-emerald-300 font-bold">
-                    Rate: <span id="lblSelectedDealerRate" class="text-yellow-400 text-sm"></span> PKR / egg
-                    <br><span class="text-zinc-500 text-[9px] font-normal" id="lblSelectedDealerLimit"></span>
-                </div>
-                <div class="text-right">
-                    <span class="text-[9px] text-zinc-500 block mb-0.5 uppercase">My Eggs</span>
-                    <span id="lblSaleCurrentEggs" class="text-yellow-400 font-black text-sm bg-emerald-950 px-2 py-0.5 rounded border border-emerald-700/50 inline-block">0</span>
-                </div>
-            </div>
-
-            <form id="withdrawalForm" class="space-y-3 text-xs">
-                <div>
-                    <label class="block font-semibold text-emerald-300 mb-1">Account Type</label>
-                    <select id="wdType" class="w-full bg-emerald-900/70 border border-emerald-700/60 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-yellow-400">
-                        <option value="Easypaisa">Easypaisa</option>
-                        <option value="Jazz Cash">Jazz Cash</option>
-                        <option value="Bank Account">Bank Account</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block font-semibold text-emerald-300 mb-1">Account Number</label>
-                    <input type="text" id="wdNumber" required class="w-full bg-emerald-900/70 border border-emerald-700/60 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-yellow-400">
-                </div>
-                <div>
-                    <label class="block font-semibold text-emerald-300 mb-1">Account Holder Name</label>
-                    <input type="text" id="wdHolderName" required class="w-full bg-emerald-900/70 border border-emerald-700/60 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-yellow-400">
-                </div>
-                <div>
-                    <label class="block font-semibold text-emerald-300 mb-1">Egg Quantity</label>
-                    <input type="number" id="wdEggQty" required class="w-full bg-emerald-900/70 border border-emerald-700/60 rounded-lg px-3 py-2.5 text-yellow-400 font-bold focus:outline-none focus:border-yellow-400">
-                </div>
-                <button type="submit" class="w-full btn-primary text-zinc-950 font-bold py-3 rounded-xl">Submit Sale Request</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- TEAM MODAL -->
-<div id="teamModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9995] modal-overlay">
-    <div class="glass border border-emerald-800/60 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[80vh] overflow-y-auto custom-scroll modal-panel">
-        <button onclick="closeModal('teamModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-        <h3 class="text-base font-bold text-yellow-400 mb-3 border-b border-emerald-800/60 pb-2">Team Network</h3>
-        <div id="teamListContainer" class="space-y-2 text-xs divide-y divide-emerald-800/40"></div>
-    </div>
-</div>
-
-<!-- PLAN LOCK MODAL -->
-<div id="planLockModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9994] modal-overlay">
-    <div class="bg-gradient-to-b from-emerald-900 to-emerald-950 border border-amber-500/40 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative text-center modal-panel">
-        <button onclick="closeModal('planLockModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-        <div class="w-16 h-16 bg-amber-500/10 border border-amber-400/40 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">🔒</div>
-        <span id="lblPlanBadge" class="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-3 py-1 rounded-full border border-amber-500/30 uppercase tracking-widest">Plan-1</span>
-        <h3 class="text-lg font-extrabold text-yellow-400 mt-2 mb-2">Withdrawal Locked</h3>
-        <p id="lblPlanMessage" class="text-zinc-300 text-xs leading-relaxed mb-4">Aap apni plan requirement poori nahi kar chuke. Referral ya khud hens purchase karein.</p>
-        <div class="bg-emerald-900/60 border border-emerald-700/50 rounded-xl p-3 mb-4 text-xs text-left space-y-1.5">
-            <div class="flex justify-between"><span class="text-zinc-400">Required:</span><span id="lblPlanRequired" class="font-bold text-yellow-400">0</span></div>
-            <div class="flex justify-between"><span class="text-zinc-400">You have:</span><span id="lblPlanHave" class="font-bold text-emerald-400">0</span></div>
-            <div class="flex justify-between"><span class="text-zinc-400">Still need:</span><span id="lblPlanNeeded" class="font-bold text-red-400">0</span></div>
-        </div>
-        <div class="space-y-2">
-            <button onclick="closeModal('planLockModal');openPurchaseModal();" class="w-full btn-emerald text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider">🛒 Purchase Hens</button>
-            <button onclick="closeModal('planLockModal');copyReferralLink();" class="w-full btn-primary text-zinc-950 font-bold py-3 rounded-xl text-xs uppercase tracking-wider">🔗 Copy Referral Link</button>
-            <button onclick="closeModal('planLockModal')" class="w-full bg-emerald-900/50 hover:bg-emerald-800/60 text-zinc-300 py-2.5 rounded-xl border border-emerald-700/40 text-xs">Close</button>
-        </div>
-    </div>
-</div>
-
-<script>
-/* =========================================================
-   GREEN LAND POULTRY FARM — FARM/USER DASHBOARD + BINANCE WS
-   ========================================================= */
-
-const firebaseConfig = {
-    apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
-    authDomain: "own-live-steam-web-default.firebaseapp.com",
-    databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
-    projectId: "own-live-steam-web-default",
-    storageBucket: "own-live-steam-web-default.appspot.com",
-    messagingSenderId: "xxxxxxxxxxx",
-    appId: "xxxxxxxxxxx"
-};
-
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
-
-/* ============ STATE ============ */
-let currentUid = null;
-let currentUserData = null;
-let timerInterval = null;
-const processingBatches = {};
-const activeListeners = [];
-
-let activeDealers = {};
-let selectedDealerKey = null;
-let selectedDealerMin = 0;
-let selectedDealerMax = 0;
-
-let globalTeamInvest = 0, globalTeamWithdraw = 0, globalTeamEggs = 0;
-let globalEggPriceFrom = 1, globalEggPriceTo = 1.7, globalEggPrice = 1.35;
-let lockedEggPrice = 1.35;
-let currentLiveEggPrice = 1.35, lastLiveEggPrice = 1.35;
-let globalActiveWaNumber = "923423944508";
-
-let withdrawalPlanTiers = [
-    { planNum: 1, threshold: 230, required: 2 },
-    { planNum: 2, threshold: 700, required: 5 },
-    { planNum: 3, threshold: 1500, required: 8 }
-];
-
-let cachedPurchases = [], cachedWithdrawals = [];
-const dayMs = 24 * 60 * 60 * 1000;
-const HEN_LIFESPAN_MS = 120 * dayMs;
-
-/* ============ BINANCE WEBSOCKET TRACKER STATE ============ */
-// User ke holdings / quantities yahan define hain (aap ise Firebase se bhi connect kar sakte hain)
-const userCryptoHoldings = {
-    'BTCUSDT': { quantity: 0.0045, buyPrice: 61500 },
-    'ETHUSDT': { quantity: 0.12, buyPrice: 2550 },
-    'BNBUSDT': { quantity: 1.15, buyPrice: 530 },
-    'SOLUSDT': { quantity: 6.85, buyPrice: 135 } // 6.85 USDT / SOL holdings
-};
-
-let binanceLivePrices = {};
-let binanceWS = null;
-
-/* ============ HELPERS ============ */
-const $ = id => document.getElementById(id);
-const num = v => { const n = Number(v); return isNaN(n) ? 0 : n; };
-const int = v => { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; };
-const flt = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
-const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-
-function showToast(msg, duration = 3000) {
-    const t = $('toast');
-    t.innerText = msg;
-    t.classList.remove('opacity-0');
-    clearTimeout(t._timer);
-    t._timer = setTimeout(() => t.classList.add('opacity-0'), duration);
-}
-
-function showCustomAlert(title, message, callback = null, btnText = "OK") {
-    $('customAlertTitle').innerText = title;
-    $('customAlertMessage').innerText = message;
-    const btn = $('customAlertBtn');
-    btn.innerText = btnText;
-    btn.onclick = () => {
-        closeCustomAlert();
-        if (callback) callback();
-        setTimeout(() => btn.innerText = "OK", 300);
-    };
-    $('customAlertModal').classList.remove('hidden');
-    $('customAlertModal').classList.add('flex');
-}
-
-function closeCustomAlert() {
-    $('customAlertModal').classList.remove('flex');
-    $('customAlertModal').classList.add('hidden');
-}
-
-function closeModal(id) {
-    const m = $(id);
-    if (!m) return;
-    m.classList.remove('flex');
-    m.classList.add('hidden');
-}
-
-function registerListener(ref, event, cb, errCb) {
-    const handler = ref.on(event, cb, errCb);
-    activeListeners.push({ ref, event, handler });
-    return handler;
-}
-
-function detachAllListeners() {
-    while (activeListeners.length) {
-        const { ref, event } = activeListeners.pop();
-        try { ref.off(event); } catch (e) {}
-    }
-}
-
-/* ============ BINANCE WEBSOCKET ENGINE ============ */
-function connectBinanceWebSocket() {
-    const streams = ['btcusdt@ticker', 'ethusdt@ticker', 'bnbusdt@ticker', 'solusdt@ticker'].join('/');
-    const socketUrl = `wss://stream.binance.com:9443/ws/${streams}`;
-
-    binanceWS = new WebSocket(socketUrl);
-
-    binanceWS.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data && data.s && data.c) {
-            const pairSymbol = data.s;
-            const currentPrice = parseFloat(data.c);
-            
-            binanceLivePrices[pairSymbol] = currentPrice;
-            
-            const currentSelected = $('cryptoCoinSelect').value;
-            if (currentSelected === pairSymbol) {
-                updateCryptoPortfolioUI();
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Trading App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+        import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+        // Apki di gayi Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
+            authDomain: "own-live-steam-web-default.firebaseapp.com",
+            databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
+            projectId: "own-live-steam-web-default",
+            storageBucket: "own-live-steam-web-default.appspot.com",
+            messagingSenderId: "xxxxxxxxxxx",
+            appId: "xxxxxxxxxxx"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // Global Variables
+        let currentUser = null;
+        let currentCoin = "BNBUSDT"; 
+
+        // --- 1. Auth & Dashboard State ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('dashboard-section').classList.remove('hidden');
+                loadUserData(user.uid);
+                loadBinanceCoins();
+                loadTradingViewGraph(currentCoin);
+            } else {
+                document.getElementById('auth-section').classList.remove('hidden');
+                document.getElementById('dashboard-section').classList.add('hidden');
+            }
+        });
+
+        // --- 2. Load Binance Coins ---
+        async function loadBinanceCoins() {
+            try {
+                let res = await fetch("https://api.binance.com/api/v3/ticker/price");
+                let data = await res.json();
+                let select = document.getElementById('coin-select');
+                
+                // Sirf USDT pairs show krny k leye (ta k samajhna asan ho)
+                let usdtPairs = data.filter(coin => coin.symbol.endsWith('USDT'));
+                
+                usdtPairs.forEach(coin => {
+                    let option = document.createElement('option');
+                    option.value = coin.symbol;
+                    option.text = `${coin.symbol} - $${parseFloat(coin.price).toFixed(4)}`;
+                    select.appendChild(option);
+                });
+
+                select.addEventListener('change', (e) => {
+                    currentCoin = e.target.value;
+                    loadTradingViewGraph(currentCoin);
+                });
+            } catch (error) {
+                console.error("Binance API Error", error);
             }
         }
-    };
 
-    binanceWS.onclose = () => {
-        setTimeout(connectBinanceWebSocket, 3000); // Auto reconnect after 3s
-    };
-}
-
-function updateCryptoPortfolioUI() {
-    const selectEl = $('cryptoCoinSelect');
-    if (!selectEl) return;
-
-    const selectedSymbol = selectEl.value;
-    const livePrice = binanceLivePrices[selectedSymbol] || 0;
-    const holding = userCryptoHoldings[selectedSymbol] || { quantity: 0, buyPrice: 0 };
-
-    if (livePrice === 0) return;
-
-    // 1. Current Rate Update
-    $('lblCryptoCurrentRate').innerText = `$${livePrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-
-    // 2. Value Calculation
-    const currentValue = holding.quantity * livePrice;
-    const initialInvestment = holding.quantity * holding.buyPrice;
-    const profitLoss = currentValue - initialInvestment;
-    const pnlPercentage = initialInvestment > 0 ? (profitLoss / initialInvestment) * 100 : 0;
-
-    // 3. Total Portfolio Value Update
-    $('lblCryptoTotalValue').innerText = `$${currentValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-
-    // 4. Profit / Loss Dynamic Color & Text Update
-    const pnlEl = $('lblCryptoPNL');
-    const formatPnl = Math.abs(profitLoss).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    
-    if (profitLoss >= 0) {
-        pnlEl.innerText = `+$${formatPnl} (+${pnlPercentage.toFixed(2)}%)`;
-        pnlEl.className = 'font-black text-emerald-400 text-xs';
-    } else {
-        pnlEl.innerText = `-$${formatPnl} (${pnlPercentage.toFixed(2)}%)`;
-        pnlEl.className = 'font-black text-red-400 text-xs';
-    }
-}
-
-/* ============ WHATSAPP NUMBER ENGINE ============ */
-function computeWaNumber(config) {
-    const now = new Date();
-    const override = config.manualOverride;
-    if (override && override.expireTime > now.getTime()) return override.number;
-    const day = now.getDay(), hours = now.getHours();
-    if (day >= 1 && day <= 5 && hours >= 7 && hours < 20) return "923423944508";
-    return "923485465097";
-}
-
-function applyWaNumber(n) {
-    globalActiveWaNumber = n;
-    const links = ['waSidebarLink', 'waHelpDeskLink'];
-    links.forEach(id => { const el = $(id); if (el) el.href = `https://wa.me/${n}`; });
-    const txt = $('waHelpDeskText'); if (txt) txt.innerText = n;
-}
-
-db.ref('settings/whatsappConfig').on('value', snap => {
-    applyWaNumber(computeWaNumber(snap.val() || {}));
-});
-
-/* ============ RATES & EGG ENGINE ============ */
-db.ref('rates').on('value', snap => {
-    const r = snap.val() || {};
-    globalEggPriceFrom = flt(r.eggPriceFrom) || 1;
-    globalEggPriceTo = flt(r.eggPriceTo) || 1.7;
-    if (globalEggPriceTo < globalEggPriceFrom) globalEggPriceTo = globalEggPriceFrom;
-    globalEggPrice = flt(r.eggPrice) || ((globalEggPriceFrom + globalEggPriceTo) / 2);
-    const rangeEl = $('marketRange');
-    if (rangeEl) rangeEl.innerText = `${globalEggPriceFrom}–${globalEggPriceTo} PKR`;
-});
-
-setInterval(() => {
-    if (!currentUserData) return;
-    const span = Math.max(0, globalEggPriceTo - globalEggPriceFrom);
-    const target = globalEggPriceFrom + Math.random() * span;
-    currentLiveEggPrice = parseFloat(target.toFixed(2));
-
-    const rateEl = $('liveEggRate');
-    const arrowEl = $('liveEggArrow');
-    if (rateEl && arrowEl) {
-        rateEl.innerText = currentLiveEggPrice.toFixed(2);
-        if (currentLiveEggPrice > lastLiveEggPrice) {
-            rateEl.className = 'font-bold text-emerald-400 text-base font-mono';
-            arrowEl.innerText = '▲'; arrowEl.className = 'text-emerald-400 text-[10px]';
-        } else if (currentLiveEggPrice < lastLiveEggPrice) {
-            rateEl.className = 'font-bold text-red-400 text-base font-mono';
-            arrowEl.innerText = '▼'; arrowEl.className = 'text-red-400 text-[10px]';
-        } else {
-            rateEl.className = 'font-bold text-white text-base font-mono';
-            arrowEl.innerText = '−'; arrowEl.className = 'text-zinc-500 text-[10px]';
+        // --- 3. TradingView Graph (Professional Realtime Graph) ---
+        window.loadTradingViewGraph = function(symbol) {
+            document.getElementById('tv_chart_container').innerHTML = ""; // Clear old graph
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": "BINANCE:" + symbol,
+                "interval": "15",
+                "timezone": "Asia/Karachi",
+                "theme": "dark",
+                "style": "1",
+                "locale": "en",
+                "enable_publishing": false,
+                "hide_side_toolbar": false,
+                "container_id": "tv_chart_container"
+            });
         }
-    }
-    lastLiveEggPrice = currentLiveEggPrice;
-    updateMainBalanceDisplay();
-}, 4000);
 
-/* ============ AUTH & NAVIGATION ============ */
-function toggleSideMenu() {
-    const p = $('sideMenuPanel'), o =$('sideMenuOverlay');
-    if (p.classList.contains('-translate-x-full')) {
-        p.classList.remove('-translate-x-full'); o.classList.remove('hidden');
-    } else {
-        p.classList.add('-translate-x-full'); o.classList.add('hidden');
-    }
-}
+        // --- 4. Buy / Convert Package Logic ---
+        window.buyCoin = async function() {
+            if(!currentUser) return;
+            const coinPriceRes = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${currentCoin}`);
+            const coinData = await coinPriceRes.json();
+            const currentPrice = parseFloat(coinData.price);
 
-function copyReferralLink() {
-    if (!currentUid || !currentUserData) return;
-    const baseUrl = window.location.origin + window.location.pathname;
-    const refLink = `${baseUrl}?ref=${currentUid}&n=${encodeURIComponent(currentUserData.name || 'User')}`;
-    navigator.clipboard.writeText(refLink).then(() => showToast("✓ Referral link copied!"));
-}
+            const userRef = ref(db, 'users/' + currentUser.uid);
+            const snapshot = await get(userRef);
+            let userData = snapshot.val();
 
-function toggleAuthMode(isRegister) {
-    $('authTitle').innerText = isRegister ? "Create Account" : "Sign In";
-    $('authSubtitle').innerText = isRegister ? "Register to start earning" : "Enter your credentials to continue";
-    $('registerForm').classList.toggle('hidden', !isRegister);$('loginForm').classList.toggle('hidden', isRegister);
-}
+            let fee = 0;
+            // Agar first time nhi hy, to thori fee charge kro (e.g., $1 ya % k hisaab sy)
+            if(userData.hasPurchasedBefore) {
+                fee = 1.0; // $1 fee deduction
+            }
 
-$('registerForm').addEventListener('submit', e => {
-    e.preventDefault();
-    const name = $('regName').value.trim();
-    const mobile = $('regMobile').value.trim();
-    const email = $('regEmail').value.trim();
-    const password = $('regPassword').value;
+            if (userData.balance >= (currentPrice + fee)) {
+                // Update Balance aur Portfolio Firebase main
+                await update(userRef, {
+                    balance: userData.balance - (currentPrice + fee),
+                    hasPurchasedBefore: true
+                });
+                alert(`${currentCoin} Bought! Fee applied: $${fee}`);
+                loadUserData(currentUser.uid); // Refresh UI
+            } else {
+                alert("Insufficient Balance!");
+            }
+        }
 
-    auth.createUserWithEmailAndPassword(email, password).then(cred => {
-        return db.ref('users/' + cred.user.uid).set({
-            name, mobile, email, totalHens: 0, availableEggs: 0, giftEggs: 0, totalExpense: 0, totalWithdrawal: 0, selfPurchasedHens: 0, status: "active", createdAt: firebase.database.ServerValue.TIMESTAMP
-        });
-    }).catch(err => showCustomAlert("Error", err.message));
-});
+        // --- 5. Withdrawal Request ---
+        window.requestWithdrawal = async function() {
+            let amount = prompt("Withdrawal Amount Enter Krain:");
+            if(amount && !isNaN(amount)) {
+                let withdrawRef = push(ref(db, 'withdrawals'));
+                await set(withdrawRef, {
+                    uid: currentUser.uid,
+                    amount: parseFloat(amount),
+                    status: "pending",
+                    timestamp: Date.now()
+                });
 
-$('loginForm').addEventListener('submit', e => {
-    e.preventDefault();
-    auth.signInWithEmailAndPassword($('loginEmail').value.trim(),$('loginPassword').value).catch(err => showCustomAlert("Error", err.message));
-});
+                // Deduct from user balance temporarily
+                const userRef = ref(db, 'users/' + currentUser.uid);
+                const snapshot = await get(userRef);
+                await update(userRef, { balance: snapshot.val().balance - parseFloat(amount) });
 
-function logout() {
-    if (!confirm("Sign out?")) return;
-    detachAllListeners();
-    if (timerInterval) clearInterval(timerInterval);
-    auth.signOut().then(() => toggleAuthMode(false));
-}
+                // WhatsApp Redirect
+                let message = `Hello Admin, meri withdrawal request approve kr dain.\nUser ID: ${currentUser.uid}\nAmount: $${amount}`;
+                let whatsappUrl = `https://wa.me/923423944508?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+            }
+        }
 
-auth.onAuthStateChanged(user => {
-    detachAllListeners();
-    if (user) {
-        currentUid = user.uid;
-        registerListener(db.ref('users/' + currentUid), 'value', snap => {
-            const val = snap.val();
-            if (!val) return;
-            $('authContainer').classList.add('hidden');$('dashboardContainer').classList.remove('hidden');
-            currentUserData = val;
-            syncFarmDashboardData(val);
-            if (timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(updateBatchesTimers, 1000);
-        });
-        
-        // WebSocket connect karein jab user login ho jaye
-        connectBinanceWebSocket();
-    } else {
-        currentUid = null; currentUserData = null;
-        $('authContainer').classList.remove('hidden');$('dashboardContainer').classList.add('hidden');
-    }
-});
+        // Dummy Data Loader for UI
+        function loadUserData(uid) {
+            get(ref(db, 'users/' + uid)).then((snapshot) => {
+                if(snapshot.exists()) {
+                    document.getElementById('user-balance').innerText = "$" + parseFloat(snapshot.val().balance).toFixed(2);
+                }
+            });
+        }
+    </script>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
 
-function syncFarmDashboardData(data) {
-    if (!data) return;
-    $('lblUserName').innerText = data.name || "User";
-    $('lblHenBalance').innerText = num(data.totalHens);$('lblTotalExpense').innerText = num(data.totalExpense).toFixed(0) + " PKR";
-    $('lblTotalWithdrawal').innerText = num(data.totalWithdrawal).toFixed(0) + " PKR";
-    updateMainBalanceDisplay();
-}
+    <!-- Authentication Section -->
+    <div id="auth-section" class="flex flex-col items-center justify-center min-h-screen p-4">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">CryptoTrade</h1>
+        <!-- Add your HTML Login/Register Inputs here -->
+        <button class="bg-blue-600 px-6 py-2 rounded mt-4">Login (Implement UI)</button>
+    </div>
 
-function updateMainBalanceDisplay() {
-    if (!currentUserData) return;
-    const totalEggs = num(currentUserData.availableEggs) + num(currentUserData.giftEggs);
-    const totalPKR = totalEggs * currentLiveEggPrice;
-    $('lblBalancePKR').innerText = totalPKR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });$('lblTotalEggs').innerText = totalEggs;
-}
+    <!-- Main Dashboard Section -->
+    <div id="dashboard-section" class="hidden flex flex-col h-screen">
+        <!-- Header -->
+        <div class="flex justify-between items-center p-4 bg-gray-800 shadow">
+            <h2 class="font-bold text-xl">Balance: <span id="user-balance" class="text-green-400">$0.00</span></h2>
+            <a href="https://wa.me/923423944508" target="_blank" class="text-green-500 underline text-sm">Help (WhatsApp)</a>
+        </div>
 
-function updateBatchesTimers() {
-    // Batch timer code logic as before...
-}
+        <!-- Coin Selector -->
+        <div class="p-4">
+            <label class="block text-sm mb-2">Select Coin (Live Binance Data):</label>
+            <select id="coin-select" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-700"></select>
+        </div>
 
-function openPurchaseModal() {
-    $('purchaseModal').classList.remove('hidden');$('purchaseModal').classList.add('flex');
-}
+        <!-- TradingView Graph Container -->
+        <div id="tv_chart_container" class="flex-grow w-full"></div>
 
-function openSaleModal() {
-    $('saleModal').classList.remove('hidden');$('saleModal').classList.add('flex');
-}
+        <!-- Action Buttons -->
+        <div class="p-4 grid grid-cols-2 gap-4 bg-gray-800">
+            <button onclick="buyCoin()" class="bg-green-600 hover:bg-green-500 p-3 rounded font-bold">Buy / Convert</button>
+            <button onclick="requestWithdrawal()" class="bg-red-600 hover:bg-red-500 p-3 rounded font-bold">Withdraw</button>
+        </div>
+    </div>
 
-function openUserSettingsModal() {
-    $('userSettingsModal').classList.remove('hidden');$('userSettingsModal').classList.add('flex');
-}
-
-function openTeamListModal() {
-    $('teamModal').classList.remove('hidden');$('teamModal').classList.add('flex');
-}
-</script>
 </body>
 </html>
