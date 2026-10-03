@@ -71,7 +71,7 @@ input, select, textarea { color-scheme: dark; }
         <div class="space-y-1.5 text-xs">
             <button onclick="toggleSideMenu(); window.scrollTo({top:0,behavior:'smooth'})" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🏠</span><span class="font-semibold text-zinc-200">Dashboard</span></button>
             <button onclick="toggleSideMenu(); openDepositModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">➕</span><span class="font-semibold text-zinc-200">Add Balance (Deposit)</span></button>
-            <button onclick="toggleSideMenu(); openCryptoMarketModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">📈</span><span class="font-semibold crypto-gold">Live Crypto Market</span></button>
+            <button onclick="toggleSideMenu(); openCryptoMarketModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🛒</span><span class="font-semibold crypto-gold">Purchase Coins</span></button>
             <button onclick="toggleSideMenu(); openWithdrawModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">💸</span><span class="font-semibold text-zinc-200">Withdraw Funds</span></button>
             <button onclick="toggleSideMenu(); openUserSettingsModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">⚙️</span><span class="font-semibold text-zinc-200">Settings</span></button>
         </div>
@@ -148,10 +148,13 @@ input, select, textarea { color-scheme: dark; }
         <div class="absolute -right-4 -bottom-4 opacity-[0.05] text-9xl">💰</div>
         <div class="relative z-10">
             <div class="flex items-center justify-between mb-1">
-                <p class="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">Wallet Available Balance</p>
+                <div class="flex items-center gap-2">
+                    <p class="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">Wallet Available Balance</p>
+                    <button onclick="manualRefreshBalance()" title="Refresh Balance" class="text-xs text-[#f0b90b] hover:rotate-180 transition-transform duration-500">🔄</button>
+                </div>
                 <div class="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-full border border-zinc-800">
                     <span class="w-1.5 h-1.5 bg-[#0ecb81] rounded-full"></span>
-                    <span class="text-[9px] text-[#0ecb81] font-bold tracking-wider">SECURE</span>
+                    <span class="text-[9px] text-[#0ecb81] font-bold tracking-wider">LIVE</span>
                 </div>
             </div>
             <div class="flex items-end gap-2 mb-3">
@@ -160,8 +163,8 @@ input, select, textarea { color-scheme: dark; }
             </div>
             <div class="grid grid-cols-2 gap-2 text-[11px] pt-3 border-t border-zinc-800/80 mb-4">
                 <div>
-                    <span class="text-zinc-500 block text-[9px] uppercase">Portfolio Value</span>
-                    <span id="lblPortfolioVal" class="font-bold text-zinc-200">0.00 PKR</span>
+                    <span class="text-zinc-500 block text-[9px] uppercase">Cash Wallet Balance</span>
+                    <span id="lblCashWallet" class="font-bold text-zinc-200">0.00 PKR</span>
                 </div>
                 <div class="text-right">
                     <span class="text-zinc-500 block text-[9px] uppercase">Total Profit / Loss</span>
@@ -183,9 +186,9 @@ input, select, textarea { color-scheme: dark; }
     <!-- QUICK ACTIONS -->
     <div class="grid grid-cols-2 gap-3 mb-4">
         <button onclick="openCryptoMarketModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow transition-all">
-            <span class="text-2xl mb-1">📈</span>
-            <span class="font-bold text-xs text-zinc-200">Live Crypto Market</span>
-            <span class="text-[9px] text-zinc-500 mt-0.5">Binance Live Prices</span>
+            <span class="text-2xl mb-1">🛒</span>
+            <span class="font-bold text-xs text-zinc-200">Purchase Coins</span>
+            <span class="text-[9px] text-zinc-500 mt-0.5">Buy from balance</span>
         </button>
         <button onclick="openShiftModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow transition-all">
             <span class="text-2xl mb-1">🔄</span>
@@ -271,12 +274,12 @@ input, select, textarea { color-scheme: dark; }
 <div id="withdrawModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9998] modal-overlay">
     <div class="glass border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative modal-panel">
         <button onclick="closeModal('withdrawModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-        <h3 class="text-base font-bold crypto-gold mb-3 flex items-center gap-2"><span>💸</span><span>Withdraw Funds (Min Rs. 500)</span></h3>
+        <h3 class="text-base font-bold crypto-gold mb-3 flex items-center gap-2"><span>💸</span><span>Withdraw Funds (Min Rs. 1000)</span></h3>
 
         <form id="withdrawForm" class="space-y-3 text-xs">
             <div>
                 <label class="block font-semibold text-zinc-300 mb-1">Amount (PKR)</label>
-                <input type="number" id="wdAmount" min="500" placeholder="Min Rs. 500" required class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+                <input type="number" id="wdAmount" min="1000" placeholder="Min Rs. 1000" required class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
             </div>
             <div>
                 <label class="block font-semibold text-zinc-300 mb-1">Account Type</label>
@@ -303,7 +306,7 @@ input, select, textarea { color-scheme: dark; }
 <div id="cryptoMarketModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9998] modal-overlay">
     <div class="glass border border-zinc-800 w-full max-w-md rounded-2xl p-5 shadow-2xl relative max-h-[90vh] overflow-hidden flex flex-col modal-panel">
         <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-3">
-            <h3 class="text-base font-bold crypto-gold flex items-center gap-2"><span>📈</span><span>Live Binance Crypto Market</span></h3>
+            <h3 class="text-base font-bold crypto-gold flex items-center gap-2"><span>🛒</span><span>Purchase Coins & Live Market</span></h3>
             <button onclick="closeModal('cryptoMarketModal')" class="text-zinc-400 hover:text-white text-xl">&times;</button>
         </div>
         <div class="mb-3 px-3 py-2 bg-[#2b313a]/50 rounded-xl border border-zinc-700 flex justify-between items-center text-xs">
@@ -391,7 +394,7 @@ input, select, textarea { color-scheme: dark; }
 
 <script>
 /* =========================================================
-   BINANCE PRO CRYPTO WALLET SCRIPT WITH REAL-TIME CHARTS
+   BINANCE PRO CRYPTO WALLET SCRIPT WITH FIXED P&L & AUTO-SYNC
    ========================================================= */
 
 const firebaseConfig = {
@@ -419,6 +422,7 @@ let selectedCryptoPriceUSD = 0;
 let livePricesMap = {};
 let activeChartInstances = {};
 let chartDataHistory = {};
+let autoRefreshTimer = null;
 
 const $ = id => document.getElementById(id);
 const num = v => { const n = Number(v); return isNaN(n) ? 0 : n; };
@@ -533,11 +537,14 @@ $('loginForm').addEventListener('submit', e => {
 function logout() {
     if (!confirm("Sign out?")) return;
     detachAllListeners();
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
     auth.signOut().then(() => toggleAuthMode(false));
 }
 
 auth.onAuthStateChanged(user => {
     detachAllListeners();
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+
     if (user) {
         currentUid = user.uid;
         const userRef = db.ref('users/' + currentUid);
@@ -546,8 +553,7 @@ auth.onAuthStateChanged(user => {
             if (!val) return;
             currentUserData = val;
             $('lblUserName').innerText = val.name || "User";
-            $('lblWalletBalance').innerText = num(val.walletBalance).toLocaleString('en-US', {minimumFractionDigits: 2});
-            $('marketWalletBal').innerText = num(val.walletBalance).toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
+            updateWalletHeaderDisplay();
         });
 
         const portfolioRef = db.ref('users/' + currentUid + '/crypto_portfolio');
@@ -559,14 +565,42 @@ auth.onAuthStateChanged(user => {
         $('authContainer').classList.add('hidden');
         $('dashboardContainer').classList.remove('hidden');
         startBinancePricePolling();
+
+        // Auto refresh balance every 5 seconds
+        autoRefreshTimer = setInterval(() => {
+            manualRefreshBalance(false);
+        }, 5000);
+
     } else {
         currentUid = null;
         currentUserData = null;
-        $('authContainer').classList.remove('hidden');
+        $('authContainer').classList.add('hidden');
         $('dashboardContainer').classList.add('hidden');
         toggleAuthMode(false);
     }
 });
+
+function manualRefreshBalance(showNotif = true) {
+    if (!currentUid) return;
+    db.ref('users/' + currentUid).once('value', snap => {
+        if (snap.exists()) {
+            currentUserData = snap.val();
+            updateWalletHeaderDisplay();
+            if (showNotif) showToast("✓ Balance refreshed successfully!");
+        }
+    });
+}
+
+function updateWalletHeaderDisplay() {
+    if (!currentUserData) return;
+    const cashBal = num(currentUserData.walletBalance);
+    $('lblCashWallet').innerText = cashBal.toLocaleString('en-US', {minimumFractionDigits: 2}) + ' PKR';
+    $('marketWalletBal').innerText = cashBal.toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
+    
+    // Total Equity = Cash Balance + Current Portfolio Value
+    const totalEquity = cashBal + window.currentPortfolioValCache || cashBal;
+    $('lblWalletBalance').innerText = totalEquity.toLocaleString('en-US', {minimumFractionDigits: 2});
+}
 
 /* ============ DEPOSIT & WITHDRAW ============ */
 function openDepositModal() { $('depositModal').classList.remove('hidden'); $('depositModal').classList.add('flex'); }
@@ -600,9 +634,9 @@ $('withdrawForm').addEventListener('submit', e => {
     const number = $('wdNumber').value.trim();
     const holder = $('wdHolder').value.trim();
 
-    if (amount < 500) { showCustomAlert("Limit", "Minimum withdrawal is Rs. 500"); return; }
+    if (amount < 1000) { showCustomAlert("Limit", "Minimum withdrawal is Rs. 1000"); return; }
     const balance = num(currentUserData?.walletBalance);
-    if (amount > balance) { showCustomAlert("Error", "Insufficient wallet balance."); return; }
+    if (amount > balance) { showCustomAlert("Error", "Insufficient cash wallet balance."); return; }
 
     const newBal = balance - amount;
     db.ref(`users/${currentUid}/walletBalance`).set(newBal).then(() => {
@@ -627,15 +661,12 @@ async function startBinancePricePolling() {
         });
     } catch (e) {}
     
-    // Update active charts every 2 seconds with realtime data and P&L calculation
     updateAllChartsAndPL();
     setTimeout(startBinancePricePolling, 2000);
 }
 
 function updateAllChartsAndPL() {
-    if (!currentUserData) return;
-    
-    // Trigger portfolio re-render to update realtime P&L every 2s
+    if (!currentUid) return;
     const portfolioRef = db.ref('users/' + currentUid + '/crypto_portfolio');
     portfolioRef.once('value', snap => {
         renderPortfolioAndCharts(snap, true);
@@ -750,6 +781,7 @@ function confirmCryptoPurchase() {
 }
 
 let cachedPortfolioData = {};
+window.currentPortfolioValCache = 0;
 
 function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
     const portfolioContainer = $('portfolioContainer');
@@ -778,6 +810,7 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
         const currentValPKR = qty * currentLivePriceUSD * USD_PKR_RATE;
         totalPortfolioVal += currentValPKR;
 
+        // Accurate Profit / Loss calculation compared to invested/purchase amount
         const profitLossPKR = currentValPKR - invested;
         const plColor = profitLossPKR >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]';
         const plSign = profitLossPKR >= 0 ? '+' : '';
@@ -791,24 +824,27 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
                 <p class="text-[10px] text-zinc-500">Invested: ${invested.toFixed(0)} PKR</p>
             </div>
             <div class="text-right">
-                <span class="font-black text-white text-xs block">${currentValPKR.toFixed(0)} PKR</span>
-                <span class="text-[10px] font-bold ${plColor} block">${plSign}${profitLossPKR.toFixed(0)} PKR</span>
+                <span class="font-black text-white text-xs block">${currentValPKR.toFixed(2)} PKR</span>
+                <span class="text-[10px] font-bold ${plColor} block">${plSign}${profitLossPKR.toFixed(2)} PKR</span>
                 <button onclick="sellPortfolioItem('${key}', ${currentValPKR})" class="mt-1 bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-1 rounded text-[9px] font-bold uppercase">Sell</button>
             </div>
         `;
         portfolioContainer.appendChild(div);
     });
 
-    $('lblPortfolioVal').innerText = totalPortfolioVal.toFixed(0) + ' PKR';
+    window.currentPortfolioValCache = totalPortfolioVal;
+    $('lblPortfolioVal'] = totalPortfolioVal.toFixed(2) + ' PKR'; // if needed
     const totalPL = totalPortfolioVal - totalInvested;
     const plEl = $('lblTotalPL');
-    plEl.innerText = (totalPL >= 0 ? '+' : '') + totalPL.toFixed(0) + ' PKR';
+    plEl.innerText = (totalPL >= 0 ? '+' : '') + totalPL.toFixed(2) + ' PKR';
     plEl.className = totalPL >= 0 ? 'font-bold text-[#0ecb81]' : 'font-bold text-[#f6465d]';
 
+    updateWalletHeaderDisplay();
+
     if (!has) {
-        portfolioContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-4 text-xs">No coins purchased yet.</p>';
-        $('lblPortfolioVal').innerText = '0.00 PKR';$('lblTotalPL').innerText = '0.00 PKR';
-        // Default to BNB/USDT if no coin purchased
+        portfolioContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-4 text-xs">No coins purchased yet. Open market to buy.</p>';
+        window.currentPortfolioValCache = 0;
+        updateWalletHeaderDisplay();
         purchasedSymbols = [{ symbol: 'BNB', buyPrice: livePricesMap['BNB'] || 600 }];
     }
 
@@ -818,7 +854,6 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
 function renderCharts(symbolsList, isIntervalUpdate) {
     const chartsContainer = $('chartsContainer');
     
-    // If not interval update, rebuild chart containers to match purchased symbols
     if (!isIntervalUpdate) {
         chartsContainer.innerHTML = '';
         activeChartInstances = {};
@@ -838,7 +873,6 @@ function renderCharts(symbolsList, isIntervalUpdate) {
             `;
             chartsContainer.appendChild(card);
 
-            // Initialize history array for this chart
             const currentPrice = (livePricesMap[item.symbol] || item.buyPrice || 100) * USD_PKR_RATE;
             chartDataHistory[canvasId] = {
                 labels: ['0s', '2s', '4s', '6s', '8s', '10s'],
@@ -874,7 +908,6 @@ function renderCharts(symbolsList, isIntervalUpdate) {
         });
     }
 
-    // Update charts data with realtime every 2s tick
     symbolsList.forEach((item, index) => {
         const canvasId = `chart_${item.symbol}_${index}`;
         const chart = activeChartInstances[canvasId];
@@ -890,13 +923,13 @@ function renderCharts(symbolsList, isIntervalUpdate) {
             hist.data.push(livePricePKR);
             
             chart.data.datasets[0].data = hist.data;
-            chart.update('none'); // Update smoothly without full redraw animation
+            chart.update('none');
         }
     });
 }
 
 function sellPortfolioItem(key, currentValPKR) {
-    if (!confirm(`Are you sure you want to sell this asset for ${currentValPKR.toFixed(0)} PKR?`)) return;
+    if (!confirm(`Are you sure you want to sell this asset for ${currentValPKR.toFixed(2)} PKR?`)) return;
     const currentBal = num(currentUserData?.walletBalance);
     const newBal = currentBal + currentValPKR;
 
