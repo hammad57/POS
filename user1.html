@@ -9,10 +9,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 :root {
-    --primary: #f0b90b; /* Binance Yellow */
+    --primary: #f0b90b;
     --dark: #0b0e11;
     --card: #1e2329;
     --success: #0ecb81;
@@ -138,7 +138,7 @@ input, select, textarea { color-scheme: dark; }
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <button onclick="openUserSettingsModal()" class="p-2 bg-[#2b313a] hover:bg-zinc-700 text-[#f0b90b] rounded-xl border border-zinc-700 text-base">⚙️️</button>
+            <button onclick="openUserSettingsModal()" class="p-2 bg-[#2b313a] hover:bg-zinc-700 text-[#f0b90b] rounded-xl border border-zinc-700 text-base">⚙</button>
             <button onclick="logout()" class="text-[10px] bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-2 rounded-xl font-bold">OUT</button>
         </div>
     </header>
@@ -193,6 +193,18 @@ input, select, textarea { color-scheme: dark; }
             <span class="text-[9px] text-zinc-500 mt-0.5">Convert Between Coins</span>
         </button>
     </div>
+
+    <!-- REAL-TIME GRAPHS SECTION -->
+    <section class="mb-4">
+        <div class="flex justify-between items-center mb-2 px-1">
+            <h3 class="text-xs font-bold crypto-gold uppercase tracking-wider flex items-center gap-1.5">
+                <span>📊</span><span>Real-Time P&L Charts (Every 2s)</span>
+            </h3>
+        </div>
+        <div id="chartsContainer" class="space-y-3">
+            <!-- Dynamic Charts Render Here -->
+        </div>
+    </section>
 
     <!-- PORTFOLIO / HOLDINGS SECTION -->
     <section class="mb-4">
@@ -365,7 +377,7 @@ input, select, textarea { color-scheme: dark; }
 <div id="userSettingsModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9002] modal-overlay">
     <div class="glass border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative space-y-4 modal-panel">
         <button onclick="closeModal('userSettingsModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
-        <h3 class="text-base font-bold crypto-gold border-b border-zinc-800 pb-2 flex items-center gap-2"><span>⚙️️</span><span>Account Settings</span></h3>
+        <h3 class="text-base font-bold crypto-gold border-b border-zinc-800 pb-2 flex items-center gap-2"><span>⚙</span><span>Account Settings</span></h3>
 
         <div class="bg-[#2b313a]/50 p-3 rounded-xl border border-zinc-700 space-y-3">
             <h4 class="text-xs font-bold text-zinc-300">Change Password</h4>
@@ -379,7 +391,7 @@ input, select, textarea { color-scheme: dark; }
 
 <script>
 /* =========================================================
-   BINANCE PRO CRYPTO WALLET SCRIPT
+   BINANCE PRO CRYPTO WALLET SCRIPT WITH REAL-TIME CHARTS
    ========================================================= */
 
 const firebaseConfig = {
@@ -405,6 +417,8 @@ let binanceCoinsCache = [];
 let selectedCryptoSymbol = "";
 let selectedCryptoPriceUSD = 0;
 let livePricesMap = {};
+let activeChartInstances = {};
+let chartDataHistory = {};
 
 const $ = id => document.getElementById(id);
 const num = v => { const n = Number(v); return isNaN(n) ? 0 : n; };
@@ -503,7 +517,7 @@ $('registerForm').addEventListener('submit', e => {
     auth.createUserWithEmailAndPassword(email, password).then(cred => {
         return db.ref('users/' + cred.user.uid).set({
             name, mobile, email,
-            walletBalance: 50000, // Demo starting balance for testing
+            walletBalance: 50000,
             status: "active",
             createdAt: firebase.database.ServerValue.TIMESTAMP
         });
@@ -536,11 +550,9 @@ auth.onAuthStateChanged(user => {
             $('marketWalletBal').innerText = num(val.walletBalance).toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
         });
 
-        // Portfolio listener
         const portfolioRef = db.ref('users/' + currentUid + '/crypto_portfolio');
-        registerListener(portfolioRef, 'value', snap => renderPortfolio(snap));
+        registerListener(portfolioRef, 'value', snap => renderPortfolioAndCharts(snap));
 
-        // History listener
         const histRef = db.ref('users/' + currentUid + '/transactions');
         registerListener(histRef, 'value', snap => renderHistory(snap));
 
@@ -604,7 +616,7 @@ $('withdrawForm').addEventListener('submit', e => {
     }).catch(err => showCustomAlert("Error", err.message));
 });
 
-/* ============ LIVE BINANCE MARKET & PORTFOLIO ============ */
+/* ============ LIVE BINANCE MARKET & REAL-TIME CHARTS ============ */
 async function startBinancePricePolling() {
     try {
         const res = await fetch('https://api.binance.com/api/v3/ticker/price');
@@ -614,7 +626,20 @@ async function startBinancePricePolling() {
             livePricesMap[c.symbol.replace('USDT', '')] = flt(c.price);
         });
     } catch (e) {}
-    setTimeout(startBinancePricePolling, 10000);
+    
+    // Update active charts every 2 seconds with realtime data and P&L calculation
+    updateAllChartsAndPL();
+    setTimeout(startBinancePricePolling, 2000);
+}
+
+function updateAllChartsAndPL() {
+    if (!currentUserData) return;
+    
+    // Trigger portfolio re-render to update realtime P&L every 2s
+    const portfolioRef = db.ref('users/' + currentUid + '/crypto_portfolio');
+    portfolioRef.once('value', snap => {
+        renderPortfolioAndCharts(snap, true);
+    });
 }
 
 async function openCryptoMarketModal() {
@@ -725,13 +750,17 @@ function confirmCryptoPurchase() {
 }
 
 let cachedPortfolioData = {};
-function renderPortfolio(snap) {
-    const c = $('portfolioContainer');
-    c.innerHTML = '';
+
+function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
+    const portfolioContainer = $('portfolioContainer');
+    const chartsContainer = $('chartsContainer');
+    
+    portfolioContainer.innerHTML = '';
     cachedPortfolioData = {};
     let has = false;
     let totalPortfolioVal = 0;
     let totalInvested = 0;
+    let purchasedSymbols = [];
 
     snap.forEach(child => {
         has = true;
@@ -740,6 +769,7 @@ function renderPortfolio(snap) {
         cachedPortfolioData[key] = item;
 
         const symbol = item.symbol;
+        purchasedSymbols.push({ symbol, buyPrice: item.buyPriceUSD });
         const qty = num(item.quantity);
         const invested = num(item.investedPKR);
         totalInvested += invested;
@@ -766,7 +796,7 @@ function renderPortfolio(snap) {
                 <button onclick="sellPortfolioItem('${key}', ${currentValPKR})" class="mt-1 bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-1 rounded text-[9px] font-bold uppercase">Sell</button>
             </div>
         `;
-        c.appendChild(div);
+        portfolioContainer.appendChild(div);
     });
 
     $('lblPortfolioVal').innerText = totalPortfolioVal.toFixed(0) + ' PKR';
@@ -776,11 +806,93 @@ function renderPortfolio(snap) {
     plEl.className = totalPL >= 0 ? 'font-bold text-[#0ecb81]' : 'font-bold text-[#f6465d]';
 
     if (!has) {
-        c.innerHTML = '<p class="text-zinc-500 italic text-center py-4 text-xs">No coins purchased yet.</p>';
+        portfolioContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-4 text-xs">No coins purchased yet.</p>';
         $('lblPortfolioVal').innerText = '0.00 PKR';$('lblTotalPL').innerText = '0.00 PKR';
+        // Default to BNB/USDT if no coin purchased
+        purchasedSymbols = [{ symbol: 'BNB', buyPrice: livePricesMap['BNB'] || 600 }];
     }
 
-    updateShiftDropdown();
+    renderCharts(purchasedSymbols, isIntervalUpdate);
+}
+
+function renderCharts(symbolsList, isIntervalUpdate) {
+    const chartsContainer = $('chartsContainer');
+    
+    // If not interval update, rebuild chart containers to match purchased symbols
+    if (!isIntervalUpdate) {
+        chartsContainer.innerHTML = '';
+        activeChartInstances = {};
+        
+        symbolsList.forEach((item, index) => {
+            const canvasId = `chart_${item.symbol}_${index}`;
+            const card = document.createElement('div');
+            card.className = "glass p-3 rounded-xl border border-zinc-800";
+            card.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold crypto-gold">${item.symbol}/USDT Real-Time P&L</span>
+                    <span id="price_${item.symbol}_${index}" class="text-xs font-mono text-[#0ecb81]">--</span>
+                </div>
+                <div style="height: 140px; position: relative;">
+                    <canvas id="${canvasId}"></canvas>
+                </div>
+            `;
+            chartsContainer.appendChild(card);
+
+            // Initialize history array for this chart
+            const currentPrice = (livePricesMap[item.symbol] || item.buyPrice || 100) * USD_PKR_RATE;
+            chartDataHistory[canvasId] = {
+                labels: ['0s', '2s', '4s', '6s', '8s', '10s'],
+                data: [currentPrice, currentPrice, currentPrice, currentPrice, currentPrice, currentPrice]
+            };
+
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            activeChartInstances[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartDataHistory[canvasId].labels,
+                    datasets: [{
+                        label: `${item.symbol} Price (PKR)`,
+                        data: chartDataHistory[canvasId].data,
+                        borderColor: '#f0b90b',
+                        backgroundColor: 'rgba(240, 185, 11, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#848e9c', font: { size: 9 } }, grid: { display: false } },
+                        y: { ticks: { color: '#848e9c', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+        });
+    }
+
+    // Update charts data with realtime every 2s tick
+    symbolsList.forEach((item, index) => {
+        const canvasId = `chart_${item.symbol}_${index}`;
+        const chart = activeChartInstances[canvasId];
+        if (chart) {
+            const livePriceUSD = livePricesMap[item.symbol] || item.buyPrice || 100;
+            const livePricePKR = livePriceUSD * USD_PKR_RATE;
+            
+            const priceLabelEl = document.getElementById(`price_${item.symbol}_${index}`);
+            if (priceLabelEl) priceLabelEl.innerText = livePricePKR.toFixed(2) + ' PKR';
+
+            const hist = chartDataHistory[canvasId];
+            hist.data.shift();
+            hist.data.push(livePricePKR);
+            
+            chart.data.datasets[0].data = hist.data;
+            chart.update('none'); // Update smoothly without full redraw animation
+        }
+    });
 }
 
 function sellPortfolioItem(key, currentValPKR) {
@@ -830,7 +942,6 @@ function confirmShiftCoin() {
     const currentLivePriceUSD = livePricesMap[item.symbol] || item.buyPriceUSD;
     let valPKR = num(item.quantity) * currentLivePriceUSD * USD_PKR_RATE;
 
-    // Apply 1% fee deduction
     const fee = valPKR * 0.01;
     valPKR -= fee;
 
@@ -841,7 +952,7 @@ function confirmShiftCoin() {
     const newPortfolioRef = db.ref(`users/${currentUid}/crypto_portfolio`).push();
 
     let updates = {};
-    updates[`users/${currentUid}/crypto_portfolio/${key}`] = null; // remove old
+    updates[`users/${currentUid}/crypto_portfolio/${key}`] = null;
     updates[`users/${currentUid}/crypto_portfolio/${newPortfolioRef.key}`] = {
         symbol: targetSymbol,
         quantity: targetQty,
@@ -855,8 +966,6 @@ function confirmShiftCoin() {
         showCustomAlert("Success", `Successfully shifted to ${targetSymbol} (1% fee deducted)!`);
     }).catch(err => showCustomAlert("Error", err.message));
 }
-
-function updateShiftDropdown() {}
 
 /* ============ HISTORY RENDERING ============ */
 function renderHistory(snap) {
