@@ -1,0 +1,28 @@
+// functions/index.js (Firebase Cloud Functions)
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+admin.initializeApp();
+
+exports.initializeUserWallet = functions.auth.user().onCreate(async (user) => {
+    // Check if user is Anonymous (Demo Account)
+    const isAnonymous = user.providerData.length === 0;
+    const initialBalance = isAnonymous ? 10000 : 0;
+
+    const db = admin.database();
+    
+    // Create user profile
+    await db.ref(`users/${user.uid}`).set({
+        role: "user",
+        isDemo: isAnonymous,
+        createdAt: admin.database.ServerValue.TIMESTAMP
+    });
+
+    // Create wallet with either 10,000 (Demo) or 0 (Real)
+    await db.ref(`wallets/${user.uid}`).set({
+        availableBalance: initialBalance,
+        investedBalance: 0,
+        pendingBalance: 0
+    });
+
+    return null;
+});
