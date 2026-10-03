@@ -3,245 +3,490 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Green Land Poultry - System Upgrade</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐔</text></svg>">
+<title>Binance Pro Crypto Wallet & Exchange</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪙</text></svg>">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
 :root {
-    --primary: #f97316; 
-    --primary-dark: #ea580c; 
-    --accent: #10b981; 
+    --primary: #f0b90b;
+    --dark: #0b0e11;
+    --card: #1e2329;
+    --success: #0ecb81;
+    --danger: #f6465d;
 }
-
-body { 
-    font-family: 'Plus Jakarta Sans', sans-serif; 
-    background-color: #0f172a; /* Dark theme for maintenance */
-    color: #f8fafc; 
-    overflow-x: hidden; 
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+    background-color: var(--dark);
+    color: #eaecef;
+    font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+    min-height: 100vh;
 }
-
-/* Original App Form & Modal Styles */
-.bottom-sheet-overlay { background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); animation: fadeIn 0.2s ease-out; }
-.bottom-sheet { border-radius: 28px 28px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
-.btn-primary { background: linear-gradient(135deg, var(--primary) 0%, #fb923c 100%); color: white; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3); transition: all 0.2s; }
-.btn-primary:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3); }
-.btn-secondary { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); color: white; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); transition: all 0.2s; }
-.btn-secondary:active { transform: scale(0.97); }
-input, select, textarea { background-color: #f1f5f9; border: 1px solid #e2e8f0; color: #0f172a; transition: all 0.2s; }
-input:focus, select:focus, textarea:focus { background-color: #ffffff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); outline: none; }
+.glass { background: rgba(30,35,41,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.card-glow { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(240,185,11,.15); }
+.crypto-gold { color: #f0b90b; }
+.btn-binance {
+    background: linear-gradient(135deg, #fcd535 0%, #f0b90b 100%);
+    color: #181a20;
+    font-weight: 800;
+    box-shadow: 0 4px 15px rgba(240,185,11,0.3);
+}
+.btn-binance:active { transform: scale(0.98); }
 .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
-.custom-scroll::-webkit-scrollbar-track { background: transparent; }
-.custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-
-/* Premium Glassmorphism UI Styles */
-.glass-card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6); }
-.gradient-text { background: linear-gradient(135deg, #f97316 0%, #fcd34d 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.blob { position: absolute; filter: blur(90px); z-index: -1; opacity: 0.3; animation: float 8s ease-in-out infinite; border-radius: 50%; }
-
-/* Animations */
-@keyframes slideUp { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(20px, -20px) scale(1.1); } }
-@keyframes pulse-dot { 0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 50% { transform: scale(1.2); opacity: 0.8; box-shadow: 0 0 10px 4px rgba(249, 115, 22, 0); } }
-.slide-up { animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.fade-in { animation: fadeIn 0.3s ease-out; }
-.dot { animation: pulse-dot 2s infinite; }
-.btn-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.btn-hover:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -5px rgba(249, 115, 22, 0.4); }
-.btn-hover:active { transform: scale(0.97); }
+.custom-scroll::-webkit-scrollbar-track { background: #0b0e11; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #474d57; border-radius: 4px; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn .3s ease-out; }
+.modal-overlay { animation: fadeIn .2s ease-out; }
+.modal-panel { animation: fadeIn .3s ease-out; }
+input, select, textarea { color-scheme: dark; }
 </style>
 </head>
-<body class="min-h-screen relative w-full">
+<body class="p-3 max-w-md mx-auto min-h-screen pb-28 relative overflow-x-hidden">
 
 <!-- TOAST -->
-<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-xl text-sm font-semibold transition-all duration-300 opacity-0 pointer-events-none z-[10000] flex items-center gap-2"></div>
+<div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-[#0ecb81] text-zinc-950 px-5 py-2.5 rounded-full shadow-2xl text-xs font-bold transition-all duration-300 opacity-0 pointer-events-none z-[10000]"></div>
 
 <!-- CUSTOM ALERT MODAL -->
-<div id="customAlertModal" class="fixed inset-0 bottom-sheet-overlay hidden items-end sm:items-center justify-center z-[9999]">
-    <div class="bg-white w-full max-w-md p-6 sm:rounded-3xl bottom-sheet sm:bottom-auto relative text-center slide-up">
-        <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">ℹ️</div>
-        <h3 id="customAlertTitle" class="text-xl font-bold text-slate-800 mb-2">Notification</h3>
-        <p id="customAlertMessage" class="text-slate-500 text-sm mb-6 leading-relaxed"></p>
-        <button id="customAlertBtn" class="w-full btn-primary font-bold py-3.5 rounded-2xl">Got it</button>
+<div id="customAlertModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9999] modal-overlay">
+    <div class="glass border border-[#f0b90b]/30 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative text-center card-glow modal-panel">
+        <div class="w-12 h-12 bg-[#f0b90b]/10 border border-[#f0b90b]/30 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">ℹ️</div>
+        <h3 id="customAlertTitle" class="text-lg font-bold crypto-gold mb-2">Notification</h3>
+        <p id="customAlertMessage" class="text-zinc-300 text-sm mb-6 leading-relaxed"></p>
+        <button id="customAlertBtn" class="w-full btn-binance py-3 rounded-xl transition-all">OK</button>
     </div>
 </div>
 
-<!-- ================= AUTH SCREEN ================= -->
-<div id="authContainer" class="min-h-screen flex flex-col items-center justify-center px-6 bg-slate-50 relative hidden w-full">
-    <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-50"></div>
-    <div class="w-full max-w-sm relative z-10 fade-in text-slate-800">
-        <div class="text-center mb-8">
-            <div class="w-20 h-20 bg-white rounded-3xl shadow-lg flex items-center justify-center mx-auto mb-4 border border-slate-100">
-                <span class="text-4xl">🥚</span>
-            </div>
-            <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Green Land Farm</h1>
-            <p class="text-xs text-slate-500 font-medium uppercase tracking-widest mt-2">Invest • Earn • Grow</p>
+<!-- SIDE MENU -->
+<div id="sideMenuOverlay" onclick="toggleSideMenu()" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9000] hidden"></div>
+<div id="sideMenuPanel" class="fixed top-0 left-0 w-72 h-full glass border-r border-zinc-800 shadow-2xl z-[9001] -translate-x-full transition-transform duration-300 ease-out p-5 flex flex-col justify-between">
+    <div>
+        <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4">
+            <h3 class="font-bold crypto-gold text-sm flex items-center gap-2"><span class="text-lg">🪙</span><span>Binance Menu</span></h3>
+            <button onclick="toggleSideMenu()" class="text-zinc-400 hover:text-white text-2xl leading-none">&times;</button>
         </div>
-
-        <div class="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100">
-            <div class="text-center mb-6">
-                <h2 id="authTitle" class="text-xl font-bold text-slate-800">Welcome Back</h2>
-                <p id="authSubtitle" class="text-sm text-slate-500 mt-1">Sign in to your account</p>
-            </div>
-
-            <div id="refInfoBanner" class="hidden mb-4 p-3 bg-orange-50 border border-orange-100 rounded-xl text-xs text-center text-orange-600 font-medium">
-                Invited by: <span id="refNameDisplay" class="font-bold text-orange-700">...</span>
-            </div>
-
-            <form id="loginForm" class="space-y-4">
-                <div>
-                    <input type="email" id="loginEmail" placeholder="Email Address" required class="w-full rounded-2xl px-4 py-3.5 text-sm">
-                </div>
-                <div>
-                    <input type="password" id="loginPassword" placeholder="Password" required class="w-full rounded-2xl px-4 py-3.5 text-sm">
-                </div>
-                <div class="flex justify-between items-center px-1 text-xs font-medium">
-                    <span class="text-slate-500">New? <button type="button" onclick="toggleAuthMode(true)" class="text-orange-500 font-bold">Create Account</button></span>
-                    <button type="button" onclick="forgotPassword()" class="text-slate-400 hover:text-slate-600">Forgot?</button>
-                </div>
-                <button type="submit" class="w-full btn-primary font-bold py-3.5 rounded-2xl text-sm mt-2">Sign In</button>
-            </form>
-
-            <form id="registerForm" class="space-y-4 hidden">
-                <input type="text" id="regName" placeholder="Full Name" required class="w-full rounded-2xl px-4 py-3 text-sm">
-                <input type="tel" id="regMobile" placeholder="Mobile Number" required class="w-full rounded-2xl px-4 py-3 text-sm">
-                <input type="email" id="regEmail" placeholder="Email Address" required class="w-full rounded-2xl px-4 py-3 text-sm">
-                <input type="password" id="regPassword" placeholder="Password (min 6 chars)" required class="w-full rounded-2xl px-4 py-3 text-sm">
-                <button type="submit" class="w-full btn-primary font-bold py-3.5 rounded-2xl text-sm mt-2">Sign Up</button>
-                <p class="text-xs text-center text-slate-500 font-medium pt-2">Have an account? <button type="button" onclick="toggleAuthMode(false)" class="text-orange-500 font-bold">Sign In</button></p>
-            </form>
+        <div class="space-y-1.5 text-xs">
+            <button onclick="toggleSideMenu(); switchTab('home')" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🏠</span><span class="font-semibold text-zinc-200">Dashboard</span></button>
+            <button onclick="toggleSideMenu(); openDepositModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">➕</span><span class="font-semibold text-zinc-200">Add Balance (Deposit)</span></button>
+            <button onclick="toggleSideMenu(); switchTab('coins')" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🪙</span><span class="font-semibold crypto-gold">My Coins</span></button>
+            <button onclick="toggleSideMenu(); switchTab('earning')" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">⚡</span><span class="font-semibold text-[#0ecb81]">10s Earning Arena</span></button>
+            <button onclick="toggleSideMenu(); openWithdrawModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">💸</span><span class="font-semibold text-zinc-200">Withdraw Funds</span></button>
+            <button onclick="toggleSideMenu(); openUserSettingsModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">⚙️</span><span class="font-semibold text-zinc-200">Settings</span></button>
         </div>
+    </div>
+    <div class="border-t border-zinc-800 pt-4">
+        <a id="waSidebarLink" href="https://wa.me/923423944508" target="_blank" class="w-full btn-binance py-3 rounded-xl flex items-center justify-center gap-2 text-xs">
+            <span>💬</span><span>WhatsApp Support Admin</span>
+        </a>
     </div>
 </div>
 
-<!-- ================= PREMIUM MAINTENANCE SCREEN ================= -->
-<div id="maintenanceContainer" class="hidden min-h-screen flex-col items-center justify-center relative px-5 w-full">
-    <!-- Cinematic Background Glow -->
-    <div class="blob bg-orange-600 w-[300px] h-[300px] absolute top-[-50px] left-[-50px]"></div>
-    <div class="blob bg-emerald-600 w-[250px] h-[250px] absolute bottom-[-50px] right-[-20px]" style="animation-delay: -4s;"></div>
+<!-- AUTH SCREEN -->
+<div id="authContainer" class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-8 px-4">
+    <div class="text-center z-10 mb-5 fade-in">
+        <div class="inline-flex items-center justify-center w-14 h-14 glass border border-[#f0b90b]/40 rounded-2xl shadow-lg mb-2.5">
+            <span class="text-2xl">🪙</span>
+        </div>
+        <h1 class="text-xl font-bold crypto-gold tracking-wide">Binance Pro Crypto</h1>
+        <p class="text-[10px] tracking-[.3em] text-zinc-400 uppercase mt-1">TRADE · INVEST · EARN</p>
+    </div>
 
-    <!-- Main Glass Card -->
-    <div class="w-full max-w-[420px] glass-card rounded-[2.5rem] p-8 sm:p-10 relative z-10 text-center mx-auto">
-        
-        <div class="w-24 h-24 mx-auto bg-gradient-to-tr from-slate-800 to-slate-700 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center border border-slate-600 mb-8 relative">
-            <div class="absolute inset-0 bg-white/5 rounded-3xl"></div>
-            <span class="text-5xl drop-shadow-xl z-10">🐔</span>
+    <div class="glass border border-zinc-800 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative z-10 card-glow fade-in">
+        <div class="text-center mb-5">
+            <span class="inline-block bg-[#f0b90b]/10 text-[#f0b90b] border border-[#f0b90b]/30 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-2">SECURE PORTAL</span>
+            <h2 id="authTitle" class="text-xl font-bold crypto-gold">Sign In</h2>
+            <p id="authSubtitle" class="text-xs text-zinc-400 mt-1">Enter your credentials to access wallet</p>
         </div>
 
-        <div class="inline-flex items-center gap-2 bg-slate-900/80 px-4 py-2.5 rounded-full border border-slate-700/50 mb-6 shadow-inner">
-            <span class="w-2.5 h-2.5 bg-orange-500 rounded-full dot"></span>
-            <span class="text-[10px] font-bold text-slate-300 tracking-widest uppercase">System Maintenance</span>
+        <form id="loginForm" class="space-y-3">
+            <div>
+                <input type="email" id="loginEmail" placeholder="Email Address" required class="w-full bg-[#181a20] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#f0b90b] transition-colors">
+            </div>
+            <div>
+                <input type="password" id="loginPassword" placeholder="Password" required class="w-full bg-[#181a20] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#f0b90b] transition-colors">
+            </div>
+            <div class="flex justify-between items-center px-1 text-[11px]">
+                <span class="text-zinc-400">New here? <button type="button" onclick="toggleAuthMode(true)" class="crypto-gold font-bold hover:underline">Create Account</button></span>
+                <button type="button" onclick="forgotPassword()" class="text-zinc-400 hover:underline">Forgot?</button>
+            </div>
+            <button type="submit" class="w-full btn-binance py-3.5 rounded-xl transition-all text-sm">Sign In →</button>
+        </form>
+
+        <form id="registerForm" class="space-y-3 hidden">
+            <input type="text" id="regName" placeholder="Full Name" required class="w-full bg-[#181a20] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#f0b90b]">
+            <input type="tel" id="regMobile" placeholder="Mobile Number" required class="w-full bg-[#181a20] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#f0b90b]">
+            <input type="email" id="regEmail" placeholder="Email Address" required class="w-full bg-[#181a20] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#f0b90b]">
+            <input type="password" id="regPassword" placeholder="Password (min 6 chars)" required class="w-full bg-[#181a20] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#f0b90b]">
+            <button type="submit" class="w-full btn-binance py-3.5 rounded-xl transition-all text-sm">Create Account</button>
+            <p class="text-[11px] text-center text-zinc-400">Have an account? <button type="button" onclick="toggleAuthMode(false)" class="crypto-gold font-bold hover:underline">Sign In</button></p>
+        </form>
+    </div>
+</div>
+
+<!-- DASHBOARD CONTAINER -->
+<div id="dashboardContainer" class="hidden">
+
+    <!-- HEADER -->
+    <header class="flex justify-between items-center mb-4 glass p-3.5 rounded-2xl border border-zinc-800 shadow-md">
+        <div class="flex items-center gap-3 min-w-0">
+            <button onclick="toggleSideMenu()" class="bg-[#2b313a] border border-zinc-700 text-zinc-300 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1"><span>☰</span></button>
+            <div class="min-w-0">
+                <p class="text-[10px] text-zinc-400 uppercase tracking-wider">Welcome back</p>
+                <h1 id="lblUserName" class="text-base font-bold crypto-gold truncate">Loading...</h1>
+            </div>
         </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openUserSettingsModal()" class="p-2 bg-[#2b313a] hover:bg-zinc-700 text-[#f0b90b] rounded-xl border border-zinc-700 text-base">⚙</button>
+            <button onclick="logout()" class="text-[10px] bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-2 rounded-xl font-bold">OUT</button>
+        </div>
+    </header>
 
-        <h1 class="text-[28px] leading-tight font-extrabold mb-4 text-white tracking-tight">
-            Platform is <br><span class="gradient-text">Upgrading.</span>
-        </h1>
-        
-        <p class="text-[13px] text-slate-400 leading-relaxed mb-6 font-medium px-2">
-            Aapko behtar experience dene ke liye hamari website par ahem updates ki ja rahi hain. Takleef ke liye mazrat. <br><br>
-            <span class="text-emerald-400 font-bold tracking-wide">Aap abhi bhi Hens purchase kar sakte hain! 👇</span>
-        </p>
+    <!-- WALLET BALANCE CARD -->
+    <div class="bg-gradient-to-br from-[#1e2329] via-[#181a20] to-[#0b0e11] border border-zinc-800 rounded-2xl p-5 mb-4 shadow-2xl relative overflow-hidden card-glow">
+        <div class="absolute -right-4 -bottom-4 opacity-[0.05] text-9xl">💰</div>
+        <div class="relative z-10">
+            <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-2">
+                    <p class="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">Wallet Available Balance</p>
+                    <button onclick="manualRefreshBalance()" title="Refresh Balance" class="text-xs text-[#f0b90b] hover:rotate-180 transition-transform duration-500">🔄</button>
+                </div>
+                <div class="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-full border border-zinc-800">
+                    <span class="w-1.5 h-1.5 bg-[#0ecb81] rounded-full"></span>
+                    <span class="text-[9px] text-[#0ecb81] font-bold tracking-wider">LIVE</span>
+                </div>
+            </div>
+            <div class="flex items-end gap-2 mb-3">
+                <span class="text-sm text-zinc-400 font-bold mb-1">PKR</span>
+                <h2 id="lblWalletBalance" class="text-3xl font-black crypto-gold leading-none">0.00</h2>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-[11px] pt-3 border-t border-zinc-800/80 mb-4">
+                <div>
+                    <span class="text-zinc-500 block text-[9px] uppercase">Cash Wallet Balance</span>
+                    <span id="lblCashWallet" class="font-bold text-zinc-200">0.00 PKR</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-zinc-500 block text-[9px] uppercase">Total Profit / Loss</span>
+                    <span id="lblTotalPL" class="font-bold text-[#0ecb81]">0.00 PKR</span>
+                </div>
+            </div>
 
-        <div class="space-y-4">
-            <!-- Purchase Button -->
-            <button onclick="openPurchaseModal()" class="btn-hover w-full bg-gradient-to-r from-emerald-500 to-emerald-400 text-white font-bold py-4 rounded-2xl text-[15px] flex items-center justify-center gap-3 shadow-[0_4px_14px_rgba(16,185,129,0.3)]">
-                <span class="text-xl">🛒</span> Purchase Hens
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="openDepositModal()" class="btn-binance py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 font-extrabold">
+                    <span>➕</span> Add Balance
+                </button>
+                <button onclick="openWithdrawModal()" class="bg-[#2b313a] hover:bg-zinc-700 text-zinc-200 font-bold py-3 rounded-xl text-xs uppercase tracking-wider border border-zinc-700 flex items-center justify-center gap-1.5">
+                    <span>💸</span> Withdraw
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 1: HOME VIEW -->
+    <div id="tabContent_home" class="tab-pane">
+        <!-- QUICK ACTIONS -->
+        <div class="grid grid-cols-2 gap-3 mb-3">
+            <button onclick="openCryptoMarketModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-2xl p-3.5 flex flex-col items-center justify-center text-center shadow transition-all">
+                <span class="text-xl mb-1">🛒</span>
+                <span class="font-bold text-xs text-zinc-200">Purchase Coins</span>
+                <span class="text-[9px] text-zinc-500 mt-0.5">Spot Trading</span>
             </button>
-
-            <!-- WhatsApp Support -->
-            <a id="btnContactSupport" href="#" target="_blank" class="btn-hover w-full bg-gradient-to-r from-orange-500 to-orange-400 text-white font-bold py-4 rounded-2xl text-[15px] flex items-center justify-center gap-3">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                Contact Support
-            </a>
-
-            <!-- Logout -->
-            <button onclick="logout()" class="w-full text-slate-400 font-bold py-2 rounded-2xl text-[13px] hover:text-white transition-colors mt-2">
-                Sign Out
+            <button onclick="openShiftModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-2xl p-3.5 flex flex-col items-center justify-center text-center shadow transition-all">
+                <span class="text-xl mb-1">🔄</span>
+                <span class="font-bold text-xs text-zinc-200">Shift Coin</span>
+                <span class="text-[9px] text-zinc-500 mt-0.5">Convert Assets</span>
             </button>
         </div>
-    </div>
 
-    <div class="absolute bottom-6 w-full text-center z-10 flex flex-col gap-1">
-        <p class="text-[11px] text-slate-500 font-medium tracking-wide uppercase">Official Help Desk</p>
-        <p id="footerWaNumber" class="text-sm font-bold text-white tracking-widest">+92 342 3944508</p>
-    </div>
-</div>
-
-<!-- ================= MANUAL PURCHASE MODAL (ORIGINAL) ================= -->
-<div id="purchaseModal" class="fixed inset-0 bottom-sheet-overlay hidden items-end justify-center z-[9994] text-slate-800">
-    <div class="bg-white w-full max-w-md p-6 bottom-sheet h-[90vh] flex flex-col slide-up">
-        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
-        <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-            <h3 class="text-lg font-bold text-slate-800">Purchase Hens</h3>
-            <button onclick="closeModal('purchaseModal')" class="bg-slate-100 text-slate-500 w-8 h-8 rounded-full font-bold">&times;</button>
-        </div>
-
-        <!-- Step 1 -->
-        <div id="purchaseStep1" class="flex-1 overflow-y-auto custom-scroll pb-4 block">
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
-                    <div class="text-[10px] text-slate-500 font-bold uppercase">Plan 1</div>
-                    <div class="text-xs font-medium text-slate-700 my-1">1-5 Hens</div>
-                    <div class="text-sm font-black text-orange-500">Rs. 499</div>
-                </div>
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
-                    <div class="text-[10px] text-slate-500 font-bold uppercase">Plan 2</div>
-                    <div class="text-xs font-medium text-slate-700 my-1">6-10 Hens</div>
-                    <div class="text-sm font-black text-orange-500">Rs. 450</div>
-                </div>
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
-                    <div class="text-[10px] text-slate-500 font-bold uppercase">Plan 3</div>
-                    <div class="text-xs font-medium text-slate-700 my-1">11-50 Hens</div>
-                    <div class="text-sm font-black text-orange-500">Rs. 399</div>
-                </div>
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
-                    <div class="text-[10px] text-slate-500 font-bold uppercase">Plan 4</div>
-                    <div class="text-xs font-medium text-slate-700 my-1">51+ Hens</div>
-                    <div class="text-sm font-black text-orange-500">Rs. 250</div>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-2">Hen Quantity</label>
-                    <input type="number" id="purchaseQty" min="1" value="1" oninput="updateHenPriceValue(this.value)" class="w-full text-lg font-black text-slate-800 rounded-xl px-4 py-3 border-2 focus:border-orange-500">
-                </div>
-                <div class="bg-orange-50 p-4 rounded-xl flex justify-between items-center">
+        <!-- 10s EARNING ARENA BANNER -->
+        <div class="mb-4">
+            <button onclick="switchTab('earning')" class="w-full bg-gradient-to-r from-[#0ecb81]/20 via-[#f0b90b]/20 to-[#f6465d]/20 border border-[#0ecb81]/50 hover:border-[#0ecb81] rounded-2xl p-4 flex items-center justify-between shadow-xl transition-all">
+                <div class="flex items-center gap-3 text-left">
+                    <div class="w-10 h-10 bg-[#0ecb81]/20 border border-[#0ecb81]/50 rounded-xl flex items-center justify-center text-lg">⚡</div>
                     <div>
-                        <span class="text-slate-500 text-xs block mb-1">Total Cost:</span>
-                        <span id="activePlanBadge" class="bg-white text-orange-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase shadow-sm">Plan 1</span>
+                        <h4 class="font-bold text-xs text-white uppercase tracking-wider">10s BNB/USDT Prediction Arena</h4>
+                        <p class="text-[10px] text-[#0ecb81] font-semibold mt-0.5">🎯 Predict Up/Down, Win Rs.21 on Rs.500! (Max 20/day)</p>
                     </div>
-                    <span id="purchaseTotalCost" class="text-xl font-black text-slate-800">499 PKR</span>
                 </div>
-                <button onclick="proceedToPaymentProof()" class="w-full btn-primary font-bold py-4 rounded-xl">Next Step →</button>
+                <span class="text-sm font-bold text-[#0ecb81]">→</span>
+            </button>
+        </div>
+
+        <!-- REAL-TIME GRAPHS SECTION -->
+        <section class="mb-4">
+            <div class="flex justify-between items-center mb-2 px-1">
+                <h3 class="text-xs font-bold crypto-gold uppercase tracking-wider flex items-center gap-1.5">
+                    <span>📊</span><span>Real-Time P&L Charts (Every 2s)</span>
+                </h3>
+            </div>
+            <div id="chartsContainer" class="space-y-3">
+                <!-- Dynamic Charts Render Here -->
+            </div>
+        </section>
+    </div>
+
+    <!-- TAB 2: MY COINS VIEW -->
+    <div id="tabContent_coins" class="tab-pane hidden">
+        <section class="mb-4">
+            <div class="flex justify-between items-center mb-3 px-1">
+                <h3 class="text-xs font-bold crypto-gold uppercase tracking-wider flex items-center gap-1.5">
+                    <span>💼</span><span>My Crypto Holdings & Profit/Loss</span>
+                </h3>
+                <button onclick="openCryptoMarketModal()" class="btn-binance px-3 py-1 rounded-lg text-[10px] uppercase font-bold">Buy More</button>
+            </div>
+            <div id="portfolioContainer" class="space-y-2.5 max-h-[70vh] overflow-y-auto custom-scroll pr-1">
+                <div class="glass p-4 rounded-xl border border-zinc-800 text-center text-xs text-zinc-500 italic">No coins purchased yet. Open market to buy.</div>
+            </div>
+        </section>
+    </div>
+
+    <!-- TAB 3: EARNING ARENA VIEW (10S PREDICTION GAME) -->
+    <div id="tabContent_earning" class="tab-pane hidden space-y-4">
+        <div class="glass p-5 rounded-2xl border border-[#0ecb81]/40 card-glow text-center relative overflow-hidden">
+            <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl">⚡</div>
+            <span class="inline-block bg-[#0ecb81]/10 text-[#0ecb81] border border-[#0ecb81]/30 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-2">10-SECONDS PREDICTION GAME</span>
+            <h3 class="text-base font-bold text-white mb-1">BNB/USDT Direction Challenge</h3>
+            <p class="text-xs text-zinc-400 mb-4">Guess whether BNB/USDT rate will go <strong class="text-[#0ecb81]">UP</strong> or <strong class="text-[#f6465d]">DOWN</strong> in the next 10 seconds!</p>
+            
+            <div class="bg-[#181a20] p-3 rounded-xl border border-zinc-800 mb-4 flex justify-between items-center text-xs">
+                <div>
+                    <span class="text-[10px] text-zinc-400 block uppercase">Current BNB Price</span>
+                    <span id="gameLiveBnbPrice" class="font-black crypto-gold text-sm">-- PKR</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-[10px] text-zinc-400 block uppercase">Daily Limit Left</span>
+                    <span id="gameDailyBetsLeft" class="font-black text-[#0ecb81] text-sm">20 / 20</span>
+                </div>
+            </div>
+
+            <div id="gameActiveBox" class="space-y-3">
+                <p class="text-xs text-zinc-300 font-medium">Select your prediction for the next 10 seconds:</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="startPredictionGame('UP')" class="bg-[#0ecb81] hover:bg-[#0ecb81]/80 text-zinc-950 font-black py-3.5 rounded-xl uppercase tracking-wider shadow-lg flex items-center justify-center gap-2">
+                        <span>📈</span><span>UP (Ooper)</span>
+                    </button>
+                    <button onclick="startPredictionGame('DOWN')" class="bg-[#f6465d] hover:bg-[#f6465d]/80 text-white font-black py-3.5 rounded-xl uppercase tracking-wider shadow-lg flex items-center justify-center gap-2">
+                        <span>📉</span><span>DOWN (Neechy)</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="gameTimerBox" class="hidden py-6 space-y-3">
+                <div class="w-16 h-16 bg-[#f0b90b]/10 border border-[#f0b90b]/40 rounded-full flex items-center justify-center mx-auto text-2xl font-black crypto-gold animate-pulse" id="gameCountdownNum">10</div>
+                <h4 class="text-sm font-bold text-white" id="gameStatusText">Waiting for next 10 seconds result...</h4>
+                <p class="text-[11px] text-zinc-400">Entry Price: <span id="gameEntryPriceVal" class="font-mono text-white">--</span></p>
             </div>
         </div>
 
-        <!-- Step 2 -->
-        <div id="purchaseStep2" class="flex-1 overflow-y-auto custom-scroll pb-4 hidden">
-            <button type="button" onclick="document.getElementById('purchaseStep2').classList.add('hidden');document.getElementById('purchaseStep1').classList.remove('hidden');" class="text-xs text-slate-500 font-bold mb-4 bg-slate-100 px-3 py-1.5 rounded-full inline-flex items-center gap-1">← Back</button>
-            
-            <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-6 text-center">
-                <p class="text-xs font-medium text-blue-800 mb-1">Send payment via Easypaisa to:</p>
-                <p class="text-sm font-bold text-blue-900">Muluk Hussain</p>
-                <p class="text-lg font-black text-blue-600 tracking-wider mt-1">03423944508</p>
+        <!-- 24-HOUR SUMMARY & HISTORY SECTION -->
+        <div class="glass p-4 rounded-2xl border border-zinc-800 space-y-3">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+                <h4 class="text-xs font-bold crypto-gold uppercase tracking-wider flex items-center gap-2"><span>📊</span><span>Past 24 Hours P&L & History</span></h4>
+                <span id="summary24HoursPL" class="text-xs font-bold text-[#0ecb81]">+0.00 PKR</span>
             </div>
-            
-            <form id="paymentProofForm" class="space-y-4">
-                <div>
-                    <label class="block font-bold text-xs text-slate-600 mb-1">Transaction ID (Trx ID)</label>
-                    <input type="text" id="proofTrxId" required class="w-full rounded-xl px-4 py-3 text-sm">
-                </div>
-                <div>
-                    <label class="block font-bold text-xs text-slate-600 mb-1">Sender Account Name</label>
-                    <input type="text" id="proofHolderName" required class="w-full rounded-xl px-4 py-3 text-sm">
-                </div>
-                <button type="submit" class="w-full btn-secondary font-bold py-4 rounded-xl mt-2">Submit Request</button>
+            <div id="predictionHistoryContainer" class="space-y-2 max-h-48 overflow-y-auto custom-scroll pr-1 text-xs">
+                <p class="text-zinc-500 italic text-center py-3">No game history in last 24 hours.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: DEPOSIT / HISTORY VIEW -->
+    <div id="tabContent_deposit" class="tab-pane hidden space-y-4">
+        <div class="glass p-5 rounded-2xl border border-zinc-800 text-center card-glow">
+            <div class="w-12 h-12 bg-[#f0b90b]/10 border border-[#f0b90b]/30 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">➕</div>
+            <h3 class="text-base font-bold crypto-gold mb-1">Add Balance & Deposit</h3>
+            <p class="text-xs text-zinc-400 mb-4">Send funds via Easypaisa, JazzCash, or Bank Transfer and submit request.</p>
+            <button onclick="openDepositModal()" class="w-full btn-binance py-3 rounded-xl text-xs uppercase font-bold tracking-wider">Open Deposit Portal</button>
+        </div>
+
+        <!-- TRANSACTION HISTORY -->
+        <div class="glass rounded-2xl border border-zinc-800 p-4 shadow">
+            <h4 class="font-bold text-xs crypto-gold mb-3 flex items-center gap-2"><span>📜</span><span>Deposit & Withdrawal History</span></h4>
+            <div id="historyContent" class="space-y-2 max-h-64 overflow-y-auto custom-scroll text-xs">
+                <p class="text-zinc-500 italic text-center py-3">No transaction history found.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION BAR -->
+    <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass border-t border-zinc-800 px-4 py-2.5 flex justify-around items-center z-[8000] shadow-2xl">
+        <button onclick="switchTab('home')" id="navBtn_home" class="flex flex-col items-center gap-1 text-[#f0b90b] transition-colors">
+            <span class="text-lg">🏠</span>
+            <span class="text-[10px] font-bold">Home</span>
+        </button>
+        <button onclick="switchTab('coins')" id="navBtn_coins" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors">
+            <span class="text-lg">🪙</span>
+            <span class="text-[10px] font-bold">My Coins</span>
+        </button>
+        <button onclick="switchTab('earning')" id="navBtn_earning" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors">
+            <span class="text-lg">⚡</span>
+            <span class="text-[10px] font-bold">Earning</span>
+        </button>
+        <button onclick="switchTab('deposit')" id="navBtn_deposit" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors">
+            <span class="text-lg">➕</span>
+            <span class="text-[10px] font-bold">Deposit</span>
+        </button>
+    </nav>
+</div>
+
+<!-- DEPOSIT MODAL -->
+<div id="depositModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9998] modal-overlay">
+    <div class="glass border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative modal-panel">
+        <button onclick="closeModal('depositModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
+        <h3 class="text-base font-bold crypto-gold mb-3 flex items-center gap-2"><span>➕</span><span>Add Balance (Deposit Request)</span></h3>
+        
+        <div class="bg-[#2b313a]/50 p-3 rounded-xl border border-zinc-700 mb-3 text-xs text-center">
+            <p class="text-zinc-300 font-medium">Payment send karein aur details submit karein:</p>
+            <p class="text-[#f0b90b] font-bold mt-1">Easypaisa / JazzCash / Bank: 03423944508 (Muluk Hussain)</p>
+        </div>
+
+        <form id="depositForm" class="space-y-3 text-xs">
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Amount (PKR)</label>
+                <input type="number" id="depAmount" min="100" placeholder="e.g. 5000" required class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+            </div>
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Payment Method</label>
+                <select id="depMethod" class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+                    <option value="Easypaisa">Easypaisa</option>
+                    <option value="JazzCash">JazzCash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Transaction ID / Trx ID</label>
+                <input type="text" id="depTrxId" placeholder="Enter Transaction ID" required class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+            </div>
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Your Account Name / Username</label>
+                <input type="text" id="depSenderName" placeholder="Account Holder Name" required class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+            </div>
+            <button type="submit" class="w-full btn-binance py-3 rounded-xl text-xs uppercase font-bold tracking-wider">Submit Request via WhatsApp</button>
+        </form>
+    </div>
+</div>
+
+<!-- WITHDRAW MODAL -->
+<div id="withdrawModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9998] modal-overlay">
+    <div class="glass border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative modal-panel">
+        <button onclick="closeModal('withdrawModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
+        <h3 class="text-base font-bold crypto-gold mb-3 flex items-center gap-2"><span>💸</span><span>Withdraw Funds (Min Rs. 1000)</span></h3>
+
+        <form id="withdrawForm" class="space-y-3 text-xs">
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Amount (PKR)</label>
+                <input type="number" id="wdAmount" min="1000" placeholder="Min Rs. 1000" required class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+            </div>
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Account Type</label>
+                <select id="wdType" class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+                    <option value="Easypaisa">Easypaisa</option>
+                    <option value="JazzCash">JazzCash</option>
+                    <option value="Bank Account">Bank Account</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Account Number</label>
+                <input type="text" id="wdNumber" placeholder="Account Number" required class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+            </div>
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Account Holder Name</label>
+                <input type="text" id="wdHolder" placeholder="Holder Name" required class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+            </div>
+            <button type="submit" class="w-full btn-binance py-3 rounded-xl text-xs uppercase font-bold tracking-wider">Request Withdrawal</button>
+        </form>
+    </div>
+</div>
+
+<!-- CRYPTO MARKET MODAL -->
+<div id="cryptoMarketModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9998] modal-overlay">
+    <div class="glass border border-zinc-800 w-full max-w-md rounded-2xl p-5 shadow-2xl relative max-h-[90vh] overflow-hidden flex flex-col modal-panel">
+        <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-3">
+            <h3 class="text-base font-bold crypto-gold flex items-center gap-2"><span>🛒</span><span>Purchase Coins & Live Market</span></h3>
+            <button onclick="closeModal('cryptoMarketModal')" class="text-zinc-400 hover:text-white text-xl">&times;</button>
+        </div>
+        <div class="mb-3 px-3 py-2 bg-[#2b313a]/50 rounded-xl border border-zinc-700 flex justify-between items-center text-xs">
+            <div>
+                <span class="text-[10px] text-zinc-400 block uppercase">Wallet Balance</span>
+                <span id="marketWalletBal" class="font-black crypto-gold text-sm">0 PKR</span>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] text-zinc-400 block uppercase">USD Rate</span>
+                <span class="font-black text-[#0ecb81] text-sm">1$ = 280 PKR</span>
+            </div>
+        </div>
+        <div class="mb-3">
+            <input type="text" id="cryptoSearchInput" placeholder="Search coin (e.g. BTC, ETH, SOL)..." oninput="filterCryptoCoins()" class="w-full bg-[#181a20] border border-zinc-700 rounded-xl px-3 py-2.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[#f0b90b]">
+        </div>
+        <div id="cryptoListContainer" class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-1">
+            <p class="text-zinc-500 italic text-center py-6 text-xs">Connecting to Binance Live Feed...</p>
+        </div>
+    </div>
+</div>
+
+<!-- BUY CRYPTO MODAL -->
+<div id="buyCryptoModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9999] modal-overlay">
+    <div class="glass border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative modal-panel">
+        <button onclick="closeModal('buyCryptoModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
+        <div class="text-center mb-4">
+            <div class="w-12 h-12 bg-[#f0b90b]/20 border border-[#f0b90b]/40 rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold crypto-gold" id="buyCoinIcon">₿</div>
+            <h3 id="buyCoinTitle" class="text-base font-bold crypto-gold">Buy Crypto Asset</h3>
+            <p id="buyCoinPriceLabel" class="text-xs text-zinc-400 mt-1">Live Price: --</p>
+        </div>
+        <div class="space-y-3 text-xs">
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Investment Amount (PKR)</label>
+                <input type="number" id="cryptoAmountInput" min="100" placeholder="Enter PKR amount..." oninput="calculateCryptoEst()" class="w-full bg-[#181a20] border border-zinc-700 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+            </div>
+            <div class="bg-[#2b313a]/50 p-3 rounded-xl border border-zinc-700 space-y-1">
+                <div class="flex justify-between"><span class="text-zinc-400">Estimated Receive:</span><span id="cryptoEstReceive" class="font-mono text-[#0ecb81] font-bold">0.00</span></div>
+                <div class="flex justify-between"><span class="text-zinc-400">Wallet Balance:</span><span id="buyCryptoAvailableBal" class="font-mono crypto-gold font-bold">0 PKR</span></div>
+            </div>
+            <button onclick="confirmCryptoPurchase()" class="w-full btn-binance py-3 rounded-xl uppercase tracking-wider font-bold">Confirm & Buy</button>
+        </div>
+    </div>
+</div>
+
+<!-- SHIFT / TRANSFER MODAL -->
+<div id="shiftModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9998] modal-overlay">
+    <div class="glass border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative modal-panel">
+        <button onclick="closeModal('shiftModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
+        <h3 class="text-base font-bold crypto-gold mb-3 flex items-center gap-2"><span>🔄</span><span>Shift Coin (Transfer with Fee)</span></h3>
+
+        <div class="space-y-3 text-xs">
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Select Coin to Sell/Shift From</label>
+                <select id="shiftFromCoin" class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+                    <option value="">-- Select Your Holding --</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Select Target Coin Symbol</label>
+                <select id="shiftToSymbol" class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+                    <option value="">-- Select Target Coin --</option>
+                </select>
+            </div>
+            <div class="bg-[#2b313a]/50 p-3 rounded-xl border border-zinc-700 text-[11px] text-zinc-400">
+                Note: 1% conversion fee will be deducted from your transfer amount automatically.
+            </div>
+            <button onclick="confirmShiftCoin()" class="w-full btn-binance py-3 rounded-xl uppercase tracking-wider font-bold">Execute Shift</button>
+        </div>
+    </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="userSettingsModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9002] modal-overlay">
+    <div class="glass border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative space-y-4 modal-panel">
+        <button onclick="closeModal('userSettingsModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
+        <h3 class="text-base font-bold crypto-gold border-b border-zinc-800 pb-2 flex items-center gap-2"><span>⚙</span><span>Account Settings</span></h3>
+
+        <div class="bg-[#2b313a]/50 p-3 rounded-xl border border-zinc-700 space-y-3">
+            <h4 class="text-xs font-bold text-zinc-300">Change Password</h4>
+            <form id="changePasswordForm" class="space-y-2 text-xs">
+                <input type="password" id="newPasswordInput" placeholder="New Password (min 6 chars)" required minlength="6" class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+                <button type="submit" class="w-full btn-binance py-2.5 rounded-lg font-bold">Update Password</button>
             </form>
         </div>
     </div>
@@ -249,7 +494,7 @@ input:focus, select:focus, textarea:focus { background-color: #ffffff; border-co
 
 <script>
 /* =========================================================
-   GREEN LAND POULTRY FARM — MAINTENANCE WITH PURCHASE
+   BINANCE PRO CRYPTO WALLET SCRIPT WITH 10S PREDICTION GAME
    ========================================================= */
 
 const firebaseConfig = {
@@ -268,21 +513,34 @@ const db = firebase.database();
 
 let currentUid = null;
 let currentUserData = null;
-let globalActiveWaNumber = "923423944508";
+let activeListeners = [];
+
+const USD_PKR_RATE = 280;
+let binanceCoinsCache = [];
+let selectedCryptoSymbol = "";
+let selectedCryptoPriceUSD = 0;
+let livePricesMap = {};
+let activeChartInstances = {};
+let chartDataHistory = {};
+let autoRefreshTimer = null;
+let dailyBetsCount = 0;
+let lastBetDate = "";
 
 const $ = id => document.getElementById(id);
+const num = v => { const n = Number(v); return isNaN(n) ? 0 : n; };
 const int = v => { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; };
+const flt = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-// Helpers
 function showToast(msg, duration = 3000) {
     const t = $('toast');
-    t.innerHTML = `<span>🚀</span> <span>${msg}</span>`;
-    t.classList.remove('opacity-0', 'translate-y-4');
+    t.innerText = msg;
+    t.classList.remove('opacity-0');
     clearTimeout(t._timer);
-    t._timer = setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), duration);
+    t._timer = setTimeout(() => t.classList.add('opacity-0'), duration);
 }
 
-function showCustomAlert(title, message, callback = null, btnText = "Got it") {
+function showCustomAlert(title, message, callback = null, btnText = "OK") {
     $('customAlertTitle').innerText = title;
     $('customAlertMessage').innerText = message;
     const btn = $('customAlertBtn');
@@ -290,186 +548,764 @@ function showCustomAlert(title, message, callback = null, btnText = "Got it") {
     btn.onclick = () => {
         closeCustomAlert();
         if (callback) callback();
-        setTimeout(() => btn.innerText = "Got it", 300);
     };
-    $('customAlertModal').classList.remove('hidden');$('customAlertModal').classList.add('flex');
+    $('customAlertModal').classList.remove('hidden');
+    $('customAlertModal').classList.add('flex');
 }
+
 function closeCustomAlert() {
-    $('customAlertModal').classList.remove('flex');$('customAlertModal').classList.add('hidden');
+    $('customAlertModal').classList.remove('flex');
+    $('customAlertModal').classList.add('hidden');
 }
 
 function closeModal(id) {
     const m = $(id);
     if (!m) return;
-    const sheet = m.querySelector('.bottom-sheet');
-    if (sheet) {
-        sheet.style.animation = 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) reverse forwards';
-        setTimeout(() => {
-            m.classList.remove('flex');
-            m.classList.add('hidden');
-            sheet.style.animation = '';
-        }, 280);
-    } else {
-        m.classList.remove('flex');
-        m.classList.add('hidden');
+    m.classList.remove('flex');
+    m.classList.add('hidden');
+}
+
+function switchTab(tabName) {
+    ['home', 'coins', 'earning', 'deposit'].forEach(t => {
+        const pane = $(`tabContent_${t}`);
+        const btn = $(`navBtn_${t}`);
+        if (pane) pane.classList.toggle('hidden', t !== tabName);
+        if (btn) {
+            if (t === tabName) {
+                btn.className = "flex flex-col items-center gap-1 text-[#f0b90b] transition-colors";
+            } else {
+                btn.className = "flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors";
+            }
+        }
+    });
+    window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function registerListener(ref, event, cb) {
+    const handler = ref.on(event, cb);
+    activeListeners.push({ ref, event, handler });
+}
+
+function detachAllListeners() {
+    while (activeListeners.length) {
+        const { ref, event } = activeListeners.pop();
+        try { ref.off(event); } catch (e) {}
     }
 }
 
-// WhatsApp Config 
-function computeWaNumber(config) {
-    const now = new Date();
-    const override = config.manualOverride;
-    if (override && override.expireTime > now.getTime()) return override.number;
-    const day = now.getDay(), hours = now.getHours();
-    if (day >= 1 && day <= 5 && hours >= 7 && hours < 20) return "923423944508";
-    return "923485465097";
-}
-function applyWaNumber(n) {
-    globalActiveWaNumber = n;
-    const btn = $('btnContactSupport');
-    if (btn) btn.href = `https://wa.me/${n}?text=Hello%20Admin,%20I%20want%20to%20know%20more.`;
-    const footer = $('footerWaNumber');
-    if (footer) footer.innerText = n;
-}
-db.ref('settings/whatsappConfig').on('value', snap => applyWaNumber(computeWaNumber(snap.val() || {})));
-
-// Referral handling
-const urlParams = new URLSearchParams(window.location.search);
-const refIdParam = urlParams.get('ref');
-const refNameParam = urlParams.get('n');
-if (refNameParam) {
-    $('refInfoBanner').classList.remove('hidden');$('refNameDisplay').innerText = decodeURIComponent(refNameParam);
-    toggleAuthMode(true);
+function toggleSideMenu() {
+    const p = $('sideMenuPanel'), o = $('sideMenuOverlay');
+    if (p.classList.contains('-translate-x-full')) {
+        p.classList.remove('-translate-x-full'); o.classList.remove('hidden');
+    } else {
+        p.classList.add('-translate-x-full'); o.classList.add('hidden');
+    }
 }
 
-// Auth Handlers
-function handleAuthError(err) {
-    const map = {
-        'auth/weak-password': 'Password must be at least 6 characters.',
-        'auth/email-already-in-use': 'Email is already registered.',
-        'auth/user-not-found': 'Invalid email or password.',
-        'auth/wrong-password': 'Invalid email or password.'
-    };
-    showCustomAlert("Auth Error", map[err.code] || err.message);
+function toggleAccordion(contentId, arrowId) {
+    const el = $(contentId);
+    const arrow = $(arrowId);
+    if (!el) return;
+    if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
+    } else {
+        el.classList.add('hidden');
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+    }
 }
 
+/* ============ AUTH ============ */
 function toggleAuthMode(isRegister) {
-    $('authTitle').innerText = isRegister ? "Create Account" : "Welcome Back";
-    $('authSubtitle').innerText = isRegister ? "Join and start earning" : "Sign in to your account";
-    $('registerForm').classList.toggle('hidden', !isRegister);$('loginForm').classList.toggle('hidden', isRegister);
+    $('authTitle').innerText = isRegister ? "Create Account" : "Sign In";
+    $('authSubtitle').innerText = isRegister ? "Register to start trading" : "Enter your credentials to access wallet";
+    $('registerForm').classList.toggle('hidden', !isRegister);
+    $('loginForm').classList.toggle('hidden', isRegister);
 }
 
 function forgotPassword() {
-    const email = $('loginEmail').value.trim();
-    const text = `Hello Admin, I forgot my password. My email is: ${email || '[insert email]'}. Please help.`;
-    window.open(`https://wa.me/${globalActiveWaNumber}?text=${encodeURIComponent(text)}`, '_blank');
+    window.open('https://wa.me/923423944508?text=' + encodeURIComponent('Hello Admin, I forgot my password. Please help.'), '_blank');
 }
 
 $('registerForm').addEventListener('submit', e => {
     e.preventDefault();
-    const name = $('regName').value.trim(), mobile =$('regMobile').value.trim(), email = $('regEmail').value.trim(), password =$('regPassword').value;
-    if (password.length < 6) return handleAuthError({ code: 'auth/weak-password' });
+    const name = $('regName').value.trim();
+    const mobile = $('regMobile').value.trim();
+    const email = $('regEmail').value.trim();
+    const password = $('regPassword').value;
+
+    if (password.length < 6) { showCustomAlert("Error", "Password must be at least 6 characters."); return; }
 
     auth.createUserWithEmailAndPassword(email, password).then(cred => {
         return db.ref('users/' + cred.user.uid).set({
-            name, mobile, email, totalHens: 0, availableEggs: 0, giftEggs: 0, totalExpense: 0, totalWithdrawal: 0, selfPurchasedHens: 0, status: "active", createdAt: firebase.database.ServerValue.TIMESTAMP, referredBy: refIdParam ? refIdParam : "none", hasRewardedInviter: false
+            name, mobile, email,
+            walletBalance: 50000,
+            status: "active",
+            createdAt: firebase.database.ServerValue.TIMESTAMP
         });
-    }).catch(err => handleAuthError(err));
+    }).catch(err => showCustomAlert("Auth Error", err.message));
 });
 
 $('loginForm').addEventListener('submit', e => {
     e.preventDefault();
-    auth.signInWithEmailAndPassword($('loginEmail').value.trim(),$('loginPassword').value).catch(err => handleAuthError(err));
+    auth.signInWithEmailAndPassword($('loginEmail').value.trim(), $('loginPassword').value)
+        .catch(err => showCustomAlert("Auth Error", err.message));
 });
 
 function logout() {
     if (!confirm("Sign out?")) return;
-    auth.signOut();
+    detachAllListeners();
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    auth.signOut().then(() => toggleAuthMode(false));
 }
 
-// Firebase Auth State
 auth.onAuthStateChanged(user => {
+    detachAllListeners();
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+
     if (user) {
         currentUid = user.uid;
-        
-        // Hide Auth, Show Maintenance UI
-        $('authContainer').classList.add('hidden');$('authContainer').classList.remove('flex');
-        
-        $('maintenanceContainer').classList.remove('hidden');$('maintenanceContainer').classList.add('flex');
-        
-        db.ref('users/' + currentUid).once('value', snapshot => {
-            const val = snapshot.val();
-            if (val && val.status === 'blocked') {
-                showCustomAlert("Suspended", "Your account is blocked.");
-                auth.signOut(); return;
-            }
+        const userRef = db.ref('users/' + currentUid);
+        registerListener(userRef, 'value', snap => {
+            const val = snap.val();
+            if (!val) return;
             currentUserData = val;
+            $('lblUserName').innerText = val.name || "User";
+            updateWalletHeaderDisplay();
         });
 
-    } else {
-        currentUid = null; currentUserData = null;
-        
-        // Hide Maintenance UI, Show Auth
-        $('maintenanceContainer').classList.add('hidden');$('maintenanceContainer').classList.remove('flex');
+        const portfolioRef = db.ref('users/' + currentUid + '/crypto_portfolio');
+        registerListener(portfolioRef, 'value', snap => renderPortfolioAndCharts(snap));
 
-        $('authContainer').classList.remove('hidden');$('authContainer').classList.add('flex');
-        
-        toggleAuthMode(refNameParam ? true : false);
+        const histRef = db.ref('users/' + currentUid + '/transactions');
+        registerListener(histRef, 'value', snap => renderHistory(snap));
+
+        const predHistRef = db.ref('users/' + currentUid + '/predictions');
+        registerListener(predHistRef, 'value', snap => renderPredictionHistory(snap));
+
+        $('authContainer').classList.add('hidden');
+        $('dashboardContainer').classList.remove('hidden');
+        startBinancePricePolling();
+
+        autoRefreshTimer = setInterval(() => {
+            manualRefreshBalance(false);
+        }, 5000);
+
+    } else {
+        currentUid = null;
+        currentUserData = null;
+        $('authContainer').classList.add('hidden');
+        $('dashboardContainer').classList.add('hidden');
+        toggleAuthMode(false);
     }
 });
 
-/* ============ PURCHASE LOGIC ============ */
-function getHenCostByPlan(qty) {
-    qty = int(qty);
-    if (qty <= 0) return { pricePerHen: 499, planName: "Plan 1", totalCost: 0 };
-    if (qty <= 5) return { pricePerHen: 499, planName: "Plan 1", totalCost: qty * 499 };
-    if (qty <= 10) return { pricePerHen: 450, planName: "Plan 2", totalCost: qty * 450 };
-    if (qty <= 50) return { pricePerHen: 399, planName: "Plan 3", totalCost: qty * 399 };
-    return { pricePerHen: 250, planName: "Plan 4", totalCost: qty * 250 };
+function manualRefreshBalance(showNotif = true) {
+    if (!currentUid) return;
+    db.ref('users/' + currentUid).once('value', snap => {
+        if (snap.exists()) {
+            currentUserData = snap.val();
+            updateWalletHeaderDisplay();
+            if (showNotif) showToast("✓ Balance refreshed successfully!");
+        }
+    });
 }
 
-function openPurchaseModal() {
-    $('purchaseStep1').classList.remove('hidden'); 
-    $('purchaseStep2').classList.add('hidden');$('purchaseQty').value = 1; 
-    updateHenPriceValue(1);
+function updateWalletHeaderDisplay() {
+    if (!currentUserData) return;
+    const cashBal = num(currentUserData.walletBalance);
+    $('lblCashWallet').innerText = cashBal.toLocaleString('en-US', {minimumFractionDigits: 2}) + ' PKR';
+    $('marketWalletBal').innerText = cashBal.toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
     
-    $('purchaseModal').classList.remove('hidden');$('purchaseModal').classList.add('flex');
+    const totalEquity = cashBal + (window.currentPortfolioValCache || 0);
+    $('lblWalletBalance').innerText = totalEquity.toLocaleString('en-US', {minimumFractionDigits: 2});
 }
 
-function updateHenPriceValue(val) {
-    const p = getHenCostByPlan(val);
-    $('purchaseTotalCost').innerText = p.totalCost + " PKR"; 
-    $('activePlanBadge').innerText = p.planName;
-}
+/* ============ DEPOSIT & WITHDRAW ============ */
+function openDepositModal() { $('depositModal').classList.remove('hidden'); $('depositModal').classList.add('flex'); }
+function openWithdrawModal() { $('withdrawModal').classList.remove('hidden'); $('withdrawModal').classList.add('flex'); }
 
-function proceedToPaymentProof() { 
-    $('purchaseStep1').classList.add('hidden');$('purchaseStep2').classList.remove('hidden'); 
-}
-
-$('paymentProofForm').addEventListener('submit', e => {
+$('depositForm').addEventListener('submit', e => {
     e.preventDefault();
-    const qty = int($('purchaseQty').value) || 1, plan = getHenCostByPlan(qty);
-    const trx = $('proofTrxId').value.trim(), holder =$('proofHolderName').value.trim();
-    if (!trx || !holder) return showCustomAlert("Error", "Fill all fields.");
+    const amount = num($('depAmount').value);
+    const method = $('depMethod').value;
+    const trxId = $('depTrxId').value.trim();
+    const sender = $('depSenderName').value.trim();
 
-    db.ref('purchase_requests').push({ 
-        uid: currentUid, 
-        quantity: qty, 
-        amount: plan.totalCost, 
-        planName: plan.planName, 
-        transactionId: trx, 
-        accountHolderName: holder, 
-        status: 'pending', 
-        timestamp: firebase.database.ServerValue.TIMESTAMP 
-    })
-    .then(() => {
-        closeModal('purchaseModal');
-        showCustomAlert("Submitted", "Purchase request sent successfully. Admin will approve it shortly.", () => {
-            window.open(`https://wa.me/${globalActiveWaNumber}?text=New Purchase Request:%20${qty}%20Hens`, '_blank');
-        }, "WhatsApp Admin");
-    }).catch(e => showCustomAlert("Error", e.message));
+    if (amount <= 0 || !trxId) { showCustomAlert("Error", "Please fill valid details."); return; }
+
+    const msg = `*Deposit Request*\nUser: ${currentUserData?.name}\nAmount: ${amount} PKR\nMethod: ${method}\nTrx ID: ${trxId}\nSender: ${sender}`;
+    window.open(`https://wa.me/923423944508?text=` + encodeURIComponent(msg), '_blank');
+
+    db.ref(`deposit_requests`).push({
+        uid: currentUid, userName: currentUserData?.name, amount, method, trxId, sender, status: 'pending', timestamp: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+        closeModal('depositModal');
+        showCustomAlert("Submitted", "Deposit request sent. Admin will review and approve via WhatsApp.");
+        $('depositForm').reset();
+    });
 });
 
+$('withdrawForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const amount = num($('wdAmount').value);
+    const type = $('wdType').value;
+    const number = $('wdNumber').value.trim();
+    const holder = $('wdHolder').value.trim();
+
+    if (amount < 1000) { showCustomAlert("Limit", "Minimum withdrawal is Rs. 1000"); return; }
+    const balance = num(currentUserData?.walletBalance);
+    if (amount > balance) { showCustomAlert("Error", "Insufficient cash wallet balance."); return; }
+
+    const newBal = balance - amount;
+    db.ref(`users/${currentUid}/walletBalance`).set(newBal).then(() => {
+        return db.ref(`withdraw_requests`).push({
+            uid: currentUid, userName: currentUserData?.name, amount, type, number, holder, status: 'pending', timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+    }).then(() => {
+        closeModal('withdrawModal');
+        showCustomAlert("Success", "Withdrawal request submitted successfully!");
+        $('withdrawForm').reset();
+    }).catch(err => showCustomAlert("Error", err.message));
+});
+
+/* ============ LIVE BINANCE MARKET & PREDICTION GAME ============ */
+async function startBinancePricePolling() {
+    try {
+        const res = await fetch('https://api.binance.com/api/v3/ticker/price');
+        const data = await res.json();
+        binanceCoinsCache = data.filter(item => item.symbol.endsWith('USDT') && !item.symbol.includes('DOWN') && !item.symbol.includes('UP'));
+        binanceCoinsCache.forEach(c => {
+            livePricesMap[c.symbol.replace('USDT', '')] = flt(c.price);
+        });
+
+        const bnbUsd = livePricesMap['BNB'] || 600;
+        const bnbPkr = bnbUsd * USD_PKR_RATE;
+        if ($('gameLiveBnbPrice')) {$('gameLiveBnbPrice').innerText = bnbPkr.toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
+        }
+    } catch (e) {}
+    
+    updateAllChartsAndPL();
+    setTimeout(startBinancePricePolling, 2000);
+}
+
+function updateAllChartsAndPL() {
+    if (!currentUid) return;
+    const portfolioRef = db.ref('users/' + currentUid + '/crypto_portfolio');
+    portfolioRef.once('value', snap => {
+        renderPortfolioAndCharts(snap, true);
+    });
+}
+
+/* ============ 10 SECONDS PREDICTION GAME LOGIC ============ */
+function checkDailyBetLimit() {
+    const todayStr = new Date().toDateString();
+    if (lastBetDate !== todayStr) {
+        lastBetDate = todayStr;
+        dailyBetsCount = 0;
+    }
+    return dailyBetsCount < 20;
+}
+
+function startPredictionGame(direction) {
+    if (!checkDailyBetLimit()) {
+        showCustomAlert("Daily Limit Reached", "You have already placed 20 bets today. Please try again tomorrow!");
+        return;
+    }
+
+    const currentBnbUsd = livePricesMap['BNB'] || 600;
+    const entryPricePKR = currentBnbUsd * USD_PKR_RATE;
+
+    dailyBetsCount++;
+    $('gameDailyBetsLeft').innerText = `${20 - dailyBetsCount} / 20`;
+
+    $('gameActiveBox').classList.add('hidden');
+    $('gameTimerBox').classList.remove('hidden');$('gameEntryPriceVal').innerText = entryPricePKR.toFixed(2) + ' PKR';
+
+    let countdown = 10;
+    $('gameCountdownNum').innerText = countdown;
+    $('gameStatusText').innerText = `Prediction: ${direction}. Watching BNB/USDT for 10s...`;
+
+    const timer = setInterval(() => {
+        countdown--;
+        $('gameCountdownNum').innerText = countdown;
+        if (countdown <= 0) {
+            clearInterval(timer);
+            evaluatePredictionResult(direction, entryPricePKR);
+        }
+    }, 1000);
+}
+
+function evaluatePredictionResult(direction, entryPricePKR) {
+    const newBnbUsd = livePricesMap['BNB'] || (entryPricePKR / USD_PKR_RATE);
+    const exitPricePKR = newBnbUsd * USD_PKR_RATE;
+    const diff = exitPricePKR - entryPricePKR;
+
+    let won = false;
+    if (direction === 'UP' && diff > 0) won = true;
+    else if (direction === 'DOWN' && diff < 0) won = true;
+    else {
+        // slight random fallback if price unchanged exactly
+        won = Math.random() > 0.5;
+    }
+
+    const currentBal = num(currentUserData?.walletBalance);
+    const prize = 21;
+    let newBal = currentBal;
+    let profitLossVal = 0;
+
+    if (won) {
+        newBal += prize;
+        profitLossVal = prize;
+        showCustomAlert("🎉 You Won!", `BNB/USDT moved ${diff >= 0 ? 'UP' : 'DOWN'}. You won Rs. ${prize} prize!`);
+    } else {
+        newBal -= prize;
+        if (newBal < 0) newBal = 0;
+        profitLossVal = -prize;
+        showCustomAlert("❌ You Lost!", `Market moved against your prediction. Rs. ${prize} deducted from your account.`);
+    }
+
+    db.ref(`users/${currentUid}/walletBalance`).set(newBal);
+    db.ref(`users/${currentUid}/predictions`).push({
+        direction,
+        entryPrice: entryPricePKR,
+        exitPrice: exitPricePKR,
+        result: won ? 'WIN' : 'LOSS',
+        amount: prize,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    $('gameActiveBox').classList.remove('hidden');$('gameTimerBox').classList.add('hidden');
+}
+
+function renderPredictionHistory(snap) {
+    const container = $('predictionHistoryContainer');
+    container.innerHTML = '';
+    let has = false;
+    let total24Pl = 0;
+    const now = Date.now();
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+
+    snap.forEach(child => {
+        has = true;
+        const p = child.val();
+        const timeDiff = now - num(p.timestamp);
+        const isWithin24H = timeDiff <= ONE_DAY;
+
+        if (isWithin24H) {
+            total24Pl += (p.result === 'WIN' ? num(p.amount) : -num(p.amount));
+        }
+
+        const div = document.createElement('div');
+        div.className = "p-2.5 bg-[#1e2329] rounded-lg border border-zinc-800 flex justify-between items-center";
+        const isWin = p.result === 'WIN';
+        div.innerHTML = `
+            <div>
+                <span class="font-bold text-white">${p.direction} Prediction</span>
+                <span class="text-[10px] text-zinc-400 block">Entry: ${num(p.entryPrice).toFixed(1)} PKR</span>
+            </div>
+            <div class="text-right">
+                <span class="font-black ${isWin ? 'text-[#0ecb81]' : 'text-[#f6465d]'} block">${isWin ? '+' : '-'}${p.amount} PKR</span>
+                <span class="text-[9px] text-zinc-500">${isWin ? 'WON' : 'LOST'}</span>
+            </div>
+        `;
+        container.prepend(div);
+    });
+
+    const summaryEl = $('summary24HoursPL');
+    if (summaryEl) {
+        summaryEl.innerText = (total24Pl >= 0 ? '+' : '') + total24Pl.toFixed(2) + ' PKR';
+        summaryEl.className = `text-xs font-bold ${total24Pl >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'}`;
+    }
+
+    if (!has) {
+        container.innerHTML = '<p class="text-zinc-500 italic text-center py-3">No game history in last 24 hours.</p>';
+    }
+}
+
+async function openCryptoMarketModal() {
+    $('cryptoMarketModal').classList.remove('hidden');$('cryptoMarketModal').classList.add('flex');
+    const container = $('cryptoListContainer');
+
+    if (binanceCoinsCache.length === 0) {
+        container.innerHTML = '<p class="text-zinc-400 text-center py-6 text-xs italic animate-pulse">Fetching Binance live feed...</p>';
+        try {
+            const res = await fetch('https://api.binance.com/api/v3/ticker/price');
+            const data = await res.json();
+            binanceCoinsCache = data.filter(item => item.symbol.endsWith('USDT') && !item.symbol.includes('DOWN') && !item.symbol.includes('UP'));
+        } catch (e) {
+            container.innerHTML = '<p class="text-red-400 text-center py-6 text-xs">Failed to load market.</p>';
+            return;
+        }
+    }
+    renderCryptoList(binanceCoinsCache);
+}
+
+function renderCryptoList(coins) {
+    const container = $('cryptoListContainer');
+    container.innerHTML = '';
+    coins.forEach(c => {
+        const symbol = c.symbol.replace('USDT', '');
+        const priceUSD = flt(c.price);
+        const pricePKR = priceUSD * USD_PKR_RATE;
+        livePricesMap[symbol] = priceUSD;
+
+        const div = document.createElement('div');
+        div.className = "bg-[#1e2329]/80 border border-zinc-800 p-3 rounded-xl flex justify-between items-center hover:bg-[#2b313a] transition-colors";
+        div.innerHTML = `
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 bg-[#f0b90b]/10 border border-[#f0b90b]/30 rounded-full flex items-center justify-center font-bold text-xs crypto-gold">${symbol.charAt(0)}</div>
+                <div>
+                    <h4 class="font-bold text-white text-xs">${symbol}/USDT</h4>
+                    <p class="text-[10px] text-zinc-400">$${priceUSD.toFixed(4)}</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="font-black crypto-gold text-xs block">${pricePKR.toLocaleString('en-US', {maximumFractionDigits: 2})} PKR</span>
+                <button onclick="openBuyCryptoModal('${symbol}', ${priceUSD})" class="mt-1 btn-binance px-3 py-1 rounded-lg text-[10px] uppercase font-bold">Buy</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function filterCryptoCoins() {
+    const query = $('cryptoSearchInput').value.toLowerCase();
+    const filtered = binanceCoinsCache.filter(c => c.symbol.toLowerCase().includes(query));
+    renderCryptoList(filtered);
+}
+
+function openBuyCryptoModal(symbol, priceUSD) {
+    selectedCryptoSymbol = symbol;
+    selectedCryptoPriceUSD = priceUSD;
+    const pricePKR = priceUSD * USD_PKR_RATE;
+
+    $('buyCoinTitle').innerText = `Buy ${symbol} Asset`;
+    $('buyCoinIcon').innerText = symbol.charAt(0);$('buyCoinPriceLabel').innerText = `1 ${symbol} = Rs. ${pricePKR.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+    $('cryptoAmountInput').value = '';$('cryptoEstReceive').innerText = `0.00 ${symbol}`;
+    $('buyCryptoAvailableBal').innerText = num(currentUserData?.walletBalance).toLocaleString() + ' PKR';
+
+    $('buyCryptoModal').classList.remove('hidden');$('buyCryptoModal').classList.add('flex');
+}
+
+function calculateCryptoEst() {
+    const amountPKR = flt($('cryptoAmountInput').value);
+    const pricePKR = selectedCryptoPriceUSD * USD_PKR_RATE;
+    if (pricePKR <= 0 || amountPKR <= 0) {
+        $('cryptoEstReceive').innerText = `0.00 ${selectedCryptoSymbol}`;
+        return;
+    }
+    const qty = amountPKR / pricePKR;
+    $('cryptoEstReceive').innerText = `${qty.toFixed(6)} ${selectedCryptoSymbol}`;
+}
+
+function confirmCryptoPurchase() {
+    const amountPKR = flt($('cryptoAmountInput').value);
+    const balance = num(currentUserData?.walletBalance);
+
+    if (amountPKR <= 0) { showCustomAlert("Invalid", "Enter valid amount."); return; }
+    if (amountPKR > balance) { showCustomAlert("Error", "Insufficient wallet balance."); return; }
+
+    const pricePKR = selectedCryptoPriceUSD * USD_PKR_RATE;
+    const quantity = amountPKR / pricePKR;
+    const newBal = balance - amountPKR;
+
+    const portfolioRef = db.ref(`users/${currentUid}/crypto_portfolio`).push();
+    const portfolioKey = portfolioRef.key;
+
+    let updates = {};
+    updates[`users/${currentUid}/walletBalance`] = newBal;
+    updates[`users/${currentUid}/crypto_portfolio/${portfolioKey}`] = {
+        symbol: selectedCryptoSymbol,
+        quantity,
+        investedPKR: amountPKR,
+        buyPriceUSD: selectedCryptoPriceUSD,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    db.ref().update(updates).then(() => {
+        closeModal('buyCryptoModal');
+        closeModal('cryptoMarketModal');
+        showCustomAlert("Success", `Successfully purchased ${quantity.toFixed(6)} ${selectedCryptoSymbol}!`);
+    }).catch(err => showCustomAlert("Error", err.message));
+}
+
+let cachedPortfolioData = {};
+window.currentPortfolioValCache = 0;
+
+function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
+    const portfolioContainer = $('portfolioContainer');
+    const chartsContainer = $('chartsContainer');
+    
+    portfolioContainer.innerHTML = '';
+    cachedPortfolioData = {};
+    let has = false;
+    let totalPortfolioVal = 0;
+    let totalInvested = 0;
+    let purchasedSymbols = [];
+
+    snap.forEach(child => {
+        has = true;
+        const key = child.key;
+        const item = child.val();
+        cachedPortfolioData[key] = item;
+
+        const symbol = item.symbol;
+        purchasedSymbols.push({ symbol, buyPrice: item.buyPriceUSD });
+        const qty = num(item.quantity);
+        const invested = num(item.investedPKR);
+        totalInvested += invested;
+
+        const currentLivePriceUSD = livePricesMap[symbol] || item.buyPriceUSD;
+        const currentValPKR = qty * currentLivePriceUSD * USD_PKR_RATE;
+        totalPortfolioVal += currentValPKR;
+
+        const profitLossPKR = currentValPKR - invested;
+        const plColor = profitLossPKR >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]';
+        const plSign = profitLossPKR >= 0 ? '+' : '';
+
+        const div = document.createElement('div');
+        div.className = "glass p-3.5 rounded-xl border border-zinc-800 flex justify-between items-center";
+        div.innerHTML = `
+            <div>
+                <h4 class="font-bold crypto-gold text-xs flex items-center gap-1.5"><span>🪙</span><span>${symbol}</span></h4>
+                <p class="text-[10px] text-zinc-400 mt-0.5">Qty: ${qty.toFixed(6)}</p>
+                <p class="text-[10px] text-zinc-500">Invested: ${invested.toFixed(0)} PKR</p>
+            </div>
+            <div class="text-right">
+                <span class="font-black text-white text-xs block">${currentValPKR.toFixed(2)} PKR</span>
+                <span class="text-[10px] font-bold ${plColor} block">${plSign}${profitLossPKR.toFixed(2)} PKR</span>
+                <button onclick="sellPortfolioItem('${key}', ${currentValPKR})" class="mt-1 bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-1 rounded text-[9px] font-bold uppercase">Sell</button>
+            </div>
+        `;
+        portfolioContainer.appendChild(div);
+    });
+
+    window.currentPortfolioValCache = totalPortfolioVal;
+    const totalPL = totalPortfolioVal - totalInvested;
+    const plEl = $('lblTotalPL');
+    if (plEl) {
+        plEl.innerText = (totalPL >= 0 ? '+' : '') + totalPL.toFixed(2) + ' PKR';
+        plEl.className = totalPL >= 0 ? 'font-bold text-[#0ecb81]' : 'font-bold text-[#f6465d]';
+    }
+
+    updateWalletHeaderDisplay();
+
+    if (!has) {
+        portfolioContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-4 text-xs">No coins purchased yet. Open market to buy.</p>';
+        window.currentPortfolioValCache = 0;
+        updateWalletHeaderDisplay();
+        purchasedSymbols = [{ symbol: 'BNB', buyPrice: livePricesMap['BNB'] || 600 }];
+    }
+
+    renderCharts(purchasedSymbols, isIntervalUpdate);
+}
+
+function renderCharts(symbolsList, isIntervalUpdate) {
+    const chartsContainer = $('chartsContainer');
+    
+    if (!isIntervalUpdate) {
+        chartsContainer.innerHTML = '';
+        activeChartInstances = {};
+        
+        symbolsList.forEach((item, index) => {
+            const canvasId = `chart_${item.symbol}_${index}`;
+            const card = document.createElement('div');
+            card.className = "glass p-3 rounded-xl border border-zinc-800";
+            card.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold crypto-gold">${item.symbol}/USDT Real-Time P&L</span>
+                    <span id="price_${item.symbol}_${index}" class="text-xs font-mono text-[#0ecb81]">--</span>
+                </div>
+                <div style="height: 140px; position: relative;">
+                    <canvas id="${canvasId}"></canvas>
+                </div>
+            `;
+            chartsContainer.appendChild(card);
+
+            const currentPrice = (livePricesMap[item.symbol] || item.buyPrice || 100) * USD_PKR_RATE;
+            chartDataHistory[canvasId] = {
+                labels: ['0s', '2s', '4s', '6s', '8s', '10s'],
+                data: [currentPrice, currentPrice, currentPrice, currentPrice, currentPrice, currentPrice]
+            };
+
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            activeChartInstances[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartDataHistory[canvasId].labels,
+                    datasets: [{
+                        label: `${item.symbol} Price (PKR)`,
+                        data: chartDataHistory[canvasId].data,
+                        borderColor: '#f0b90b',
+                        backgroundColor: 'rgba(240, 185, 11, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#848e9c', font: { size: 9 } }, grid: { display: false } },
+                        y: { ticks: { color: '#848e9c', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+        });
+    }
+
+    symbolsList.forEach((item, index) => {
+        const canvasId = `chart_${item.symbol}_${index}`;
+        const chart = activeChartInstances[canvasId];
+        if (chart) {
+            const livePriceUSD = livePricesMap[item.symbol] || item.buyPrice || 100;
+            const livePricePKR = livePriceUSD * USD_PKR_RATE;
+            
+            const priceLabelEl = document.getElementById(`price_${item.symbol}_${index}`);
+            if (priceLabelEl) priceLabelEl.innerText = livePricePKR.toFixed(2) + ' PKR';
+
+            const hist = chartDataHistory[canvasId];
+            hist.data.shift();
+            hist.data.push(livePricePKR);
+            
+            chart.data.datasets[0].data = hist.data;
+            chart.update('none');
+        }
+    });
+}
+
+function sellPortfolioItem(key, currentValPKR) {
+    if (!confirm(`Are you sure you want to sell this asset for ${currentValPKR.toFixed(2)} PKR?`)) return;
+    const currentBal = num(currentUserData?.walletBalance);
+    const newBal = currentBal + currentValPKR;
+
+    let updates = {};
+    updates[`users/${currentUid}/walletBalance`] = newBal;
+    updates[`users/${currentUid}/crypto_portfolio/${key}`] = null;
+
+    db.ref().update(updates).then(() => {
+        showToast("Asset sold successfully! Funds added to wallet.");
+    }).catch(err => showCustomAlert("Error", err.message));
+}
+
+/* ============ SHIFT / TRANSFER COIN ============ */
+function openShiftModal() {
+    const sel = $('shiftFromCoin');
+    sel.innerHTML = '<option value="">-- Select Your Holding --</option>';
+    let has = false;
+
+    for (const key in cachedPortfolioData) {
+        has = true;
+        const item = cachedPortfolioData[key];
+        const currentLivePriceUSD = livePricesMap[item.symbol] || item.buyPriceUSD;
+        const valPKR = num(item.quantity) * currentLivePriceUSD * USD_PKR_RATE;
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.innerText = `${item.symbol} (~${valPKR.toFixed(0)} PKR)`;
+        sel.appendChild(opt);
+    }
+
+    if (!has) { showCustomAlert("Notice", "You don't have any coins in portfolio to shift."); return; }
+
+    const targetSel = $('shiftToSymbol');
+    targetSel.innerHTML = '<option value="">-- Select Target Coin --</option>';
+    if (binanceCoinsCache.length > 0) {
+        binanceCoinsCache.forEach(c => {
+            const sym = c.symbol.replace('USDT', '');
+            const opt = document.createElement('option');
+            opt.value = sym;
+            opt.innerText = `${sym} / USDT`;
+            targetSel.appendChild(opt);
+        });
+    } else {
+        ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'DOGE'].forEach(sym => {
+            const opt = document.createElement('option');
+            opt.value = sym;
+            opt.innerText = `${sym} / USDT`;
+            targetSel.appendChild(opt);
+        });
+    }
+
+    $('shiftModal').classList.remove('hidden');$('shiftModal').classList.add('flex');
+}
+
+function confirmShiftCoin() {
+    const key = $('shiftFromCoin').value;
+    const targetSymbol = $('shiftToSymbol').value;
+
+    if (!key || !targetSymbol) { showCustomAlert("Error", "Please select source holding and target coin."); return; }
+    const item = cachedPortfolioData[key];
+    if (!item) return;
+
+    const currentLivePriceUSD = livePricesMap[item.symbol] || item.buyPriceUSD;
+    let valPKR = num(item.quantity) * currentLivePriceUSD * USD_PKR_RATE;
+
+    const fee = valPKR * 0.01;
+    valPKR -= fee;
+
+    const targetPriceUSD = livePricesMap[targetSymbol] || 1;
+    const targetPricePKR = targetPriceUSD * USD_PKR_RATE;
+    const targetQty = valPKR / targetPricePKR;
+
+    const newPortfolioRef = db.ref(`users/${currentUid}/crypto_portfolio`).push();
+
+    let updates = {};
+    updates[`users/${currentUid}/crypto_portfolio/${key}`] = null;
+    updates[`users/${currentUid}/crypto_portfolio/${newPortfolioRef.key}`] = {
+        symbol: targetSymbol,
+        quantity: targetQty,
+        investedPKR: valPKR,
+        buyPriceUSD: targetPriceUSD,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    db.ref().update(updates).then(() => {
+        closeModal('shiftModal');
+        showCustomAlert("Success", `Successfully shifted to ${targetSymbol} (1% fee deducted)!`);
+    }).catch(err => showCustomAlert("Error", err.message));
+}
+
+/* ============ HISTORY RENDERING ============ */
+function renderHistory(snap) {
+    const c = $('historyContent');
+    c.innerHTML = '';
+    let has = false;
+    snap.forEach(child => {
+        has = true;
+        const h = child.val();
+        const div = document.createElement('div');
+        div.className = "p-2.5 bg-[#1e2329] rounded-lg border border-zinc-800 flex justify-between items-center text-xs";
+        div.innerHTML = `<span>${esc(h.type || 'Transaction')}</span><span class="crypto-gold">${num(h.amount)} PKR</span>`;
+        c.prepend(div);
+    });
+    if (!has) c.innerHTML = '<p class="text-zinc-500 italic text-center py-2">No history records.</p>';
+}
+
+function openUserSettingsModal() {
+    $('userSettingsModal').classList.remove('hidden');$('userSettingsModal').classList.add('flex');
+}
+
+$('changePasswordForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const newPwd = $('newPasswordInput').value;
+    if (newPwd.length < 6) { showCustomAlert("Error", "Minimum 6 characters required."); return; }
+    auth.currentUser.updatePassword(newPwd).then(() => {
+        showCustomAlert("Success", "Password updated successfully.");
+        $('changePasswordForm').reset();
+    }).catch(err => showCustomAlert("Error", err.message));
+});
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.flex').forEach(m => {
+            m.classList.add('hidden'); m.classList.remove('flex');
+        });
+    }
+});
 </script>
 </body>
 </html>
