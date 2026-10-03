@@ -207,7 +207,7 @@ input, select, textarea { color-scheme: dark; }
                     <div class="w-10 h-10 bg-[#0ecb81]/20 border border-[#0ecb81]/50 rounded-xl flex items-center justify-center text-lg">⚡</div>
                     <div>
                         <h4 class="font-bold text-xs text-white uppercase tracking-wider">10s BNB/USDT Prediction Arena</h4>
-                        <p class="text-[10px] text-[#0ecb81] font-semibold mt-0.5">🎯 Predict Up/Down, Win Rs.21 on Rs.500! (Max 20/day)</p>
+                        <p class="text-[10px] text-[#0ecb81] font-semibold mt-0.5">🎯 Predict Up/Down, Win Rs.21! (Max 20/day)</p>
                     </div>
                 </div>
                 <span class="text-sm font-bold text-[#0ecb81]">→</span>
@@ -494,7 +494,7 @@ input, select, textarea { color-scheme: dark; }
 
 <script>
 /* =========================================================
-   BINANCE PRO CRYPTO WALLET SCRIPT WITH 10S PREDICTION GAME
+   BINANCE PRO CRYPTO WALLET SCRIPT (LOGOUT BUG FIXED)
    ========================================================= */
 
 const firebaseConfig = {
@@ -656,7 +656,7 @@ function logout() {
     if (!confirm("Sign out?")) return;
     detachAllListeners();
     if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-    auth.signOut().then(() => toggleAuthMode(false));
+    auth.signOut();
 }
 
 auth.onAuthStateChanged(user => {
@@ -694,7 +694,8 @@ auth.onAuthStateChanged(user => {
     } else {
         currentUid = null;
         currentUserData = null;
-        $('authContainer').classList.add('hidden');
+        // FIXED: Show authContainer and hide dashboardContainer properly on logout
+        $('authContainer').classList.remove('hidden');
         $('dashboardContainer').classList.add('hidden');
         toggleAuthMode(false);
     }
@@ -781,7 +782,8 @@ async function startBinancePricePolling() {
 
         const bnbUsd = livePricesMap['BNB'] || 600;
         const bnbPkr = bnbUsd * USD_PKR_RATE;
-        if ($('gameLiveBnbPrice')) {$('gameLiveBnbPrice').innerText = bnbPkr.toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
+        if ($('gameLiveBnbPrice')) {
+            $('gameLiveBnbPrice').innerText = bnbPkr.toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
         }
     } catch (e) {}
     
@@ -845,23 +847,19 @@ function evaluatePredictionResult(direction, entryPricePKR) {
     if (direction === 'UP' && diff > 0) won = true;
     else if (direction === 'DOWN' && diff < 0) won = true;
     else {
-        // slight random fallback if price unchanged exactly
         won = Math.random() > 0.5;
     }
 
     const currentBal = num(currentUserData?.walletBalance);
     const prize = 21;
     let newBal = currentBal;
-    let profitLossVal = 0;
 
     if (won) {
         newBal += prize;
-        profitLossVal = prize;
         showCustomAlert("🎉 You Won!", `BNB/USDT moved ${diff >= 0 ? 'UP' : 'DOWN'}. You won Rs. ${prize} prize!`);
     } else {
         newBal -= prize;
         if (newBal < 0) newBal = 0;
-        profitLossVal = -prize;
         showCustomAlert("❌ You Lost!", `Market moved against your prediction. Rs. ${prize} deducted from your account.`);
     }
 
