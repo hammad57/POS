@@ -144,18 +144,19 @@ input, select, textarea { color-scheme: dark; }
         </div>
     </header>
 
-    <!-- WALLET BALANCE CARD -->
+    <!-- WALLET BALANCE CARD WITH INDEPENDENT DEMO ACCOUNT TOGGLE -->
     <div class="bg-gradient-to-br from-[#1e2329] via-[#181a20] to-[#0b0e11] border border-zinc-800 rounded-2xl p-5 mb-4 shadow-2xl relative overflow-hidden card-glow">
         <div class="absolute -right-4 -bottom-4 opacity-[0.05] text-9xl">💰</div>
         <div class="relative z-10">
-            <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
-                    <p class="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">Wallet Available Balance</p>
+                    <p id="lblAccountTitle" class="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">Demo Account Balance</p>
                     <button onclick="manualRefreshBalance()" title="Refresh Balance" class="text-xs text-[#f0b90b] hover:rotate-180 transition-transform duration-500">🔄</button>
                 </div>
-                <div class="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-full border border-zinc-800">
-                    <span class="w-1.5 h-1.5 bg-[#0ecb81] rounded-full"></span>
-                    <span class="text-[9px] text-[#0ecb81] font-bold tracking-wider">LIVE</span>
+                <!-- Demo Toggle Button / Badge -->
+                <div class="flex items-center gap-2">
+                    <span id="lblAccountBadge" class="bg-[#f0b90b]/20 text-[#f0b90b] border border-[#f0b90b]/40 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase">DEMO</span>
+                    <button onclick="toggleDemoAccountMode()" id="btnToggleDemo" class="text-[10px] bg-[#2b313a] hover:bg-zinc-700 text-zinc-200 px-2.5 py-1 rounded-lg border border-zinc-700 font-bold transition-all">Deactivate Demo</button>
                 </div>
             </div>
             <div class="flex items-end gap-2 mb-3">
@@ -409,7 +410,7 @@ input, select, textarea { color-scheme: dark; }
         </div>
         <div class="mb-3 px-3 py-2 bg-[#2b313a]/50 rounded-xl border border-zinc-700 flex justify-between items-center text-xs">
             <div>
-                <span class="text-[10px] text-zinc-400 block uppercase">Wallet Balance</span>
+                <span class="text-[10px] text-zinc-400 block uppercase">Active Balance</span>
                 <span id="marketWalletBal" class="font-black crypto-gold text-sm">0 PKR</span>
             </div>
             <div class="text-right">
@@ -442,7 +443,7 @@ input, select, textarea { color-scheme: dark; }
             </div>
             <div class="bg-[#2b313a]/50 p-3 rounded-xl border border-zinc-700 space-y-1">
                 <div class="flex justify-between"><span class="text-zinc-400">Estimated Receive:</span><span id="cryptoEstReceive" class="font-mono text-[#0ecb81] font-bold">0.00</span></div>
-                <div class="flex justify-between"><span class="text-zinc-400">Wallet Balance:</span><span id="buyCryptoAvailableBal" class="font-mono crypto-gold font-bold">0 PKR</span></div>
+                <div class="flex justify-between"><span class="text-zinc-400">Active Balance:</span><span id="buyCryptoAvailableBal" class="font-mono crypto-gold font-bold">0 PKR</span></div>
             </div>
             <button onclick="confirmCryptoPurchase()" class="w-full btn-binance py-3 rounded-xl uppercase tracking-wider font-bold">Confirm & Buy</button>
         </div>
@@ -494,7 +495,7 @@ input, select, textarea { color-scheme: dark; }
 
 <script>
 /* =========================================================
-   BINANCE PRO CRYPTO WALLET SCRIPT (LOGOUT BUG FIXED)
+   BINANCE PRO CRYPTO WALLET SCRIPT (INDEPENDENT DEMO ACCOUNT)
    ========================================================= */
 
 const firebaseConfig = {
@@ -639,7 +640,9 @@ $('registerForm').addEventListener('submit', e => {
     auth.createUserWithEmailAndPassword(email, password).then(cred => {
         return db.ref('users/' + cred.user.uid).set({
             name, mobile, email,
-            walletBalance: 50000,
+            walletBalance: 0,         // Real wallet starts at 0
+            demoBalance: 50000,       // Independent demo balance starts at 50,000
+            isDemoActive: true,       // Demo mode active by default
             status: "active",
             createdAt: firebase.database.ServerValue.TIMESTAMP
         });
@@ -694,7 +697,6 @@ auth.onAuthStateChanged(user => {
     } else {
         currentUid = null;
         currentUserData = null;
-        // FIXED: Show authContainer and hide dashboardContainer properly on logout
         $('authContainer').classList.remove('hidden');
         $('dashboardContainer').classList.add('hidden');
         toggleAuthMode(false);
@@ -712,14 +714,43 @@ function manualRefreshBalance(showNotif = true) {
     });
 }
 
+/* ============ TOGGLE DEMO / REAL ACCOUNT MODE ============ */
+function toggleDemoAccountMode() {
+    if (!currentUid || !currentUserData) return;
+    const currentStatus = currentUserData.isDemoActive !== false; // default true
+    const newStatus = !currentStatus;
+
+    db.ref(`users/${currentUid}/isDemoActive`).set(newStatus).then(() => {
+        currentUserData.isDemoActive = newStatus;
+        updateWalletHeaderDisplay();
+        showToast(newStatus ? "✓ Switched to Demo Account" : "✓ Switched to Real Account");
+    });
+}
+
 function updateWalletHeaderDisplay() {
     if (!currentUserData) return;
-    const cashBal = num(currentUserData.walletBalance);
-    $('lblCashWallet').innerText = cashBal.toLocaleString('en-US', {minimumFractionDigits: 2}) + ' PKR';
-    $('marketWalletBal').innerText = cashBal.toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
     
-    const totalEquity = cashBal + (window.currentPortfolioValCache || 0);
-    $('lblWalletBalance').innerText = totalEquity.toLocaleString('en-US', {minimumFractionDigits: 2});
+    const isDemo = currentUserData.isDemoActive !== false; // true by default
+    const cashBal = num(currentUserData.walletBalance);
+    const demoBal = currentUserData.demoBalance !== undefined ? num(currentUserData.demoBalance) : 50000;
+
+    // Update UI elements based on Demo or Real state
+    if (isDemo) {
+        $('lblAccountTitle').innerText = "DEMO ACCOUNT BALANCE";
+        $('lblAccountBadge').innerText = "DEMO";
+        $('lblAccountBadge').className = "bg-[#f0b90b]/20 text-[#f0b90b] border border-[#f0b90b]/40 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase";
+        $('btnToggleDemo').innerText = "Deactivate Demo";
+        $('lblWalletBalance').innerText = demoBal.toLocaleString('en-US', {minimumFractionDigits: 2});
+    } else {
+        $('lblAccountTitle').innerText = "REAL WALLET BALANCE";
+        $('lblAccountBadge').innerText = "REAL";
+        $('lblAccountBadge').className = "bg-[#0ecb81]/20 text-[#0ecb81] border border-[#0ecb81]/40 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase";
+        $('btnToggleDemo').innerText = "Activate Demo";
+        $('lblWalletBalance').innerText = cashBal.toLocaleString('en-US', {minimumFractionDigits: 2});
+    }
+
+    $('lblCashWallet').innerText = cashBal.toLocaleString('en-US', {minimumFractionDigits: 2}) + ' PKR';
+    $('marketWalletBal').innerText = (isDemo ? demoBal : cashBal).toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
 }
 
 /* ============ DEPOSIT & WITHDRAW ============ */
@@ -756,7 +787,7 @@ $('withdrawForm').addEventListener('submit', e => {
 
     if (amount < 1000) { showCustomAlert("Limit", "Minimum withdrawal is Rs. 1000"); return; }
     const balance = num(currentUserData?.walletBalance);
-    if (amount > balance) { showCustomAlert("Error", "Insufficient cash wallet balance."); return; }
+    if (amount > balance) { showCustomAlert("Error", "Insufficient cash wallet balance in Real Account."); return; }
 
     const newBal = balance - amount;
     db.ref(`users/${currentUid}/walletBalance`).set(newBal).then(() => {
@@ -850,26 +881,44 @@ function evaluatePredictionResult(direction, entryPricePKR) {
         won = Math.random() > 0.5;
     }
 
-    const currentBal = num(currentUserData?.walletBalance);
+    const isDemo = currentUserData.isDemoActive !== false;
     const prize = 21;
-    let newBal = currentBal;
+
+    if (isDemo) {
+        let currentDemoBal = currentUserData.demoBalance !== undefined ? num(currentUserData.demoBalance) : 50000;
+        if (won) currentDemoBal += prize;
+        else {
+            currentDemoBal -= prize;
+            if (currentDemoBal < 0) currentDemoBal = 0;
+        }
+        db.ref(`users/${currentUid}/demoBalance`).set(currentDemoBal);
+        currentUserData.demoBalance = currentDemoBal;
+    } else {
+        let currentRealBal = num(currentUserData.walletBalance);
+        if (won) currentRealBal += prize;
+        else {
+            currentRealBal -= prize;
+            if (currentRealBal < 0) currentRealBal = 0;
+        }
+        db.ref(`users/${currentUid}/walletBalance`).set(currentRealBal);
+        currentUserData.walletBalance = currentRealBal;
+    }
 
     if (won) {
-        newBal += prize;
         showCustomAlert("🎉 You Won!", `BNB/USDT moved ${diff >= 0 ? 'UP' : 'DOWN'}. You won Rs. ${prize} prize!`);
     } else {
-        newBal -= prize;
-        if (newBal < 0) newBal = 0;
         showCustomAlert("❌ You Lost!", `Market moved against your prediction. Rs. ${prize} deducted from your account.`);
     }
 
-    db.ref(`users/${currentUid}/walletBalance`).set(newBal);
+    updateWalletHeaderDisplay();
+
     db.ref(`users/${currentUid}/predictions`).push({
         direction,
         entryPrice: entryPricePKR,
         exitPrice: exitPricePKR,
         result: won ? 'WIN' : 'LOSS',
         amount: prize,
+        isDemo,
         timestamp: firebase.database.ServerValue.TIMESTAMP
     });
 
@@ -899,7 +948,7 @@ function renderPredictionHistory(snap) {
         const isWin = p.result === 'WIN';
         div.innerHTML = `
             <div>
-                <span class="font-bold text-white">${p.direction} Prediction</span>
+                <span class="font-bold text-white">${p.direction} Prediction ${p.isDemo ? '(Demo)' : ''}</span>
                 <span class="text-[10px] text-zinc-400 block">Entry: ${num(p.entryPrice).toFixed(1)} PKR</span>
             </div>
             <div class="text-right">
@@ -978,10 +1027,13 @@ function openBuyCryptoModal(symbol, priceUSD) {
     selectedCryptoPriceUSD = priceUSD;
     const pricePKR = priceUSD * USD_PKR_RATE;
 
-    $('buyCoinTitle').innerText = `Buy ${symbol} Asset`;
+    const isDemo = currentUserData.isDemoActive !== false;
+    const activeBal = isDemo ? (currentUserData.demoBalance !== undefined ? currentUserData.demoBalance : 50000) : num(currentUserData?.walletBalance);
+
+    $('buyCoinTitle').innerText = `Buy ${symbol} Asset (${isDemo ? 'Demo' : 'Real'})`;
     $('buyCoinIcon').innerText = symbol.charAt(0);$('buyCoinPriceLabel').innerText = `1 ${symbol} = Rs. ${pricePKR.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
     $('cryptoAmountInput').value = '';$('cryptoEstReceive').innerText = `0.00 ${symbol}`;
-    $('buyCryptoAvailableBal').innerText = num(currentUserData?.walletBalance).toLocaleString() + ' PKR';
+    $('buyCryptoAvailableBal').innerText = activeBal.toLocaleString() + ' PKR';
 
     $('buyCryptoModal').classList.remove('hidden');$('buyCryptoModal').classList.add('flex');
 }
@@ -999,31 +1051,42 @@ function calculateCryptoEst() {
 
 function confirmCryptoPurchase() {
     const amountPKR = flt($('cryptoAmountInput').value);
-    const balance = num(currentUserData?.walletBalance);
+    const isDemo = currentUserData.isDemoActive !== false;
+    const activeBal = isDemo ? (currentUserData.demoBalance !== undefined ? currentUserData.demoBalance : 50000) : num(currentUserData?.walletBalance);
 
     if (amountPKR <= 0) { showCustomAlert("Invalid", "Enter valid amount."); return; }
-    if (amountPKR > balance) { showCustomAlert("Error", "Insufficient wallet balance."); return; }
+    if (amountPKR > activeBal) { showCustomAlert("Error", "Insufficient balance in active account."); return; }
 
     const pricePKR = selectedCryptoPriceUSD * USD_PKR_RATE;
     const quantity = amountPKR / pricePKR;
-    const newBal = balance - amountPKR;
+
+    let updates = {};
+    if (isDemo) {
+        const newDemoBal = activeBal - amountPKR;
+        updates[`users/${currentUid}/demoBalance`] = newDemoBal;
+        currentUserData.demoBalance = newDemoBal;
+    } else {
+        const newRealBal = activeBal - amountPKR;
+        updates[`users/${currentUid}/walletBalance`] = newRealBal;
+        currentUserData.walletBalance = newRealBal;
+    }
 
     const portfolioRef = db.ref(`users/${currentUid}/crypto_portfolio`).push();
     const portfolioKey = portfolioRef.key;
 
-    let updates = {};
-    updates[`users/${currentUid}/walletBalance`] = newBal;
     updates[`users/${currentUid}/crypto_portfolio/${portfolioKey}`] = {
         symbol: selectedCryptoSymbol,
         quantity,
         investedPKR: amountPKR,
         buyPriceUSD: selectedCryptoPriceUSD,
+        isDemo,
         timestamp: firebase.database.ServerValue.TIMESTAMP
     };
 
     db.ref().update(updates).then(() => {
         closeModal('buyCryptoModal');
         closeModal('cryptoMarketModal');
+        updateWalletHeaderDisplay();
         showCustomAlert("Success", `Successfully purchased ${quantity.toFixed(6)} ${selectedCryptoSymbol}!`);
     }).catch(err => showCustomAlert("Error", err.message));
 }
@@ -1066,14 +1129,14 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
         div.className = "glass p-3.5 rounded-xl border border-zinc-800 flex justify-between items-center";
         div.innerHTML = `
             <div>
-                <h4 class="font-bold crypto-gold text-xs flex items-center gap-1.5"><span>🪙</span><span>${symbol}</span></h4>
+                <h4 class="font-bold crypto-gold text-xs flex items-center gap-1.5"><span>🪙</span><span>${symbol} ${item.isDemo ? '(Demo)' : ''}</span></h4>
                 <p class="text-[10px] text-zinc-400 mt-0.5">Qty: ${qty.toFixed(6)}</p>
                 <p class="text-[10px] text-zinc-500">Invested: ${invested.toFixed(0)} PKR</p>
             </div>
             <div class="text-right">
                 <span class="font-black text-white text-xs block">${currentValPKR.toFixed(2)} PKR</span>
                 <span class="text-[10px] font-bold ${plColor} block">${plSign}${profitLossPKR.toFixed(2)} PKR</span>
-                <button onclick="sellPortfolioItem('${key}', ${currentValPKR})" class="mt-1 bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-1 rounded text-[9px] font-bold uppercase">Sell</button>
+                <button onclick="sellPortfolioItem('${key}', ${currentValPKR}, ${item.isDemo})" class="mt-1 bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-1 rounded text-[9px] font-bold uppercase">Sell</button>
             </div>
         `;
         portfolioContainer.appendChild(div);
@@ -1087,12 +1150,9 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
         plEl.className = totalPL >= 0 ? 'font-bold text-[#0ecb81]' : 'font-bold text-[#f6465d]';
     }
 
-    updateWalletHeaderDisplay();
-
     if (!has) {
         portfolioContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-4 text-xs">No coins purchased yet. Open market to buy.</p>';
         window.currentPortfolioValCache = 0;
-        updateWalletHeaderDisplay();
         purchasedSymbols = [{ symbol: 'BNB', buyPrice: livePricesMap['BNB'] || 600 }];
     }
 
@@ -1176,17 +1236,27 @@ function renderCharts(symbolsList, isIntervalUpdate) {
     });
 }
 
-function sellPortfolioItem(key, currentValPKR) {
+function sellPortfolioItem(key, currentValPKR, isDemoItem) {
     if (!confirm(`Are you sure you want to sell this asset for ${currentValPKR.toFixed(2)} PKR?`)) return;
-    const currentBal = num(currentUserData?.walletBalance);
-    const newBal = currentBal + currentValPKR;
 
     let updates = {};
-    updates[`users/${currentUid}/walletBalance`] = newBal;
+    if (isDemoItem) {
+        const currentDemoBal = currentUserData.demoBalance !== undefined ? num(currentUserData.demoBalance) : 50000;
+        const newDemoBal = currentDemoBal + currentValPKR;
+        updates[`users/${currentUid}/demoBalance`] = newDemoBal;
+        currentUserData.demoBalance = newDemoBal;
+    } else {
+        const currentRealBal = num(currentUserData?.walletBalance);
+        const newRealBal = currentRealBal + currentValPKR;
+        updates[`users/${currentUid}/walletBalance`] = newRealBal;
+        currentUserData.walletBalance = newRealBal;
+    }
+
     updates[`users/${currentUid}/crypto_portfolio/${key}`] = null;
 
     db.ref().update(updates).then(() => {
-        showToast("Asset sold successfully! Funds added to wallet.");
+        updateWalletHeaderDisplay();
+        showToast("Asset sold successfully! Funds added to active balance.");
     }).catch(err => showCustomAlert("Error", err.message));
 }
 
@@ -1203,7 +1273,7 @@ function openShiftModal() {
         const valPKR = num(item.quantity) * currentLivePriceUSD * USD_PKR_RATE;
         const opt = document.createElement('option');
         opt.value = key;
-        opt.innerText = `${item.symbol} (~${valPKR.toFixed(0)} PKR)`;
+        opt.innerText = `${item.symbol} ${item.isDemo ? '(Demo)' : '(Real)'} (~${valPKR.toFixed(0)} PKR)`;
         sel.appendChild(opt);
     }
 
@@ -1258,6 +1328,7 @@ function confirmShiftCoin() {
         quantity: targetQty,
         investedPKR: valPKR,
         buyPriceUSD: targetPriceUSD,
+        isDemo: item.isDemo,
         timestamp: firebase.database.ServerValue.TIMESTAMP
     };
 
