@@ -2,51 +2,200 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Investment Wallet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Crypto Pro Wallet</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
-        .container { max-width: 400px; margin: auto; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
-        .hidden { display: none; }
-        input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: none; box-sizing: border-box;}
-        button { background-color: #00e676; color: black; font-weight: bold; cursor: pointer; }
-        .demo-btn { background-color: #ff9100; }
-        .logout-btn { background-color: #ff1744; color: white; }
-        .price-up { color: #00e676; }
-        .price-down { color: #ff1744; }
+        /* Base Styles */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0d1117; color: #c9d1d9; margin: 0; padding: 0; padding-bottom: 70px; }
+        .container { max-width: 500px; margin: auto; padding: 15px; }
+        .hidden { display: none !important; }
+        .screen { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Typography & Inputs */
+        h2, h3, h4 { color: #ffffff; margin-top: 0; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #161b22; border: 1px solid #30363d; color: white; border-radius: 6px; box-sizing: border-box; outline: none; }
+        input:focus { border-color: #58a6ff; }
+        
+        /* Buttons */
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; transition: 0.2s; text-align: center; }
+        .btn-success { background: #238636; color: white; }
+        .btn-success:hover { background: #2ea043; }
+        .btn-warning { background: #e3b341; color: #0d1117; }
+        .btn-danger { background: #da3633; color: white; }
+        .btn-outline { background: transparent; border: 1px solid #58a6ff; color: #58a6ff; }
+
+        /* Cards */
+        .card { background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; margin-bottom: 15px; }
+        .wallet-card { background: linear-gradient(135deg, #161b22, #21262d); text-align: center; }
+        .wallet-card h1 { color: #3fb950; font-size: 32px; margin: 10px 0; }
+        
+        /* Grids & Lists */
+        .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        .action-btn { background: #21262d; border-radius: 10px; padding: 15px 5px; text-align: center; cursor: pointer; font-size: 12px; }
+        .action-btn i { font-size: 20px; margin-bottom: 8px; display: block; color: #58a6ff; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #30363d; }
+        .list-item:last-child { border-bottom: none; }
+        .price-up { color: #3fb950; }
+        .price-down { color: #f85149; }
+
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #161b22; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #30363d; z-index: 100; }
+        .nav-item { text-align: center; color: #8b949e; font-size: 11px; cursor: pointer; flex: 1; }
+        .nav-item i { font-size: 20px; margin-bottom: 4px; display: block; }
+        .nav-item.active { color: #58a6ff; }
+
+        /* Modals */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 200; }
+        .modal-content { background: #161b22; width: 90%; max-width: 400px; padding: 20px; border-radius: 12px; border: 1px solid #30363d; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Auth Section -->
-    <div id="auth-section" class="card">
-        <h2>Login</h2>
-        <input type="text" id="username" placeholder="Username (e.g. hammad)">
-        <input type="password" id="password" placeholder="Password">
-        <button onclick="loginUser()">Login</button>
-        <p>OR</p>
-        <button class="demo-btn" onclick="demoLogin()">Try Demo Account (Rs. 10,000)</button>
+
+    <!-- ================= AUTH SCREEN ================= -->
+    <div id="screen-auth" class="screen">
+        <div class="card" style="margin-top: 50px; text-align: center;">
+            <h2>Crypto Pro Wallet</h2>
+            <p style="color:#8b949e; font-size:14px;">Secure Investment Platform</p>
+            
+            <div id="login-form">
+                <input type="text" id="login-username" placeholder="Username">
+                <input type="password" id="login-password" placeholder="Password">
+                <button class="btn btn-success" onclick="loginUser()">Login</button>
+                <button class="btn btn-warning" onclick="demoLogin()">Try Demo Account (Rs. 10,000)</button>
+                <p style="margin-top:15px; font-size:14px;">No account? <a href="#" onclick="toggleAuth('signup')" style="color:#58a6ff;">Sign up here</a></p>
+            </div>
+
+            <div id="signup-form" class="hidden">
+                <input type="text" id="signup-username" placeholder="Choose Username">
+                <input type="number" id="signup-mobile" placeholder="Mobile Number">
+                <input type="password" id="signup-password" placeholder="Password">
+                <button class="btn btn-outline" onclick="registerUser()">Create Account</button>
+                <p style="margin-top:15px; font-size:14px;">Have an account? <a href="#" onclick="toggleAuth('login')" style="color:#58a6ff;">Login here</a></p>
+            </div>
+        </div>
     </div>
 
-    <!-- Dashboard Section -->
-    <div id="dashboard-section" class="card hidden">
-        <h2>My Dashboard</h2>
-        <p>UID: <span id="user-uid" style="font-size: 12px; color: gray;"></span></p>
+    <!-- ================= DASHBOARD SCREEN ================= -->
+    <div id="screen-dashboard" class="screen hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2>Dashboard</h2>
+            <i class="fas fa-bell"></i>
+        </div>
         
-        <div class="card" style="background: #2c2c2c;">
-            <h3>Available Balance</h3>
-            <h1 style="color: #00e676;">PKR <span id="wallet-balance">0.00</span></h1>
+        <div class="card wallet-card">
+            <h3 style="color:#8b949e; font-size:14px; font-weight:normal;">Available Balance</h3>
+            <h1>PKR <span id="dash-balance">0.00</span></h1>
+            <div style="display:flex; justify-content:space-between; margin-top:15px; border-top:1px solid #30363d; padding-top:15px;">
+                <div>
+                    <p style="margin:0; font-size:12px; color:#8b949e;">Total Invested</p>
+                    <h4 style="margin:5px 0 0 0;">PKR <span id="dash-invested">0.00</span></h4>
+                </div>
+                <div>
+                    <p style="margin:0; font-size:12px; color:#8b949e;">Account Status</p>
+                    <h4 style="margin:5px 0 0 0; color:#3fb950;">Active</h4>
+                </div>
+            </div>
         </div>
 
-        <div class="card" style="background: #2c2c2c;">
-            <h3>Live Market (Binance)</h3>
-            <p>Bitcoin (BTC)</p>
-            <h2 id="btc-price">Loading...</h2>
+        <div class="action-grid">
+            <div class="action-btn" onclick="navTo('screen-deposit')"><i class="fas fa-wallet"></i>Deposit</div>
+            <div class="action-btn" onclick="navTo('screen-market')"><i class="fas fa-shopping-cart"></i>Buy</div>
+            <div class="action-btn" onclick="navTo('screen-portfolio')"><i class="fas fa-chart-pie"></i>Portfolio</div>
+            <div class="action-btn" onclick="navTo('screen-withdraw')"><i class="fas fa-money-bill-wave"></i>Withdraw</div>
         </div>
 
-        <button onclick="logout()">Logout</button>
+        <h3>Market Overview</h3>
+        <div class="card" id="mini-market-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- ================= MARKET SCREEN ================= -->
+    <div id="screen-market" class="screen hidden">
+        <h2>Live Market</h2>
+        <div class="card" id="full-market-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- ================= PORTFOLIO SCREEN ================= -->
+    <div id="screen-portfolio" class="screen hidden">
+        <h2>My Investments</h2>
+        <div class="card wallet-card" style="padding:15px;">
+            <h3 style="color:#8b949e; font-size:14px;">Total Portfolio Value</h3>
+            <h1 style="font-size:24px;">PKR <span id="port-total-value">0.00</span></h1>
+        </div>
+        <div class="card" id="portfolio-list">
+            <p style="text-align:center; color:#8b949e;">No active investments found.</p>
+        </div>
+    </div>
+
+    <!-- ================= DEPOSIT SCREEN ================= -->
+    <div id="screen-deposit" class="screen hidden">
+        <h2>Add Balance</h2>
+        <div class="card">
+            <label>Amount (PKR)</label>
+            <input type="number" id="dep-amount" placeholder="e.g. 5000">
+            <label>Payment Method</label>
+            <select id="dep-method">
+                <option value="easypaisa">EasyPaisa</option>
+                <option value="jazzcash">JazzCash</option>
+                <option value="bank">Bank Transfer</option>
+            </select>
+            <label>Transaction ID / TID</label>
+            <input type="text" id="dep-tid" placeholder="Enter TID">
+            <button class="btn btn-success" onclick="submitDeposit()">Submit Request</button>
+        </div>
+    </div>
+
+    <!-- ================= WITHDRAW SCREEN ================= -->
+    <div id="screen-withdraw" class="screen hidden">
+        <h2>Withdraw Funds</h2>
+        <div class="card">
+            <p>Available for withdrawal: <b>PKR <span id="with-balance">0.00</span></b></p>
+            <label>Amount (PKR)</label>
+            <input type="number" id="with-amount" placeholder="e.g. 2000">
+            <label>Receive in (Account No)</label>
+            <input type="text" id="with-account" placeholder="Jazzcash/Easypaisa Number">
+            <button class="btn btn-danger" onclick="submitWithdraw()">Request Withdraw</button>
+        </div>
+    </div>
+
+    <!-- ================= PROFILE SCREEN ================= -->
+    <div id="screen-profile" class="screen hidden">
+        <h2>My Profile</h2>
+        <div class="card" style="text-align:center;">
+            <i class="fas fa-user-circle" style="font-size:60px; color:#58a6ff; margin-bottom:15px;"></i>
+            <h3>UID: <span id="prof-uid" style="font-size:12px; color:#8b949e;"></span></h3>
+            <button class="btn btn-outline" style="margin-top:20px;" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+</div> <!-- Container End -->
+
+<!-- ================= BOTTOM NAVIGATION ================= -->
+<div id="bottom-nav" class="bottom-nav hidden">
+    <div class="nav-item active" onclick="navTo('screen-dashboard', this)"><i class="fas fa-home"></i>Home</div>
+    <div class="nav-item" onclick="navTo('screen-market', this)"><i class="fas fa-chart-line"></i>Market</div>
+    <div class="nav-item" onclick="navTo('screen-portfolio', this)"><i class="fas fa-briefcase"></i>Portfolio</div>
+    <div class="nav-item" onclick="navTo('screen-profile', this)"><i class="fas fa-user"></i>Profile</div>
+</div>
+
+<!-- ================= BUY COIN MODAL ================= -->
+<div id="modal-buy" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h3>Buy <span id="buy-coin-name"></span></h3>
+        <p>Current Price: PKR <span id="buy-coin-price"></span></p>
+        <p>Available Balance: PKR <span id="buy-avail-bal"></span></p>
+        <input type="number" id="buy-amount" placeholder="Amount in PKR to Invest">
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-outline" onclick="closeModal('modal-buy')">Cancel</button>
+            <button class="btn btn-success" onclick="confirmBuy()">Confirm Buy</button>
+        </div>
     </div>
 </div>
 
