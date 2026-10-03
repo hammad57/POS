@@ -72,6 +72,7 @@ input, select, textarea { color-scheme: dark; }
             <button onclick="toggleSideMenu(); window.scrollTo({top:0,behavior:'smooth'})" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🏠</span><span class="font-semibold text-zinc-200">Dashboard</span></button>
             <button onclick="toggleSideMenu(); openDepositModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">➕</span><span class="font-semibold text-zinc-200">Add Balance (Deposit)</span></button>
             <button onclick="toggleSideMenu(); openCryptoMarketModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🛒</span><span class="font-semibold crypto-gold">Purchase Coins</span></button>
+            <button onclick="toggleSideMenu(); openFuturesModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">⚡</span><span class="font-semibold text-[#0ecb81]">Futures / Leverage (100x)</span></button>
             <button onclick="toggleSideMenu(); openWithdrawModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">💸</span><span class="font-semibold text-zinc-200">Withdraw Funds</span></button>
             <button onclick="toggleSideMenu(); openUserSettingsModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">⚙️</span><span class="font-semibold text-zinc-200">Settings</span></button>
         </div>
@@ -184,16 +185,30 @@ input, select, textarea { color-scheme: dark; }
     </div>
 
     <!-- QUICK ACTIONS -->
-    <div class="grid grid-cols-2 gap-3 mb-4">
-        <button onclick="openCryptoMarketModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow transition-all">
-            <span class="text-2xl mb-1">🛒</span>
+    <div class="grid grid-cols-2 gap-3 mb-3">
+        <button onclick="openCryptoMarketModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-2xl p-3.5 flex flex-col items-center justify-center text-center shadow transition-all">
+            <span class="text-xl mb-1">🛒</span>
             <span class="font-bold text-xs text-zinc-200">Purchase Coins</span>
-            <span class="text-[9px] text-zinc-500 mt-0.5">Buy from balance</span>
+            <span class="text-[9px] text-zinc-500 mt-0.5">Spot Trading</span>
         </button>
-        <button onclick="openShiftModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow transition-all">
-            <span class="text-2xl mb-1">🔄</span>
-            <span class="font-bold text-xs text-zinc-200">Shift / Transfer Coin</span>
-            <span class="text-[9px] text-zinc-500 mt-0.5">Convert Between Coins</span>
+        <button onclick="openShiftModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-2xl p-3.5 flex flex-col items-center justify-center text-center shadow transition-all">
+            <span class="text-xl mb-1">🔄</span>
+            <span class="font-bold text-xs text-zinc-200">Shift Coin</span>
+            <span class="text-[9px] text-zinc-500 mt-0.5">Convert Assets</span>
+        </button>
+    </div>
+
+    <!-- HIGH LALACH / FUTURES TRADING BUTTON -->
+    <div class="mb-4">
+        <button onclick="openFuturesModal()" class="w-full bg-gradient-to-r from-[#0ecb81]/20 via-[#f0b90b]/20 to-[#f6465d]/20 border border-[#0ecb81]/50 hover:border-[#0ecb81] rounded-2xl p-4 flex items-center justify-between shadow-xl transition-all">
+            <div class="flex items-center gap-3 text-left">
+                <div class="w-10 h-10 bg-[#0ecb81]/20 border border-[#0ecb81]/50 rounded-xl flex items-center justify-center text-lg">⚡</div>
+                <div>
+                    <h4 class="font-bold text-xs text-white uppercase tracking-wider">Futures / Leverage Trading (Up to 100x)</h4>
+                    <p class="text-[10px] text-[#0ecb81] font-semibold mt-0.5">🔥 High Risk, Massive Profit & Multiplier! Click to Play</p>
+                </div>
+            </div>
+            <span class="text-sm font-bold text-[#0ecb81]">→</span>
         </button>
     </div>
 
@@ -351,6 +366,45 @@ input, select, textarea { color-scheme: dark; }
     </div>
 </div>
 
+<!-- FUTURES / HIGH LALACH LEVERAGE MODAL -->
+<div id="futuresModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9998] modal-overlay">
+    <div class="glass border border-[#0ecb81]/40 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative modal-panel">
+        <button onclick="closeModal('futuresModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
+        <h3 class="text-base font-bold text-[#0ecb81] mb-2 flex items-center gap-2"><span>⚡</span><span>Futures Leverage Arena (High Risk)</span></h3>
+        <p class="text-[11px] text-zinc-400 mb-4">Choose leverage and predict Long (Up) or Short (Down) to multiply your money instantly!</p>
+
+        <div class="space-y-3 text-xs">
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Select Coin</label>
+                <select id="futuresCoinSelect" class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#0ecb81]">
+                    <option value="BTC">BTC / USDT</option>
+                    <option value="ETH">ETH / USDT</option>
+                    <option value="BNB">BNB / USDT</option>
+                    <option value="SOL">SOL / USDT</option>
+                    <option value="DOGE">DOGE / USDT</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Margin Amount (PKR)</label>
+                <input type="number" id="futuresAmountInput" min="100" placeholder="Enter PKR amount..." class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#0ecb81]">
+            </div>
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Leverage Multiplier</label>
+                <select id="futuresLeverage" class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 font-bold text-[#f0b90b] focus:outline-none focus:border-[#0ecb81]">
+                    <option value="10">10x Leverage</option>
+                    <option value="20">20x Leverage</option>
+                    <option value="50">50x Leverage 🔥</option>
+                    <option value="100">100x Leverage 🚀 (Extreme)</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button onclick="executeFuturesTrade('LONG')" class="bg-[#0ecb81] hover:bg-[#0ecb81]/80 text-zinc-950 font-black py-3 rounded-xl uppercase tracking-wider shadow-lg">📈 Long (UP)</button>
+                <button onclick="executeFuturesTrade('SHORT')" class="bg-[#f6465d] hover:bg-[#f6465d]/80 text-white font-black py-3 rounded-xl uppercase tracking-wider shadow-lg">📉 Short (DOWN)</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- SHIFT / TRANSFER MODAL -->
 <div id="shiftModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9998] modal-overlay">
     <div class="glass border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative modal-panel">
@@ -396,7 +450,7 @@ input, select, textarea { color-scheme: dark; }
 
 <script>
 /* =========================================================
-   BINANCE PRO CRYPTO WALLET SCRIPT (UPDATED WITH TARGET DROPDOWN)
+   BINANCE PRO CRYPTO WALLET SCRIPT WITH FUTURES LEVERAGE
    ========================================================= */
 
 const firebaseConfig = {
@@ -780,6 +834,43 @@ function confirmCryptoPurchase() {
     }).catch(err => showCustomAlert("Error", err.message));
 }
 
+/* ============ FUTURES / LEVERAGE TRADING (HIGH LALACH FEATURE) ============ */
+function openFuturesModal() {
+    $('futuresAmountInput').value = '';
+    $('futuresModal').classList.remove('hidden');$('futuresModal').classList.add('flex');
+}
+
+function executeFuturesTrade(direction) {
+    const symbol = $('futuresCoinSelect').value;
+    const margin = flt($('futuresAmountInput').value);
+    const leverage = int($('futuresLeverage').value);
+    const balance = num(currentUserData?.walletBalance);
+
+    if (margin <= 0) { showCustomAlert("Error", "Enter valid margin amount."); return; }
+    if (margin > balance) { showCustomAlert("Error", "Insufficient wallet balance for margin."); return; }
+
+    // Instant thrilling simulation calculation for high lalach/excitement
+    // Random fluctuation percentage between -4% to +6% multiplied by leverage
+    const randomPct = (Math.random() * 10 - 4.2) / 100; 
+    const rawProfitLoss = margin * leverage * randomPct;
+    const finalResult = Math.round(rawProfitLoss);
+
+    const newBal = balance + finalResult;
+    if (newBal < 0) newBal = 0; // liquidation check
+
+    let updates = {};
+    updates[`users/${currentUid}/walletBalance`] = newBal;
+
+    db.ref().update(updates).then(() => {
+        closeModal('futuresModal');
+        if (finalResult >= 0) {
+            showCustomAlert("🚀 Massive Win! (Futures)", `Congratulations! Your ${leverage}x ${direction} trade on ${symbol} won! You made +${finalResult.toLocaleString()} PKR profit! 🔥`);
+        } else {
+            showCustomAlert("💥 Liquidation / Loss!", `Market moved against your ${leverage}x ${direction} position on ${symbol}. You lost ${Math.abs(finalResult).toLocaleString()} PKR. Try again to recover!`);
+        }
+    }).catch(err => showCustomAlert("Error", err.message));
+}
+
 let cachedPortfolioData = {};
 window.currentPortfolioValCache = 0;
 
@@ -961,7 +1052,6 @@ function openShiftModal() {
 
     if (!has) { showCustomAlert("Notice", "You don't have any coins in portfolio to shift."); return; }
 
-    // Populate target coin dropdown from active binanceCoinsCache
     const targetSel = $('shiftToSymbol');
     targetSel.innerHTML = '<option value="">-- Select Target Coin --</option>';
     if (binanceCoinsCache.length > 0) {
