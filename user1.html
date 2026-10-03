@@ -394,7 +394,7 @@ input, select, textarea { color-scheme: dark; }
 
 <script>
 /* =========================================================
-   BINANCE PRO CRYPTO WALLET SCRIPT WITH FIXED P&L & AUTO-SYNC
+   BINANCE PRO CRYPTO WALLET SCRIPT (FIXED & ERROR FREE)
    ========================================================= */
 
 const firebaseConfig = {
@@ -566,7 +566,6 @@ auth.onAuthStateChanged(user => {
         $('dashboardContainer').classList.remove('hidden');
         startBinancePricePolling();
 
-        // Auto refresh balance every 5 seconds
         autoRefreshTimer = setInterval(() => {
             manualRefreshBalance(false);
         }, 5000);
@@ -574,7 +573,7 @@ auth.onAuthStateChanged(user => {
     } else {
         currentUid = null;
         currentUserData = null;
-        $('authContainer').classList.add('hidden');
+        $('authContainer').classList.remove('hidden');
         $('dashboardContainer').classList.add('hidden');
         toggleAuthMode(false);
     }
@@ -597,8 +596,7 @@ function updateWalletHeaderDisplay() {
     $('lblCashWallet').innerText = cashBal.toLocaleString('en-US', {minimumFractionDigits: 2}) + ' PKR';
     $('marketWalletBal').innerText = cashBal.toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
     
-    // Total Equity = Cash Balance + Current Portfolio Value
-    const totalEquity = cashBal + window.currentPortfolioValCache || cashBal;
+    const totalEquity = cashBal + (window.currentPortfolioValCache || 0);
     $('lblWalletBalance').innerText = totalEquity.toLocaleString('en-US', {minimumFractionDigits: 2});
 }
 
@@ -810,7 +808,6 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
         const currentValPKR = qty * currentLivePriceUSD * USD_PKR_RATE;
         totalPortfolioVal += currentValPKR;
 
-        // Accurate Profit / Loss calculation compared to invested/purchase amount
         const profitLossPKR = currentValPKR - invested;
         const plColor = profitLossPKR >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]';
         const plSign = profitLossPKR >= 0 ? '+' : '';
@@ -833,11 +830,12 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
     });
 
     window.currentPortfolioValCache = totalPortfolioVal;
-    $('lblPortfolioVal'] = totalPortfolioVal.toFixed(2) + ' PKR'; // if needed
     const totalPL = totalPortfolioVal - totalInvested;
     const plEl = $('lblTotalPL');
-    plEl.innerText = (totalPL >= 0 ? '+' : '') + totalPL.toFixed(2) + ' PKR';
-    plEl.className = totalPL >= 0 ? 'font-bold text-[#0ecb81]' : 'font-bold text-[#f6465d]';
+    if (plEl) {
+        plEl.innerText = (totalPL >= 0 ? '+' : '') + totalPL.toFixed(2) + ' PKR';
+        plEl.className = totalPL >= 0 ? 'font-bold text-[#0ecb81]' : 'font-bold text-[#f6465d]';
+    }
 
     updateWalletHeaderDisplay();
 
