@@ -365,8 +365,10 @@ input, select, textarea { color-scheme: dark; }
                 </select>
             </div>
             <div>
-                <label class="block font-semibold text-zinc-300 mb-1">Target Coin Symbol (e.g. ETH, SOL)</label>
-                <input type="text" id="shiftToSymbol" placeholder="Target Coin Symbol" class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+                <label class="block font-semibold text-zinc-300 mb-1">Select Target Coin Symbol</label>
+                <select id="shiftToSymbol" class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+                    <option value="">-- Select Target Coin --</option>
+                </select>
             </div>
             <div class="bg-[#2b313a]/50 p-3 rounded-xl border border-zinc-700 text-[11px] text-zinc-400">
                 Note: 1% conversion fee will be deducted from your transfer amount automatically.
@@ -394,7 +396,7 @@ input, select, textarea { color-scheme: dark; }
 
 <script>
 /* =========================================================
-   BINANCE PRO CRYPTO WALLET SCRIPT (FIXED & ERROR FREE)
+   BINANCE PRO CRYPTO WALLET SCRIPT (UPDATED WITH TARGET DROPDOWN)
    ========================================================= */
 
 const firebaseConfig = {
@@ -573,7 +575,7 @@ auth.onAuthStateChanged(user => {
     } else {
         currentUid = null;
         currentUserData = null;
-        $('authContainer').classList.remove('hidden');
+        $('authContainer').classList.add('hidden');
         $('dashboardContainer').classList.add('hidden');
         toggleAuthMode(false);
     }
@@ -959,14 +961,34 @@ function openShiftModal() {
 
     if (!has) { showCustomAlert("Notice", "You don't have any coins in portfolio to shift."); return; }
 
+    // Populate target coin dropdown from active binanceCoinsCache
+    const targetSel = $('shiftToSymbol');
+    targetSel.innerHTML = '<option value="">-- Select Target Coin --</option>';
+    if (binanceCoinsCache.length > 0) {
+        binanceCoinsCache.forEach(c => {
+            const sym = c.symbol.replace('USDT', '');
+            const opt = document.createElement('option');
+            opt.value = sym;
+            opt.innerText = `${sym} / USDT`;
+            targetSel.appendChild(opt);
+        });
+    } else {
+        ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'DOGE'].forEach(sym => {
+            const opt = document.createElement('option');
+            opt.value = sym;
+            opt.innerText = `${sym} / USDT`;
+            targetSel.appendChild(opt);
+        });
+    }
+
     $('shiftModal').classList.remove('hidden');$('shiftModal').classList.add('flex');
 }
 
 function confirmShiftCoin() {
     const key = $('shiftFromCoin').value;
-    const targetSymbol = $('shiftToSymbol').value.trim().toUpperCase();
+    const targetSymbol = $('shiftToSymbol').value;
 
-    if (!key || !targetSymbol) { showCustomAlert("Error", "Please select source and target coin."); return; }
+    if (!key || !targetSymbol) { showCustomAlert("Error", "Please select source holding and target coin."); return; }
     const item = cachedPortfolioData[key];
     if (!item) return;
 
