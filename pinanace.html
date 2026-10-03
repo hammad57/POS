@@ -1,209 +1,670 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Crypto Pro Wallet</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        /* Base Styles */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0d1117; color: #c9d1d9; margin: 0; padding: 0; padding-bottom: 70px; }
-        .container { max-width: 500px; margin: auto; padding: 15px; }
-        .hidden { display: none !important; }
-        .screen { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Green Land Poultry & Crypto - System Upgrade</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐔</text></svg>">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-        /* Typography & Inputs */
-        h2, h3, h4 { color: #ffffff; margin-top: 0; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #161b22; border: 1px solid #30363d; color: white; border-radius: 6px; box-sizing: border-box; outline: none; }
-        input:focus { border-color: #58a6ff; }
-        
-        /* Buttons */
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; transition: 0.2s; text-align: center; }
-        .btn-success { background: #238636; color: white; }
-        .btn-success:hover { background: #2ea043; }
-        .btn-warning { background: #e3b341; color: #0d1117; }
-        .btn-danger { background: #da3633; color: white; }
-        .btn-outline { background: transparent; border: 1px solid #58a6ff; color: #58a6ff; }
+:root {
+    --primary: #f97316; 
+    --primary-dark: #ea580c; 
+    --accent: #10b981; 
+}
 
-        /* Cards */
-        .card { background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; margin-bottom: 15px; }
-        .wallet-card { background: linear-gradient(135deg, #161b22, #21262d); text-align: center; }
-        .wallet-card h1 { color: #3fb950; font-size: 32px; margin: 10px 0; }
-        
-        /* Grids & Lists */
-        .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-        .action-btn { background: #21262d; border-radius: 10px; padding: 15px 5px; text-align: center; cursor: pointer; font-size: 12px; }
-        .action-btn i { font-size: 20px; margin-bottom: 8px; display: block; color: #58a6ff; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #30363d; }
-        .list-item:last-child { border-bottom: none; }
-        .price-up { color: #3fb950; }
-        .price-down { color: #f85149; }
+body { 
+    font-family: 'Plus Jakarta Sans', sans-serif; 
+    background-color: #0f172a; 
+    color: #f8fafc; 
+    overflow-x: hidden; 
+}
 
-        /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #161b22; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #30363d; z-index: 100; }
-        .nav-item { text-align: center; color: #8b949e; font-size: 11px; cursor: pointer; flex: 1; }
-        .nav-item i { font-size: 20px; margin-bottom: 4px; display: block; }
-        .nav-item.active { color: #58a6ff; }
+/* Original App Form & Modal Styles */
+.bottom-sheet-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); animation: fadeIn 0.2s ease-out; }
+.bottom-sheet { border-radius: 28px 28px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
+.btn-primary { background: linear-gradient(135deg, var(--primary) 0%, #fb923c 100%); color: white; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3); transition: all 0.2s; }
+.btn-primary:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3); }
+.btn-secondary { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); color: white; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); transition: all 0.2s; }
+.btn-secondary:active { transform: scale(0.97); }
+.btn-crypto { background: linear-gradient(135deg, #8b5cf6 0%, #c084fc 100%); color: white; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3); transition: all 0.2s; }
+input, select, textarea { background-color: #f1f5f9; border: 1px solid #e2e8f0; color: #0f172a; transition: all 0.2s; }
+input:focus, select:focus, textarea:focus { background-color: #ffffff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); outline: none; }
+.custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+.custom-scroll::-webkit-scrollbar-track { background: transparent; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
-        /* Modals */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 200; }
-        .modal-content { background: #161b22; width: 90%; max-width: 400px; padding: 20px; border-radius: 12px; border: 1px solid #30363d; }
-    </style>
+/* Premium Glassmorphism UI Styles */
+.glass-card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6); }
+.gradient-text { background: linear-gradient(135deg, #f97316 0%, #fcd34d 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.gradient-crypto { background: linear-gradient(135deg, #a855f7 0%, #f472b6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.blob { position: absolute; filter: blur(90px); z-index: -1; opacity: 0.3; animation: float 8s ease-in-out infinite; border-radius: 50%; }
+
+/* Animations */
+@keyframes slideUp { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(20px, -20px) scale(1.1); } }
+@keyframes pulse-dot { 0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 50% { transform: scale(1.2); opacity: 0.8; box-shadow: 0 0 10px 4px rgba(249, 115, 22, 0); } }
+.slide-up { animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.fade-in { animation: fadeIn 0.3s ease-out; }
+.dot { animation: pulse-dot 2s infinite; }
+.btn-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.btn-hover:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -5px rgba(249, 115, 22, 0.4); }
+.btn-hover:active { transform: scale(0.97); }
+
+.crypto-item { transition: all 0.2s; }
+.crypto-item:hover { background-color: #f8fafc; transform: translateX(5px); }
+</style>
 </head>
-<body>
+<body class="min-h-screen relative w-full">
 
-<div class="container">
+<!-- TOAST -->
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-xl text-sm font-semibold transition-all duration-300 opacity-0 pointer-events-none z-[10000] flex items-center gap-2"></div>
 
-    <!-- ================= AUTH SCREEN ================= -->
-    <div id="screen-auth" class="screen">
-        <div class="card" style="margin-top: 50px; text-align: center;">
-            <h2>Crypto Pro Wallet</h2>
-            <p style="color:#8b949e; font-size:14px;">Secure Investment Platform</p>
-            
-            <div id="login-form">
-                <input type="text" id="login-username" placeholder="Username">
-                <input type="password" id="login-password" placeholder="Password">
-                <button class="btn btn-success" onclick="loginUser()">Login</button>
-                <button class="btn btn-warning" onclick="demoLogin()">Try Demo Account (Rs. 10,000)</button>
-                <p style="margin-top:15px; font-size:14px;">No account? <a href="#" onclick="toggleAuth('signup')" style="color:#58a6ff;">Sign up here</a></p>
+<!-- CUSTOM ALERT MODAL -->
+<div id="customAlertModal" class="fixed inset-0 bottom-sheet-overlay hidden items-end sm:items-center justify-center z-[9999]">
+    <div class="bg-white w-full max-w-md p-6 sm:rounded-3xl bottom-sheet sm:bottom-auto relative text-center slide-up">
+        <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">ℹ️</div>
+        <h3 id="customAlertTitle" class="text-xl font-bold text-slate-800 mb-2">Notification</h3>
+        <p id="customAlertMessage" class="text-slate-500 text-sm mb-6 leading-relaxed"></p>
+        <button id="customAlertBtn" class="w-full btn-primary font-bold py-3.5 rounded-2xl">Got it</button>
+    </div>
+</div>
+
+<!-- ================= AUTH SCREEN ================= -->
+<div id="authContainer" class="min-h-screen flex flex-col items-center justify-center px-6 bg-slate-50 relative hidden w-full">
+    <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-50"></div>
+    <div class="w-full max-w-sm relative z-10 fade-in text-slate-800">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-white rounded-3xl shadow-lg flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                <span class="text-4xl">🥚</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Green Land Farm</h1>
+            <p class="text-xs text-slate-500 font-medium uppercase tracking-widest mt-2">Invest • Earn • Grow</p>
+        </div>
+
+        <div class="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100">
+            <div class="text-center mb-6">
+                <h2 id="authTitle" class="text-xl font-bold text-slate-800">Welcome Back</h2>
+                <p id="authSubtitle" class="text-sm text-slate-500 mt-1">Sign in to your account</p>
             </div>
 
-            <div id="signup-form" class="hidden">
-                <input type="text" id="signup-username" placeholder="Choose Username">
-                <input type="number" id="signup-mobile" placeholder="Mobile Number">
-                <input type="password" id="signup-password" placeholder="Password">
-                <button class="btn btn-outline" onclick="registerUser()">Create Account</button>
-                <p style="margin-top:15px; font-size:14px;">Have an account? <a href="#" onclick="toggleAuth('login')" style="color:#58a6ff;">Login here</a></p>
+            <div id="refInfoBanner" class="hidden mb-4 p-3 bg-orange-50 border border-orange-100 rounded-xl text-xs text-center text-orange-600 font-medium">
+                Invited by: <span id="refNameDisplay" class="font-bold text-orange-700">...</span>
             </div>
+
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <input type="email" id="loginEmail" placeholder="Email Address" required class="w-full rounded-2xl px-4 py-3.5 text-sm">
+                </div>
+                <div>
+                    <input type="password" id="loginPassword" placeholder="Password" required class="w-full rounded-2xl px-4 py-3.5 text-sm">
+                </div>
+                <div class="flex justify-between items-center px-1 text-xs font-medium">
+                    <span class="text-slate-500">New? <button type="button" onclick="toggleAuthMode(true)" class="text-orange-500 font-bold">Create Account</button></span>
+                    <button type="button" onclick="forgotPassword()" class="text-slate-400 hover:text-slate-600">Forgot?</button>
+                </div>
+                <button type="submit" class="w-full btn-primary font-bold py-3.5 rounded-2xl text-sm mt-2">Sign In</button>
+            </form>
+
+            <form id="registerForm" class="space-y-4 hidden">
+                <input type="text" id="regName" placeholder="Full Name" required class="w-full rounded-2xl px-4 py-3 text-sm">
+                <input type="tel" id="regMobile" placeholder="Mobile Number" required class="w-full rounded-2xl px-4 py-3 text-sm">
+                <input type="email" id="regEmail" placeholder="Email Address" required class="w-full rounded-2xl px-4 py-3 text-sm">
+                <input type="password" id="regPassword" placeholder="Password (min 6 chars)" required class="w-full rounded-2xl px-4 py-3 text-sm">
+                <button type="submit" class="w-full btn-primary font-bold py-3.5 rounded-2xl text-sm mt-2">Sign Up</button>
+                <p class="text-xs text-center text-slate-500 font-medium pt-2">Have an account? <button type="button" onclick="toggleAuthMode(false)" class="text-orange-500 font-bold">Sign In</button></p>
+            </form>
         </div>
     </div>
+</div>
 
-    <!-- ================= DASHBOARD SCREEN ================= -->
-    <div id="screen-dashboard" class="screen hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h2>Dashboard</h2>
-            <i class="fas fa-bell"></i>
-        </div>
+<!-- ================= PREMIUM MAINTENANCE SCREEN ================= -->
+<div id="maintenanceContainer" class="hidden min-h-screen flex-col items-center justify-center relative px-5 w-full">
+    <!-- Cinematic Background Glow -->
+    <div class="blob bg-orange-600 w-[300px] h-[300px] absolute top-[-50px] left-[-50px]"></div>
+    <div class="blob bg-emerald-600 w-[250px] h-[250px] absolute bottom-[-50px] right-[-20px]" style="animation-delay: -4s;"></div>
+    <div class="blob bg-purple-600 w-[200px] h-[200px] absolute top-[40%] left-[20%]" style="animation-delay: -2s;"></div>
+
+    <!-- Main Glass Card -->
+    <div class="w-full max-w-[420px] glass-card rounded-[2.5rem] p-8 sm:p-10 relative z-10 text-center mx-auto">
         
-        <div class="card wallet-card">
-            <h3 style="color:#8b949e; font-size:14px; font-weight:normal;">Available Balance</h3>
-            <h1>PKR <span id="dash-balance">0.00</span></h1>
-            <div style="display:flex; justify-content:space-between; margin-top:15px; border-top:1px solid #30363d; padding-top:15px;">
-                <div>
-                    <p style="margin:0; font-size:12px; color:#8b949e;">Total Invested</p>
-                    <h4 style="margin:5px 0 0 0;">PKR <span id="dash-invested">0.00</span></h4>
-                </div>
-                <div>
-                    <p style="margin:0; font-size:12px; color:#8b949e;">Account Status</p>
-                    <h4 style="margin:5px 0 0 0; color:#3fb950;">Active</h4>
-                </div>
+        <!-- User Wallet Info -->
+        <div class="absolute top-4 right-4 bg-slate-900/60 border border-slate-700 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg backdrop-blur-md">
+            <span class="text-xl">💰</span>
+            <div class="text-left">
+                <p class="text-[9px] text-slate-400 uppercase tracking-widest font-bold leading-none">Wallet Balance</p>
+                <p class="text-sm font-black text-white" id="displayWalletBalance">Rs. 0</p>
             </div>
         </div>
 
-        <div class="action-grid">
-            <div class="action-btn" onclick="navTo('screen-deposit')"><i class="fas fa-wallet"></i>Deposit</div>
-            <div class="action-btn" onclick="navTo('screen-market')"><i class="fas fa-shopping-cart"></i>Buy</div>
-            <div class="action-btn" onclick="navTo('screen-portfolio')"><i class="fas fa-chart-pie"></i>Portfolio</div>
-            <div class="action-btn" onclick="navTo('screen-withdraw')"><i class="fas fa-money-bill-wave"></i>Withdraw</div>
+        <div class="w-24 h-24 mx-auto bg-gradient-to-tr from-slate-800 to-slate-700 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center border border-slate-600 mb-8 mt-6 relative">
+            <div class="absolute inset-0 bg-white/5 rounded-3xl"></div>
+            <span class="text-5xl drop-shadow-xl z-10">🐔</span>
         </div>
 
-        <h3>Market Overview</h3>
-        <div class="card" id="mini-market-list">
-            <!-- Populated by JS -->
+        <div class="inline-flex items-center gap-2 bg-slate-900/80 px-4 py-2.5 rounded-full border border-slate-700/50 mb-6 shadow-inner">
+            <span class="w-2.5 h-2.5 bg-orange-500 rounded-full dot"></span>
+            <span class="text-[10px] font-bold text-slate-300 tracking-widest uppercase">System Active</span>
         </div>
-    </div>
 
-    <!-- ================= MARKET SCREEN ================= -->
-    <div id="screen-market" class="screen hidden">
-        <h2>Live Market</h2>
-        <div class="card" id="full-market-list">
-            <!-- Populated by JS -->
-        </div>
-    </div>
+        <h1 class="text-[28px] leading-tight font-extrabold mb-4 text-white tracking-tight">
+            Invest & <span class="gradient-text">Grow.</span><br>
+            <span class="text-lg font-medium text-slate-300">Poultry + <span class="gradient-crypto font-bold">Crypto</span></span>
+        </h1>
+        
+        <p class="text-[13px] text-slate-400 leading-relaxed mb-6 font-medium px-2">
+            Aap Hens purchase kar sakte hain ya Live Binance Market se apni marzi ki Crypto buy kar sakte hain. 👇
+        </p>
 
-    <!-- ================= PORTFOLIO SCREEN ================= -->
-    <div id="screen-portfolio" class="screen hidden">
-        <h2>My Investments</h2>
-        <div class="card wallet-card" style="padding:15px;">
-            <h3 style="color:#8b949e; font-size:14px;">Total Portfolio Value</h3>
-            <h1 style="font-size:24px;">PKR <span id="port-total-value">0.00</span></h1>
-        </div>
-        <div class="card" id="portfolio-list">
-            <p style="text-align:center; color:#8b949e;">No active investments found.</p>
-        </div>
-    </div>
+        <div class="space-y-4">
+            <!-- Purchase Hens Button -->
+            <button onclick="openPurchaseModal()" class="btn-hover w-full bg-gradient-to-r from-emerald-500 to-emerald-400 text-white font-bold py-4 rounded-2xl text-[15px] flex items-center justify-center gap-3 shadow-[0_4px_14px_rgba(16,185,129,0.3)]">
+                <span class="text-xl">🛒</span> Purchase Hens
+            </button>
 
-    <!-- ================= DEPOSIT SCREEN ================= -->
-    <div id="screen-deposit" class="screen hidden">
-        <h2>Add Balance</h2>
-        <div class="card">
-            <label>Amount (PKR)</label>
-            <input type="number" id="dep-amount" placeholder="e.g. 5000">
-            <label>Payment Method</label>
-            <select id="dep-method">
-                <option value="easypaisa">EasyPaisa</option>
-                <option value="jazzcash">JazzCash</option>
-                <option value="bank">Bank Transfer</option>
-            </select>
-            <label>Transaction ID / TID</label>
-            <input type="text" id="dep-tid" placeholder="Enter TID">
-            <button class="btn btn-success" onclick="submitDeposit()">Submit Request</button>
+            <!-- Crypto Market Button -->
+            <button onclick="openCryptoMarket()" class="btn-hover w-full btn-crypto font-bold py-4 rounded-2xl text-[15px] flex items-center justify-center gap-3">
+                <span class="text-xl">📈</span> Live Crypto Market
+            </button>
+
+            <!-- WhatsApp Support -->
+            <a id="btnContactSupport" href="#" target="_blank" class="btn-hover w-full bg-gradient-to-r from-orange-500 to-orange-400 text-white font-bold py-4 rounded-2xl text-[15px] flex items-center justify-center gap-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Contact Support
+            </a>
+
+            <!-- Logout -->
+            <button onclick="logout()" class="w-full text-slate-400 font-bold py-2 rounded-2xl text-[13px] hover:text-white transition-colors mt-2">
+                Sign Out
+            </button>
         </div>
     </div>
 
-    <!-- ================= WITHDRAW SCREEN ================= -->
-    <div id="screen-withdraw" class="screen hidden">
-        <h2>Withdraw Funds</h2>
-        <div class="card">
-            <p>Available for withdrawal: <b>PKR <span id="with-balance">0.00</span></b></p>
-            <label>Amount (PKR)</label>
-            <input type="number" id="with-amount" placeholder="e.g. 2000">
-            <label>Receive in (Account No)</label>
-            <input type="text" id="with-account" placeholder="Jazzcash/Easypaisa Number">
-            <button class="btn btn-danger" onclick="submitWithdraw()">Request Withdraw</button>
-        </div>
+    <div class="absolute bottom-6 w-full text-center z-10 flex flex-col gap-1">
+        <p class="text-[11px] text-slate-500 font-medium tracking-wide uppercase">Official Help Desk</p>
+        <p id="footerWaNumber" class="text-sm font-bold text-white tracking-widest">+92 342 3944508</p>
     </div>
-
-    <!-- ================= PROFILE SCREEN ================= -->
-    <div id="screen-profile" class="screen hidden">
-        <h2>My Profile</h2>
-        <div class="card" style="text-align:center;">
-            <i class="fas fa-user-circle" style="font-size:60px; color:#58a6ff; margin-bottom:15px;"></i>
-            <h3>UID: <span id="prof-uid" style="font-size:12px; color:#8b949e;"></span></h3>
-            <button class="btn btn-outline" style="margin-top:20px;" onclick="logout()">Logout</button>
-        </div>
-    </div>
-
-</div> <!-- Container End -->
-
-<!-- ================= BOTTOM NAVIGATION ================= -->
-<div id="bottom-nav" class="bottom-nav hidden">
-    <div class="nav-item active" onclick="navTo('screen-dashboard', this)"><i class="fas fa-home"></i>Home</div>
-    <div class="nav-item" onclick="navTo('screen-market', this)"><i class="fas fa-chart-line"></i>Market</div>
-    <div class="nav-item" onclick="navTo('screen-portfolio', this)"><i class="fas fa-briefcase"></i>Portfolio</div>
-    <div class="nav-item" onclick="navTo('screen-profile', this)"><i class="fas fa-user"></i>Profile</div>
 </div>
 
-<!-- ================= BUY COIN MODAL ================= -->
-<div id="modal-buy" class="modal-overlay hidden">
-    <div class="modal-content">
-        <h3>Buy <span id="buy-coin-name"></span></h3>
-        <p>Current Price: PKR <span id="buy-coin-price"></span></p>
-        <p>Available Balance: PKR <span id="buy-avail-bal"></span></p>
-        <input type="number" id="buy-amount" placeholder="Amount in PKR to Invest">
-        <div style="display:flex; gap:10px;">
-            <button class="btn btn-outline" onclick="closeModal('modal-buy')">Cancel</button>
-            <button class="btn btn-success" onclick="confirmBuy()">Confirm Buy</button>
+<!-- ================= CRYPTO MARKET MODAL ================= -->
+<div id="cryptoMarketModal" class="fixed inset-0 bottom-sheet-overlay hidden items-end justify-center z-[9994] text-slate-800">
+    <div class="bg-slate-50 w-full max-w-md p-0 bottom-sheet h-[85vh] flex flex-col slide-up">
+        
+        <div class="p-5 border-b border-slate-200 bg-white rounded-t-[28px] flex justify-between items-center shadow-sm">
+            <div>
+                <h3 class="text-lg font-black text-slate-800">Live Crypto Market</h3>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Binance Powered</p>
+            </div>
+            <button onclick="closeModal('cryptoMarketModal')" class="bg-slate-100 text-slate-600 hover:bg-slate-200 w-8 h-8 rounded-full font-bold transition-colors">&times;</button>
+        </div>
+
+        <div class="p-4 bg-purple-50 border-b border-purple-100 flex justify-between items-center">
+            <div>
+                <span class="text-[10px] text-purple-600 font-bold uppercase">My Balance</span>
+                <div class="text-lg font-black text-purple-800" id="cryptoModalBalance">Rs. 0</div>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] text-slate-500 font-bold uppercase">USD Rate</span>
+                <div class="text-xs font-bold text-slate-700">1$ = Rs. 280</div>
+            </div>
+        </div>
+
+        <div id="cryptoList" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3 bg-slate-50 relative">
+            <div class="text-center text-slate-500 mt-10 text-sm font-medium">Fetching live prices from Binance...</div>
         </div>
     </div>
 </div>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-<script src="app.js"></script>
+<!-- ================= BUY CRYPTO MODAL ================= -->
+<div id="buyCryptoModal" class="fixed inset-0 bottom-sheet-overlay hidden items-end sm:items-center justify-center z-[9995] text-slate-800">
+    <div class="bg-white w-full max-w-md p-6 sm:rounded-3xl bottom-sheet sm:bottom-auto relative slide-up">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
+        <button onclick="closeModal('buyCryptoModal')" class="absolute top-4 right-4 bg-slate-100 text-slate-500 w-8 h-8 rounded-full font-bold">&times;</button>
+        
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-xl font-black" id="buyCoinIcon">₿</div>
+            <div>
+                <h3 class="text-xl font-black text-slate-800" id="buyCoinSymbol">BTCUSDT</h3>
+                <p class="text-xs font-bold text-slate-500" id="buyCoinPrice">Loading...</p>
+            </div>
+        </div>
 
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-600 mb-2">Investment Amount (PKR)</label>
+                <input type="number" id="cryptoAmountInput" min="100" placeholder="Enter amount e.g 5000" oninput="calculateCryptoEst()" class="w-full text-lg font-black text-slate-800 rounded-xl px-4 py-3 border-2 focus:border-purple-500">
+            </div>
+            
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-slate-500 text-xs font-bold">You will receive approx:</span>
+                    <span id="cryptoEstReceive" class="text-sm font-black text-purple-600">0.0000000</span>
+                </div>
+                <div class="flex justify-between items-center pt-2 border-t border-slate-200">
+                    <span class="text-slate-500 text-xs font-bold">Available Balance:</span>
+                    <span id="buyCryptoAvailableBal" class="text-xs font-bold text-slate-800">Rs. 0</span>
+                </div>
+            </div>
+
+            <button onclick="confirmCryptoPurchase()" class="w-full btn-crypto font-bold py-4 rounded-xl text-lg">Confirm Purchase</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MANUAL PURCHASE MODAL (ORIGINAL) ================= -->
+<div id="purchaseModal" class="fixed inset-0 bottom-sheet-overlay hidden items-end justify-center z-[9994] text-slate-800">
+    <div class="bg-white w-full max-w-md p-6 bottom-sheet h-[90vh] flex flex-col slide-up">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+            <h3 class="text-lg font-bold text-slate-800">Purchase Hens</h3>
+            <button onclick="closeModal('purchaseModal')" class="bg-slate-100 text-slate-500 w-8 h-8 rounded-full font-bold">&times;</button>
+        </div>
+
+        <!-- Step 1 -->
+        <div id="purchaseStep1" class="flex-1 overflow-y-auto custom-scroll pb-4 block">
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <div class="text-[10px] text-slate-500 font-bold uppercase">Plan 1</div>
+                    <div class="text-xs font-medium text-slate-700 my-1">1-5 Hens</div>
+                    <div class="text-sm font-black text-orange-500">Rs. 499</div>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <div class="text-[10px] text-slate-500 font-bold uppercase">Plan 2</div>
+                    <div class="text-xs font-medium text-slate-700 my-1">6-10 Hens</div>
+                    <div class="text-sm font-black text-orange-500">Rs. 450</div>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <div class="text-[10px] text-slate-500 font-bold uppercase">Plan 3</div>
+                    <div class="text-xs font-medium text-slate-700 my-1">11-50 Hens</div>
+                    <div class="text-sm font-black text-orange-500">Rs. 399</div>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <div class="text-[10px] text-slate-500 font-bold uppercase">Plan 4</div>
+                    <div class="text-xs font-medium text-slate-700 my-1">51+ Hens</div>
+                    <div class="text-sm font-black text-orange-500">Rs. 250</div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-2">Hen Quantity</label>
+                    <input type="number" id="purchaseQty" min="1" value="1" oninput="updateHenPriceValue(this.value)" class="w-full text-lg font-black text-slate-800 rounded-xl px-4 py-3 border-2 focus:border-orange-500">
+                </div>
+                <div class="bg-orange-50 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <span class="text-slate-500 text-xs block mb-1">Total Cost:</span>
+                        <span id="activePlanBadge" class="bg-white text-orange-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase shadow-sm">Plan 1</span>
+                    </div>
+                    <span id="purchaseTotalCost" class="text-xl font-black text-slate-800">499 PKR</span>
+                </div>
+                <button onclick="proceedToPaymentProof()" class="w-full btn-primary font-bold py-4 rounded-xl">Next Step →</button>
+            </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div id="purchaseStep2" class="flex-1 overflow-y-auto custom-scroll pb-4 hidden">
+            <button type="button" onclick="document.getElementById('purchaseStep2').classList.add('hidden');document.getElementById('purchaseStep1').classList.remove('hidden');" class="text-xs text-slate-500 font-bold mb-4 bg-slate-100 px-3 py-1.5 rounded-full inline-flex items-center gap-1">← Back</button>
+            
+            <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-6 text-center">
+                <p class="text-xs font-medium text-blue-800 mb-1">Send payment via Easypaisa to:</p>
+                <p class="text-sm font-bold text-blue-900">Muluk Hussain</p>
+                <p class="text-lg font-black text-blue-600 tracking-wider mt-1">03423944508</p>
+            </div>
+            
+            <form id="paymentProofForm" class="space-y-4">
+                <div>
+                    <label class="block font-bold text-xs text-slate-600 mb-1">Transaction ID (Trx ID)</label>
+                    <input type="text" id="proofTrxId" required class="w-full rounded-xl px-4 py-3 text-sm">
+                </div>
+                <div>
+                    <label class="block font-bold text-xs text-slate-600 mb-1">Sender Account Name</label>
+                    <input type="text" id="proofHolderName" required class="w-full rounded-xl px-4 py-3 text-sm">
+                </div>
+                <button type="submit" class="w-full btn-secondary font-bold py-4 rounded-xl mt-2">Submit Request</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+/* =========================================================
+   GREEN LAND POULTRY FARM & CRYPTO WALLET
+   ========================================================= */
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
+    authDomain: "own-live-steam-web-default.firebaseapp.com",
+    databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
+    projectId: "own-live-steam-web-default",
+    storageBucket: "own-live-steam-web-default.appspot.com",
+    messagingSenderId: "xxxxxxxxxxx",
+    appId: "xxxxxxxxxxx"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+let currentUid = null;
+let currentUserData = null;
+let globalActiveWaNumber = "923423944508";
+const USD_PKR_RATE = 280;
+
+const $ = id => document.getElementById(id);
+const int = v => { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; };
+
+// Helpers
+function showToast(msg, duration = 3000) {
+    const t = $('toast');
+    t.innerHTML = `<span>🚀</span> <span>${msg}</span>`;
+    t.classList.remove('opacity-0', 'translate-y-4');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), duration);
+}
+
+function showCustomAlert(title, message, callback = null, btnText = "Got it") {
+    $('customAlertTitle').innerText = title;
+    $('customAlertMessage').innerText = message;
+    const btn = $('customAlertBtn');
+    btn.innerText = btnText;
+    btn.onclick = () => {
+        closeCustomAlert();
+        if (callback) callback();
+        setTimeout(() => btn.innerText = "Got it", 300);
+    };
+    $('customAlertModal').classList.remove('hidden');$('customAlertModal').classList.add('flex');
+}
+function closeCustomAlert() {
+    $('customAlertModal').classList.remove('flex');$('customAlertModal').classList.add('hidden');
+}
+
+function closeModal(id) {
+    const m = $(id);
+    if (!m) return;
+    const sheet = m.querySelector('.bottom-sheet');
+    if (sheet) {
+        sheet.style.animation = 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) reverse forwards';
+        setTimeout(() => {
+            m.classList.remove('flex');
+            m.classList.add('hidden');
+            sheet.style.animation = '';
+        }, 280);
+    } else {
+        m.classList.remove('flex');
+        m.classList.add('hidden');
+    }
+}
+
+// WhatsApp Config 
+function computeWaNumber(config) {
+    const now = new Date();
+    const override = config.manualOverride;
+    if (override && override.expireTime > now.getTime()) return override.number;
+    const day = now.getDay(), hours = now.getHours();
+    if (day >= 1 && day <= 5 && hours >= 7 && hours < 20) return "923423944508";
+    return "923485465097";
+}
+function applyWaNumber(n) {
+    globalActiveWaNumber = n;
+    const btn = $('btnContactSupport');
+    if (btn) btn.href = `https://wa.me/${n}?text=Hello%20Admin,%20I%20want%20to%20know%20more.`;
+    const footer = $('footerWaNumber');
+    if (footer) footer.innerText = n;
+}
+db.ref('settings/whatsappConfig').on('value', snap => applyWaNumber(computeWaNumber(snap.val() || {})));
+
+// Referral handling
+const urlParams = new URLSearchParams(window.location.search);
+const refIdParam = urlParams.get('ref');
+const refNameParam = urlParams.get('n');
+if (refNameParam) {
+    $('refInfoBanner').classList.remove('hidden');$('refNameDisplay').innerText = decodeURIComponent(refNameParam);
+    toggleAuthMode(true);
+}
+
+// Auth Handlers
+function handleAuthError(err) {
+    const map = {
+        'auth/weak-password': 'Password must be at least 6 characters.',
+        'auth/email-already-in-use': 'Email is already registered.',
+        'auth/user-not-found': 'Invalid email or password.',
+        'auth/wrong-password': 'Invalid email or password.'
+    };
+    showCustomAlert("Auth Error", map[err.code] || err.message);
+}
+
+function toggleAuthMode(isRegister) {
+    $('authTitle').innerText = isRegister ? "Create Account" : "Welcome Back";
+    $('authSubtitle').innerText = isRegister ? "Join and start earning" : "Sign in to your account";
+    $('registerForm').classList.toggle('hidden', !isRegister);$('loginForm').classList.toggle('hidden', isRegister);
+}
+
+function forgotPassword() {
+    const email = $('loginEmail').value.trim();
+    const text = `Hello Admin, I forgot my password. My email is: ${email || '[insert email]'}. Please help.`;
+    window.open(`https://wa.me/${globalActiveWaNumber}?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+$('registerForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('regName').value.trim(), mobile =$('regMobile').value.trim(), email = $('regEmail').value.trim(), password =$('regPassword').value;
+    if (password.length < 6) return handleAuthError({ code: 'auth/weak-password' });
+
+    auth.createUserWithEmailAndPassword(email, password).then(cred => {
+        // Automatically give 50,000 PKR wallet balance on new registration for testing
+        return db.ref('users/' + cred.user.uid).set({
+            name, mobile, email, totalHens: 0, availableEggs: 0, giftEggs: 0, totalExpense: 0, totalWithdrawal: 0, selfPurchasedHens: 0, status: "active", walletBalance: 50000, createdAt: firebase.database.ServerValue.TIMESTAMP, referredBy: refIdParam ? refIdParam : "none", hasRewardedInviter: false
+        });
+    }).catch(err => handleAuthError(err));
+});
+
+$('loginForm').addEventListener('submit', e => {
+    e.preventDefault();
+    auth.signInWithEmailAndPassword($('loginEmail').value.trim(),$('loginPassword').value).catch(err => handleAuthError(err));
+});
+
+function logout() {
+    if (!confirm("Sign out?")) return;
+    auth.signOut();
+}
+
+// Firebase Auth State
+auth.onAuthStateChanged(user => {
+    if (user) {
+        currentUid = user.uid;
+        
+        $('authContainer').classList.add('hidden');$('authContainer').classList.remove('flex');
+        $('maintenanceContainer').classList.remove('hidden');$('maintenanceContainer').classList.add('flex');
+        
+        db.ref('users/' + currentUid).on('value', snapshot => {
+            const val = snapshot.val();
+            if (val && val.status === 'blocked') {
+                showCustomAlert("Suspended", "Your account is blocked.");
+                auth.signOut(); return;
+            }
+            currentUserData = val;
+            
+            // Ensure walletBalance exists
+            if(currentUserData && currentUserData.walletBalance === undefined) {
+                currentUserData.walletBalance = 0;
+            }
+
+            // Update UI Balance
+            let bal = currentUserData.walletBalance || 0;
+            $('displayWalletBalance').innerText = 'Rs. ' + bal.toLocaleString();
+            $('cryptoModalBalance').innerText = 'Rs. ' + bal.toLocaleString();$('buyCryptoAvailableBal').innerText = 'Rs. ' + bal.toLocaleString();
+        });
+
+    } else {
+        currentUid = null; currentUserData = null;
+        $('maintenanceContainer').classList.add('hidden');$('maintenanceContainer').classList.remove('flex');
+        $('authContainer').classList.remove('hidden');$('authContainer').classList.add('flex');
+        toggleAuthMode(refNameParam ? true : false);
+    }
+});
+
+/* ============ PURCHASE HENS LOGIC ============ */
+function getHenCostByPlan(qty) {
+    qty = int(qty);
+    if (qty <= 0) return { pricePerHen: 499, planName: "Plan 1", totalCost: 0 };
+    if (qty <= 5) return { pricePerHen: 499, planName: "Plan 1", totalCost: qty * 499 };
+    if (qty <= 10) return { pricePerHen: 450, planName: "Plan 2", totalCost: qty * 450 };
+    if (qty <= 50) return { pricePerHen: 399, planName: "Plan 3", totalCost: qty * 399 };
+    return { pricePerHen: 250, planName: "Plan 4", totalCost: qty * 250 };
+}
+
+function openPurchaseModal() {
+    $('purchaseStep1').classList.remove('hidden'); 
+    $('purchaseStep2').classList.add('hidden');$('purchaseQty').value = 1; 
+    updateHenPriceValue(1);
+    $('purchaseModal').classList.remove('hidden');$('purchaseModal').classList.add('flex');
+}
+
+function updateHenPriceValue(val) {
+    const p = getHenCostByPlan(val);
+    $('purchaseTotalCost').innerText = p.totalCost + " PKR"; 
+    $('activePlanBadge').innerText = p.planName;
+}
+
+function proceedToPaymentProof() { 
+    $('purchaseStep1').classList.add('hidden');$('purchaseStep2').classList.remove('hidden'); 
+}
+
+$('paymentProofForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const qty = int($('purchaseQty').value) || 1, plan = getHenCostByPlan(qty);
+    const trx = $('proofTrxId').value.trim(), holder =$('proofHolderName').value.trim();
+    if (!trx || !holder) return showCustomAlert("Error", "Fill all fields.");
+
+    db.ref('purchase_requests').push({ 
+        uid: currentUid, quantity: qty, amount: plan.totalCost, planName: plan.planName, transactionId: trx, accountHolderName: holder, status: 'pending', timestamp: firebase.database.ServerValue.TIMESTAMP 
+    })
+    .then(() => {
+        closeModal('purchaseModal');
+        showCustomAlert("Submitted", "Purchase request sent successfully.", () => {
+            window.open(`https://wa.me/${globalActiveWaNumber}?text=New Purchase Request:%20${qty}%20Hens`, '_blank');
+        }, "WhatsApp Admin");
+    }).catch(e => showCustomAlert("Error", e.message));
+});
+
+/* ============ CRYPTO MARKET LOGIC ============ */
+let activeCryptoPriceUSD = 0;
+let activeCryptoSymbol = "";
+
+async function openCryptoMarket() {
+    $('cryptoMarketModal').classList.remove('hidden');
+    $('cryptoMarketModal').classList.add('flex');$('cryptoList').innerHTML = `<div class="text-center text-slate-500 mt-10 text-sm font-bold animate-pulse">Loading Binance Data...</div>`;
+    
+    try {
+        let response = await fetch('https://api.binance.com/api/v3/ticker/price');
+        let data = await response.json();
+        
+        // Filter only USDT pairs and top volume-like symbols for clean UI
+        let usdtPairs = data.filter(c => c.symbol.endsWith('USDT') && !c.symbol.includes('DOWN') && !c.symbol.includes('UP'));
+        
+        // Sort some popular ones first
+        const popular = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'TRXUSDT'];
+        usdtPairs.sort((a, b) => {
+            let indexA = popular.indexOf(a.symbol);
+            let indexB = popular.indexOf(b.symbol);
+            if(indexA === -1) indexA = 999;
+            if(indexB === -1) indexB = 999;
+            return indexA - indexB;
+        });
+
+        // Take top 50 pairs to not lag the mobile browser
+        usdtPairs = usdtPairs.slice(0, 50);
+
+        let html = '';
+        usdtPairs.forEach(coin => {
+            let priceUSD = parseFloat(coin.price);
+            let pricePKR = priceUSD * USD_PKR_RATE;
+            let displaySymbol = coin.symbol.replace('USDT', '');
+            
+            html += `
+            <div class="crypto-item bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm cursor-pointer" onclick="openBuyCryptoModal('${coin.symbol}', ${priceUSD}, '${displaySymbol}')">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-slate-50 text-slate-800 rounded-full flex items-center justify-center font-black border border-slate-200">${displaySymbol.charAt(0)}</div>
+                    <div>
+                        <h4 class="font-black text-slate-800 text-sm">${displaySymbol}</h4>
+                        <p class="text-[10px] font-bold text-slate-400">USDT Pair</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-black text-slate-800">Rs. ${pricePKR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                    <div class="text-[10px] font-bold text-emerald-500">$${priceUSD.toFixed(4)}</div>
+                </div>
+            </div>`;
+        });
+        $('cryptoList').innerHTML = html;
+
+    } catch(err) {
+        $('cryptoList').innerHTML = `<div class="text-center text-red-500 mt-10 text-sm font-bold">Failed to load market. Try again.</div>`;
+    }
+}
+
+function openBuyCryptoModal(symbol, priceUSD, displaySymbol) {
+    activeCryptoSymbol = displaySymbol;
+    activeCryptoPriceUSD = priceUSD;
+    
+    let pricePKR = priceUSD * USD_PKR_RATE;
+    
+    $('buyCoinSymbol').innerText = displaySymbol;
+    $('buyCoinIcon').innerText = displaySymbol.charAt(0);$('buyCoinPrice').innerText = '1 ' + displaySymbol + ' = Rs. ' + pricePKR.toLocaleString();
+    $('cryptoAmountInput').value = '';$('cryptoEstReceive').innerText = '0.0000000 ' + displaySymbol;
+
+    $('buyCryptoModal').classList.remove('hidden');$('buyCryptoModal').classList.add('flex');
+}
+
+function calculateCryptoEst() {
+    let pkrAmount = parseFloat($('cryptoAmountInput').value) || 0;
+    let pricePKR = activeCryptoPriceUSD * USD_PKR_RATE;
+    let receive = pkrAmount / pricePKR;
+    $('cryptoEstReceive').innerText = receive.toFixed(7) + ' ' + activeCryptoSymbol;
+}
+
+function confirmCryptoPurchase() {
+    let pkrAmount = parseFloat($('cryptoAmountInput').value);
+    
+    if(!pkrAmount || pkrAmount <= 0) return showCustomAlert("Invalid Amount", "Please enter a valid amount.");
+    
+    let currentBalance = currentUserData.walletBalance || 0;
+    
+    if(pkrAmount > currentBalance) {
+        return showCustomAlert("Insufficient Balance", "Aapke wallet mein nakafi balance hai.");
+    }
+
+    let pricePKR = activeCryptoPriceUSD * USD_PKR_RATE;
+    let quantity = pkrAmount / pricePKR;
+    let newBalance = currentBalance - pkrAmount;
+
+    // Database Update
+    let updates = {};
+    updates[`users/${currentUid}/walletBalance`] = newBalance;
+    
+    // Push purchase to portfolio
+    let portfolioRef = db.ref(`users/${currentUid}/cryptoPortfolio`).push();
+    updates[`users/${currentUid}/cryptoPortfolio/${portfolioRef.key}`] = {
+        symbol: activeCryptoSymbol,
+        quantity: quantity,
+        investedPKR: pkrAmount,
+        buyPriceUSD: activeCryptoPriceUSD,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    db.ref().update(updates).then(() => {
+        closeModal('buyCryptoModal');
+        showToast("Crypto Purchased Successfully! 🚀");
+    }).catch(err => {
+        showCustomAlert("Error", "Transaction failed: " + err.message);
+    });
+}
+</script>
 </body>
 </html>
