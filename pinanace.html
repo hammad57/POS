@@ -1,28 +1,60 @@
-// functions/index.js (Firebase Cloud Functions)
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-admin.initializeApp();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Investment Wallet</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
+        .container { max-width: 400px; margin: auto; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .hidden { display: none; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: none; box-sizing: border-box;}
+        button { background-color: #00e676; color: black; font-weight: bold; cursor: pointer; }
+        .demo-btn { background-color: #ff9100; }
+        .logout-btn { background-color: #ff1744; color: white; }
+        .price-up { color: #00e676; }
+        .price-down { color: #ff1744; }
+    </style>
+</head>
+<body>
 
-exports.initializeUserWallet = functions.auth.user().onCreate(async (user) => {
-    // Check if user is Anonymous (Demo Account)
-    const isAnonymous = user.providerData.length === 0;
-    const initialBalance = isAnonymous ? 10000 : 0;
+<div class="container">
+    <!-- Auth Section -->
+    <div id="auth-section" class="card">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username (e.g. hammad)">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="loginUser()">Login</button>
+        <p>OR</p>
+        <button class="demo-btn" onclick="demoLogin()">Try Demo Account (Rs. 10,000)</button>
+    </div>
 
-    const db = admin.database();
-    
-    // Create user profile
-    await db.ref(`users/${user.uid}`).set({
-        role: "user",
-        isDemo: isAnonymous,
-        createdAt: admin.database.ServerValue.TIMESTAMP
-    });
+    <!-- Dashboard Section -->
+    <div id="dashboard-section" class="card hidden">
+        <h2>My Dashboard</h2>
+        <p>UID: <span id="user-uid" style="font-size: 12px; color: gray;"></span></p>
+        
+        <div class="card" style="background: #2c2c2c;">
+            <h3>Available Balance</h3>
+            <h1 style="color: #00e676;">PKR <span id="wallet-balance">0.00</span></h1>
+        </div>
 
-    // Create wallet with either 10,000 (Demo) or 0 (Real)
-    await db.ref(`wallets/${user.uid}`).set({
-        availableBalance: initialBalance,
-        investedBalance: 0,
-        pendingBalance: 0
-    });
+        <div class="card" style="background: #2c2c2c;">
+            <h3>Live Market (Binance)</h3>
+            <p>Bitcoin (BTC)</p>
+            <h2 id="btc-price">Loading...</h2>
+        </div>
 
-    return null;
-});
+        <button onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
