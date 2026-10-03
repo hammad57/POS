@@ -1,28 +1,255 @@
-// functions/index.js (Firebase Cloud Functions)
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-admin.initializeApp();
-
-exports.initializeUserWallet = functions.auth.user().onCreate(async (user) => {
-    // Check if user is Anonymous (Demo Account)
-    const isAnonymous = user.providerData.length === 0;
-    const initialBalance = isAnonymous ? 10000 : 0;
-
-    const db = admin.database();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Professional Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    // Create user profile
-    await db.ref(`users/${user.uid}`).set({
-        role: "user",
-        isDemo: isAnonymous,
-        createdAt: admin.database.ServerValue.TIMESTAMP
-    });
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script> <style>
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        .active-tab { background-color: #2563eb !important; color: white !important; border-color: #2563eb !important; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
 
-    // Create wallet with either 10,000 (Demo) or 0 (Real)
-    await db.ref(`wallets/${user.uid}`).set({
-        availableBalance: initialBalance,
-        investedBalance: 0,
-        pendingBalance: 0
-    });
+    <nav class="bg-slate-800 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-wide"><i class="fa-solid fa-shield-halved text-blue-400 mr-2"></i>Admin Dashboard</h1>
+            <div class="flex gap-3">
+                <a href="home.html" class="bg-slate-700 hover:bg-slate-600 px-4 py-1.5 rounded-lg text-sm font-semibold transition shadow-sm border border-slate-600"><i class="fa-solid fa-house mr-1"></i> Home</a>
+                <a href="index.html" class="bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded-lg text-sm font-semibold transition shadow-sm"><i class="fa-solid fa-store mr-1"></i> View Shop</a>
+            </div>
+        </div>
+    </nav>
 
-    return null;
-});
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
+            
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-extrabold text-gray-800 mb-4 flex items-center gap-2 text-sm uppercase tracking-wide">
+                        <i class="fa-solid fa-layer-group text-blue-500"></i> Categories
+                    </h3>
+                    <div class="flex flex-col gap-3 mb-4">
+                        <input type="hidden" id="editCatKey">
+                        <input type="text" id="catInput" placeholder="Category Name" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none transition">
+                        <input type="text" id="catImageInput" placeholder="Icon/Image URL (Optional)" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none transition">
+                        <div class="flex gap-2">
+                            <button id="saveCatBtn" onclick="saveCategory()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-sm transition transform hover:-translate-y-0.5">Add Category</button>
+                            <button id="cancelCatBtn" onclick="resetCatForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2.5 rounded-lg text-sm font-bold hidden transition">Cancel</button>
+                        </div>
+                    </div>
+                    <ul id="catList" class="space-y-2 max-h-[35vh] overflow-y-auto custom-scrollbar pr-1"></ul>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3">
+                <div class="flex space-x-2 mb-6 overflow-x-auto pb-2 custom-scrollbar">
+                    <button onclick="switchTab('uploadTab', this)" class="tab-btn active-tab bg-white text-gray-600 border border-gray-200 px-6 py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 transition whitespace-nowrap">
+                        <i class="fa-solid fa-plus-circle mr-2"></i> Upload / Edit Product
+                    </button>
+                    <button onclick="switchTab('itemsTab', this)" class="tab-btn bg-white text-gray-600 border border-gray-200 px-6 py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 transition whitespace-nowrap">
+                        <i class="fa-solid fa-boxes-stacked mr-2"></i> Inventory Items
+                    </button>
+                </div>
+
+                <div id="uploadTab" class="tab-content space-y-6">
+                    <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 class="font-extrabold text-gray-800 mb-6 flex items-center gap-2 text-xl border-b pb-4">
+                            <i class="fa-solid fa-cloud-arrow-up text-green-500"></i> <span id="formTitle">Upload New Product</span>
+                        </h3>
+                        
+                        <input type="hidden" id="editKey">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-5">
+                                <div>
+                                    <label class="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-1 block">Category</label>
+                                    <select id="pCat" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-700 transition"></select>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-1 block">Product Name</label>
+                                    <input type="text" id="pName" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-800 transition">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-1 block">Item Code</label>
+                                        <input type="text" id="pCode" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-800 transition uppercase">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-1 block">Price (Rs.)</label>
+                                        <input type="number" id="pPrice" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-blue-700 transition">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-1 block">Description</label>
+                                    <textarea id="pDesc" rows="4" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none text-sm transition custom-scrollbar"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-100 flex flex-col justify-between">
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider block mb-2"><i class="fa-regular fa-images text-blue-500 mr-1"></i> Product Image (Upload File)</label>
+                                    <input type="file" id="imgFile" accept="image/*" class="w-full p-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none transition">
+                                    
+                                    <div id="uploadProgress" class="hidden w-full bg-gray-200 rounded-full h-2.5">
+                                        <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-8 pt-4 border-t border-gray-200">
+                                    <button id="saveBtn" onclick="uploadProduct()" class="w-full bg-green-600 hover:bg-green-500 text-white font-extrabold py-4 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-lg flex justify-center items-center gap-2">
+                                        <i class="fa-solid fa-check"></i> Save Product
+                                    </button>
+                                    <button id="cancelEditBtn" onclick="resetForm()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 rounded-xl hidden transition mt-3">
+                                        Cancel Edit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="itemsTab" class="tab-content hidden space-y-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 class="font-extrabold text-gray-800 mb-6 flex items-center gap-2 text-xl border-b pb-4">
+                            <i class="fa-solid fa-boxes-stacked text-blue-500"></i> Inventory Items
+                        </h3>
+                        <div id="productList" class="space-y-4"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Config [cite: 182, 183]
+        const firebaseConfig = {
+            apiKey: "AIzaSyBQ0Ckzlgy8GV-uP89ypRHwrMX2Wq-2Mok",
+            authDomain: "onlineshoping-bcf3b.firebaseapp.com",
+            databaseURL: "https://onlineshoping-bcf3b-default-rtdb.firebaseio.com/",
+            projectId: "onlineshoping-bcf3b",
+            storageBucket: "onlineshoping-bcf3b.firebasestorage.app",
+            messagingSenderId: "634849561995",
+            appId: "1:634849561995:web:caa5e8916b5489e1f4f38e"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const storage = firebase.storage(); // Storage Initialize
+
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
+            if(btnElement) btnElement.classList.add('active-tab');
+        }
+
+        // Product Upload with Image Saving [cite: 224, 225, 226]
+        async function uploadProduct() {
+            const key = document.getElementById('editKey').value;
+            const file = document.getElementById('imgFile').files[0];
+            const saveBtn = document.getElementById('saveBtn');
+            
+            const pName = document.getElementById('pName').value;
+            const pCode = document.getElementById('pCode').value;
+            const pPrice = document.getElementById('pPrice').value;
+
+            if(!pName || !pCode || (!file && !key)) {
+                return alert("Name, Code, and Image are required!");
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+
+            let imageUrl = "";
+
+            try {
+                if(file) {
+                    // Image ko Firebase Storage mein save karna
+                    const storageRef = storage.ref('products/' + Date.now() + "_" + file.name);
+                    const snapshot = await storageRef.put(file);
+                    imageUrl = await snapshot.ref.getDownloadURL();
+                }
+
+                const p = {
+                    category: document.getElementById('pCat').value,
+                    name: pName,
+                    code: pCode,
+                    price: pPrice,
+                    desc: document.getElementById('pDesc').value,
+                    // Agar nayi image upload hui toh woh use hogi, warna purani (agar edit ho raha hai)
+                    images: imageUrl ? [imageUrl] : null 
+                };
+
+                const ref = key ? db.ref('products').child(key) : db.ref('products').push();
+                
+                // Agar edit hai aur nayi image nahi hai toh purani images delete na hon
+                if(key && !imageUrl) {
+                    delete p.images;
+                    await ref.update(p);
+                } else {
+                    await ref.set(p);
+                }
+
+                alert(key ? "Product Updated!" : "Product Saved!");
+                resetForm();
+            } catch (error) {
+                console.error(error);
+                alert("Error: " + error.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Save Product';
+            }
+        }
+
+        // Categories Loading [cite: 207, 212]
+        db.ref('categories').on('value', snap => {
+            const list = document.getElementById('catList');
+            const select = document.getElementById('pCat');
+            list.innerHTML = ''; select.innerHTML = ''; 
+            
+            snap.forEach(child => {
+                const c = child.val();
+                list.innerHTML += `<li class="p-2 bg-gray-50 mb-1 rounded text-xs flex justify-between items-center">${c.name}</li>`;
+                select.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+            });
+        });
+
+        // Inventory Loading [cite: 238, 240, 241]
+        db.ref('products').on('value', snap => {
+            const list = document.getElementById('productList');
+            list.innerHTML = '';
+            snap.forEach(child => {
+                const p = child.val();
+                list.innerHTML += `
+                    <div class="flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-xl">
+                        <img src="${p.images ? p.images[0] : ''}" class="w-12 h-12 object-cover rounded-lg">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm">${p.name}</h4>
+                            <p class="text-blue-600 text-[10px]">Rs. ${p.price}</p>
+                        </div>
+                    </div>`;
+            });
+        });
+
+        function resetForm() {
+            document.getElementById('editKey').value = '';
+            document.getElementById('pName').value = '';
+            document.getElementById('pCode').value = '';
+            document.getElementById('pPrice').value = '';
+            document.getElementById('pDesc').value = '';
+            document.getElementById('imgFile').value = '';
+            document.getElementById('formTitle').innerText = "Upload New Product";
+        }
+    </script>
+</body>
+</html>
