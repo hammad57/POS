@@ -168,9 +168,10 @@ input, select, textarea { color-scheme: dark; }
                     <button onclick="toggleDemoAccountMode()" id="btnToggleDemo" class="text-[10px] bg-[#2b313a] hover:bg-zinc-700 text-zinc-200 px-2.5 py-1 rounded-lg border border-zinc-700 font-bold transition-all">Deactivate Demo</button>
                 </div>
             </div>
-            <div class="flex items-end gap-2 mb-3">
-                <span class="text-sm text-zinc-400 font-bold mb-1">PKR</span>
-                <h2 id="lblWalletBalance" class="text-3xl font-black crypto-gold leading-none">0.00</h2>
+            <div class="flex items-center mb-3">
+                <span class="text-sm text-zinc-400 font-bold mb-1 mr-2">PKR</span>
+                <h2 id="lblWalletBalance" class="text-3xl font-black crypto-gold leading-none transition-all duration-300">0.00</h2>
+                <span id="liveBalanceFlow" class="text-xs ml-3 bg-black/40 px-2 py-0.5 rounded shadow">〰</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-[11px] pt-3 border-t border-zinc-800/80 mb-4">
                 <div>
@@ -180,6 +181,7 @@ input, select, textarea { color-scheme: dark; }
                 <div class="text-right">
                     <span class="text-zinc-500 block text-[9px] uppercase">Total Profit / Loss</span>
                     <span id="lblTotalPL" class="font-bold text-[#0ecb81]">0.00 PKR</span>
+                    <span id="lblDailyPL" class="text-[9px] text-[#f6465d] block mt-0.5">Today: 0.00 PKR</span>
                 </div>
             </div>
 
@@ -197,6 +199,18 @@ input, select, textarea { color-scheme: dark; }
     <!-- TAB 1: HOME VIEW -->
     <div id="tabContent_home" class="tab-pane">
         
+        <!-- INVITE PROMO BANNER ON HOME -->
+        <div onclick="openInviteModal()" class="cursor-pointer glass border border-[#f0b90b]/50 rounded-2xl p-4 flex items-center justify-between shadow-xl transition-all bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mb-4">
+            <div class="flex items-center gap-3 text-left">
+                <div class="w-12 h-12 bg-gradient-to-br from-[#f0b90b] to-[#d4a000] rounded-full flex items-center justify-center text-2xl shadow-lg border-2 border-white/20">🎁</div>
+                <div>
+                    <h4 class="font-bold text-sm text-white uppercase tracking-wider">Invite Friends & Earn</h4>
+                    <p class="text-[10px] text-zinc-300 font-semibold mt-0.5">Get 10% on 1st Deposit + Daily 0.95% Returns!</p>
+                </div>
+            </div>
+            <span class="text-xl font-bold crypto-gold animate-bounce">→</span>
+        </div>
+
         <!-- DAILY LOGIN CLAIM BANNER (ALWAYS SHOWS) -->
         <div id="dailyClaimContainer" class="mb-4">
             <!-- Will be populated via JS based on balance -->
@@ -377,6 +391,33 @@ input, select, textarea { color-scheme: dark; }
 
 <!-- ================= MODALS ================= -->
 
+<!-- PURCHASE SUCCESS MODAL -->
+<div id="purchaseSuccessModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9999] modal-overlay">
+    <div class="glass border border-[#0ecb81]/50 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative text-center card-glow modal-panel">
+        <div class="w-16 h-16 bg-[#0ecb81]/20 border border-[#0ecb81]/50 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl animate-bounce">✅</div>
+        <h3 class="text-xl font-bold text-white mb-2">Purchase Successful!</h3>
+        <p id="purchaseSuccessMsg" class="text-zinc-300 text-sm mb-6"></p>
+        <button onclick="closeModal('purchaseSuccessModal')" class="w-full bg-[#0ecb81] hover:bg-[#0ecb81]/80 text-black font-black py-3 rounded-xl transition-all">Done</button>
+    </div>
+</div>
+
+<!-- EXPANDED CHART MODAL (HISTORY) -->
+<div id="expandedChartModal" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden items-center justify-center p-2 z-[9999] modal-overlay">
+    <div class="glass border border-zinc-800 w-full max-w-md rounded-2xl p-4 shadow-2xl relative modal-panel h-[70vh] flex flex-col">
+        <button onclick="closeModal('expandedChartModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-2xl">&times;</button>
+        <div class="mb-4 mt-2 text-center">
+            <h3 id="expChartTitle" class="text-lg font-bold crypto-gold">Coin/USDT History</h3>
+            <p id="expChartPL" class="text-sm font-bold text-[#0ecb81]">Live P&L: --</p>
+        </div>
+        <div class="flex-1 overflow-x-auto overflow-y-hidden custom-scroll relative bg-[#1e2329]/50 rounded-xl border border-zinc-800 p-2">
+            <div style="width: 800px; height: 100%; position: relative;">
+                <canvas id="expandedCanvas"></canvas>
+            </div>
+        </div>
+        <p class="text-[10px] text-zinc-500 text-center mt-3">👈 Swipe Left/Right to view chart history 👉</p>
+    </div>
+</div>
+
 <!-- INVITE / REFERRAL MODAL -->
 <div id="inviteModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9998] modal-overlay">
     <div class="glass border border-[#f0b90b]/50 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative modal-panel max-h-[90vh] overflow-y-auto custom-scroll">
@@ -479,7 +520,6 @@ input, select, textarea { color-scheme: dark; }
     </div>
 </div>
 
-<!-- OTHERS MODALS (Deposit, Withdraw, Market, Buy, Shift, Settings) -->
 <!-- DEPOSIT MODAL -->
 <div id="depositModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9998] modal-overlay">
     <div class="glass border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative modal-panel">
@@ -596,7 +636,7 @@ input, select, textarea { color-scheme: dark; }
 
 <script>
 /* =========================================================
-   BINANCE PRO CRYPTO WALLET SCRIPT (UPDATED WITH REFERRAL & PNL)
+   BINANCE PRO CRYPTO WALLET SCRIPT (UPDATED WITH REFERRAL, LIVE PNL & HISTORY CHARTS)
    ========================================================= */
 
 const firebaseConfig = {
@@ -629,6 +669,15 @@ let dailyBetsCount = 0;
 let lastBetDate = "";
 let referredByUrlParam = null;
 
+window.total24PlCache = 0;
+let lastPortfolioValForFlow = 0;
+
+// Expanded Chart Variables
+let expandedChartInstance = null;
+let currentExpandedKey = null;
+let currentExpandedBuyPrice = null;
+let currentExpandedSymbol = null;
+
 const $ = id => document.getElementById(id);
 const num = v => { const n = Number(v); return isNaN(n) ? 0 : n; };
 const flt = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
@@ -639,6 +688,22 @@ const urlParams = new URLSearchParams(window.location.search);
 if(urlParams.has('ref')) {
     referredByUrlParam = urlParams.get('ref');
 }
+
+// 1-second interval for the small Flow Indicator 📉📈
+setInterval(() => {
+    const flowEl = $('liveBalanceFlow');
+    if(flowEl) {
+        const current = window.currentPortfolioValCache || 0;
+        if(current > lastPortfolioValForFlow) {
+            flowEl.innerHTML = '<span class="text-[#0ecb81]">📈 +</span>';
+        } else if(current < lastPortfolioValForFlow) {
+            flowEl.innerHTML = '<span class="text-[#f6465d]">📉 -</span>';
+        } else {
+            flowEl.innerHTML = '<span class="text-zinc-500">〰</span>';
+        }
+        lastPortfolioValForFlow = current;
+    }
+}, 1000);
 
 function showToast(msg, duration = 3000) {
     const t = $('toast');
@@ -740,7 +805,7 @@ auth.onAuthStateChanged(user => {
             currentUserData = val;
             $('lblUserName').innerText = val.name || "User";
             updateWalletHeaderDisplay();
-            renderDailyClaimBanner(); // Update daily claim ui
+            renderDailyClaimBanner();
         });
 
         const portfolioRef = db.ref('users/' + currentUid + '/crypto_portfolio');
@@ -756,11 +821,14 @@ auth.onAuthStateChanged(user => {
         $('dashboardContainer').classList.remove('hidden');
         startBinancePricePolling();
         
-        // Handle Promos and Referrals on Login
         checkAndShowPromoAds();
         processDailyReferralYield();
 
-        autoRefreshTimer = setInterval(() => { manualRefreshBalance(false); }, 5000);
+        // Updated timer to 3 Seconds for balance and charts update
+        autoRefreshTimer = setInterval(() => { 
+            manualRefreshBalance(false); 
+            updateAllChartsAndPL(); 
+        }, 3000);
 
     } else {
         currentUid = null; currentUserData = null;
@@ -794,22 +862,25 @@ function updateWalletHeaderDisplay() {
     const cashBal = num(currentUserData.walletBalance);
     const demoBal = currentUserData.demoBalance !== undefined ? num(currentUserData.demoBalance) : 50000;
 
+    const activeCash = isDemo ? demoBal : cashBal;
+    // Combining Cash Wallet and the Portfolio Value dynamically
+    const totalEquity = activeCash + (window.currentPortfolioValCache || 0);
+
     if (isDemo) {
         $('lblAccountTitle').innerText = "DEMO ACCOUNT BALANCE";
         $('lblAccountBadge').innerText = "DEMO";
         $('lblAccountBadge').className = "bg-[#f0b90b]/20 text-[#f0b90b] border border-[#f0b90b]/40 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase";
         $('btnToggleDemo').innerText = "Deactivate Demo";
-        $('lblWalletBalance').innerText = demoBal.toLocaleString('en-US', {minimumFractionDigits: 2});
     } else {
         $('lblAccountTitle').innerText = "REAL WALLET BALANCE";
         $('lblAccountBadge').innerText = "REAL";
         $('lblAccountBadge').className = "bg-[#0ecb81]/20 text-[#0ecb81] border border-[#0ecb81]/40 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase";
         $('btnToggleDemo').innerText = "Activate Demo";
-        $('lblWalletBalance').innerText = cashBal.toLocaleString('en-US', {minimumFractionDigits: 2});
     }
 
-    $('lblCashWallet').innerText = cashBal.toLocaleString('en-US', {minimumFractionDigits: 2}) + ' PKR';
-    $('marketWalletBal').innerText = (isDemo ? demoBal : cashBal).toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
+    $('lblWalletBalance').innerText = totalEquity.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    $('lblCashWallet').innerText = activeCash.toLocaleString('en-US', {minimumFractionDigits: 2}) + ' PKR';
+    $('marketWalletBal').innerText = activeCash.toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
 }
 
 /* ============ DAILY LOGIN BONUS (MIN RS 100) ============ */
@@ -819,7 +890,6 @@ function renderDailyClaimBanner() {
     const isDemo = currentUserData.isDemoActive !== false;
     const activeBal = isDemo ? num(currentUserData.demoBalance) : num(currentUserData.walletBalance);
     
-    // Always show, check if claimable
     let lastClaimStr = currentUserData.lastDailyClaimDate || "";
     let todayStr = new Date().toLocaleDateString();
     let isClaimedToday = (lastClaimStr === todayStr);
@@ -885,7 +955,6 @@ function claimDailyBonus() {
         updates[`users/${currentUid}/walletBalance`] = currentReal + 1.2;
     }
     
-    // Log in history
     let newTxRef = db.ref(`users/${currentUid}/transactions`).push();
     updates[`users/${currentUid}/transactions/${newTxRef.key}`] = {
         type: 'Daily Login Bonus', amount: 1.2, isDemo: isDemo, timestamp: firebase.database.ServerValue.TIMESTAMP
@@ -906,9 +975,6 @@ function checkAndShowPromoAds() {
         setTimeout(() => {
             $('promoAdModal').classList.remove('hidden'); $('promoAdModal').classList.add('flex');
         }, 1000);
-    } else if (hideDate2 !== todayStr) {
-        // If 1 is hidden but 2 is not, show 2 maybe? User said "jab skip kare to doosra dikhaye". 
-        // We will just follow that flow.
     }
 }
 
@@ -918,8 +984,6 @@ function skipPromoAd1() {
     if($('chkHidePromo1').checked) {
         localStorage.setItem('hidePromo1Date', todayStr);
     }
-    
-    // Show Ad 2
     let hideDate2 = localStorage.getItem('hidePromo2Date');
     if(hideDate2 !== todayStr) {
         setTimeout(() => {
@@ -948,7 +1012,6 @@ function loadReferredUsers() {
     const list = $('referredUsersList');
     list.innerHTML = '<p class="text-zinc-500 italic text-center py-2">Loading...</p>';
     
-    // Simple fetch all and filter client side to avoid index requirement for demo
     db.ref('users').once('value', snap => {
         let count = 0;
         let html = '';
@@ -985,10 +1048,8 @@ function processDailyReferralYield() {
         snap.forEach(child => {
             let u = child.val();
             if(u.referredBy === currentUid) {
-                // Check if user has min 500 balance (checking demo or real whichever is active)
                 let balToCheck = u.isDemoActive !== false ? num(u.demoBalance) : num(u.walletBalance);
                 if(balToCheck >= 500) {
-                    // Calculate 0.95% daily earning based on their balance
                     totalYield += (balToCheck * 0.0095);
                 }
             }
@@ -1000,14 +1061,12 @@ function processDailyReferralYield() {
             let currentRefEarn = num(currentUserData.referralEarnings);
             updates[`users/${currentUid}/referralEarnings`] = currentRefEarn + totalYield;
             
-            // Add to active wallet
             if(currentUserData.isDemoActive !== false) {
                 updates[`users/${currentUid}/demoBalance`] = num(currentUserData.demoBalance) + totalYield;
             } else {
                 updates[`users/${currentUid}/walletBalance`] = num(currentUserData.walletBalance) + totalYield;
             }
             
-            // Log Tx
             let newTxRef = db.ref(`users/${currentUid}/transactions`).push();
             updates[`users/${currentUid}/transactions/${newTxRef.key}`] = {
                 type: 'Referral Daily Earning', amount: totalYield, timestamp: firebase.database.ServerValue.TIMESTAMP
@@ -1024,7 +1083,6 @@ function openPnlModal() {
     const list = $('pnlHistoryList');
     list.innerHTML = '<p class="text-zinc-500 italic text-center py-4">Loading history...</p>';
     
-    // Combine transactions and predictions
     let allRecords = [];
     
     if(currentUserData.transactions) {
@@ -1044,7 +1102,7 @@ function openPnlModal() {
         });
     }
     
-    allRecords.sort((a,b) => b.time - a.time); // newest first
+    allRecords.sort((a,b) => b.time - a.time);
     
     let netTotal = 0;
     let html = '';
@@ -1072,12 +1130,11 @@ function openPnlModal() {
     else list.innerHTML = '<p class="text-zinc-500 italic text-center py-4">No P&L history found.</p>';
 }
 
-/* ============ DEPOSIT, WITHDRAW & MARKET LOGIC (UNCHANGED CORE) ============ */
+/* ============ DEPOSIT, WITHDRAW & MARKET LOGIC ============ */
 function openDepositModal() { $('depositModal').classList.remove('hidden'); $('depositModal').classList.add('flex'); }
 function openWithdrawModal() { $('withdrawModal').classList.remove('hidden'); $('withdrawModal').classList.add('flex'); }
 
 function simulateDeposit() {
-    // For demo purposes to trigger 10% referral and balance logic
     let amount = 1000;
     let updates = {};
     let isDemo = currentUserData.isDemoActive !== false;
@@ -1086,11 +1143,9 @@ function simulateDeposit() {
     if(isDemo) updates[`users/${currentUid}/demoBalance`] = currentBal + amount;
     else updates[`users/${currentUid}/walletBalance`] = currentBal + amount;
     
-    // Handle 10% First Deposit Referral Bonus for the Referrer
     if(currentUserData.referredBy && !currentUserData.hasDeposited) {
         updates[`users/${currentUid}/hasDeposited`] = true;
         let bonus = amount * 0.10;
-        // Fetch referrer and add bonus
         db.ref('users/'+currentUserData.referredBy).once('value', snap => {
             if(snap.exists()) {
                 let refU = snap.val();
@@ -1175,7 +1230,6 @@ async function startBinancePricePolling() {
         if ($('gameLiveBnbPrice')) $('gameLiveBnbPrice').innerText = bnbPkr.toLocaleString('en-US', {maximumFractionDigits: 2}) + ' PKR';
     } catch (e) {}
     
-    updateAllChartsAndPL();
     setTimeout(startBinancePricePolling, 2000);
 }
 
@@ -1262,6 +1316,9 @@ function renderPredictionHistory(snap) {
             <div class="text-right"><span class="font-black ${isWin ? 'text-[#0ecb81]' : 'text-[#f6465d]'} block">${isWin ? '+' : '-'}${p.amount} PKR</span><span class="text-[9px] text-zinc-500">${isWin ? 'WON' : 'LOST'}</span></div>`;
         container.prepend(div);
     });
+    
+    // Store globally for daily PL display calculation
+    window.total24PlCache = total24Pl;
 
     const summaryEl = $('summary24HoursPL');
     if (summaryEl) { summaryEl.innerText = (total24Pl >= 0 ? '+' : '') + total24Pl.toFixed(2) + ' PKR'; summaryEl.className = `text-xs font-bold ${total24Pl >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'}`; }
@@ -1306,7 +1363,8 @@ function openBuyCryptoModal(symbol, priceUSD) {
     $('buyCoinTitle').innerText = `Buy ${symbol} Asset (${isDemo ? 'Demo' : 'Real'})`; $('buyCoinIcon').innerText = symbol.charAt(0);$('buyCoinPriceLabel').innerText = `1 ${symbol} = Rs. ${pricePKR.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
     $('cryptoAmountInput').value = '';$('cryptoEstReceive').innerText = `0.00 ${symbol}`; $('buyCryptoAvailableBal').innerText = activeBal.toLocaleString() + ' PKR';
     
-    $('buyCryptoInputError').classList.add('hidden');$('buyCryptoInlineBal').innerText = `Available Balance: ${activeBal.toLocaleString('en-US', {maximumFractionDigits: 2})} PKR`;
+    $('buyCryptoInputError').classList.add('hidden');
+    $('buyCryptoInlineBal').innerText = `Available Balance: ${activeBal.toLocaleString('en-US', {maximumFractionDigits: 2})} PKR`;
 
     $('buyCryptoModal').classList.remove('hidden');$('buyCryptoModal').classList.add('flex');
 }
@@ -1349,12 +1407,66 @@ function confirmCryptoPurchase() {
     updates[`users/${currentUid}/crypto_portfolio/${portfolioRef.key}`] = { symbol: selectedCryptoSymbol, quantity, investedPKR: amountPKR, buyPriceUSD: selectedCryptoPriceUSD, isDemo, timestamp: firebase.database.ServerValue.TIMESTAMP };
     
     db.ref().update(updates).then(() => {
-        closeModal('buyCryptoModal'); closeModal('cryptoMarketModal'); updateWalletHeaderDisplay();
-        showCustomAlert("Success", `Successfully purchased ${quantity.toFixed(6)} ${selectedCryptoSymbol}!`);
+        // CLOSE MODALS & SHOW CONFIRMATION TAB
+        closeModal('buyCryptoModal'); 
+        closeModal('cryptoMarketModal'); 
+        updateWalletHeaderDisplay();
+        
+        $('purchaseSuccessMsg').innerText = `Aap ne successfully ${quantity.toFixed(6)} ${selectedCryptoSymbol} buy kar liye hain!`;
+        $('purchaseSuccessModal').classList.remove('hidden');$('purchaseSuccessModal').classList.add('flex');
     }).catch(err => showCustomAlert("Error", err.message));
 }
 
-let cachedPortfolioData = {}; window.currentPortfolioValCache = 0;
+function openExpandedChart(symbol, dataKey, buyPrice) {
+    currentExpandedKey = dataKey;
+    currentExpandedBuyPrice = buyPrice;
+    currentExpandedSymbol = symbol;
+    
+    $('expChartTitle').innerText = `${symbol} / USDT Market History`;
+    $('expandedChartModal').classList.remove('hidden');$('expandedChartModal').classList.add('flex');
+    
+    updateExpandedChart();
+}
+
+function updateExpandedChart() {
+    if(!currentExpandedKey || $('expandedChartModal').classList.contains('hidden')) return;
+    
+    const hist = chartDataHistory[currentExpandedKey];
+    if(!hist) return;
+
+    const livePricePKR = (livePricesMap[currentExpandedSymbol] || currentExpandedBuyPrice) * USD_PKR_RATE;
+    const investedPKR = currentExpandedBuyPrice * USD_PKR_RATE;
+    const diff = livePricePKR - investedPKR;
+    
+    const plEl = $('expChartPL');
+    plEl.innerText = `Live PL: ${diff >= 0 ? '+' : ''}${diff.toFixed(2)} PKR`;
+    plEl.className = `text-sm font-bold ${diff >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'}`;
+
+    const ctx = document.getElementById('expandedCanvas').getContext('2d');
+    if(expandedChartInstance) {
+        expandedChartInstance.data.labels = hist.labels;
+        expandedChartInstance.data.datasets[0].data = hist.data;
+        expandedChartInstance.update('none');
+    } else {
+        expandedChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: hist.labels,
+                datasets: [{ 
+                    label: `${currentExpandedSymbol} Price (PKR)`, 
+                    data: hist.data, 
+                    borderColor: '#0ecb81', 
+                    backgroundColor: 'rgba(14, 203, 129, 0.2)', 
+                    borderWidth: 2, 
+                    fill: true, 
+                    tension: 0.2, 
+                    pointRadius: 3 
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } } }
+        });
+    }
+}
 
 function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
     const portfolioContainer = $('portfolioContainer'); portfolioContainer.innerHTML = ''; 
@@ -1374,7 +1486,6 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
             <div class="text-right"><span class="font-black text-white text-xs block">${currentValPKR.toFixed(2)} PKR</span><span class="text-[10px] font-bold ${profitLossPKR >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'} block">${profitLossPKR >= 0 ? '+' : ''}${profitLossPKR.toFixed(2)} PKR</span><button onclick="sellPortfolioItem('${key}', ${currentValPKR}, ${item.isDemo})" class="mt-1 bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-1 rounded text-[9px] font-bold uppercase">Sell</button></div>`;
         portfolioContainer.appendChild(div);
 
-        // Update home dashboard quick portfolio section
         if(homePortContainer) {
             const homeDiv = document.createElement('div');
             homeDiv.className = "glass p-3 rounded-xl border border-zinc-800 flex justify-between items-center";
@@ -1399,6 +1510,14 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
     window.currentPortfolioValCache = totalPortfolioVal; const totalPL = totalPortfolioVal - totalInvested;
     const plEl = $('lblTotalPL'); if (plEl) { plEl.innerText = (totalPL >= 0 ? '+' : '') + totalPL.toFixed(2) + ' PKR'; plEl.className = totalPL >= 0 ? 'font-bold text-[#0ecb81]' : 'font-bold text-[#f6465d]'; }
     
+    // Calculate and display Daily PL (Combination of today's closed prediction PL and live active PL)
+    const totalDaily = (window.total24PlCache || 0) + totalPL;
+    const dailyEl = $('lblDailyPL');
+    if(dailyEl) {
+        dailyEl.innerText = 'Today: ' + (totalDaily >= 0 ? '+' : '') + totalDaily.toFixed(2) + ' PKR';
+        dailyEl.className = `text-[9px] block mt-0.5 ${totalDaily >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'}`;
+    }
+
     if (!has) { 
         portfolioContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-4 text-xs">No coins purchased yet. Open market to buy.</p>';
         if(homePortContainer) homePortContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-2 text-xs">No coins purchased yet.</p>';
@@ -1413,12 +1532,27 @@ function renderCharts(symbolsList, isIntervalUpdate) {
         chartsContainer.innerHTML = ''; activeChartInstances = {};
         symbolsList.forEach((item, index) => {
             const canvasId = `chart_${item.symbol}_${index}`; const card = document.createElement('div'); card.className = "glass p-3 rounded-xl border border-zinc-800";
-            card.innerHTML = `<div class="flex justify-between items-center mb-2"><span class="text-xs font-bold crypto-gold">${item.symbol}/USDT Real-Time P&L</span><span id="price_${item.symbol}_${index}" class="text-xs font-mono text-[#0ecb81]">--</span></div><div style="height: 140px; position: relative;"><canvas id="${canvasId}"></canvas></div>`;
+            
+            // Re-designed chart card header to include history button
+            card.innerHTML = `<div class="flex justify-between items-center mb-2"><span class="text-xs font-bold crypto-gold">${item.symbol}/USDT Real-Time P&L</span><div class="flex items-center gap-2"><span id="price_${item.symbol}_${index}" class="text-xs font-mono text-[#0ecb81]">--</span><button onclick="openExpandedChart('${item.symbol}', '${canvasId}', ${item.buyPrice})" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded p-1 text-xs border border-zinc-700 transition-colors" title="View History">📜</button></div></div><div style="height: 140px; position: relative;"><canvas id="${canvasId}"></canvas></div>`;
             chartsContainer.appendChild(card);
+            
             const currentPrice = (livePricesMap[item.symbol] || item.buyPrice || 100) * USD_PKR_RATE;
-            chartDataHistory[canvasId] = { labels: ['0s', '2s', '4s', '6s', '8s', '10s'], data: [currentPrice, currentPrice, currentPrice, currentPrice, currentPrice, currentPrice] };
+            // Maintaining array of 60 items for history expanding
+            chartDataHistory[canvasId] = { 
+                labels: Array(60).fill('').map((_, i) => (i+1) + 's'), 
+                data: Array(60).fill(currentPrice) 
+            };
+            
             const ctx = document.getElementById(canvasId).getContext('2d');
-            activeChartInstances[canvasId] = new Chart(ctx, { type: 'line', data: { labels: chartDataHistory[canvasId].labels, datasets: [{ label: `${item.symbol} Price (PKR)`, data: chartDataHistory[canvasId].data, borderColor: '#f0b90b', backgroundColor: 'rgba(240, 185, 11, 0.1)', borderWidth: 2, fill: true, tension: 0.3, pointRadius: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#848e9c', font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: '#848e9c', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } } } } });
+            activeChartInstances[canvasId] = new Chart(ctx, { 
+                type: 'line', 
+                data: { 
+                    labels: chartDataHistory[canvasId].labels.slice(-10), 
+                    datasets: [{ label: `${item.symbol} Price (PKR)`, data: chartDataHistory[canvasId].data.slice(-10), borderColor: '#f0b90b', backgroundColor: 'rgba(240, 185, 11, 0.1)', borderWidth: 2, fill: true, tension: 0.3, pointRadius: 2 }] 
+                }, 
+                options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#848e9c', font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: '#848e9c', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } } } } 
+            });
         });
     }
 
@@ -1427,7 +1561,20 @@ function renderCharts(symbolsList, isIntervalUpdate) {
         if (chart) {
             const livePricePKR = (livePricesMap[item.symbol] || item.buyPrice || 100) * USD_PKR_RATE;
             const priceLabelEl = document.getElementById(`price_${item.symbol}_${index}`); if (priceLabelEl) priceLabelEl.innerText = livePricePKR.toFixed(2) + ' PKR';
-            const hist = chartDataHistory[canvasId]; hist.data.shift(); hist.data.push(livePricePKR); chart.data.datasets[0].data = hist.data; chart.update('none');
+            
+            const hist = chartDataHistory[canvasId]; 
+            hist.data.shift(); 
+            hist.data.push(livePricePKR); 
+            
+            // Mini chart updates only last 10 ticks
+            chart.data.labels = hist.labels.slice(-10);
+            chart.data.datasets[0].data = hist.data.slice(-10); 
+            chart.update('none');
+
+            // If expanded chart is active for this coin, update it live
+            if(currentExpandedKey === canvasId) {
+                updateExpandedChart();
+            }
         }
     });
 }
