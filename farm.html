@@ -202,6 +202,16 @@ input, select, textarea { color-scheme: dark; }
             <!-- Will be populated via JS based on balance -->
         </div>
 
+        <!-- QUICK PORTFOLIO / PURCHASED COINS -->
+        <section class="mb-4">
+            <h3 class="text-xs font-bold crypto-gold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <span>💼</span><span>My Purchased Coins</span>
+            </h3>
+            <div id="homeQuickPortfolio" class="space-y-2">
+                <p class="text-zinc-500 italic text-center py-2 text-xs">No coins purchased yet.</p>
+            </div>
+        </section>
+
         <!-- QUICK ACTIONS -->
         <div class="grid grid-cols-3 gap-2 mb-4">
             <button onclick="openCryptoMarketModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow transition-all">
@@ -540,7 +550,12 @@ input, select, textarea { color-scheme: dark; }
             <p id="buyCoinPriceLabel" class="text-xs text-zinc-400 mt-1">Live Price: --</p>
         </div>
         <div class="space-y-3 text-xs">
-            <div><label class="block font-semibold text-zinc-300 mb-1">Investment Amount (PKR)</label><input type="number" id="cryptoAmountInput" min="100" placeholder="Enter PKR amount..." oninput="calculateCryptoEst()" class="w-full bg-[#181a20] border border-zinc-700 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]"></div>
+            <div>
+                <label class="block font-semibold text-zinc-300 mb-1">Investment Amount (PKR)</label>
+                <input type="number" id="cryptoAmountInput" min="100" placeholder="Enter PKR amount..." oninput="calculateCryptoEst()" class="w-full bg-[#181a20] border border-zinc-700 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
+                <p id="buyCryptoInlineBal" class="text-zinc-400 text-[10px] mt-1 font-semibold"></p>
+                <p id="buyCryptoInputError" class="text-yellow-400 text-[11px] mt-1 hidden"></p>
+            </div>
             <div class="bg-[#2b313a]/50 p-3 rounded-xl border border-zinc-700 space-y-1">
                 <div class="flex justify-between"><span class="text-zinc-400">Estimated Receive:</span><span id="cryptoEstReceive" class="font-mono text-[#0ecb81] font-bold">0.00</span></div>
                 <div class="flex justify-between"><span class="text-zinc-400">Active Balance:</span><span id="buyCryptoAvailableBal" class="font-mono crypto-gold font-bold">0 PKR</span></div>
@@ -1290,11 +1305,25 @@ function openBuyCryptoModal(symbol, priceUSD) {
     
     $('buyCoinTitle').innerText = `Buy ${symbol} Asset (${isDemo ? 'Demo' : 'Real'})`; $('buyCoinIcon').innerText = symbol.charAt(0);$('buyCoinPriceLabel').innerText = `1 ${symbol} = Rs. ${pricePKR.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
     $('cryptoAmountInput').value = '';$('cryptoEstReceive').innerText = `0.00 ${symbol}`; $('buyCryptoAvailableBal').innerText = activeBal.toLocaleString() + ' PKR';
+    
+    $('buyCryptoInputError').classList.add('hidden');$('buyCryptoInlineBal').innerText = `Available Balance: ${activeBal.toLocaleString('en-US', {maximumFractionDigits: 2})} PKR`;
+
     $('buyCryptoModal').classList.remove('hidden');$('buyCryptoModal').classList.add('flex');
 }
 
 function calculateCryptoEst() {
     const amountPKR = flt($('cryptoAmountInput').value); const pricePKR = selectedCryptoPriceUSD * USD_PKR_RATE;
+    
+    const isDemo = currentUserData.isDemoActive !== false;
+    const activeBal = isDemo ? (currentUserData.demoBalance !== undefined ? currentUserData.demoBalance : 50000) : num(currentUserData?.walletBalance);
+
+    if (amountPKR > activeBal) {
+        $('buyCryptoInputError').innerText = `Aap ke paas ${activeBal.toLocaleString('en-US', {maximumFractionDigits: 2})} PKR balance hai, aur aap ${amountPKR.toLocaleString('en-US', {maximumFractionDigits: 2})} PKR likh rahay hain.`;
+        $('buyCryptoInputError').classList.remove('hidden');
+    } else {
+        $('buyCryptoInputError').classList.add('hidden');
+    }
+
     if (pricePKR <= 0 || amountPKR <= 0) { $('cryptoEstReceive').innerText = `0.00 ${selectedCryptoSymbol}`; return; }
     $('cryptoEstReceive').innerText = `${(amountPKR / pricePKR).toFixed(6)} ${selectedCryptoSymbol}`;
 }
@@ -1304,7 +1333,12 @@ function confirmCryptoPurchase() {
     const activeBal = isDemo ? (currentUserData.demoBalance !== undefined ? currentUserData.demoBalance : 50000) : num(currentUserData?.walletBalance);
     
     if (amountPKR <= 0) { showCustomAlert("Invalid", "Enter valid amount."); return; }
-    if (amountPKR > activeBal) { showCustomAlert("Error", "Insufficient balance in active account."); return; }
+    
+    if (amountPKR > activeBal) { 
+        $('buyCryptoInputError').innerText = `Aap ke paas ${activeBal.toLocaleString('en-US', {maximumFractionDigits: 2})} PKR balance hai, aur aap ${amountPKR.toLocaleString('en-US', {maximumFractionDigits: 2})} PKR likh rahay hain.`;
+        $('buyCryptoInputError').classList.remove('hidden');
+        return; 
+    }
     
     const pricePKR = selectedCryptoPriceUSD * USD_PKR_RATE; const quantity = amountPKR / pricePKR;
     let updates = {};
@@ -1323,7 +1357,9 @@ function confirmCryptoPurchase() {
 let cachedPortfolioData = {}; window.currentPortfolioValCache = 0;
 
 function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
-    const portfolioContainer = $('portfolioContainer'); portfolioContainer.innerHTML = ''; cachedPortfolioData = {};
+    const portfolioContainer = $('portfolioContainer'); portfolioContainer.innerHTML = ''; 
+    const homePortContainer = $('homeQuickPortfolio'); if(homePortContainer) homePortContainer.innerHTML = '';
+    cachedPortfolioData = {};
     let has = false; let totalPortfolioVal = 0; let totalInvested = 0; let purchasedSymbols = [];
 
     snap.forEach(child => {
@@ -1337,11 +1373,37 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
         div.innerHTML = `<div><h4 class="font-bold crypto-gold text-xs flex items-center gap-1.5"><span>🪙</span><span>${symbol} ${item.isDemo ? '(Demo)' : ''}</span></h4><p class="text-[10px] text-zinc-400 mt-0.5">Qty: ${qty.toFixed(6)}</p><p class="text-[10px] text-zinc-500">Invested: ${invested.toFixed(0)} PKR</p></div>
             <div class="text-right"><span class="font-black text-white text-xs block">${currentValPKR.toFixed(2)} PKR</span><span class="text-[10px] font-bold ${profitLossPKR >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'} block">${profitLossPKR >= 0 ? '+' : ''}${profitLossPKR.toFixed(2)} PKR</span><button onclick="sellPortfolioItem('${key}', ${currentValPKR}, ${item.isDemo})" class="mt-1 bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-1 rounded text-[9px] font-bold uppercase">Sell</button></div>`;
         portfolioContainer.appendChild(div);
+
+        // Update home dashboard quick portfolio section
+        if(homePortContainer) {
+            const homeDiv = document.createElement('div');
+            homeDiv.className = "glass p-3 rounded-xl border border-zinc-800 flex justify-between items-center";
+            homeDiv.innerHTML = `
+                <div>
+                    <h4 class="font-bold crypto-gold text-xs">${symbol} ${item.isDemo ? '(Demo)' : ''}</h4>
+                    <p class="text-[10px] text-zinc-400">Qty: ${qty.toFixed(6)}</p>
+                    <p class="text-[10px] text-zinc-400">Value: ${currentValPKR.toFixed(2)} PKR</p>
+                </div>
+                <div class="flex flex-col gap-1 text-right items-end">
+                    <span class="text-[10px] font-bold ${profitLossPKR >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'}">${profitLossPKR >= 0 ? '+' : ''}${profitLossPKR.toFixed(2)} PKR</span>
+                    <div class="flex gap-1 mt-1">
+                        <button onclick="openShiftModalFromHome('${key}')" class="bg-blue-500/20 border border-blue-500/40 text-blue-400 px-2 py-1 rounded text-[9px] font-bold uppercase">Shift</button>
+                        <button onclick="sellPortfolioItem('${key}', ${currentValPKR}, ${item.isDemo})" class="bg-red-500/20 border border-red-500/40 text-red-400 px-2 py-1 rounded text-[9px] font-bold uppercase">Sell</button>
+                    </div>
+                </div>
+            `;
+            homePortContainer.appendChild(homeDiv);
+        }
     });
 
     window.currentPortfolioValCache = totalPortfolioVal; const totalPL = totalPortfolioVal - totalInvested;
     const plEl = $('lblTotalPL'); if (plEl) { plEl.innerText = (totalPL >= 0 ? '+' : '') + totalPL.toFixed(2) + ' PKR'; plEl.className = totalPL >= 0 ? 'font-bold text-[#0ecb81]' : 'font-bold text-[#f6465d]'; }
-    if (!has) { portfolioContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-4 text-xs">No coins purchased yet. Open market to buy.</p>'; window.currentPortfolioValCache = 0; purchasedSymbols = [{ symbol: 'BNB', buyPrice: livePricesMap['BNB'] || 600 }]; }
+    
+    if (!has) { 
+        portfolioContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-4 text-xs">No coins purchased yet. Open market to buy.</p>';
+        if(homePortContainer) homePortContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-2 text-xs">No coins purchased yet.</p>';
+        window.currentPortfolioValCache = 0; purchasedSymbols = [{ symbol: 'BNB', buyPrice: livePricesMap['BNB'] || 600 }]; 
+    }
     renderCharts(purchasedSymbols, isIntervalUpdate);
 }
 
@@ -1377,6 +1439,12 @@ function sellPortfolioItem(key, currentValPKR, isDemoItem) {
     else { updates[`users/${currentUid}/walletBalance`] = num(currentUserData?.walletBalance) + currentValPKR; }
     updates[`users/${currentUid}/crypto_portfolio/${key}`] = null;
     db.ref().update(updates).then(() => { updateWalletHeaderDisplay(); showToast("Asset sold successfully!"); }).catch(err => showCustomAlert("Error", err.message));
+}
+
+function openShiftModalFromHome(key) {
+    openShiftModal();
+    const sel = $('shiftFromCoin');
+    if (sel) sel.value = key;
 }
 
 function openShiftModal() {
