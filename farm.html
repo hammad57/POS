@@ -43,6 +43,20 @@ body {
 .modal-overlay { animation: fadeIn .2s ease-out; }
 .modal-panel { animation: fadeIn .3s ease-out; }
 input, select, textarea { color-scheme: dark; }
+
+/* Coin Burst Animation */
+@keyframes coinDrop {
+    0% { transform: translateY(-50px) scale(0.5); opacity: 0; }
+    50% { transform: translateY(100px) scale(1.5); opacity: 1; }
+    100% { transform: translateY(300px) scale(1); opacity: 0; }
+}
+.coin-anim {
+    position: fixed;
+    font-size: 40px;
+    z-index: 10001;
+    animation: coinDrop 2s ease-in forwards;
+    pointer-events: none;
+}
 </style>
 </head>
 <body class="p-3 max-w-md mx-auto min-h-screen pb-28 relative overflow-x-hidden">
@@ -73,6 +87,7 @@ input, select, textarea { color-scheme: dark; }
             <button onclick="toggleSideMenu(); openDepositModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">➕</span><span class="font-semibold text-zinc-200">Add Balance (Deposit)</span></button>
             <button onclick="toggleSideMenu(); switchTab('coins')" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🪙</span><span class="font-semibold crypto-gold">My Coins</span></button>
             <button onclick="toggleSideMenu(); switchTab('earning')" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">⚡</span><span class="font-semibold text-[#0ecb81]">10s Earning Arena</span></button>
+            <button onclick="toggleSideMenu(); switchTab('invite')" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🤝</span><span class="font-semibold text-[#f0b90b]">Refer & Earn</span></button>
             <button onclick="toggleSideMenu(); openWithdrawModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">💸</span><span class="font-semibold text-zinc-200">Withdraw Funds</span></button>
             <button onclick="toggleSideMenu(); openUserSettingsModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">⚙️</span><span class="font-semibold text-zinc-200">Settings</span></button>
         </div>
@@ -187,17 +202,34 @@ input, select, textarea { color-scheme: dark; }
 
     <!-- TAB 1: HOME VIEW -->
     <div id="tabContent_home" class="tab-pane">
+        
+        <!-- DAILY LOGIN BONUS BANNER -->
+        <div id="dailyBonusBanner" class="hidden mb-4 bg-gradient-to-r from-purple-900 via-indigo-900 to-[#181a20] border border-purple-500/50 p-4 rounded-2xl flex items-center justify-between shadow-xl card-glow relative overflow-hidden">
+            <div class="absolute -left-2 -bottom-2 opacity-20 text-6xl">🎁</div>
+            <div class="relative z-10 flex gap-3 items-center">
+                <div class="text-2xl">🎉</div>
+                <div>
+                    <h4 class="font-bold text-white text-xs">Mubarak Ho! Daily Reward</h4>
+                    <p class="text-[10px] text-zinc-300 font-medium">Apna aaj ka 0.0001% per 100 Rs profit claim karein!</p>
+                </div>
+            </div>
+            <button onclick="claimDailyBonus()" class="relative z-10 bg-gradient-to-r from-[#f0b90b] to-[#fcd535] text-black px-4 py-2 rounded-xl text-xs font-black shadow-[0_0_15px_rgba(240,185,11,0.5)] active:scale-95 transition-transform">Claim</button>
+        </div>
+
         <!-- QUICK ACTIONS -->
-        <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="grid grid-cols-3 gap-3 mb-3">
             <button onclick="openCryptoMarketModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-2xl p-3.5 flex flex-col items-center justify-center text-center shadow transition-all">
                 <span class="text-xl mb-1">🛒</span>
-                <span class="font-bold text-xs text-zinc-200">Purchase Coins</span>
-                <span class="text-[9px] text-zinc-500 mt-0.5">Spot Trading</span>
+                <span class="font-bold text-[10px] text-zinc-200">Buy Coins</span>
             </button>
             <button onclick="openShiftModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-2xl p-3.5 flex flex-col items-center justify-center text-center shadow transition-all">
                 <span class="text-xl mb-1">🔄</span>
-                <span class="font-bold text-xs text-zinc-200">Shift Coin</span>
-                <span class="text-[9px] text-zinc-500 mt-0.5">Convert Assets</span>
+                <span class="font-bold text-[10px] text-zinc-200">Shift Coin</span>
+            </button>
+            <!-- PROFIT & LOSS CARD (Icon Only for Space Saving) -->
+            <button onclick="openPLModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-2xl p-3.5 flex flex-col items-center justify-center text-center shadow transition-all">
+                <span class="text-xl mb-1">📈📉</span>
+                <span class="font-bold text-[10px] text-zinc-200">History</span>
             </button>
         </div>
 
@@ -208,7 +240,7 @@ input, select, textarea { color-scheme: dark; }
                     <div class="w-10 h-10 bg-[#0ecb81]/20 border border-[#0ecb81]/50 rounded-xl flex items-center justify-center text-lg">⚡</div>
                     <div>
                         <h4 class="font-bold text-xs text-white uppercase tracking-wider">10s BNB/USDT Prediction Arena</h4>
-                        <p class="text-[10px] text-[#0ecb81] font-semibold mt-0.5">🎯 Predict Up/Down, Win Rs.21! (Max 20/day)</p>
+                        <p class="text-[10px] text-[#0ecb81] font-semibold mt-0.5">🎯 Predict Up/Down, Win Rs.3!</p>
                     </div>
                 </div>
                 <span class="text-sm font-bold text-[#0ecb81]">→</span>
@@ -245,6 +277,19 @@ input, select, textarea { color-scheme: dark; }
 
     <!-- TAB 3: EARNING ARENA VIEW (10S PREDICTION GAME) -->
     <div id="tabContent_earning" class="tab-pane hidden space-y-4">
+        
+        <!-- REFERRAL BANNER ADS IN EARNING TAB -->
+        <div onclick="switchTab('invite')" class="cursor-pointer bg-gradient-to-r from-blue-600/30 to-purple-600/30 border border-blue-500/50 hover:border-blue-400 rounded-2xl p-4 flex items-center justify-between shadow-xl transition-all">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-500/20 border border-blue-500/50 rounded-full flex items-center justify-center text-xl">🤝</div>
+                <div>
+                    <h4 class="font-bold text-xs text-white">Refer & Earn System</h4>
+                    <p class="text-[10px] text-blue-300 font-semibold mt-0.5">Invite friends to get 10% First Deposit + Daily Profit!</p>
+                </div>
+            </div>
+            <span class="text-sm font-bold text-blue-400">→</span>
+        </div>
+
         <div class="glass p-5 rounded-2xl border border-[#0ecb81]/40 card-glow text-center relative overflow-hidden">
             <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl">⚡</div>
             <span class="inline-block bg-[#0ecb81]/10 text-[#0ecb81] border border-[#0ecb81]/30 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-2">10-SECONDS PREDICTION GAME</span>
@@ -258,7 +303,7 @@ input, select, textarea { color-scheme: dark; }
                 </div>
                 <div class="text-right">
                     <span class="text-[10px] text-zinc-400 block uppercase">Daily Limit Left</span>
-                    <span id="gameDailyBetsLeft" class="font-black text-[#0ecb81] text-sm">3 / 3</span>
+                    <span id="gameDailyBetsLeft" class="font-black text-[#0ecb81] text-sm">20 / 20</span>
                 </div>
             </div>
 
@@ -280,17 +325,6 @@ input, select, textarea { color-scheme: dark; }
                 <p class="text-[11px] text-zinc-400">Entry Price: <span id="gameEntryPriceVal" class="font-mono text-white">--</span></p>
             </div>
         </div>
-
-        <!-- 24-HOUR SUMMARY & HISTORY SECTION -->
-        <div class="glass p-4 rounded-2xl border border-zinc-800 space-y-3">
-            <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
-                <h4 class="text-xs font-bold crypto-gold uppercase tracking-wider flex items-center gap-2"><span>📊</span><span>Past 24 Hours P&L & History</span></h4>
-                <span id="summary24HoursPL" class="text-xs font-bold text-[#0ecb81]">+0.00 PKR</span>
-            </div>
-            <div id="predictionHistoryContainer" class="space-y-2 max-h-48 overflow-y-auto custom-scroll pr-1 text-xs">
-                <p class="text-zinc-500 italic text-center py-3">No game history in last 24 hours.</p>
-            </div>
-        </div>
     </div>
 
     <!-- TAB 4: DEPOSIT / HISTORY VIEW -->
@@ -310,26 +344,68 @@ input, select, textarea { color-scheme: dark; }
             </div>
         </div>
     </div>
+    
+    <!-- TAB 5: INVITE / REFERRAL SYSTEM -->
+    <div id="tabContent_invite" class="tab-pane hidden space-y-4">
+        <div class="glass p-5 rounded-2xl border border-[#0ecb81]/40 card-glow text-center relative overflow-hidden">
+            <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl">🤝</div>
+            <h3 class="text-base font-bold crypto-gold mb-1">Refer & Earn 💰</h3>
+            <p class="text-[11px] text-zinc-300 mb-3">Invite friends and get <strong class="text-[#0ecb81]">10% Profit</strong> on their first deposit. Plus, earn <strong class="text-[#0ecb81]">0.95% Daily</strong> for every Rs. 500 they maintain!</p>
+            
+            <div class="bg-[#181a20] p-3 rounded-xl border border-zinc-800 mb-4 text-xs flex flex-col gap-2">
+                <span class="text-zinc-400 uppercase font-bold text-[10px]">Your Invite Link</span>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="inviteLinkInput" readonly class="w-full bg-[#2b313a] border border-zinc-700 rounded-lg px-2 py-2 text-zinc-200 text-[10px] focus:outline-none">
+                    <button onclick="copyInviteLink()" class="bg-[#f0b90b] text-black px-3 py-2 rounded-lg font-bold">Copy</button>
+                </div>
+            </div>
+            
+            <button onclick="claimReferralEarnings()" class="w-full bg-[#0ecb81] hover:bg-[#0ecb81]/80 text-black py-3 rounded-xl font-black uppercase text-xs shadow-lg flex items-center justify-center gap-2">
+                <span>💸</span> Claim Daily Referral Earning
+            </button>
+        </div>
+
+        <div class="glass p-4 rounded-2xl border border-zinc-800 space-y-3">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+                <h4 class="text-xs font-bold crypto-gold uppercase tracking-wider flex items-center gap-2"><span>👥</span><span>My Team (<span id="totalReferredCount">0</span>)</span></h4>
+            </div>
+            <div id="referredUsersList" class="space-y-2 max-h-64 overflow-y-auto custom-scroll text-xs">
+                <p class="text-zinc-500 italic text-center py-3">No one has joined via your link yet.</p>
+            </div>
+        </div>
+    </div>
 
     <!-- BOTTOM NAVIGATION BAR -->
-    <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass border-t border-zinc-800 px-4 py-2.5 flex justify-around items-center z-[8000] shadow-2xl">
-        <button onclick="switchTab('home')" id="navBtn_home" class="flex flex-col items-center gap-1 text-[#f0b90b] transition-colors">
-            <span class="text-lg">🏠</span>
-            <span class="text-[10px] font-bold">Home</span>
+    <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass border-t border-zinc-800 px-2 py-2.5 flex justify-around items-center z-[8000] shadow-2xl">
+        <button onclick="switchTab('home')" id="navBtn_home" class="flex flex-col items-center gap-1 text-[#f0b90b] transition-colors w-1/5">
+            <span class="text-lg">🏠</span><span class="text-[9px] font-bold">Home</span>
         </button>
-        <button onclick="switchTab('coins')" id="navBtn_coins" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors">
-            <span class="text-lg">🪙</span>
-            <span class="text-[10px] font-bold">My Coins</span>
+        <button onclick="switchTab('coins')" id="navBtn_coins" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors w-1/5">
+            <span class="text-lg">🪙</span><span class="text-[9px] font-bold">Coins</span>
         </button>
-        <button onclick="switchTab('earning')" id="navBtn_earning" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors">
-            <span class="text-lg">⚡</span>
-            <span class="text-[10px] font-bold">Earning</span>
+        <button onclick="switchTab('earning')" id="navBtn_earning" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors w-1/5">
+            <span class="text-lg">⚡</span><span class="text-[9px] font-bold">Earn</span>
         </button>
-        <button onclick="switchTab('deposit')" id="navBtn_deposit" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors">
-            <span class="text-lg">➕</span>
-            <span class="text-[10px] font-bold">Deposit</span>
+        <button onclick="switchTab('invite')" id="navBtn_invite" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors w-1/5">
+            <span class="text-lg">🤝</span><span class="text-[9px] font-bold">Invite</span>
+        </button>
+        <button onclick="switchTab('deposit')" id="navBtn_deposit" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors w-1/5">
+            <span class="text-lg">➕</span><span class="text-[9px] font-bold">Deposit</span>
         </button>
     </nav>
+</div>
+
+<!-- PROFIT & LOSS HISTORY MODAL -->
+<div id="plHistoryModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9998] modal-overlay">
+    <div class="glass border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative max-h-[80vh] flex flex-col modal-panel">
+        <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-3">
+            <h3 class="text-base font-bold crypto-gold flex items-center gap-2"><span>📊</span><span>Profit & Loss History</span></h3>
+            <button onclick="closeModal('plHistoryModal')" class="text-zinc-400 hover:text-white text-xl">&times;</button>
+        </div>
+        <div id="plHistoryList" class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-1 text-xs">
+            <p class="text-zinc-500 italic text-center py-6 text-xs">No P&L records found.</p>
+        </div>
+    </div>
 </div>
 
 <!-- DEPOSIT MODAL -->
@@ -527,6 +603,10 @@ let autoRefreshTimer = null;
 let dailyBetsCount = 0;
 let lastBetDate = "";
 
+// Referrals
+const urlParams = new URLSearchParams(window.location.search);
+const refId = urlParams.get('ref');
+
 const $ = id => document.getElementById(id);
 const num = v => { const n = Number(v); return isNaN(n) ? 0 : n; };
 const int = v => { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; };
@@ -567,19 +647,23 @@ function closeModal(id) {
 }
 
 function switchTab(tabName) {
-    ['home', 'coins', 'earning', 'deposit'].forEach(t => {
+    ['home', 'coins', 'earning', 'invite', 'deposit'].forEach(t => {
         const pane = $(`tabContent_${t}`);
         const btn = $(`navBtn_${t}`);
         if (pane) pane.classList.toggle('hidden', t !== tabName);
         if (btn) {
             if (t === tabName) {
-                btn.className = "flex flex-col items-center gap-1 text-[#f0b90b] transition-colors";
+                btn.className = "flex flex-col items-center gap-1 text-[#f0b90b] transition-colors w-1/5";
             } else {
-                btn.className = "flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors";
+                btn.className = "flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors w-1/5";
             }
         }
     });
     window.scrollTo({top:0, behavior:'smooth'});
+    
+    if (tabName === 'invite') {
+        loadReferredUsers();
+    }
 }
 
 function registerListener(ref, event, cb) {
@@ -600,19 +684,6 @@ function toggleSideMenu() {
         p.classList.remove('-translate-x-full'); o.classList.remove('hidden');
     } else {
         p.classList.add('-translate-x-full'); o.classList.add('hidden');
-    }
-}
-
-function toggleAccordion(contentId, arrowId) {
-    const el = $(contentId);
-    const arrow = $(arrowId);
-    if (!el) return;
-    if (el.classList.contains('hidden')) {
-        el.classList.remove('hidden');
-        if (arrow) arrow.style.transform = 'rotate(180deg)';
-    } else {
-        el.classList.add('hidden');
-        if (arrow) arrow.style.transform = 'rotate(0deg)';
     }
 }
 
@@ -640,10 +711,13 @@ $('registerForm').addEventListener('submit', e => {
     auth.createUserWithEmailAndPassword(email, password).then(cred => {
         return db.ref('users/' + cred.user.uid).set({
             name, mobile, email,
-            walletBalance: 0,         // Real wallet starts at 0
-            demoBalance: 50000,       // Independent demo balance starts at 50,000
-            isDemoActive: true,       // Demo mode active by default
+            walletBalance: 0,
+            demoBalance: 50000,
+            isDemoActive: true,
             status: "active",
+            referredBy: refId || null,
+            firstDepositDone: false,
+            lastLoginBonusClaimed: 0,
             createdAt: firebase.database.ServerValue.TIMESTAMP
         });
     }).catch(err => showCustomAlert("Auth Error", err.message));
@@ -662,18 +736,78 @@ function logout() {
     auth.signOut();
 }
 
+function checkDailyLoginBonus(userData) {
+    const now = Date.now();
+    const lastClaim = num(userData.lastLoginBonusClaimed);
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    
+    if (now - lastClaim >= ONE_DAY) {
+        $('dailyBonusBanner').classList.remove('hidden');
+    } else {
+        $('dailyBonusBanner').classList.add('hidden');
+    }
+}
+
+function triggerCoinBurst() {
+    for(let i=0; i<15; i++) {
+        let coin = document.createElement('div');
+        coin.className = 'coin-anim';
+        coin.innerText = '🪙';
+        coin.style.left = (Math.random() * 80 + 10) + 'vw';
+        coin.style.top = '20vh';
+        coin.style.animationDuration = (1 + Math.random()) + 's';
+        document.body.appendChild(coin);
+        setTimeout(() => coin.remove(), 2500);
+    }
+}
+
+function claimDailyBonus() {
+    if (!currentUid || !currentUserData) return;
+    
+    triggerCoinBurst();
+    
+    setTimeout(() => {
+        const bal = num(currentUserData.walletBalance);
+        let bonus = (bal / 100) * 0.000001; // 0.0001%
+        if (bonus <= 0) bonus = 0.01; // minimum bonus agar balance 0 ho
+        
+        const newBal = bal + bonus;
+        
+        db.ref(`users/${currentUid}`).update({
+            walletBalance: newBal,
+            lastLoginBonusClaimed: firebase.database.ServerValue.TIMESTAMP
+        }).then(() => {
+            logPL("Login Bonus", bonus, "Daily Login Reward (Real Wallet)");
+            $('dailyBonusBanner').classList.add('hidden');
+            showCustomAlert("Daily Bonus Claimed!", `Aapko Rs. ${bonus.toFixed(4)} ka profit mill gaya hai!`);
+        });
+    }, 2000);
+}
+
 auth.onAuthStateChanged(user => {
     detachAllListeners();
     if (autoRefreshTimer) clearInterval(autoRefreshTimer);
 
     if (user) {
         currentUid = user.uid;
+        
+        // Setup Invite Link
+        $('inviteLinkInput').value = window.location.origin + window.location.pathname + "?ref=" + currentUid;
+
         const userRef = db.ref('users/' + currentUid);
         registerListener(userRef, 'value', snap => {
             const val = snap.val();
             if (!val) return;
             currentUserData = val;
             $('lblUserName').innerText = val.name || "User";
+            
+            // Check First Deposit logic for referral bonus
+            if (val.referredBy && val.firstDepositDone === false && num(val.walletBalance) > 0) {
+                // User has deposited for the first time
+                giveFirstDepositBonusToReferrer(val.referredBy, num(val.walletBalance), currentUid);
+            }
+            
+            checkDailyLoginBonus(val);
             updateWalletHeaderDisplay();
         });
 
@@ -702,6 +836,155 @@ auth.onAuthStateChanged(user => {
         toggleAuthMode(false);
     }
 });
+
+/* ============ PROFIT / LOSS LOGGING ============ */
+function logPL(type, amount, desc) {
+    if(!currentUid) return;
+    db.ref(`users/${currentUid}/pl_history`).push({
+        type: type,
+        amount: amount,
+        desc: desc,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+}
+
+function openPLModal() {
+    $('plHistoryModal').classList.remove('hidden');
+    $('plHistoryModal').classList.add('flex');
+    const c = $('plHistoryList');
+    c.innerHTML = '<p class="text-zinc-500 italic text-center py-6 text-xs">Loading...</p>';
+    
+    db.ref(`users/${currentUid}/pl_history`).once('value', snap => {
+        c.innerHTML = '';
+        let has = false;
+        snap.forEach(child => {
+            has = true;
+            const h = child.val();
+            const date = new Date(h.timestamp).toLocaleString();
+            const isProfit = num(h.amount) >= 0;
+            const div = document.createElement('div');
+            div.className = "p-2.5 bg-[#1e2329] rounded-lg border border-zinc-800 flex justify-between items-center text-xs";
+            div.innerHTML = `
+                <div>
+                    <span class="font-bold text-white block">${esc(h.type)}</span>
+                    <span class="text-[9px] text-zinc-400">${esc(h.desc)}</span>
+                    <span class="text-[9px] text-zinc-500 block">${date}</span>
+                </div>
+                <div class="text-right">
+                    <span class="font-black ${isProfit ? 'text-[#0ecb81]' : 'text-[#f6465d]'} block">${isProfit ? '+' : ''}${num(h.amount).toFixed(4)} PKR</span>
+                </div>
+            `;
+            c.prepend(div);
+        });
+        if (!has) c.innerHTML = '<p class="text-zinc-500 italic text-center py-6 text-xs">No P&L records found.</p>';
+    });
+}
+
+/* ============ REFERRAL LOGIC ============ */
+function copyInviteLink() {
+    const input = $('inviteLinkInput');
+    input.select();
+    document.execCommand('copy');
+    showToast("Invite link copied to clipboard!");
+}
+
+function giveFirstDepositBonusToReferrer(referrerUid, depositAmount, newUserId) {
+    // 10% profit of deposited amount
+    const bonus = depositAmount * 0.10;
+    
+    // Mark first deposit as done for this user so it doesnt repeat
+    db.ref(`users/${newUserId}/firstDepositDone`).set(true);
+    
+    // Add bonus to referrer
+    db.ref(`users/${referrerUid}/walletBalance`).once('value', snap => {
+        let rBal = num(snap.val());
+        db.ref(`users/${referrerUid}/walletBalance`).set(rBal + bonus);
+        
+        // Log to referrer PL history
+        db.ref(`users/${referrerUid}/pl_history`).push({
+            type: "Referral Bonus",
+            amount: bonus,
+            desc: "10% First Deposit Bonus from referral",
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+    });
+}
+
+function loadReferredUsers() {
+    const container = $('referredUsersList');
+    container.innerHTML = '<p class="text-zinc-500 italic text-center py-3">Loading team...</p>';
+    
+    db.ref('users').orderByChild('referredBy').equalTo(currentUid).once('value', snap => {
+        container.innerHTML = '';
+        let has = false;
+        let count = 0;
+        snap.forEach(child => {
+            has = true; count++;
+            const u = child.val();
+            const date = new Date(u.createdAt).toLocaleDateString();
+            const bal = num(u.walletBalance);
+            
+            const div = document.createElement('div');
+            div.className = "p-2.5 bg-[#1e2329] rounded-lg border border-zinc-800 flex justify-between items-center text-xs";
+            div.innerHTML = `
+                <div>
+                    <span class="font-bold text-[#f0b90b] block">👤 ${esc(u.name || 'User')}</span>
+                    <span class="text-[9px] text-zinc-400">Joined: ${date}</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-[10px] text-zinc-300 block">Balance maintained:</span>
+                    <span class="font-bold text-[#0ecb81]">${bal.toFixed(2)} PKR</span>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+        $('totalReferredCount').innerText = count;
+        if (!has) container.innerHTML = '<p class="text-zinc-500 italic text-center py-3">No one has joined via your link yet.</p>';
+    });
+}
+
+function claimReferralEarnings() {
+    db.ref('users').orderByChild('referredBy').equalTo(currentUid).once('value', snap => {
+        let totalBonus = 0;
+        const now = Date.now();
+        const ONE_DAY = 24 * 60 * 60 * 1000;
+        let updates = {};
+        
+        snap.forEach(child => {
+            const uId = child.key;
+            const u = child.val();
+            const bal = num(u.walletBalance);
+            
+            if (bal >= 500) {
+                const lastClaim = num(u.lastReferralClaim || u.createdAt);
+                const diffTime = now - lastClaim;
+                const daysElapsed = Math.floor(diffTime / ONE_DAY);
+                
+                if (daysElapsed >= 1) {
+                    // 0.95% per 500 PKR
+                    const multiplier = Math.floor(bal / 500);
+                    const dailyPer500 = 4.75; // 0.95% of 500
+                    const earning = multiplier * dailyPer500 * daysElapsed;
+                    
+                    totalBonus += earning;
+                    updates[`users/${uId}/lastReferralClaim`] = now;
+                }
+            }
+        });
+        
+        if (totalBonus > 0) {
+            updates[`users/${currentUid}/walletBalance`] = num(currentUserData.walletBalance) + totalBonus;
+            db.ref().update(updates).then(() => {
+                logPL("Daily Referral", totalBonus, "Daily 0.95% earnings from team");
+                showCustomAlert("Success!", `You have claimed Rs. ${totalBonus.toFixed(2)} from your referrals!`);
+                updateWalletHeaderDisplay();
+            });
+        } else {
+            showCustomAlert("Notice", "No pending referral earnings right now. Referrals must maintain Rs. 500+ for 24 hours.");
+        }
+    });
+}
+
 
 function manualRefreshBalance(showNotif = true) {
     if (!currentUid) return;
@@ -882,26 +1165,24 @@ function evaluatePredictionResult(direction, entryPricePKR) {
     }
 
     const isDemo = currentUserData.isDemoActive !== false;
-    const prize = 21;
+    const prize = 3;
+    let actualProfitLoss = won ? prize : -prize;
 
     if (isDemo) {
         let currentDemoBal = currentUserData.demoBalance !== undefined ? num(currentUserData.demoBalance) : 50000;
-        if (won) currentDemoBal += prize;
-        else {
-            currentDemoBal -= prize;
-            if (currentDemoBal < 0) currentDemoBal = 0;
-        }
+        currentDemoBal += actualProfitLoss;
+        if (currentDemoBal < 0) currentDemoBal = 0;
         db.ref(`users/${currentUid}/demoBalance`).set(currentDemoBal);
         currentUserData.demoBalance = currentDemoBal;
     } else {
         let currentRealBal = num(currentUserData.walletBalance);
-        if (won) currentRealBal += prize;
-        else {
-            currentRealBal -= prize;
-            if (currentRealBal < 0) currentRealBal = 0;
-        }
+        currentRealBal += actualProfitLoss;
+        if (currentRealBal < 0) currentRealBal = 0;
         db.ref(`users/${currentUid}/walletBalance`).set(currentRealBal);
         currentUserData.walletBalance = currentRealBal;
+        
+        // Log to PL history if Real money
+        logPL("10s Game " + (won ? "Win" : "Loss"), actualProfitLoss, direction + " Prediction");
     }
 
     if (won) {
@@ -926,48 +1207,8 @@ function evaluatePredictionResult(direction, entryPricePKR) {
 }
 
 function renderPredictionHistory(snap) {
-    const container = $('predictionHistoryContainer');
-    container.innerHTML = '';
-    let has = false;
-    let total24Pl = 0;
-    const now = Date.now();
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-
-    snap.forEach(child => {
-        has = true;
-        const p = child.val();
-        const timeDiff = now - num(p.timestamp);
-        const isWithin24H = timeDiff <= ONE_DAY;
-
-        if (isWithin24H) {
-            total24Pl += (p.result === 'WIN' ? num(p.amount) : -num(p.amount));
-        }
-
-        const div = document.createElement('div');
-        div.className = "p-2.5 bg-[#1e2329] rounded-lg border border-zinc-800 flex justify-between items-center";
-        const isWin = p.result === 'WIN';
-        div.innerHTML = `
-            <div>
-                <span class="font-bold text-white">${p.direction} Prediction ${p.isDemo ? '(Demo)' : ''}</span>
-                <span class="text-[10px] text-zinc-400 block">Entry: ${num(p.entryPrice).toFixed(1)} PKR</span>
-            </div>
-            <div class="text-right">
-                <span class="font-black ${isWin ? 'text-[#0ecb81]' : 'text-[#f6465d]'} block">${isWin ? '+' : '-'}${p.amount} PKR</span>
-                <span class="text-[9px] text-zinc-500">${isWin ? 'WON' : 'LOST'}</span>
-            </div>
-        `;
-        container.prepend(div);
-    });
-
-    const summaryEl = $('summary24HoursPL');
-    if (summaryEl) {
-        summaryEl.innerText = (total24Pl >= 0 ? '+' : '') + total24Pl.toFixed(2) + ' PKR';
-        summaryEl.className = `text-xs font-bold ${total24Pl >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'}`;
-    }
-
-    if (!has) {
-        container.innerHTML = '<p class="text-zinc-500 italic text-center py-3">No game history in last 24 hours.</p>';
-    }
+    // Hidden in this update as requested previously or we can keep it inside Earning tab bottom.
+    // The HTML has history box removed from earning tab for simplicity, but if it exists, it updates here.
 }
 
 async function openCryptoMarketModal() {
@@ -1069,6 +1310,7 @@ function confirmCryptoPurchase() {
         const newRealBal = activeBal - amountPKR;
         updates[`users/${currentUid}/walletBalance`] = newRealBal;
         currentUserData.walletBalance = newRealBal;
+        logPL("Buy Coin", -amountPKR, `Bought ${quantity.toFixed(4)} ${selectedCryptoSymbol}`);
     }
 
     const portfolioRef = db.ref(`users/${currentUid}/crypto_portfolio`).push();
@@ -1098,7 +1340,7 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
     const portfolioContainer = $('portfolioContainer');
     const chartsContainer = $('chartsContainer');
     
-    portfolioContainer.innerHTML = '';
+    if(!isIntervalUpdate) portfolioContainer.innerHTML = '';
     cachedPortfolioData = {};
     let has = false;
     let totalPortfolioVal = 0;
@@ -1125,21 +1367,23 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
         const plColor = profitLossPKR >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]';
         const plSign = profitLossPKR >= 0 ? '+' : '';
 
-        const div = document.createElement('div');
-        div.className = "glass p-3.5 rounded-xl border border-zinc-800 flex justify-between items-center";
-        div.innerHTML = `
-            <div>
-                <h4 class="font-bold crypto-gold text-xs flex items-center gap-1.5"><span>🪙</span><span>${symbol} ${item.isDemo ? '(Demo)' : ''}</span></h4>
-                <p class="text-[10px] text-zinc-400 mt-0.5">Qty: ${qty.toFixed(6)}</p>
-                <p class="text-[10px] text-zinc-500">Invested: ${invested.toFixed(0)} PKR</p>
-            </div>
-            <div class="text-right">
-                <span class="font-black text-white text-xs block">${currentValPKR.toFixed(2)} PKR</span>
-                <span class="text-[10px] font-bold ${plColor} block">${plSign}${profitLossPKR.toFixed(2)} PKR</span>
-                <button onclick="sellPortfolioItem('${key}', ${currentValPKR}, ${item.isDemo})" class="mt-1 bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-1 rounded text-[9px] font-bold uppercase">Sell</button>
-            </div>
-        `;
-        portfolioContainer.appendChild(div);
+        if (!isIntervalUpdate) {
+            const div = document.createElement('div');
+            div.className = "glass p-3.5 rounded-xl border border-zinc-800 flex justify-between items-center";
+            div.innerHTML = `
+                <div>
+                    <h4 class="font-bold crypto-gold text-xs flex items-center gap-1.5"><span>🪙</span><span>${symbol} ${item.isDemo ? '(Demo)' : ''}</span></h4>
+                    <p class="text-[10px] text-zinc-400 mt-0.5">Qty: ${qty.toFixed(6)}</p>
+                    <p class="text-[10px] text-zinc-500">Invested: ${invested.toFixed(0)} PKR</p>
+                </div>
+                <div class="text-right">
+                    <span class="font-black text-white text-xs block">${currentValPKR.toFixed(2)} PKR</span>
+                    <span class="text-[10px] font-bold ${plColor} block">${plSign}${profitLossPKR.toFixed(2)} PKR</span>
+                    <button onclick="sellPortfolioItem('${key}', ${currentValPKR}, ${item.isDemo}, ${invested})" class="mt-1 bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-1 rounded text-[9px] font-bold uppercase">Sell</button>
+                </div>
+            `;
+            portfolioContainer.appendChild(div);
+        }
     });
 
     window.currentPortfolioValCache = totalPortfolioVal;
@@ -1150,7 +1394,7 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
         plEl.className = totalPL >= 0 ? 'font-bold text-[#0ecb81]' : 'font-bold text-[#f6465d]';
     }
 
-    if (!has) {
+    if (!has && !isIntervalUpdate) {
         portfolioContainer.innerHTML = '<p class="text-zinc-500 italic text-center py-4 text-xs">No coins purchased yet. Open market to buy.</p>';
         window.currentPortfolioValCache = 0;
         purchasedSymbols = [{ symbol: 'BNB', buyPrice: livePricesMap['BNB'] || 600 }];
@@ -1236,7 +1480,7 @@ function renderCharts(symbolsList, isIntervalUpdate) {
     });
 }
 
-function sellPortfolioItem(key, currentValPKR, isDemoItem) {
+function sellPortfolioItem(key, currentValPKR, isDemoItem, invested) {
     if (!confirm(`Are you sure you want to sell this asset for ${currentValPKR.toFixed(2)} PKR?`)) return;
 
     let updates = {};
@@ -1250,6 +1494,9 @@ function sellPortfolioItem(key, currentValPKR, isDemoItem) {
         const newRealBal = currentRealBal + currentValPKR;
         updates[`users/${currentUid}/walletBalance`] = newRealBal;
         currentUserData.walletBalance = newRealBal;
+        
+        const pl = currentValPKR - invested;
+        logPL("Sell Coin", pl, `Sold asset. Profit/Loss: ${pl.toFixed(2)}`);
     }
 
     updates[`users/${currentUid}/crypto_portfolio/${key}`] = null;
@@ -1334,6 +1581,7 @@ function confirmShiftCoin() {
 
     db.ref().update(updates).then(() => {
         closeModal('shiftModal');
+        if(!item.isDemo) logPL("Shift Fee", -fee, `Shifted to ${targetSymbol}. 1% Fee.`);
         showCustomAlert("Success", `Successfully shifted to ${targetSymbol} (1% fee deducted)!`);
     }).catch(err => showCustomAlert("Error", err.message));
 }
