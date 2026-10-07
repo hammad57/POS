@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.CryptoPro" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/gold</item>
+        <item name="colorOnPrimary">@color/dark</item>
+        <item name="android:statusBarColor">@color/dark</item>
+        <item name="android:navigationBarColor">@color/dark</item>
+        <item name="android:windowBackground">@color/dark</item>
+    </style>
+</resources>
