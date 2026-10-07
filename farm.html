@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Binance Pro Crypto Wallet & Exchange</title>
+<title>Crypto Pro Wallet & Exchange</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪙</text></svg>">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -74,7 +74,7 @@ input, select, textarea { color-scheme: dark; }
 <div id="sideMenuPanel" class="fixed top-0 left-0 w-72 h-full glass border-r border-zinc-800 shadow-2xl z-[9001] -translate-x-full transition-transform duration-300 ease-out p-5 flex flex-col justify-between">
     <div>
         <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4">
-            <h3 class="font-bold crypto-gold text-sm flex items-center gap-2"><span class="text-lg">🪙</span><span>Binance Menu</span></h3>
+            <h3 class="font-bold crypto-gold text-sm flex items-center gap-2"><span class="text-lg">🪙</span><span>Main Menu</span></h3>
             <button onclick="toggleSideMenu()" class="text-zinc-400 hover:text-white text-2xl leading-none">&times;</button>
         </div>
         <div class="space-y-1.5 text-xs">
@@ -100,7 +100,7 @@ input, select, textarea { color-scheme: dark; }
         <div class="inline-flex items-center justify-center w-14 h-14 glass border border-[#f0b90b]/40 rounded-2xl shadow-lg mb-2.5">
             <span class="text-2xl">🪙</span>
         </div>
-        <h1 class="text-xl font-bold crypto-gold tracking-wide">Binance Pro Crypto</h1>
+        <h1 class="text-xl font-bold crypto-gold tracking-wide">Crypto Pro</h1>
         <p class="text-[10px] tracking-[.3em] text-zinc-400 uppercase mt-1">TRADE · INVEST · EARN</p>
     </div>
 
@@ -639,6 +639,9 @@ input, select, textarea { color-scheme: dark; }
    BINANCE PRO CRYPTO WALLET SCRIPT (UPDATED WITH REFERRAL, LIVE PNL & HISTORY CHARTS)
    ========================================================= */
 
+/* SECURITY NOTE: Firebase apiKey client me public hoti hai. Asal security Firebase Realtime Database Rules se ati hai.
+   Rules me users/${uid} par sirf owner ko read/write dein, aur balance ko Cloud Function se validate karein.
+   Kabhi bhi client se bheje gaye balance par blind trust na karein. */
 const firebaseConfig = {
     apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
     authDomain: "own-live-steam-web-default.firebaseapp.com",
@@ -657,7 +660,16 @@ let currentUid = null;
 let currentUserData = null;
 let activeListeners = [];
 
-const USD_PKR_RATE = 280;
+let USD_PKR_RATE = 280;
+async function refreshUsdPkrRate() {
+    try {
+        const r = await fetch('https://open.er-api.com/v6/latest/USD');
+        const j = await r.json();
+        if (j && j.rates && j.rates.PKR) { USD_PKR_RATE = Number(j.rates.PKR); console.log("USD/PKR updated:", USD_PKR_RATE); }
+    } catch(e) { console.warn("FX fetch failed, using fallback 280", e); }
+}
+refreshUsdPkrRate();
+setInterval(refreshUsdPkrRate, 3600000);
 let binanceCoinsCache = [];
 let selectedCryptoSymbol = "";
 let selectedCryptoPriceUSD = 0;
@@ -683,14 +695,20 @@ const num = v => { const n = Number(v); return isNaN(n) ? 0 : n; };
 const flt = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
+const escAttr = s => String(s ?? '').replace(/["'<>]/g, m => ({'"':'&quot;',"'":'&#39;','<':'&lt;','>':'&gt;'}[m]));
+function validAmount(v) { const n = Number(v); return isFinite(n) && n > 0; }
+
 // Parse URL for invite code
 const urlParams = new URLSearchParams(window.location.search);
 if(urlParams.has('ref')) {
-    referredByUrlParam = urlParams.get('ref');
+    const rawRef = urlParams.get('ref');
+    if (/^[a-zA-Z0-9_-]{1,64}$/.test(rawRef)) { referredByUrlParam = rawRef; }
+    else { console.warn("Invalid ref param ignored"); referredByUrlParam = null; }
 }
 
-// 1-second interval for the small Flow Indicator 📉📈
+// 5-second interval for the small Flow Indicator 📉📈 (throttled for performance)
 setInterval(() => {
+    if (document.hidden) return;
     const flowEl = $('liveBalanceFlow');
     if(flowEl) {
         const current = window.currentPortfolioValCache || 0;
@@ -703,7 +721,7 @@ setInterval(() => {
         }
         lastPortfolioValForFlow = current;
     }
-}, 1000);
+}, 5000);
 
 function showToast(msg, duration = 3000) {
     const t = $('toast');
@@ -790,6 +808,15 @@ function logout() {
     if (!confirm("Sign out?")) return;
     detachAllListeners(); if (autoRefreshTimer) clearInterval(autoRefreshTimer);
     auth.signOut();
+}
+function forgotPassword() {
+    const email = prompt("Apna email likhein taake password reset link bheja ja sake:");
+    if (!email) return;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) { showCustomAlert("Error", "Valid email likhein."); return; }
+    auth.sendPasswordResetEmail(email.trim())
+        .then(() => showCustomAlert("Success", "Password reset link email par bhej diya gaya hai."))
+        .catch(err => showCustomAlert("Error", err.message));
 }
 
 auth.onAuthStateChanged(user => {
@@ -1271,12 +1298,22 @@ function evaluatePredictionResult(direction, entryPricePKR) {
     const diff = exitPricePKR - entryPricePKR;
 
     let won = false;
+    let isDraw = false;
     if (direction === 'UP' && diff > 0) won = true;
     else if (direction === 'DOWN' && diff < 0) won = true;
-    else won = Math.random() > 0.5;
+    else if (diff === 0) isDraw = true;
+    else won = false;
 
     const isDemo = currentUserData.isDemoActive !== false;
     const prize = 3;
+
+    if (isDraw) {
+        showCustomAlert("Draw", "Price me koi movement nahi hui. Koi amount deduct nahi hua.");
+        db.ref(`users/${currentUid}/predictions`).push({
+            direction, entryPrice: entryPricePKR, exitPrice: exitPricePKR, result: 'DRAW', amount: 0, isDemo, timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        return;
+    }
 
     if (isDemo) {
         let currentDemoBal = currentUserData.demoBalance !== undefined ? num(currentUserData.demoBalance) : 50000;
@@ -1312,7 +1349,7 @@ function renderPredictionHistory(snap) {
 
         const div = document.createElement('div'); div.className = "p-2.5 bg-[#1e2329] rounded-lg border border-zinc-800 flex justify-between items-center";
         const isWin = p.result === 'WIN';
-        div.innerHTML = `<div><span class="font-bold text-white">${p.direction} Prediction ${p.isDemo ? '(Demo)' : ''}</span><span class="text-[10px] text-zinc-400 block">Entry: ${num(p.entryPrice).toFixed(1)} PKR</span></div>
+        div.innerHTML = `<div><span class="font-bold text-white">${esc(p.direction)} Prediction ${p.isDemo ? '(Demo)' : ''}</span><span class="text-[10px] text-zinc-400 block">Entry: ${num(p.entryPrice).toFixed(1)} PKR</span></div>
             <div class="text-right"><span class="font-black ${isWin ? 'text-[#0ecb81]' : 'text-[#f6465d]'} block">${isWin ? '+' : '-'}${p.amount} PKR</span><span class="text-[9px] text-zinc-500">${isWin ? 'WON' : 'LOST'}</span></div>`;
         container.prepend(div);
     });
@@ -1344,7 +1381,7 @@ function renderCryptoList(coins) {
     coins.forEach(c => {
         const symbol = c.symbol.replace('USDT', ''); const priceUSD = flt(c.price); const pricePKR = priceUSD * USD_PKR_RATE; livePricesMap[symbol] = priceUSD;
         const div = document.createElement('div'); div.className = "bg-[#1e2329]/80 border border-zinc-800 p-3 rounded-xl flex justify-between items-center hover:bg-[#2b313a] transition-colors";
-        div.innerHTML = `<div class="flex items-center gap-2.5"><div class="w-9 h-9 bg-[#f0b90b]/10 border border-[#f0b90b]/30 rounded-full flex items-center justify-center font-bold text-xs crypto-gold">${symbol.charAt(0)}</div><div><h4 class="font-bold text-white text-xs">${symbol}/USDT</h4><p class="text-[10px] text-zinc-400">$${priceUSD.toFixed(4)}</p></div></div>
+        div.innerHTML = `<div class="flex items-center gap-2.5"><div class="w-9 h-9 bg-[#f0b90b]/10 border border-[#f0b90b]/30 rounded-full flex items-center justify-center font-bold text-xs crypto-gold">${esc(symbol).charAt(0)}</div><div><h4 class="font-bold text-white text-xs">${esc(symbol)}/USDT</h4><p class="text-[10px] text-zinc-400">$${priceUSD.toFixed(4)}</p></div></div>
             <div class="text-right"><span class="font-black crypto-gold text-xs block">${pricePKR.toLocaleString('en-US', {maximumFractionDigits: 2})} PKR</span><button onclick="openBuyCryptoModal('${symbol}', ${priceUSD})" class="mt-1 btn-binance px-3 py-1 rounded-lg text-[10px] uppercase font-bold">Buy</button></div>`;
         container.appendChild(div);
     });
@@ -1482,7 +1519,7 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
         totalPortfolioVal += currentValPKR; const profitLossPKR = currentValPKR - invested;
 
         const div = document.createElement('div'); div.className = "glass p-3.5 rounded-xl border border-zinc-800 flex justify-between items-center";
-        div.innerHTML = `<div><h4 class="font-bold crypto-gold text-xs flex items-center gap-1.5"><span>🪙</span><span>${symbol} ${item.isDemo ? '(Demo)' : ''}</span></h4><p class="text-[10px] text-zinc-400 mt-0.5">Qty: ${qty.toFixed(6)}</p><p class="text-[10px] text-zinc-500">Invested: ${invested.toFixed(0)} PKR</p></div>
+        div.innerHTML = `<div><h4 class="font-bold crypto-gold text-xs flex items-center gap-1.5"><span>🪙</span><span>${esc(symbol)} ${item.isDemo ? '(Demo)' : ''}</span></h4><p class="text-[10px] text-zinc-400 mt-0.5">Qty: ${qty.toFixed(6)}</p><p class="text-[10px] text-zinc-500">Invested: ${invested.toFixed(0)} PKR</p></div>
             <div class="text-right"><span class="font-black text-white text-xs block">${currentValPKR.toFixed(2)} PKR</span><span class="text-[10px] font-bold ${profitLossPKR >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'} block">${profitLossPKR >= 0 ? '+' : ''}${profitLossPKR.toFixed(2)} PKR</span><button onclick="sellPortfolioItem('${key}', ${currentValPKR}, ${item.isDemo})" class="mt-1 bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-1 rounded text-[9px] font-bold uppercase">Sell</button></div>`;
         portfolioContainer.appendChild(div);
 
@@ -1491,7 +1528,7 @@ function renderPortfolioAndCharts(snap, isIntervalUpdate = false) {
             homeDiv.className = "glass p-3 rounded-xl border border-zinc-800 flex justify-between items-center";
             homeDiv.innerHTML = `
                 <div>
-                    <h4 class="font-bold crypto-gold text-xs">${symbol} ${item.isDemo ? '(Demo)' : ''}</h4>
+                    <h4 class="font-bold crypto-gold text-xs">${esc(symbol)} ${item.isDemo ? '(Demo)' : ''}</h4>
                     <p class="text-[10px] text-zinc-400">Qty: ${qty.toFixed(6)}</p>
                     <p class="text-[10px] text-zinc-400">Value: ${currentValPKR.toFixed(2)} PKR</p>
                 </div>
@@ -1534,7 +1571,7 @@ function renderCharts(symbolsList, isIntervalUpdate) {
             const canvasId = `chart_${item.symbol}_${index}`; const card = document.createElement('div'); card.className = "glass p-3 rounded-xl border border-zinc-800";
             
             // Re-designed chart card header to include history button
-            card.innerHTML = `<div class="flex justify-between items-center mb-2"><span class="text-xs font-bold crypto-gold">${item.symbol}/USDT Real-Time P&L</span><div class="flex items-center gap-2"><span id="price_${item.symbol}_${index}" class="text-xs font-mono text-[#0ecb81]">--</span><button onclick="openExpandedChart('${item.symbol}', '${canvasId}', ${item.buyPrice})" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded p-1 text-xs border border-zinc-700 transition-colors" title="View History">📜</button></div></div><div style="height: 140px; position: relative;"><canvas id="${canvasId}"></canvas></div>`;
+            card.innerHTML = `<div class="flex justify-between items-center mb-2"><span class="text-xs font-bold crypto-gold">${esc(item.symbol)}/USDT Real-Time P&L</span><div class="flex items-center gap-2"><span id="price_${item.symbol}_${index}" class="text-xs font-mono text-[#0ecb81]">--</span><button data-symbol="${esc(item.symbol)}" data-canvas="${canvasId}" data-buyprice="${item.buyPrice}" onclick="openExpandedChart(this.dataset.symbol, this.dataset.canvas, Number(this.dataset.buyprice))" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded p-1 text-xs border border-zinc-700 transition-colors" title="View History">📜</button></div></div><div style="height: 140px; position: relative;"><canvas id="${canvasId}"></canvas></div>`;
             chartsContainer.appendChild(card);
             
             const currentPrice = (livePricesMap[item.symbol] || item.buyPrice || 100) * USD_PKR_RATE;
