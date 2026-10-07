@@ -11,28 +11,61 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-:root {
+:root, [data-theme="dark"] {
     --primary: #f0b90b;
+    --primary-light: #fcd535;
     --dark: #0b0e11;
     --card: #1e2329;
     --success: #0ecb81;
     --danger: #f6465d;
+    --app-bg: #0b0e11;
+    --app-text: #eaecef;
+}
+[data-theme="light"] {
+    --primary: #ca8a04;
+    --primary-light: #eab308;
+    --dark: #f1f5f9;
+    --card: #ffffff;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --app-bg: #f1f5f9;
+    --app-text: #1e293b;
+}
+[data-theme="blue"] {
+    --primary: #3b82f6;
+    --primary-light: #60a5fa;
+    --dark: #0a1628;
+    --card: #10233f;
+    --success: #0ecb81;
+    --danger: #f6465d;
+    --app-bg: #0a1628;
+    --app-text: #e8eefc;
+}
+[data-theme="purple"] {
+    --primary: #a855f7;
+    --primary-light: #c084fc;
+    --dark: #150f24;
+    --card: #1f1740;
+    --success: #0ecb81;
+    --danger: #f6465d;
+    --app-bg: #150f24;
+    --app-text: #f0eafc;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body {
-    background-color: var(--dark);
-    color: #eaecef;
+    background-color: var(--app-bg);
+    color: var(--app-text);
     font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
     min-height: 100vh;
 }
 .glass { background: rgba(30,35,41,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 .card-glow { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(240,185,11,.15); }
-.crypto-gold { color: #f0b90b; }
+.crypto-gold { color: var(--primary); }
 .btn-binance {
-    background: linear-gradient(135deg, #fcd535 0%, #f0b90b 100%);
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
     color: #181a20;
     font-weight: 800;
-    box-shadow: 0 4px 15px rgba(240,185,11,0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.28);
 }
 .btn-binance:active { transform: scale(0.98); }
 .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -43,6 +76,58 @@ body {
 .modal-overlay { animation: fadeIn .2s ease-out; }
 .modal-panel { animation: fadeIn .3s ease-out; }
 input, select, textarea { color-scheme: dark; }
+
+/* Splash loader spinner */
+.spinner { width: 46px; height: 46px; border: 4px solid rgba(128,128,128,.25); border-top-color: var(--primary); border-radius: 50%; animation: spin .9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Professional side-menu items */
+.menu-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 14px; text-align: left; transition: background .2s, transform .15s; }
+.menu-item:hover { background: rgba(128,128,128,.12); }
+.menu-item:active { transform: scale(.98); }
+.menu-ico { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+
+/* ---------- LIGHT (WHITE) THEME ---------- */
+[data-theme="light"] body { background-color: #f1f5f9 !important; color: #1e293b !important; }
+[data-theme="light"] .glass { background: rgba(255,255,255,.95) !important; border-color: #e2e8f0 !important; }
+[data-theme="light"] .bg-\[\#181a20\] { background-color: #ffffff !important; }
+[data-theme="light"] .bg-\[\#1e2329\] { background-color: #f8fafc !important; }
+[data-theme="light"] .bg-\[\#2b313a\] { background-color: #eef2f7 !important; }
+[data-theme="light"] .text-white { color: #1e293b !important; }
+[data-theme="light"] .text-zinc-200 { color: #334155 !important; }
+[data-theme="light"] .text-zinc-300 { color: #475569 !important; }
+[data-theme="light"] .text-zinc-400 { color: #64748b !important; }
+[data-theme="light"] .text-zinc-500 { color: #94a3b8 !important; }
+[data-theme="light"] .border-zinc-700, [data-theme="light"] .border-zinc-800 { border-color: #e2e8f0 !important; }
+[data-theme="light"] input, [data-theme="light"] select, [data-theme="light"] textarea { background-color: #ffffff !important; color: #1e293b !important; border-color: #cbd5e1 !important; color-scheme: light !important; }
+[data-theme="light"] input::placeholder { color: #94a3b8 !important; }
+[data-theme="light"] .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+[data-theme="light"] .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; }
+[data-theme="light"] .card-glow { box-shadow: 0 8px 24px rgba(0,0,0,.08), 0 0 0 1px rgba(202,138,4,.18); }
+
+/* ---------- BLUE THEME ---------- */
+[data-theme="blue"] body { background-color: #0a1628 !important; color: #e8eefc !important; }
+[data-theme="blue"] .glass { background: rgba(16,35,63,.92) !important; border-color: #1e3a5f !important; }
+[data-theme="blue"] .bg-\[\#181a20\] { background-color: #0d1d38 !important; }
+[data-theme="blue"] .bg-\[\#1e2329\] { background-color: #10233f !important; }
+[data-theme="blue"] .bg-\[\#2b313a\] { background-color: #1a3260 !important; }
+[data-theme="blue"] .border-zinc-700, [data-theme="blue"] .border-zinc-800 { border-color: #1e3a5f !important; }
+[data-theme="blue"] .crypto-gold, [data-theme="blue"] .text-\[\#f0b90b\] { color: #60a5fa !important; }
+[data-theme="blue"] .bg-\[\#f0b90b\]\/10 { background-color: rgba(59,130,246,.14) !important; }
+[data-theme="blue"] .bg-\[\#f0b90b\]\/20 { background-color: rgba(59,130,246,.2) !important; }
+[data-theme="blue"] .border-\[\#f0b90b\]\/30, [data-theme="blue"] .border-\[\#f0b90b\]\/40, [data-theme="blue"] .border-\[\#f0b90b\]\/50 { border-color: rgba(59,130,246,.5) !important; }
+
+/* ---------- PURPLE THEME ---------- */
+[data-theme="purple"] body { background-color: #150f24 !important; color: #f0eafc !important; }
+[data-theme="purple"] .glass { background: rgba(31,23,64,.92) !important; border-color: #372a63 !important; }
+[data-theme="purple"] .bg-\[\#181a20\] { background-color: #1c1440 !important; }
+[data-theme="purple"] .bg-\[\#1e2329\] { background-color: #1f1740 !important; }
+[data-theme="purple"] .bg-\[\#2b313a\] { background-color: #2c2160 !important; }
+[data-theme="purple"] .border-zinc-700, [data-theme="purple"] .border-zinc-800 { border-color: #372a63 !important; }
+[data-theme="purple"] .crypto-gold, [data-theme="purple"] .text-\[\#f0b90b\] { color: #c084fc !important; }
+[data-theme="purple"] .bg-\[\#f0b90b\]\/10 { background-color: rgba(168,85,247,.14) !important; }
+[data-theme="purple"] .bg-\[\#f0b90b\]\/20 { background-color: rgba(168,85,247,.2) !important; }
+[data-theme="purple"] .border-\[\#f0b90b\]\/30, [data-theme="purple"] .border-\[\#f0b90b\]\/40, [data-theme="purple"] .border-\[\#f0b90b\]\/50 { border-color: rgba(168,85,247,.5) !important; }
 
 /* Coin Shower Animation CSS */
 .coin-drop {
@@ -55,6 +140,14 @@ input, select, textarea { color-scheme: dark; }
 </style>
 </head>
 <body class="p-3 max-w-md mx-auto min-h-screen pb-28 relative overflow-x-hidden">
+
+<!-- SPLASH / REFRESH LOADER (login state check hone tak) -->
+<div id="splashScreen" class="min-h-screen flex flex-col items-center justify-center gap-4 -mt-10">
+    <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-xl" style="background: linear-gradient(135deg, var(--primary-light), var(--primary));">🪙</div>
+    <h2 class="text-lg font-black crypto-gold tracking-wide">Crypto Pro</h2>
+    <div class="spinner"></div>
+    <p class="text-[11px] text-zinc-400 font-bold tracking-[.25em] uppercase">Refreshing…</p>
+</div>
 
 <!-- TOAST -->
 <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-[#0ecb81] text-zinc-950 px-5 py-2.5 rounded-full shadow-2xl text-xs font-bold transition-all duration-300 opacity-0 pointer-events-none z-[10000]"></div>
@@ -71,31 +164,49 @@ input, select, textarea { color-scheme: dark; }
 
 <!-- SIDE MENU -->
 <div id="sideMenuOverlay" onclick="toggleSideMenu()" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9000] hidden"></div>
-<div id="sideMenuPanel" class="fixed top-0 left-0 w-72 h-full glass border-r border-zinc-800 shadow-2xl z-[9001] -translate-x-full transition-transform duration-300 ease-out p-5 flex flex-col justify-between">
-    <div>
-        <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4">
-            <h3 class="font-bold crypto-gold text-sm flex items-center gap-2"><span class="text-lg">🪙</span><span>Binance Menu</span></h3>
-            <button onclick="toggleSideMenu()" class="text-zinc-400 hover:text-white text-2xl leading-none">&times;</button>
-        </div>
-        <div class="space-y-1.5 text-xs">
-            <button onclick="toggleSideMenu(); switchTab('home')" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🏠</span><span class="font-semibold text-zinc-200">Dashboard</span></button>
-            <button onclick="toggleSideMenu(); openDepositModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">➕</span><span class="font-semibold text-zinc-200">Add Balance (Deposit)</span></button>
-            <button onclick="toggleSideMenu(); switchTab('coins')" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🪙</span><span class="font-semibold crypto-gold">My Coins</span></button>
-            <button onclick="toggleSideMenu(); switchTab('earning')" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">⚡</span><span class="font-semibold text-[#0ecb81]">10s Earning Arena</span></button>
-            <button onclick="toggleSideMenu(); openInviteModal()" class="w-full bg-gradient-to-r from-[#f0b90b]/20 to-[#f6465d]/20 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors border border-[#f0b90b]/30"><span class="text-base">🤝</span><span class="font-semibold crypto-gold">Invite & Earn</span></button>
-            <button onclick="toggleSideMenu(); openWithdrawModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">💸</span><span class="font-semibold text-zinc-200">Withdraw Funds</span></button>
-            <button onclick="toggleSideMenu(); openUserSettingsModal()" class="w-full bg-[#2b313a]/50 hover:bg-[#2b313a] p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">⚙️</span><span class="font-semibold text-zinc-200">Settings</span></button>
+<div id="sideMenuPanel" class="fixed top-0 left-0 w-72 h-full glass border-r border-zinc-800 shadow-2xl z-[9001] -translate-x-full transition-transform duration-300 ease-out flex flex-col">
+    <!-- LOGO + VERSION HEADER -->
+    <div class="p-5 border-b border-zinc-800">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-2xl shadow-lg" style="background: linear-gradient(135deg, var(--primary-light), var(--primary));">🪙</div>
+                <div>
+                    <h3 class="font-black crypto-gold text-base leading-tight">Crypto Pro</h3>
+                    <p class="text-[10px] text-zinc-400 font-bold tracking-widest">v1.0 • OFFICIAL APP</p>
+                </div>
+            </div>
+            <button onclick="toggleSideMenu()" class="text-zinc-400 hover:text-white text-2xl leading-none px-1">&times;</button>
         </div>
     </div>
-    <div class="border-t border-zinc-800 pt-4">
-        <a id="waSidebarLink" href="https://wa.me/923423944508" target="_blank" class="w-full btn-binance py-3 rounded-xl flex items-center justify-center gap-2 text-xs">
+    <!-- MENU ITEMS -->
+    <div class="flex-1 overflow-y-auto custom-scroll p-4 text-xs">
+        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-2 mb-2">Main Menu</p>
+        <div class="space-y-1">
+            <button onclick="toggleSideMenu(); switchTab('home')" class="menu-item"><span class="menu-ico" style="background: rgba(240,185,11,.15);">🏠</span><span class="font-bold text-zinc-200">Dashboard</span></button>
+            <button onclick="toggleSideMenu(); openDepositModal()" class="menu-item"><span class="menu-ico" style="background: rgba(14,203,129,.15);">➕</span><span class="font-bold text-zinc-200">Add Balance <span class="text-zinc-500 font-semibold">(Deposit)</span></span></button>
+            <button onclick="toggleSideMenu(); switchTab('coins')" class="menu-item"><span class="menu-ico" style="background: rgba(240,185,11,.15);">🪙</span><span class="font-bold crypto-gold">My Coins</span></button>
+            <button onclick="toggleSideMenu(); switchTab('earning')" class="menu-item"><span class="menu-ico" style="background: rgba(14,203,129,.15);">⚡</span><span class="font-bold text-[#0ecb81]">10s Earning Arena</span></button>
+            <button onclick="toggleSideMenu(); openInviteModal()" class="menu-item" style="border: 1px solid rgba(240,185,11,.35); background: rgba(240,185,11,.06);"><span class="menu-ico" style="background: rgba(240,185,11,.2);">🤝</span><span class="font-bold crypto-gold">Invite & Earn</span></button>
+            <button onclick="toggleSideMenu(); openWithdrawModal()" class="menu-item"><span class="menu-ico" style="background: rgba(246,70,93,.15);">💸</span><span class="font-bold text-zinc-200">Withdraw Funds</span></button>
+        </div>
+        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-2 mt-4 mb-2">Account</p>
+        <div class="space-y-1">
+            <button onclick="toggleSideMenu(); switchTab('deposit')" class="menu-item"><span class="menu-ico" style="background: rgba(96,165,250,.15);">📜</span><span class="font-bold text-zinc-200">Transaction History</span></button>
+            <button onclick="toggleSideMenu(); openUserSettingsModal()" class="menu-item"><span class="menu-ico" style="background: rgba(128,128,128,.15);">⚙️</span><span class="font-bold text-zinc-200">Settings</span></button>
+            <button onclick="toggleSideMenu(); logout()" class="menu-item" style="border: 1px solid rgba(246,70,93,.35); background: rgba(246,70,93,.06);"><span class="menu-ico" style="background: rgba(246,70,93,.18);">🚪</span><span class="font-bold text-[#f6465d]">Logout</span></button>
+        </div>
+    </div>
+    <!-- FOOTER -->
+    <div class="p-4 border-t border-zinc-800 space-y-2.5">
+        <a id="waSidebarLink" href="https://wa.me/923423944508" target="_blank" class="w-full btn-binance py-3 rounded-xl flex items-center justify-center gap-2 text-xs font-bold">
             <span>💬</span><span>WhatsApp Support Admin</span>
         </a>
+        <p class="text-center text-[10px] text-zinc-500 font-semibold">Crypto Pro v1.0 © 2026</p>
     </div>
 </div>
 
 <!-- AUTH SCREEN -->
-<div id="authContainer" class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-8 px-4">
+<div id="authContainer" class="min-h-screen flex-col items-center justify-center relative overflow-hidden py-8 px-4 hidden">
     <div class="text-center z-10 mb-5 fade-in">
         <div class="inline-flex items-center justify-center w-14 h-14 glass border border-[#f0b90b]/40 rounded-2xl shadow-lg mb-2.5">
             <span class="text-2xl">🪙</span>
@@ -130,6 +241,9 @@ input, select, textarea { color-scheme: dark; }
             <input type="tel" id="regMobile" placeholder="Mobile Number" required class="w-full bg-[#181a20] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#f0b90b]">
             <input type="email" id="regEmail" placeholder="Email Address" required class="w-full bg-[#181a20] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#f0b90b]">
             <input type="password" id="regPassword" placeholder="Password (min 6 chars)" required class="w-full bg-[#181a20] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#f0b90b]">
+            <div id="referralBadge" class="hidden bg-[#0ecb81]/10 border border-[#0ecb81]/40 rounded-xl p-2.5 text-center">
+                <p class="text-[11px] text-[#0ecb81] font-bold">🎉 You were invited by <span id="referrerName" class="underline"></span>!</p>
+            </div>
             <button type="submit" class="w-full btn-binance py-3.5 rounded-xl transition-all text-sm">Create Account</button>
             <p class="text-[11px] text-center text-zinc-400">Have an account? <button type="button" onclick="toggleAuthMode(false)" class="crypto-gold font-bold hover:underline">Sign In</button></p>
         </form>
@@ -150,7 +264,9 @@ input, select, textarea { color-scheme: dark; }
         </div>
         <div class="flex items-center gap-2">
             <button onclick="openUserSettingsModal()" class="p-2 bg-[#2b313a] hover:bg-zinc-700 text-[#f0b90b] rounded-xl border border-zinc-700 text-base">⚙</button>
-            <button onclick="logout()" class="text-[10px] bg-red-500/20 border border-red-500/40 text-red-400 px-2.5 py-2 rounded-xl font-bold">OUT</button>
+            <button onclick="logout()" class="flex items-center gap-1.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white pl-3 pr-3.5 py-2 rounded-xl text-[11px] font-bold shadow-lg shadow-red-500/25 transition-all active:scale-95">
+                <span class="text-sm">🚪</span><span>Logout</span>
+            </button>
         </div>
     </header>
 
@@ -172,6 +288,7 @@ input, select, textarea { color-scheme: dark; }
                 <span class="text-sm text-zinc-400 font-bold mb-1 mr-2">PKR</span>
                 <h2 id="lblWalletBalance" class="text-3xl font-black crypto-gold leading-none transition-all duration-300">0.00</h2>
                 <span id="liveBalanceFlow" class="text-xs ml-3 bg-black/40 px-2 py-0.5 rounded shadow">〰</span>
+                <button onclick="openWithdrawModal()" title="Withdraw Funds" class="ml-auto w-11 h-11 rounded-full flex items-center justify-center text-xl shadow-lg transition-transform active:scale-90 shrink-0" style="background: linear-gradient(135deg, var(--primary-light), var(--primary));">💸</button>
             </div>
             <div class="grid grid-cols-2 gap-2 text-[11px] pt-3 border-t border-zinc-800/80 mb-4">
                 <div>
@@ -228,9 +345,9 @@ input, select, textarea { color-scheme: dark; }
 
         <!-- QUICK ACTIONS -->
         <div class="grid grid-cols-3 gap-2 mb-4">
-            <button onclick="openCryptoMarketModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow transition-all">
+            <button onclick="openCryptoMarketModal()" class="rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-lg transition-all active:scale-95 border border-yellow-200/60" style="background: linear-gradient(135deg, var(--primary-light), var(--primary));">
                 <span class="text-xl mb-1">🛒</span>
-                <span class="font-bold text-[10px] text-zinc-200">Buy Coins</span>
+                <span class="font-black text-[10px] text-[#181a20]">Buy Coins</span>
             </button>
             <button onclick="openShiftModal()" class="glass border border-zinc-800 hover:border-[#f0b90b]/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow transition-all">
                 <span class="text-xl mb-1">🔄</span>
@@ -621,15 +738,42 @@ input, select, textarea { color-scheme: dark; }
 
 <!-- SETTINGS MODAL -->
 <div id="userSettingsModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-[9002] modal-overlay">
-    <div class="glass border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative space-y-4 modal-panel">
+    <div class="glass border border-zinc-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl relative space-y-4 modal-panel max-h-[90vh] overflow-y-auto custom-scroll">
         <button onclick="closeModal('userSettingsModal')" class="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl">&times;</button>
         <h3 class="text-base font-bold crypto-gold border-b border-zinc-800 pb-2 flex items-center gap-2"><span>⚙</span><span>Account Settings</span></h3>
         <div class="bg-[#2b313a]/50 p-3 rounded-xl border border-zinc-700 space-y-3">
-            <h4 class="text-xs font-bold text-zinc-300">Change Password</h4>
+            <h4 class="text-xs font-bold text-zinc-300">🔑 Change Password</h4>
             <form id="changePasswordForm" class="space-y-2 text-xs">
                 <input type="password" id="newPasswordInput" placeholder="New Password (min 6 chars)" required minlength="6" class="w-full bg-[#181a20] border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#f0b90b]">
                 <button type="submit" class="w-full btn-binance py-2.5 rounded-lg font-bold">Update Password</button>
             </form>
+        </div>
+        <div class="bg-[#2b313a]/50 p-3 rounded-xl border border-zinc-700">
+            <h4 class="text-xs font-bold text-zinc-300 mb-2.5">🎨 App Theme</h4>
+            <div class="grid grid-cols-4 gap-2 text-center">
+                <button type="button" onclick="setTheme('dark')" data-theme-btn="dark" class="p-2 rounded-xl border border-zinc-700 hover:border-[#f0b90b]/60 transition-all">
+                    <span class="w-8 h-8 rounded-full mx-auto mb-1 block border-2 border-zinc-600" style="background: linear-gradient(135deg,#fcd535,#0b0e11 70%);"></span>
+                    <span class="text-[9px] font-bold text-zinc-300 block">Black</span>
+                </button>
+                <button type="button" onclick="setTheme('light')" data-theme-btn="light" class="p-2 rounded-xl border border-zinc-700 hover:border-[#f0b90b]/60 transition-all">
+                    <span class="w-8 h-8 rounded-full mx-auto mb-1 block border-2 border-zinc-400" style="background: linear-gradient(135deg,#ffffff,#cbd5e1);"></span>
+                    <span class="text-[9px] font-bold text-zinc-300 block">White</span>
+                </button>
+                <button type="button" onclick="setTheme('blue')" data-theme-btn="blue" class="p-2 rounded-xl border border-zinc-700 hover:border-[#f0b90b]/60 transition-all">
+                    <span class="w-8 h-8 rounded-full mx-auto mb-1 block border-2 border-blue-400" style="background: linear-gradient(135deg,#60a5fa,#0a1628 70%);"></span>
+                    <span class="text-[9px] font-bold text-zinc-300 block">Blue</span>
+                </button>
+                <button type="button" onclick="setTheme('purple')" data-theme-btn="purple" class="p-2 rounded-xl border border-zinc-700 hover:border-[#f0b90b]/60 transition-all">
+                    <span class="w-8 h-8 rounded-full mx-auto mb-1 block border-2 border-purple-400" style="background: linear-gradient(135deg,#c084fc,#150f24 70%);"></span>
+                    <span class="text-[9px] font-bold text-zinc-300 block">Purple</span>
+                </button>
+            </div>
+        </div>
+        <div class="bg-[#2b313a]/50 p-3 rounded-xl border border-zinc-700">
+            <h4 class="text-xs font-bold text-zinc-300 mb-2">📜 Full Transaction History</h4>
+            <div id="settingsHistoryList" class="space-y-2 max-h-56 overflow-y-auto custom-scroll text-xs pr-1">
+                <p class="text-zinc-500 italic text-center py-2">Loading...</p>
+            </div>
         </div>
     </div>
 </div>
@@ -678,16 +822,35 @@ let currentExpandedKey = null;
 let currentExpandedBuyPrice = null;
 let currentExpandedSymbol = null;
 
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+window.scrollTo(0, 0);
+
 const $ = id => document.getElementById(id);
 const num = v => { const n = Number(v); return isNaN(n) ? 0 : n; };
 const flt = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-// Parse URL for invite code
+// Parse + VALIDATE referral code from URL (?ref=...)
 const urlParams = new URLSearchParams(window.location.search);
-if(urlParams.has('ref')) {
-    referredByUrlParam = urlParams.get('ref');
-}
+(function initReferralValidation() {
+    const raw = urlParams.get('ref');
+    if (!raw) return;
+    const code = raw.trim();
+    // 1) Format check: Firebase UID jaisa hona chahiye (alphanumeric, 10-40 chars)
+    if (!/^[A-Za-z0-9]{10,40}$/.test(code)) return;
+    // 2) Database me check: aisa user maujood hona chahiye
+    db.ref('users/' + code).once('value').then(snap => {
+        if (snap.exists()) {
+            referredByUrlParam = code;
+            const badge = $('referralBadge');
+            if (badge) {
+                badge.classList.remove('hidden');
+                const rn = $('referrerName');
+                if (rn) rn.innerText = snap.val().name || 'a friend';
+            }
+        }
+    }).catch(() => { /* invalid referral -> ignore silently */ });
+})();
 
 // 1-second interval for the small Flow Indicator 📉📈
 setInterval(() => {
@@ -703,7 +866,7 @@ setInterval(() => {
         }
         lastPortfolioValForFlow = current;
     }
-}, 1000);
+}, 3000);
 
 function showToast(msg, duration = 3000) {
     const t = $('toast');
@@ -758,7 +921,7 @@ function toggleAuthMode(isRegister) {
     $('loginForm').classList.toggle('hidden', isRegister);
 }
 
-$('registerForm').addEventListener('submit', e => {
+$('registerForm').addEventListener('submit', async e => {
     e.preventDefault();
     const name = $('regName').value.trim();
     const mobile = $('regMobile').value.trim();
@@ -767,17 +930,23 @@ $('registerForm').addEventListener('submit', e => {
 
     if (password.length < 6) { showCustomAlert("Error", "Password must be at least 6 characters."); return; }
 
-    auth.createUserWithEmailAndPassword(email, password).then(cred => {
+    try {
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
         let userData = {
             name, mobile, email,
             walletBalance: 0, demoBalance: 50000, isDemoActive: true,
             status: "active",
             createdAt: firebase.database.ServerValue.TIMESTAMP
         };
-        if(referredByUrlParam) userData.referredBy = referredByUrlParam; // Save Referral
-        
-        return db.ref('users/' + cred.user.uid).set(userData);
-    }).catch(err => showCustomAlert("Auth Error", err.message));
+        // Validated referral only: format OK + user exists + not self
+        if (referredByUrlParam && referredByUrlParam !== cred.user.uid) {
+            try {
+                const rsnap = await db.ref('users/' + referredByUrlParam).once('value');
+                if (rsnap.exists()) userData.referredBy = referredByUrlParam;
+            } catch (re) { /* ignore invalid referral */ }
+        }
+        await db.ref('users/' + cred.user.uid).set(userData);
+    } catch (err) { showCustomAlert("Auth Error", err.message); }
 });
 
 $('loginForm').addEventListener('submit', e => {
@@ -785,6 +954,15 @@ $('loginForm').addEventListener('submit', e => {
     auth.signInWithEmailAndPassword($('loginEmail').value.trim(), $('loginPassword').value)
         .catch(err => showCustomAlert("Auth Error", err.message));
 });
+
+function forgotPassword() {
+    const emailInput = $('loginEmail');
+    const email = emailInput ? emailInput.value.trim() : '';
+    if (!email) { showCustomAlert("Reset Password", "Please enter your email address in the login field first, then tap Forgot."); return; }
+    auth.sendPasswordResetEmail(email)
+        .then(() => showCustomAlert("Email Sent", "Password reset link has been sent to " + email + ". Please check your inbox (and spam folder)."))
+        .catch(err => showCustomAlert("Reset Failed", err.message));
+}
 
 function logout() {
     if (!confirm("Sign out?")) return;
@@ -795,6 +973,11 @@ function logout() {
 auth.onAuthStateChanged(user => {
     detachAllListeners();
     if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+
+    // Refresh procedure: splash hatao, page top se shuru karo
+    const splash = $('splashScreen');
+    if (splash) splash.classList.add('hidden');
+    window.scrollTo(0, 0);
 
     if (user) {
         currentUid = user.uid;
@@ -1629,12 +1812,51 @@ function renderHistory(snap) {
     if (!has) c.innerHTML = '<p class="text-zinc-500 italic text-center py-2">No history records.</p>';
 }
 
-function openUserSettingsModal() { $('userSettingsModal').classList.remove('hidden');$('userSettingsModal').classList.add('flex'); }
+function openUserSettingsModal() { $('userSettingsModal').classList.remove('hidden');$('userSettingsModal').classList.add('flex'); renderSettingsHistory(); }
 
 $('changePasswordForm').addEventListener('submit', e => {     e.preventDefault(); const newPwd =$('newPasswordInput').value;
     if (newPwd.length < 6) { showCustomAlert("Error", "Minimum 6 characters required."); return; }
     auth.currentUser.updatePassword(newPwd).then(() => { showCustomAlert("Success", "Password updated successfully."); $('changePasswordForm').reset(); }).catch(err => showCustomAlert("Error", err.message));
 });
+
+/* ============ THEME SYSTEM ============ */
+function setTheme(name) {
+    const valid = ['dark', 'light', 'blue', 'purple'];
+    if (!valid.includes(name)) name = 'dark';
+    document.documentElement.setAttribute('data-theme', name);
+    try { localStorage.setItem('appTheme', name); } catch (e) {}
+    document.querySelectorAll('[data-theme-btn]').forEach(b => {
+        const active = b.getAttribute('data-theme-btn') === name;
+        b.style.outline = active ? '2px solid var(--primary)' : 'none';
+        b.style.outlineOffset = '2px';
+    });
+}
+function applySavedTheme() {
+    let t = 'dark';
+    try { t = localStorage.getItem('appTheme') || 'dark'; } catch (e) {}
+    setTheme(t);
+}
+applySavedTheme();
+
+/* ============ SETTINGS: FULL TRANSACTION HISTORY ============ */
+function renderSettingsHistory() {
+    const list = $('settingsHistoryList');
+    if (!list) return;
+    list.innerHTML = '';
+    const txs = (currentUserData && currentUserData.transactions) ? Object.values(currentUserData.transactions) : [];
+    txs.sort((a, b) => num(b.timestamp) - num(a.timestamp));
+    if (!txs.length) { list.innerHTML = '<p class="text-zinc-500 italic text-center py-2">No transactions yet.</p>'; return; }
+    let html = '';
+    txs.forEach(tx => {
+        const d = new Date(num(tx.timestamp));
+        const ds = isNaN(d.getTime()) ? '' : (d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
+        html += `<div class="bg-[#1e2329] p-2.5 rounded-lg border border-zinc-800 flex justify-between items-center">`
+            + `<div><span class="font-bold text-zinc-200">${esc(tx.type || 'Transaction')}</span>`
+            + `<span class="block text-[9px] text-zinc-500">${ds}</span></div>`
+            + `<span class="font-black text-[#0ecb81]">+${num(tx.amount).toFixed(2)}</span></div>`;
+    });
+    list.innerHTML = html;
+}
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { document.querySelectorAll('.modal-overlay.flex').forEach(m => { m.classList.add('hidden'); m.classList.remove('flex'); }); } });
 </script>
