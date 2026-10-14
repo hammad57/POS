@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Web Clone (Advanced)</title>
-    <!-- Firebase SDKs -->
+    <title>WhatsApp Web Clone (Firebase Integrated)</title>
+    <!-- Firebase SDKs (v9 Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
@@ -21,14 +21,14 @@
         .hidden { display: none !important; }
         .header-bar { background: #075e54; color: white; padding: 15px; display: flex; align-items: center; justify-content: space-between; }
         
-        /* Auth Screens (Login/Signup) */
+        /* Auth Screens */
         .auth-screen { padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #ece5dd; }
         .auth-screen h2 { color: #075e54; margin-bottom: 20px; }
         .auth-screen input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; outline: none; }
         .auth-screen button { width: 100%; padding: 12px; background: #128C7E; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
         .auth-screen .toggle-link { color: #128C7E; cursor: pointer; font-size: 14px; text-decoration: underline; }
 
-        /* Main Dashboard (Chats List) */
+        /* Main Dashboard */
         .dashboard-header { background: #075e54; padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center; }
         .dashboard-header .profile-icon { width: 40px; height: 40px; background: #ccc; border-radius: 50%; display: flex; justify-content: center; align-items: center; overflow: hidden; cursor: pointer; }
         .dashboard-header .profile-icon img { width: 100%; height: 100%; object-fit: cover; }
@@ -41,7 +41,8 @@
         .chat-list { flex: 1; overflow-y: auto; }
         .chat-list-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
         .chat-list-item:hover { background: #f5f5f5; }
-        .chat-list-item .avatar { width: 50px; height: 50px; background: #ddd; border-radius: 50%; margin-right: 15px; }
+        .chat-list-item .avatar { width: 50px; height: 50px; background: #ddd; border-radius: 50%; margin-right: 15px; overflow: hidden; }
+        .chat-list-item .avatar img { width: 100%; height: 100%; object-fit: cover; }
         .chat-list-item .info { flex: 1; }
         .chat-list-item .info h4 { margin-bottom: 5px; color: #333; }
         .chat-list-item .info p { font-size: 13px; color: #777; }
@@ -61,13 +62,11 @@
         .sent { background: #dcf8c6; align-self: flex-end; border-top-right-radius: 0; }
         .received { background: #fff; align-self: flex-start; border-top-left-radius: 0; }
         
-        .message-media { max-width: 100%; border-radius: 5px; margin-bottom: 5px; cursor: pointer; }
+        .message-media { max-width: 100%; max-height: 200px; border-radius: 5px; margin-bottom: 5px; object-fit: cover; }
         
         .msg-meta { display: flex; justify-content: flex-end; align-items: center; gap: 5px; margin-top: 3px; }
         .msg-time { font-size: 11px; color: #999; }
-        .msg-ticks { font-size: 12px; color: #999; }
-        .msg-ticks.blue { color: #34B7F1; } /* Blue ticks */
-        .msg-delete-btn { font-size: 10px; color: red; cursor: pointer; display: none; }
+        .msg-delete-btn { font-size: 11px; color: red; cursor: pointer; display: none; }
         .message-bubble:hover .msg-delete-btn { display: inline; }
 
         .chat-input-area { background: #f0f0f0; padding: 10px; display: flex; align-items: center; gap: 10px; }
@@ -75,11 +74,18 @@
         .chat-input-area input[type="text"] { flex: 1; padding: 12px; border: none; border-radius: 20px; outline: none; font-size: 15px; }
         .send-btn { width: 45px; height: 45px; background: #00897b; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; border: none; cursor: pointer; }
 
-        /* Status & Profile Overlays (Simplified) */
+        /* Overlays */
         .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 20; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.3s ease; }
         .overlay-screen.active { transform: translateY(0); }
         .overlay-header { background: #075e54; padding: 15px; color: white; display: flex; align-items: center; }
         
+        /* Status Card Styles */
+        .status-item { display: flex; align-items: center; padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .status-avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #128C7E; margin-right: 12px; object-fit: cover; }
+        .status-info { flex: 1; text-align: left; }
+        .status-info h5 { margin-bottom: 2px; color: #333; }
+        .status-info p { font-size: 12px; color: #777; }
+
         .toast { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none;}
         .toast.show { opacity: 1; }
     </style>
@@ -88,7 +94,7 @@
 
     <div class="app-container">
         <!-- Toast Notification -->
-        <div id="toastMessage" class="toast">Message goes here</div>
+        <div id="toastMessage" class="toast">Notification</div>
 
         <!-- 1. LOGIN SCREEN -->
         <div id="loginScreen" class="auth-screen">
@@ -109,7 +115,7 @@
             <p class="toggle-link" onclick="toggleAuth('login')">Already have an account? Login</p>
         </div>
 
-        <!-- 3. MAIN DASHBOARD (Chat List) -->
+        <!-- 3. MAIN DASHBOARD -->
         <div id="dashboardScreen" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
             <div class="dashboard-header">
                 <div class="profile-icon" onclick="openProfile()">
@@ -117,7 +123,7 @@
                 </div>
                 <div class="action-buttons">
                     <i class="fas fa-circle-notch" onclick="openStatus()" title="Status"></i>
-                    <i class="fas fa-ellipsis-v" onclick="logout()" title="Logout"></i>
+                    <i class="fas fa-sign-out-alt" onclick="logout()" title="Logout"></i>
                 </div>
             </div>
             
@@ -127,7 +133,6 @@
             </div>
 
             <div class="chat-list" id="chatListContainer">
-                <!-- Chat items will be injected here -->
                 <div style="padding: 20px; text-align: center; color: #777;">No recent chats. Enter a number above to start.</div>
             </div>
         </div>
@@ -137,7 +142,7 @@
             <div class="chat-header">
                 <i class="fas fa-arrow-left" onclick="closeChat()"></i>
                 <div class="avatar" style="width:35px; height:35px; background:#ddd; border-radius:50%; margin-right:10px; overflow:hidden;">
-                    <img id="activeChatProfilePic" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" style="width:100%; height:100%;" alt="">
+                    <img id="activeChatProfilePic" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" style="width:100%; height:100%; object-fit:cover;" alt="">
                 </div>
                 <div class="chat-user-info">
                     <h3 id="activeChatName">User Name</h3>
@@ -145,20 +150,17 @@
                 <i class="fas fa-trash-alt" onclick="clearChatHistory()" style="font-size: 16px; margin-left:auto; margin-right:0;" title="Clear Chat"></i>
             </div>
             
-            <div class="chat-messages" id="messageContainer">
-                <!-- Messages go here -->
-            </div>
+            <div class="chat-messages" id="messageContainer"></div>
             
             <div class="chat-input-area">
-                <input type="file" id="mediaInput" class="hidden" accept="image/*,video/*" onchange="handleMediaSelect()">
+                <input type="file" id="mediaInput" class="hidden" accept="image/*,video/*" onchange="handleMediaSelect(event)">
                 <i class="fas fa-paperclip" onclick="document.getElementById('mediaInput').click()"></i>
-                <i class="fas fa-microphone" onclick="showToast('Voice recording feature coming soon!')"></i>
                 <input type="text" id="messageInput" placeholder="Type a message" onkeypress="handleKey(event)">
-                <button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                <button class="send-btn" onclick="sendTextMessage()"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
 
-        <!-- 5. PROFILE SETTINGS OVERLAY -->
+        <!-- 5. PROFILE SETTINGS -->
         <div id="profileOverlay" class="overlay-screen">
             <div class="overlay-header">
                 <i class="fas fa-arrow-left" onclick="closeProfile()" style="margin-right: 15px; cursor: pointer;"></i>
@@ -166,48 +168,61 @@
             </div>
             <div style="padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 15px;">
                 <img id="editProfilePicPreview" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
-                <input type="file" id="profilePicInput" accept="image/*" class="hidden" onchange="updateProfilePicLocally()">
-                <button style="padding: 8px 15px; background: #075e54; color:white; border:none; border-radius:5px;" onclick="document.getElementById('profilePicInput').click()">Change Picture</button>
+                <input type="file" id="profilePicInput" accept="image/*" class="hidden" onchange="updateProfilePicLocally(event)">
+                <button style="padding: 8px 15px; background: #075e54; color:white; border:none; border-radius:5px; cursor:pointer;" onclick="document.getElementById('profilePicInput').click()">Change Picture</button>
                 <input type="password" id="newPasswordInput" placeholder="New Password" style="width:100%; padding: 10px; border:1px solid #ccc; border-radius:5px; margin-top: 10px;">
-                <button style="width:100%; padding: 10px; background: #128C7E; color:white; border:none; border-radius:5px;" onclick="updateProfile()">Save Changes</button>
+                <button style="width:100%; padding: 10px; background: #128C7E; color:white; border:none; border-radius:5px; cursor:pointer;" onclick="updateProfile()">Save Changes</button>
             </div>
         </div>
         
-         <!-- 6. STATUS OVERLAY -->
+        <!-- 6. STATUS OVERLAY -->
         <div id="statusOverlay" class="overlay-screen">
             <div class="overlay-header">
                 <i class="fas fa-arrow-left" onclick="closeStatus()" style="margin-right: 15px; cursor: pointer;"></i>
                 <h2>Status</h2>
             </div>
-            <div style="padding: 20px; text-align: center;">
-                <button style="padding: 10px 20px; background: #128C7E; color:white; border:none; border-radius:20px; margin-bottom: 20px;" onclick="showToast('Status upload simulated')">Add Status</button>
-                <p style="color: #777;">Viewed by: User A, User B (Simulated)</p>
+            <div style="padding: 15px; border-bottom: 1px solid #ddd; background: #f9f9f9; text-align: center;">
+                <input type="file" id="statusFileInput" accept="image/*,video/*" class="hidden" onchange="uploadStatus(event)">
+                <button style="padding: 10px 20px; background: #128C7E; color:white; border:none; border-radius:20px; cursor:pointer; font-weight:bold;" onclick="document.getElementById('statusFileInput').click()">
+                    <i class="fas fa-camera"></i> Add Video / Photo Status
+                </button>
+            </div>
+            <div style="padding: 10px 15px; color: #075e54; font-weight: bold; background: #eee; font-size: 13px;">RECENT UPDATES</div>
+            <div id="statusListContainer" style="flex:1; overflow-y:auto;">
+                <!-- Status items will load here -->
+            </div>
+        </div>
+
+        <!-- 7. STATUS VIEWER MODAL -->
+        <div id="statusViewer" class="overlay-screen" style="background:#000; z-index:30;">
+            <div style="padding:15px; color:white; display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.5); position:absolute; top:0; width:100%; z-index:2;">
+                <span id="statusViewerTitle" style="font-weight:bold;">User Status</span>
+                <i class="fas fa-times" onclick="closeStatusViewer()" style="font-size:22px; cursor:pointer;"></i>
+            </div>
+            <div id="statusMediaContainer" style="flex:1; display:flex; align-items:center; justify-content:center; width:100%; height:100%;">
+                <!-- Dynamic Image or Video -->
             </div>
         </div>
 
     </div>
 
     <script>
-        // --- 1. FIREBASE SETUP (Replace with your actual keys) ---
-        // DO NOT LEAVE THIS EMPTY WHEN HOSTING
+        // --- 1. REAL FIREBASE CONFIGURATION ---
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            databaseURL: "https://earn-platform-76c26-default-rtdb.firebaseio.com/"
         };
+        
         // Initialize Firebase
-        // firebase.initializeApp(firebaseConfig);
-        // const db = firebase.database();
-        // const storage = firebase.storage();
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
 
         // --- GLOBAL VARIABLES ---
-        let currentUser = null; // Object { phone, name, pic, password }
-        let currentChatUser = null; // The phone number we are chatting with
-        let messagesRef = null;
+        let currentUser = null; 
+        let currentChatUser = null; 
+        let currentChatId = null;
+        let messagesListener = null;
 
         // --- UTILITY FUNCTIONS ---
         function showToast(msg) {
@@ -217,8 +232,20 @@
             setTimeout(() => toast.classList.remove("show"), 3000);
         }
 
+        function getChatId(phone1, phone2) {
+            return phone1 < phone2 ? `${phone1}_${phone2}` : `${phone2}_${phone1}`;
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
         // --- AUTHENTICATION LOGIC ---
-        // Auto-login check
         window.onload = function() {
             const savedUser = localStorage.getItem('wa_user');
             if(savedUser) {
@@ -241,42 +268,40 @@
 
             if(!name || !phone || !pass) return showToast("All fields required");
 
-            // SIMULATED DATABASE SAVE (In real app, use db.ref('users/' + phone).set(...))
-            const userData = { name: name, phone: phone, password: pass, pic: "" };
-            
-            // Simulating saving to DB by saving to local storage as 'mock DB'
-            localStorage.setItem('mock_db_user_' + phone, JSON.stringify(userData)); 
-            
-            showToast("Registration successful! Please login.");
-            toggleAuth('login');
+            const userRef = db.ref('users/' + phone);
+            userRef.once('value', snapshot => {
+                if(snapshot.exists()){
+                    showToast("Phone number already registered!");
+                } else {
+                    const userData = { name: name, phone: phone, password: pass, pic: "" };
+                    userRef.set(userData).then(() => {
+                        showToast("Registration successful! Please login.");
+                        toggleAuth('login');
+                    }).catch(err => showToast("Error: " + err.message));
+                }
+            });
         }
 
         function handleLogin() {
             const phone = document.getElementById('loginPhone').value.trim();
             const pass = document.getElementById('loginPassword').value.trim();
 
-            // Admin Override
-            if(phone === 'admin' && pass === 'admin') {
-                currentUser = { name: "Admin", phone: "admin", pic: "" };
-                localStorage.setItem('wa_user', JSON.stringify(currentUser));
-                showDashboard();
-                return;
-            }
+            if(!phone || !pass) return showToast("Enter phone and password");
 
-            // SIMULATED DATABASE FETCH
-            const dbUserStr = localStorage.getItem('mock_db_user_' + phone);
-            if(dbUserStr) {
-                const dbUser = JSON.parse(dbUserStr);
-                if(dbUser.password === pass) {
-                    currentUser = dbUser;
-                    localStorage.setItem('wa_user', JSON.stringify(currentUser));
-                    showDashboard();
+            db.ref('users/' + phone).once('value', snapshot => {
+                if(snapshot.exists()) {
+                    const dbUser = snapshot.val();
+                    if(dbUser.password === pass) {
+                        currentUser = dbUser;
+                        localStorage.setItem('wa_user', JSON.stringify(currentUser));
+                        showDashboard();
+                    } else {
+                        showToast("Incorrect password");
+                    }
                 } else {
-                    showToast("Incorrect password");
+                    showToast("User not registered.");
                 }
-            } else {
-                showToast("User not registered. Please sign up.");
-            }
+            });
         }
 
         function logout() {
@@ -288,7 +313,7 @@
             closeChat();
         }
 
-        // --- DASHBOARD & CHAT LOGIC ---
+        // --- DASHBOARD & CHATS ---
         function showDashboard() {
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('signupScreen').classList.add('hidden');
@@ -296,6 +321,39 @@
             dash.classList.remove('hidden');
             dash.style.display = "flex";
             if(currentUser.pic) document.getElementById('myProfilePic').src = currentUser.pic;
+            loadRecentChats();
+        }
+
+        function loadRecentChats() {
+            db.ref('users').on('value', snapshot => {
+                const container = document.getElementById('chatListContainer');
+                container.innerHTML = "";
+                const users = snapshot.val();
+                let count = 0;
+
+                for(let phone in users) {
+                    if(phone !== currentUser.phone) {
+                        count++;
+                        const u = users[phone];
+                        const div = document.createElement('div');
+                        div.className = 'chat-list-item';
+                        div.onclick = () => openChat(u.phone, u.name, u.pic);
+                        div.innerHTML = `
+                            <div class="avatar">
+                                <img src="${u.pic || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png'}">
+                            </div>
+                            <div class="info">
+                                <h4>${u.name}</h4>
+                                <p>${u.phone}</p>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    }
+                }
+                if(count === 0) {
+                    container.innerHTML = `<div style="padding: 20px; text-align: center; color: #777;">No users found.</div>`;
+                }
+            });
         }
 
         function checkUserAndStartChat() {
@@ -303,187 +361,239 @@
             if(!num) return;
             if(num === currentUser.phone) return showToast("You can't message yourself.");
 
-            // Check if user exists in our "Mock DB"
-            const dbUserStr = localStorage.getItem('mock_db_user_' + num);
-            if(dbUserStr || num === 'admin') {
-                const targetUser = dbUserStr ? JSON.parse(dbUserStr) : {name: "Admin", pic: ""};
-                openChat(num, targetUser.name, targetUser.pic);
-            } else {
-                showToast("⚠️ This number is not registered on the app.");
-            }
+            db.ref('users/' + num).once('value', snapshot => {
+                if(snapshot.exists()) {
+                    const targetUser = snapshot.val();
+                    openChat(targetUser.phone, targetUser.name, targetUser.pic);
+                } else {
+                    showToast("⚠️ This number is not registered.");
+                }
+            });
         }
 
         function openChat(phone, name, pic) {
             currentChatUser = phone;
+            currentChatId = getChatId(currentUser.phone, currentChatUser);
+            
             document.getElementById('activeChatName').innerText = name;
             document.getElementById('activeChatProfilePic').src = pic || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png";
             document.getElementById('chatWindow').classList.add('active');
             
-            // Clear current messages
-            document.getElementById('messageContainer').innerHTML = "";
             loadMessages();
         }
 
         function closeChat() {
             document.getElementById('chatWindow').classList.remove('active');
+            if(currentChatId && messagesListener) {
+                db.ref('chats/' + currentChatId).off('value', messagesListener);
+            }
             currentChatUser = null;
+            currentChatId = null;
         }
 
-        // --- MESSAGING ---
-        function sendMessage(mediaUrl = null, type = 'text') {
+        // --- REALTIME MESSAGING ---
+        function sendTextMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
-            
-            if(!text && !mediaUrl) return;
+            if(!text) return;
 
-            const msgData = {
-                id: Date.now().toString(),
-                sender: currentUser.phone,
-                receiver: currentChatUser,
-                text: mediaUrl || text,
-                type: type,
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                status: 'sent' // sent -> delivered -> read (simulated)
-            };
-
-            // SIMULATED SEND (In real app, push to db.ref('chats/' + chatID))
-            let chats = JSON.parse(localStorage.getItem('mock_chats') || "[]");
-            chats.push(msgData);
-            localStorage.setItem('mock_chats', JSON.stringify(chats));
-            
+            sendMessageData(text, 'text');
             input.value = "";
-            loadMessages(); // Refresh UI
-            
-            // Simulate Delivery & Read receipt
-            setTimeout(() => updateMsgStatus(msgData.id, 'delivered'), 1000);
-            setTimeout(() => updateMsgStatus(msgData.id, 'read'), 2500);
         }
 
-        function handleKey(e) { if(e.key === 'Enter') sendMessage(); }
+        function handleMediaSelect(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            if(file.size > 10 * 1024 * 1024) {
+                return showToast("File size too large (Max 10MB).");
+            }
+
+            showToast("Processing media...");
+            fileToBase64(file).then(base64 => {
+                const type = file.type.startsWith('video') ? 'video' : 'image';
+                sendMessageData(base64, type);
+            }).catch(() => showToast("Error processing file."));
+        }
+
+        function sendMessageData(content, type) {
+            const msgData = {
+                sender: currentUser.phone,
+                receiver: currentChatUser,
+                content: content,
+                type: type,
+                timestamp: Date.now(),
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            };
+
+            db.ref('chats/' + currentChatId).push(msgData);
+        }
+
+        function handleKey(e) { if(e.key === 'Enter') sendTextMessage(); }
 
         function loadMessages() {
             const container = document.getElementById('messageContainer');
-            container.innerHTML = "";
             
-            let chats = JSON.parse(localStorage.getItem('mock_chats') || "[]");
-            
-            // Filter messages between me and current chat user
-            let myChats = chats.filter(c => 
-                (c.sender === currentUser.phone && c.receiver === currentChatUser) ||
-                (c.sender === currentChatUser && c.receiver === currentUser.phone)
-            );
+            messagesListener = db.ref('chats/' + currentChatId).on('value', snapshot => {
+                container.innerHTML = "";
+                const data = snapshot.val();
 
-            // Filter out messages I cleared from my history
-            let clearedHistory = JSON.parse(localStorage.getItem('cleared_' + currentUser.phone + '_' + currentChatUser) || "[]");
-            myChats = myChats.filter(c => !clearedHistory.includes(c.id));
+                if(data) {
+                    for(let key in data) {
+                        const msg = data[key];
+                        const isMe = msg.sender === currentUser.phone;
+                        const div = document.createElement('div');
+                        div.className = `message-bubble ${isMe ? 'sent' : 'received'}`;
+                        
+                        let contentHTML = "";
+                        if(msg.type === 'text') {
+                            contentHTML = `<span>${msg.content}</span>`;
+                        } else if(msg.type === 'image') {
+                            contentHTML = `<img src="${msg.content}" class="message-media" onclick="window.open('${msg.content}')">`;
+                        } else if(msg.type === 'video') {
+                            contentHTML = `<video src="${msg.content}" class="message-media" controls></video>`;
+                        }
 
-            myChats.forEach(msg => {
-                const isMe = msg.sender === currentUser.phone;
-                const div = document.createElement('div');
-                div.className = `message-bubble ${isMe ? 'sent' : 'received'}`;
-                
-                let contentHTML = "";
-                if(msg.type === 'text') contentHTML = `<span>${msg.text}</span>`;
-                else if(msg.type === 'image') contentHTML = `<img src="${msg.text}" class="message-media" onclick="showToast('Full screen view not implemented in preview')">`;
-                
-                let ticksHTML = "";
-                if(isMe) {
-                    if(msg.status === 'sent') ticksHTML = `<i class="fas fa-check msg-ticks"></i>`; // Single tick
-                    else if(msg.status === 'delivered') ticksHTML = `<i class="fas fa-check-double msg-ticks"></i>`; // Double tick
-                    else if(msg.status === 'read') ticksHTML = `<i class="fas fa-check-double msg-ticks blue"></i>`; // Blue tick
+                        div.innerHTML = `
+                            ${contentHTML}
+                            <div class="msg-meta">
+                                <span class="msg-time">${msg.time}</span>
+                                ${isMe ? `<i class="fas fa-trash msg-delete-btn" onclick="deleteMessage('${key}')" title="Delete"></i>` : ''}
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    }
+                    container.scrollTop = container.scrollHeight;
                 }
-
-                div.innerHTML = `
-                    ${contentHTML}
-                    <div class="msg-meta">
-                        <span class="msg-time">${msg.time}</span>
-                        ${ticksHTML}
-                        ${isMe ? `<i class="fas fa-trash msg-delete-btn" onclick="deleteMessage('${msg.id}')" title="Delete for Everyone"></i>` : ''}
-                    </div>
-                `;
-                
-                // Add Swipe to Reply basic visual cue
-                let startX;
-                div.addEventListener('touchstart', e => startX = e.touches[0].clientX);
-                div.addEventListener('touchend', e => {
-                    let endX = e.changedTouches[0].clientX;
-                    if(endX - startX > 50) showToast("Swiped to reply to: " + (msg.type === 'text' ? msg.text : msg.type));
-                });
-
-                container.appendChild(div);
             });
-            container.scrollTop = container.scrollHeight;
         }
 
-        // Simulate Status Updates (Ticks)
-        function updateMsgStatus(msgId, status) {
-            let chats = JSON.parse(localStorage.getItem('mock_chats') || "[]");
-            let msgIndex = chats.findIndex(c => c.id === msgId);
-            if(msgIndex > -1) {
-                chats[msgIndex].status = status;
-                localStorage.setItem('mock_chats', JSON.stringify(chats));
-                if(currentChatUser) loadMessages(); // re-render if chat is open
+        function deleteMessage(key) {
+            if(confirm("Delete message?")) {
+                db.ref(`chats/${currentChatId}/${key}`).remove();
             }
         }
 
-        function deleteMessage(msgId) {
-            let chats = JSON.parse(localStorage.getItem('mock_chats') || "[]");
-            chats = chats.filter(c => c.id !== msgId);
-            localStorage.setItem('mock_chats', JSON.stringify(chats));
-            loadMessages();
-            showToast("Message deleted for everyone");
-        }
-
         function clearChatHistory() {
-            if(!confirm("Clear this chat from your screen? (Won't affect the other person)")) return;
-            let chats = JSON.parse(localStorage.getItem('mock_chats') || "[]");
-            let myChats = chats.filter(c => 
-                (c.sender === currentUser.phone && c.receiver === currentChatUser) ||
-                (c.sender === currentChatUser && c.receiver === currentUser.phone)
-            );
-            
-            let clearedHistory = JSON.parse(localStorage.getItem('cleared_' + currentUser.phone + '_' + currentChatUser) || "[]");
-            myChats.forEach(c => clearedHistory.push(c.id));
-            localStorage.setItem('cleared_' + currentUser.phone + '_' + currentChatUser, JSON.stringify(clearedHistory));
-            
-            loadMessages();
-            showToast("Chat history cleared from your screen");
+            if(confirm("Clear this complete chat from database?")) {
+                db.ref('chats/' + currentChatId).remove();
+            }
         }
 
-        function handleMediaSelect() {
-            const file = document.getElementById('mediaInput').files[0];
-            if(!file) return;
-            // In real app: upload to Firebase Storage and get URL.
-            // Here, we create a local object URL for simulation.
-            const localUrl = URL.createObjectURL(file);
-            let type = file.type.startsWith('image') ? 'image' : 'video';
-            sendMessage(localUrl, type);
-        }
-
-        // --- PROFILE & SETTINGS ---
+        // --- PROFILE LOGIC ---
         function openProfile() { document.getElementById('profileOverlay').classList.add('active'); }
         function closeProfile() { document.getElementById('profileOverlay').classList.remove('active'); }
-        function openStatus() { document.getElementById('statusOverlay').classList.add('active'); }
-        function closeStatus() { document.getElementById('statusOverlay').classList.remove('active'); }
 
-        function updateProfilePicLocally() {
-            const file = document.getElementById('profilePicInput').files[0];
-            if(file) document.getElementById('editProfilePicPreview').src = URL.createObjectURL(file);
+        function updateProfilePicLocally(e) {
+            const file = e.target.files[0];
+            if(file) {
+                fileToBase64(file).then(base64 => {
+                    document.getElementById('editProfilePicPreview').src = base64;
+                });
+            }
         }
 
         function updateProfile() {
-            const newPass = document.getElementById('newPasswordInput').value;
+            const newPass = document.getElementById('newPasswordInput').value.trim();
             const picSrc = document.getElementById('editProfilePicPreview').src;
             
-            if(newPass) currentUser.password = newPass;
-            if(picSrc && !picSrc.includes("blank-profile")) currentUser.pic = picSrc;
-            
-            localStorage.setItem('wa_user', JSON.stringify(currentUser));
-            localStorage.setItem('mock_db_user_' + currentUser.phone, JSON.stringify(currentUser)); // Update DB
-            
-            document.getElementById('myProfilePic').src = currentUser.pic;
-            showToast("Profile Updated");
-            closeProfile();
+            let updates = {};
+            if(newPass) {
+                currentUser.password = newPass;
+                updates.password = newPass;
+            }
+            if(picSrc && !picSrc.includes("blank-profile")) {
+                currentUser.pic = picSrc;
+                updates.pic = picSrc;
+            }
+
+            db.ref('users/' + currentUser.phone).update(updates).then(() => {
+                localStorage.setItem('wa_user', JSON.stringify(currentUser));
+                document.getElementById('myProfilePic').src = currentUser.pic;
+                showToast("Profile Updated");
+                closeProfile();
+            });
+        }
+
+        // --- STATUS FEATURE (Realtime Video & Picture Upload) ---
+        function openStatus() { 
+            document.getElementById('statusOverlay').classList.add('active'); 
+            loadStatuses();
+        }
+        function closeStatus() { document.getElementById('statusOverlay').classList.remove('active'); }
+
+        function uploadStatus(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            if(file.size > 12 * 1024 * 1024) {
+                return showToast("Status file too large (Max 12MB)");
+            }
+
+            showToast("Uploading status...");
+            fileToBase64(file).then(base64 => {
+                const statusType = file.type.startsWith('video') ? 'video' : 'image';
+                const statusData = {
+                    userName: currentUser.name,
+                    userPic: currentUser.pic || '',
+                    userPhone: currentUser.phone,
+                    mediaUrl: base64,
+                    type: statusType,
+                    timestamp: Date.now(),
+                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                };
+
+                db.ref('status/' + currentUser.phone).set(statusData).then(() => {
+                    showToast("Status uploaded successfully!");
+                }).catch(err => showToast("Failed: " + err.message));
+            });
+        }
+
+        function loadStatuses() {
+            db.ref('status').on('value', snapshot => {
+                const container = document.getElementById('statusListContainer');
+                container.innerHTML = "";
+                const statuses = snapshot.val();
+
+                if(!statuses) {
+                    container.innerHTML = `<p style="padding: 20px; text-align:center; color:#888;">No recent status updates</p>`;
+                    return;
+                }
+
+                for(let phone in statuses) {
+                    const st = statuses[phone];
+                    const div = document.createElement('div');
+                    div.className = "status-item";
+                    div.onclick = () => viewStatus(st);
+                    div.innerHTML = `
+                        <img class="status-avatar" src="${st.userPic || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png'}">
+                        <div class="status-info">
+                            <h5>${st.userName} (${st.type.toUpperCase()})</h5>
+                            <p>Today, ${st.time}</p>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                }
+            });
+        }
+
+        function viewStatus(st) {
+            const viewer = document.getElementById('statusViewer');
+            const container = document.getElementById('statusMediaContainer');
+            document.getElementById('statusViewerTitle').innerText = st.userName;
+
+            if(st.type === 'image') {
+                container.innerHTML = `<img src="${st.mediaUrl}" style="max-width:100%; max-height:80vh; object-fit:contain;">`;
+            } else if(st.type === 'video') {
+                container.innerHTML = `<video src="${st.mediaUrl}" style="max-width:100%; max-height:80vh;" controls autoplay></video>`;
+            }
+
+            viewer.classList.add('active');
+        }
+
+        function closeStatusViewer() {
+            document.getElementById('statusViewer').classList.remove('active');
+            document.getElementById('statusMediaContainer').innerHTML = "";
         }
     </script>
 </body>
