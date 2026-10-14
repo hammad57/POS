@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Web Clone (Firebase Integrated)</title>
+    <title>WhatsApp Web Clone (Firebase Fixed)</title>
     <!-- Firebase SDKs (v9 Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -12,14 +12,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        /* General Styles */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #d1d7db; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         .app-container { width: 100%; max-width: 450px; height: 100vh; background: #fff; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
         
-        /* Utility Classes */
         .hidden { display: none !important; }
-        .header-bar { background: #075e54; color: white; padding: 15px; display: flex; align-items: center; justify-content: space-between; }
         
         /* Auth Screens */
         .auth-screen { padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #ece5dd; }
@@ -28,7 +25,7 @@
         .auth-screen button { width: 100%; padding: 12px; background: #128C7E; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
         .auth-screen .toggle-link { color: #128C7E; cursor: pointer; font-size: 14px; text-decoration: underline; }
 
-        /* Main Dashboard */
+        /* Dashboard */
         .dashboard-header { background: #075e54; padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center; }
         .dashboard-header .profile-icon { width: 40px; height: 40px; background: #ccc; border-radius: 50%; display: flex; justify-content: center; align-items: center; overflow: hidden; cursor: pointer; }
         .dashboard-header .profile-icon img { width: 100%; height: 100%; object-fit: cover; }
@@ -79,7 +76,6 @@
         .overlay-screen.active { transform: translateY(0); }
         .overlay-header { background: #075e54; padding: 15px; color: white; display: flex; align-items: center; }
         
-        /* Status Card Styles */
         .status-item { display: flex; align-items: center; padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; }
         .status-avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #128C7E; margin-right: 12px; object-fit: cover; }
         .status-info { flex: 1; text-align: left; }
@@ -93,7 +89,6 @@
 <body>
 
     <div class="app-container">
-        <!-- Toast Notification -->
         <div id="toastMessage" class="toast">Notification</div>
 
         <!-- 1. LOGIN SCREEN -->
@@ -188,9 +183,7 @@
                 </button>
             </div>
             <div style="padding: 10px 15px; color: #075e54; font-weight: bold; background: #eee; font-size: 13px;">RECENT UPDATES</div>
-            <div id="statusListContainer" style="flex:1; overflow-y:auto;">
-                <!-- Status items will load here -->
-            </div>
+            <div id="statusListContainer" style="flex:1; overflow-y:auto;"></div>
         </div>
 
         <!-- 7. STATUS VIEWER MODAL -->
@@ -199,32 +192,26 @@
                 <span id="statusViewerTitle" style="font-weight:bold;">User Status</span>
                 <i class="fas fa-times" onclick="closeStatusViewer()" style="font-size:22px; cursor:pointer;"></i>
             </div>
-            <div id="statusMediaContainer" style="flex:1; display:flex; align-items:center; justify-content:center; width:100%; height:100%;">
-                <!-- Dynamic Image or Video -->
-            </div>
+            <div id="statusMediaContainer" style="flex:1; display:flex; align-items:center; justify-content:center; width:100%; height:100%;"></div>
         </div>
-
     </div>
 
     <script>
-        // --- 1. REAL FIREBASE CONFIGURATION ---
+        // --- FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             databaseURL: "https://earn-platform-76c26-default-rtdb.firebaseio.com/"
         };
         
-        // Initialize Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.database();
 
-        // --- GLOBAL VARIABLES ---
         let currentUser = null; 
         let currentChatUser = null; 
         let currentChatId = null;
         let messagesListener = null;
 
-        // --- UTILITY FUNCTIONS ---
         function showToast(msg) {
             const toast = document.getElementById("toastMessage");
             toast.innerText = msg;
@@ -245,7 +232,6 @@
             });
         }
 
-        // --- AUTHENTICATION LOGIC ---
         window.onload = function() {
             const savedUser = localStorage.getItem('wa_user');
             if(savedUser) {
@@ -313,7 +299,6 @@
             closeChat();
         }
 
-        // --- DASHBOARD & CHATS ---
         function showDashboard() {
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('signupScreen').classList.add('hidden');
@@ -391,7 +376,7 @@
             currentChatId = null;
         }
 
-        // --- REALTIME MESSAGING ---
+        // --- FIXED MESSAGING & MEDIA SENDING ---
         function sendTextMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
@@ -401,22 +386,33 @@
             input.value = "";
         }
 
-        function handleMediaSelect(e) {
-            const file = e.target.files[0];
+        function handleMediaSelect(event) {
+            const file = event.target.files[0];
             if(!file) return;
 
             if(file.size > 10 * 1024 * 1024) {
-                return showToast("File size too large (Max 10MB).");
+                showToast("File size too large (Max 10MB)");
+                return;
             }
 
-            showToast("Processing media...");
+            showToast("Processing media attachment...");
             fileToBase64(file).then(base64 => {
                 const type = file.type.startsWith('video') ? 'video' : 'image';
                 sendMessageData(base64, type);
-            }).catch(() => showToast("Error processing file."));
+                // Reset file input element so same file can be selected again if needed
+                event.target.value = '';
+            }).catch(err => {
+                console.error(err);
+                showToast("Error processing file.");
+            });
         }
 
         function sendMessageData(content, type) {
+            if(!currentChatId) {
+                showToast("Error: No active chat selected.");
+                return;
+            }
+
             const msgData = {
                 sender: currentUser.phone,
                 receiver: currentChatUser,
@@ -426,13 +422,23 @@
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
             };
 
-            db.ref('chats/' + currentChatId).push(msgData);
+            db.ref('chats/' + currentChatId).push(msgData).catch(err => {
+                showToast("Failed to send: " + err.message);
+            });
         }
 
-        function handleKey(e) { if(e.key === 'Enter') sendTextMessage(); }
+        function handleKey(e) { 
+            if(e.key === 'Enter') {
+                e.preventDefault();
+                sendTextMessage(); 
+            }
+        }
 
         function loadMessages() {
             const container = document.getElementById('messageContainer');
+            if(messagesListener && currentChatId) {
+                db.ref('chats/' + currentChatId).off('value', messagesListener);
+            }
             
             messagesListener = db.ref('chats/' + currentChatId).on('value', snapshot => {
                 container.innerHTML = "";
@@ -480,7 +486,6 @@
             }
         }
 
-        // --- PROFILE LOGIC ---
         function openProfile() { document.getElementById('profileOverlay').classList.add('active'); }
         function closeProfile() { document.getElementById('profileOverlay').classList.remove('active'); }
 
@@ -515,7 +520,6 @@
             });
         }
 
-        // --- STATUS FEATURE (Realtime Video & Picture Upload) ---
         function openStatus() { 
             document.getElementById('statusOverlay').classList.add('active'); 
             loadStatuses();
@@ -527,7 +531,8 @@
             if(!file) return;
 
             if(file.size > 12 * 1024 * 1024) {
-                return showToast("Status file too large (Max 12MB)");
+                showToast("Status file too large (Max 12MB)");
+                return;
             }
 
             showToast("Uploading status...");
@@ -545,6 +550,7 @@
 
                 db.ref('status/' + currentUser.phone).set(statusData).then(() => {
                     showToast("Status uploaded successfully!");
+                    e.target.value = '';
                 }).catch(err => showToast("Failed: " + err.message));
             });
         }
