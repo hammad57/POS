@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Web Clone (Advanced)</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* General Styles */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #d1d7db; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .app-container { width: 100%; max-width: 450px; height: 100vh; background: #fff; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+        
+        /* Utility Classes */
+        .hidden { display: none !important; }
+        .header-bar { background: #075e54; color: white; padding: 15px; display: flex; align-items: center; justify-content: space-between; }
+        
+        /* Auth Screens (Login/Signup) */
+        .auth-screen { padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #ece5dd; }
+        .auth-screen h2 { color: #075e54; margin-bottom: 20px; }
+        .auth-screen input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; outline: none; }
+        .auth-screen button { width: 100%; padding: 12px; background: #128C7E; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
+        .auth-screen .toggle-link { color: #128C7E; cursor: pointer; font-size: 14px; text-decoration: underline; }
+
+        /* Main Dashboard (Chats List) */
+        .dashboard-header { background: #075e54; padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .dashboard-header .profile-icon { width: 40px; height: 40px; background: #ccc; border-radius: 50%; display: flex; justify-content: center; align-items: center; overflow: hidden; cursor: pointer; }
+        .dashboard-header .profile-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .action-buttons i { margin-left: 15px; cursor: pointer; font-size: 20px; }
+        
+        .new-chat-section { padding: 10px; background: #f6f6f6; display: flex; gap: 10px; }
+        .new-chat-section input { flex: 1; padding: 10px; border: none; border-radius: 20px; outline: none; }
+        .new-chat-section button { background: #128C7E; color: white; border: none; padding: 10px 15px; border-radius: 20px; cursor: pointer; }
+
+        .chat-list { flex: 1; overflow-y: auto; }
+        .chat-list-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+        .chat-list-item:hover { background: #f5f5f5; }
+        .chat-list-item .avatar { width: 50px; height: 50px; background: #ddd; border-radius: 50%; margin-right: 15px; }
+        .chat-list-item .info { flex: 1; }
+        .chat-list-item .info h4 { margin-bottom: 5px; color: #333; }
+        .chat-list-item .info p { font-size: 13px; color: #777; }
+
+        /* Chat Window */
+        .chat-window { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #ece5dd; display: flex; flex-direction: column; z-index: 10; transition: transform 0.3s ease; transform: translateX(100%); }
+        .chat-window.active { transform: translateX(0); }
+        
+        .chat-header { background: #075e54; padding: 10px 15px; color: white; display: flex; align-items: center; }
+        .chat-header i { margin-right: 15px; cursor: pointer; font-size: 20px; }
+        .chat-header .chat-user-info { flex: 1; }
+        .chat-header .chat-user-info h3 { font-size: 16px; }
+        
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: cover; display: flex; flex-direction: column; gap: 10px;}
+        
+        .message-bubble { max-width: 75%; padding: 8px 12px; border-radius: 10px; position: relative; font-size: 14.5px; line-height: 1.3; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); display: flex; flex-direction: column;}
+        .sent { background: #dcf8c6; align-self: flex-end; border-top-right-radius: 0; }
+        .received { background: #fff; align-self: flex-start; border-top-left-radius: 0; }
+        
+        .message-media { max-width: 100%; border-radius: 5px; margin-bottom: 5px; cursor: pointer; }
+        
+        .msg-meta { display: flex; justify-content: flex-end; align-items: center; gap: 5px; margin-top: 3px; }
+        .msg-time { font-size: 11px; color: #999; }
+        .msg-ticks { font-size: 12px; color: #999; }
+        .msg-ticks.blue { color: #34B7F1; } /* Blue ticks */
+        .msg-delete-btn { font-size: 10px; color: red; cursor: pointer; display: none; }
+        .message-bubble:hover .msg-delete-btn { display: inline; }
+
+        .chat-input-area { background: #f0f0f0; padding: 10px; display: flex; align-items: center; gap: 10px; }
+        .chat-input-area i { font-size: 24px; color: #828689; cursor: pointer; }
+        .chat-input-area input[type="text"] { flex: 1; padding: 12px; border: none; border-radius: 20px; outline: none; font-size: 15px; }
+        .send-btn { width: 45px; height: 45px; background: #00897b; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; border: none; cursor: pointer; }
+
+        /* Status & Profile Overlays (Simplified) */
+        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 20; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.3s ease; }
+        .overlay-screen.active { transform: translateY(0); }
+        .overlay-header { background: #075e54; padding: 15px; color: white; display: flex; align-items: center; }
+        
+        .toast { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none;}
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Toast Notification -->
+        <div id="toastMessage" class="toast">Message goes here</div>
+
+        <!-- 1. LOGIN SCREEN -->
+        <div id="loginScreen" class="auth-screen">
+            <h2>WhatsApp Login</h2>
+            <input type="tel" id="loginPhone" placeholder="Phone Number (e.g., 03001234567)">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button onclick="handleLogin()">Login</button>
+            <p class="toggle-link" onclick="toggleAuth('signup')">New user? Register here</p>
+        </div>
+
+        <!-- 2. SIGNUP SCREEN -->
+        <div id="signupScreen" class="auth-screen hidden">
+            <h2>Register</h2>
+            <input type="text" id="signupName" placeholder="Full Name">
+            <input type="tel" id="signupPhone" placeholder="Phone Number">
+            <input type="password" id="signupPassword" placeholder="Create Password">
+            <button onclick="handleSignup()">Sign Up</button>
+            <p class="toggle-link" onclick="toggleAuth('login')">Already have an account? Login</p>
+        </div>
+
+        <!-- 3. MAIN DASHBOARD (Chat List) -->
+        <div id="dashboardScreen" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
+            <div class="dashboard-header">
+                <div class="profile-icon" onclick="openProfile()">
+                    <img id="myProfilePic" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" alt="Profile">
+                </div>
+                <div class="action-buttons">
+                    <i class="fas fa-circle-notch" onclick="openStatus()" title="Status"></i>
+                    <i class="fas fa-ellipsis-v" onclick="logout()" title="Logout"></i>
+                </div>
+            </div>
+            
+            <div class="new-chat-section">
+                <input type="tel" id="newChatNumber" placeholder="Enter number to message...">
+                <button onclick="checkUserAndStartChat()">Message</button>
+            </div>
+
+            <div class="chat-list" id="chatListContainer">
+                <!-- Chat items will be injected here -->
+                <div style="padding: 20px; text-align: center; color: #777;">No recent chats. Enter a number above to start.</div>
+            </div>
+        </div>
+
+        <!-- 4. CHAT WINDOW -->
+        <div id="chatWindow" class="chat-window">
+            <div class="chat-header">
+                <i class="fas fa-arrow-left" onclick="closeChat()"></i>
+                <div class="avatar" style="width:35px; height:35px; background:#ddd; border-radius:50%; margin-right:10px; overflow:hidden;">
+                    <img id="activeChatProfilePic" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" style="width:100%; height:100%;" alt="">
+                </div>
+                <div class="chat-user-info">
+                    <h3 id="activeChatName">User Name</h3>
+                </div>
+                <i class="fas fa-trash-alt" onclick="clearChatHistory()" style="font-size: 16px; margin-left:auto; margin-right:0;" title="Clear Chat"></i>
+            </div>
+            
+            <div class="chat-messages" id="messageContainer">
+                <!-- Messages go here -->
+            </div>
+            
+            <div class="chat-input-area">
+                <input type="file" id="mediaInput" class="hidden" accept="image/*,video/*" onchange="handleMediaSelect()">
+                <i class="fas fa-paperclip" onclick="document.getElementById('mediaInput').click()"></i>
+                <i class="fas fa-microphone" onclick="showToast('Voice recording feature coming soon!')"></i>
+                <input type="text" id="messageInput" placeholder="Type a message" onkeypress="handleKey(event)">
+                <button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+
+        <!-- 5. PROFILE SETTINGS OVERLAY -->
+        <div id="profileOverlay" class="overlay-screen">
+            <div class="overlay-header">
+                <i class="fas fa-arrow-left" onclick="closeProfile()" style="margin-right: 15px; cursor: pointer;"></i>
+                <h2>Profile Settings</h2>
+            </div>
+            <div style="padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                <img id="editProfilePicPreview" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
+                <input type="file" id="profilePicInput" accept="image/*" class="hidden" onchange="updateProfilePicLocally()">
+                <button style="padding: 8px 15px; background: #075e54; color:white; border:none; border-radius:5px;" onclick="document.getElementById('profilePicInput').click()">Change Picture</button>
+                <input type="password" id="newPasswordInput" placeholder="New Password" style="width:100%; padding: 10px; border:1px solid #ccc; border-radius:5px; margin-top: 10px;">
+                <button style="width:100%; padding: 10px; background: #128C7E; color:white; border:none; border-radius:5px;" onclick="updateProfile()">Save Changes</button>
+            </div>
+        </div>
+        
+         <!-- 6. STATUS OVERLAY -->
+        <div id="statusOverlay" class="overlay-screen">
+            <div class="overlay-header">
+                <i class="fas fa-arrow-left" onclick="closeStatus()" style="margin-right: 15px; cursor: pointer;"></i>
+                <h2>Status</h2>
+            </div>
+            <div style="padding: 20px; text-align: center;">
+                <button style="padding: 10px 20px; background: #128C7E; color:white; border:none; border-radius:20px; margin-bottom: 20px;" onclick="showToast('Status upload simulated')">Add Status</button>
+                <p style="color: #777;">Viewed by: User A, User B (Simulated)</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. FIREBASE SETUP (Replace with your actual keys) ---
+        // DO NOT LEAVE THIS EMPTY WHEN HOSTING
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        // Initialize Firebase
+        // firebase.initializeApp(firebaseConfig);
+        // const db = firebase.database();
+        // const storage = firebase.storage();
+
+        // --- GLOBAL VARIABLES ---
+        let currentUser = null; // Object { phone, name, pic, password }
+        let currentChatUser = null; // The phone number we are chatting with
+        let messagesRef = null;
+
+        // --- UTILITY FUNCTIONS ---
+        function showToast(msg) {
+            const toast = document.getElementById("toastMessage");
+            toast.innerText = msg;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 3000);
+        }
+
+        // --- AUTHENTICATION LOGIC ---
+        // Auto-login check
+        window.onload = function() {
+            const savedUser = localStorage.getItem('wa_user');
+            if(savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showDashboard();
+            }
+        };
+
+        function toggleAuth(screen) {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('signupScreen').classList.add('hidden');
+            if(screen === 'login') document.getElementById('loginScreen').classList.remove('hidden');
+            else document.getElementById('signupScreen').classList.remove('hidden');
+        }
+
+        function handleSignup() {
+            const name = document.getElementById('signupName').value.trim();
+            const phone = document.getElementById('signupPhone').value.trim();
+            const pass = document.getElementById('signupPassword').value.trim();
+
+            if(!name || !phone || !pass) return showToast("All fields required");
+
+            // SIMULATED DATABASE SAVE (In real app, use db.ref('users/' + phone).set(...))
+            const userData = { name: name, phone: phone, password: pass, pic: "" };
+            
+            // Simulating saving to DB by saving to local storage as 'mock DB'
+            localStorage.setItem('mock_db_user_' + phone, JSON.stringify(userData)); 
+            
+            showToast("Registration successful! Please login.");
+            toggleAuth('login');
+        }
+
+        function handleLogin() {
+            const phone = document.getElementById('loginPhone').value.trim();
+            const pass = document.getElementById('loginPassword').value.trim();
+
+            // Admin Override
+            if(phone === 'admin' && pass === 'admin') {
+                currentUser = { name: "Admin", phone: "admin", pic: "" };
+                localStorage.setItem('wa_user', JSON.stringify(currentUser));
+                showDashboard();
+                return;
+            }
+
+            // SIMULATED DATABASE FETCH
+            const dbUserStr = localStorage.getItem('mock_db_user_' + phone);
+            if(dbUserStr) {
+                const dbUser = JSON.parse(dbUserStr);
+                if(dbUser.password === pass) {
+                    currentUser = dbUser;
+                    localStorage.setItem('wa_user', JSON.stringify(currentUser));
+                    showDashboard();
+                } else {
+                    showToast("Incorrect password");
+                }
+            } else {
+                showToast("User not registered. Please sign up.");
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('wa_user');
+            currentUser = null;
+            document.getElementById('dashboardScreen').style.display = "none";
+            document.getElementById('dashboardScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            closeChat();
+        }
+
+        // --- DASHBOARD & CHAT LOGIC ---
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('signupScreen').classList.add('hidden');
+            const dash = document.getElementById('dashboardScreen');
+            dash.classList.remove('hidden');
+            dash.style.display = "flex";
+            if(currentUser.pic) document.getElementById('myProfilePic').src = currentUser.pic;
+        }
+
+        function checkUserAndStartChat() {
+            const num = document.getElementById('newChatNumber').value.trim();
+            if(!num) return;
+            if(num === currentUser.phone) return showToast("You can't message yourself.");
+
+            // Check if user exists in our "Mock DB"
+            const dbUserStr = localStorage.getItem('mock_db_user_' + num);
+            if(dbUserStr || num === 'admin') {
+                const targetUser = dbUserStr ? JSON.parse(dbUserStr) : {name: "Admin", pic: ""};
+                openChat(num, targetUser.name, targetUser.pic);
+            } else {
+                showToast("⚠️ This number is not registered on the app.");
+            }
+        }
+
+        function openChat(phone, name, pic) {
+            currentChatUser = phone;
+            document.getElementById('activeChatName').innerText = name;
+            document.getElementById('activeChatProfilePic').src = pic || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png";
+            document.getElementById('chatWindow').classList.add('active');
+            
+            // Clear current messages
+            document.getElementById('messageContainer').innerHTML = "";
+            loadMessages();
+        }
+
+        function closeChat() {
+            document.getElementById('chatWindow').classList.remove('active');
+            currentChatUser = null;
+        }
+
+        // --- MESSAGING ---
+        function sendMessage(mediaUrl = null, type = 'text') {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            
+            if(!text && !mediaUrl) return;
+
+            const msgData = {
+                id: Date.now().toString(),
+                sender: currentUser.phone,
+                receiver: currentChatUser,
+                text: mediaUrl || text,
+                type: type,
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                status: 'sent' // sent -> delivered -> read (simulated)
+            };
+
+            // SIMULATED SEND (In real app, push to db.ref('chats/' + chatID))
+            let chats = JSON.parse(localStorage.getItem('mock_chats') || "[]");
+            chats.push(msgData);
+            localStorage.setItem('mock_chats', JSON.stringify(chats));
+            
+            input.value = "";
+            loadMessages(); // Refresh UI
+            
+            // Simulate Delivery & Read receipt
+            setTimeout(() => updateMsgStatus(msgData.id, 'delivered'), 1000);
+            setTimeout(() => updateMsgStatus(msgData.id, 'read'), 2500);
+        }
+
+        function handleKey(e) { if(e.key === 'Enter') sendMessage(); }
+
+        function loadMessages() {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = "";
+            
+            let chats = JSON.parse(localStorage.getItem('mock_chats') || "[]");
+            
+            // Filter messages between me and current chat user
+            let myChats = chats.filter(c => 
+                (c.sender === currentUser.phone && c.receiver === currentChatUser) ||
+                (c.sender === currentChatUser && c.receiver === currentUser.phone)
+            );
+
+            // Filter out messages I cleared from my history
+            let clearedHistory = JSON.parse(localStorage.getItem('cleared_' + currentUser.phone + '_' + currentChatUser) || "[]");
+            myChats = myChats.filter(c => !clearedHistory.includes(c.id));
+
+            myChats.forEach(msg => {
+                const isMe = msg.sender === currentUser.phone;
+                const div = document.createElement('div');
+                div.className = `message-bubble ${isMe ? 'sent' : 'received'}`;
+                
+                let contentHTML = "";
+                if(msg.type === 'text') contentHTML = `<span>${msg.text}</span>`;
+                else if(msg.type === 'image') contentHTML = `<img src="${msg.text}" class="message-media" onclick="showToast('Full screen view not implemented in preview')">`;
+                
+                let ticksHTML = "";
+                if(isMe) {
+                    if(msg.status === 'sent') ticksHTML = `<i class="fas fa-check msg-ticks"></i>`; // Single tick
+                    else if(msg.status === 'delivered') ticksHTML = `<i class="fas fa-check-double msg-ticks"></i>`; // Double tick
+                    else if(msg.status === 'read') ticksHTML = `<i class="fas fa-check-double msg-ticks blue"></i>`; // Blue tick
+                }
+
+                div.innerHTML = `
+                    ${contentHTML}
+                    <div class="msg-meta">
+                        <span class="msg-time">${msg.time}</span>
+                        ${ticksHTML}
+                        ${isMe ? `<i class="fas fa-trash msg-delete-btn" onclick="deleteMessage('${msg.id}')" title="Delete for Everyone"></i>` : ''}
+                    </div>
+                `;
+                
+                // Add Swipe to Reply basic visual cue
+                let startX;
+                div.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+                div.addEventListener('touchend', e => {
+                    let endX = e.changedTouches[0].clientX;
+                    if(endX - startX > 50) showToast("Swiped to reply to: " + (msg.type === 'text' ? msg.text : msg.type));
+                });
+
+                container.appendChild(div);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Simulate Status Updates (Ticks)
+        function updateMsgStatus(msgId, status) {
+            let chats = JSON.parse(localStorage.getItem('mock_chats') || "[]");
+            let msgIndex = chats.findIndex(c => c.id === msgId);
+            if(msgIndex > -1) {
+                chats[msgIndex].status = status;
+                localStorage.setItem('mock_chats', JSON.stringify(chats));
+                if(currentChatUser) loadMessages(); // re-render if chat is open
+            }
+        }
+
+        function deleteMessage(msgId) {
+            let chats = JSON.parse(localStorage.getItem('mock_chats') || "[]");
+            chats = chats.filter(c => c.id !== msgId);
+            localStorage.setItem('mock_chats', JSON.stringify(chats));
+            loadMessages();
+            showToast("Message deleted for everyone");
+        }
+
+        function clearChatHistory() {
+            if(!confirm("Clear this chat from your screen? (Won't affect the other person)")) return;
+            let chats = JSON.parse(localStorage.getItem('mock_chats') || "[]");
+            let myChats = chats.filter(c => 
+                (c.sender === currentUser.phone && c.receiver === currentChatUser) ||
+                (c.sender === currentChatUser && c.receiver === currentUser.phone)
+            );
+            
+            let clearedHistory = JSON.parse(localStorage.getItem('cleared_' + currentUser.phone + '_' + currentChatUser) || "[]");
+            myChats.forEach(c => clearedHistory.push(c.id));
+            localStorage.setItem('cleared_' + currentUser.phone + '_' + currentChatUser, JSON.stringify(clearedHistory));
+            
+            loadMessages();
+            showToast("Chat history cleared from your screen");
+        }
+
+        function handleMediaSelect() {
+            const file = document.getElementById('mediaInput').files[0];
+            if(!file) return;
+            // In real app: upload to Firebase Storage and get URL.
+            // Here, we create a local object URL for simulation.
+            const localUrl = URL.createObjectURL(file);
+            let type = file.type.startsWith('image') ? 'image' : 'video';
+            sendMessage(localUrl, type);
+        }
+
+        // --- PROFILE & SETTINGS ---
+        function openProfile() { document.getElementById('profileOverlay').classList.add('active'); }
+        function closeProfile() { document.getElementById('profileOverlay').classList.remove('active'); }
+        function openStatus() { document.getElementById('statusOverlay').classList.add('active'); }
+        function closeStatus() { document.getElementById('statusOverlay').classList.remove('active'); }
+
+        function updateProfilePicLocally() {
+            const file = document.getElementById('profilePicInput').files[0];
+            if(file) document.getElementById('editProfilePicPreview').src = URL.createObjectURL(file);
+        }
+
+        function updateProfile() {
+            const newPass = document.getElementById('newPasswordInput').value;
+            const picSrc = document.getElementById('editProfilePicPreview').src;
+            
+            if(newPass) currentUser.password = newPass;
+            if(picSrc && !picSrc.includes("blank-profile")) currentUser.pic = picSrc;
+            
+            localStorage.setItem('wa_user', JSON.stringify(currentUser));
+            localStorage.setItem('mock_db_user_' + currentUser.phone, JSON.stringify(currentUser)); // Update DB
+            
+            document.getElementById('myProfilePic').src = currentUser.pic;
+            showToast("Profile Updated");
+            closeProfile();
+        }
+    </script>
+</body>
+</html>
