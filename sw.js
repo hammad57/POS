@@ -17,6 +17,8 @@ self.addEventListener('push',e=>e.waitUntil((async()=>{
         tag:'call',renotify:true,requireInteraction:true,
         vibrate:[600,300,600,300,600,300,600,300,600],data:{call:1}});
     }
+    const old=(await self.registration.getNotifications({tag:'call'})).filter(n=>n.title.startsWith('📞'));
+    if(old.length)return self.registration.showNotification('📵 Missed call',{body:old[0].title.replace('📞 ',''),tag:'call',renotify:true,vibrate:[200,100,200],data:{}});
     const ib=await j('/wa_inbox/'+ME)||{};
     const top=Object.entries(ib).filter(([k,v])=>v&&v.unread>0&&v.from!==ME).sort((a,b)=>b[1].ts-a[1].ts)[0];
     if(top){
