@@ -178,16 +178,42 @@ function chkBanner(){
   const need=!AC||AC.state!=='running'||('Notification' in window&&Notification.permission==='default');
   b.style.display=need?'block':'none';
 }
-function tone(f,d,v,at){
+function tone(f,d,v,at,ty){
   if(!AC||AC.state!=='running')return;at=at||0;
-  const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+at;o.type='sine';o.frequency.value=f;
+  const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+at;o.type=ty||'sine';o.frequency.value=f;
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.03);g.gain.setValueAtTime(v,t+d-.06);g.gain.linearRampToValueAtTime(0,t+d);
   o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.05);
 }
 function ringOnce(){[0,.5].forEach(a=>{tone(880,.18,.35,a);tone(1109,.18,.35,a+.2);tone(1319,.25,.35,a+.4)})}
 function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
-function startRing(){stopRing();ringOnce();vib([500,250,500]);ringT=setInterval(()=>{ringOnce();vib([500,250,500])},2500);chkBanner()}
-function stopRing(){clearInterval(ringT);ringT=null;vib(0)}
+var ringAud=null;
+const TONES={
+  classic:{n:'Classic',iv:2500,p:()=>{[0,.5].forEach(a=>{tone(880,.18,.35,a);tone(1109,.18,.35,a+.2);tone(1319,.25,.35,a+.4)})}},
+  melody:{n:'Melody',iv:3000,p:()=>{[523,659,784,1047,784,659].forEach((f,i)=>tone(f,.28,.3,i*.3))}},
+  digital:{n:'Digital',iv:1800,p:()=>{[0,.25,.5].forEach(a=>tone(1000,.15,.25,a,'square'))}},
+  soft:{n:'Soft bell',iv:3500,p:()=>{tone(659,.9,.3,0);tone(988,1.2,.25,.5)}}
+};
+const getRT=()=>{try{return JSON.parse(localStorage.wa_rt)||{k:'classic'}}catch(e){return{k:'classic'}}};
+function setRT(k){const r=getRT();r.k=k;try{localStorage.wa_rt=JSON.stringify(r)}catch(e){}}
+function pickRT(i){
+  const f=i.files[0];i.value='';if(!f)return;
+  if(f.size>2*1024*1024)return alert('Ringtone 2MB se choti honi chahiye (30-40 second ki mp3 theek rehti hai)');
+  const r=new FileReader();
+  r.onload=()=>{try{localStorage.wa_rt=JSON.stringify({k:'custom',d:r.result,n:f.name})}catch(e){return alert('Ye file save nahi ho saki, koi choti file chunein')}settings()};
+  r.readAsDataURL(f);
+}
+function testRT(){unlockAudio();if(rg)return;if(ringT){stopRing();return}startRing();setTimeout(()=>{if(!rg)stopRing()},7000)}
+function startRing(){
+  stopRing();const rt=getRT();
+  if(rt.k=='custom'&&rt.d){
+    try{ringAud=new Audio(rt.d);ringAud.loop=true;const pl=ringAud.play();if(pl)pl.catch(()=>chkBanner())}catch(e){}
+    vib([500,250,500]);ringT=setInterval(()=>vib([500,250,500]),2500);
+  }else{
+    const T=TONES[rt.k]||TONES.classic;T.p();vib([500,250,500]);ringT=setInterval(()=>{T.p();vib([500,250,500])},T.iv);
+  }
+  chkBanner();
+}
+function stopRing(){clearInterval(ringT);ringT=null;if(ringAud){try{ringAud.pause()}catch(e){}ringAud=null}vib(0)}
 function startBack(){stopBack();const p=()=>{tone(425,1,.15)};p();backT=setInterval(p,4000)}
 function stopBack(){clearInterval(backT);backT=null}
 function beep(){tone(880,.12,.25);tone(1175,.16,.25,.13)}
@@ -313,7 +339,12 @@ function modal(h){$('#mdb').innerHTML=h;$('#md').style.display='flex'}
 function closeM(){$('#md').style.display='none'}
 function setTab(t){tab=t;$('#t1').className=t=='chats'?'on':'';$('#t2').className=t=='status'?'on':'';$('#q').style.display=t=='chats'?'':'none';renderList()}
 
-function settings(){drawer(0);modal(`<h3>⚙️ Settings</h3><input id="sn" value="${esc(me.name)}" placeholder="Naam"><input id="sa" value="${esc(me.about||'')}" placeholder="About"><label class="ck"><input type="checkbox" id="sd" ${me.dark?'checked':''}> Dark mode</label><button class="btn" onclick="saveSet()">Save</button>`)}
+function settings(){drawer(0);modal(`<h3>⚙️ Settings</h3><input id="sn" value="${esc(me.name)}" placeholder="Naam"><input id="sa" value="${esc(me.about||'')}" placeholder="About"><label class="ck"><input type="checkbox" id="sd" ${me.dark?'checked':''}> Dark mode</label>
+<h3 style="margin-top:12px">🔔 Call ringtone (sirf is mobile ke liye)</h3>
+<select id="rts" onchange="setRT(this.value)" style="width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bottom:8px;font-size:15px">${Object.entries(TONES).map(([k,t])=>`<option value="${k}" ${getRT().k==k?'selected':''}>${t.n}</option>`).join('')}${getRT().d?`<option value="custom" ${getRT().k=='custom'?'selected':''}>🎵 ${esc(getRT().n||'Meri ringtone')}</option>`:''}</select>
+<div style="display:flex;gap:8px;margin-bottom:10px"><button class="btn" style="background:#667781;font-size:14px" onclick="$('#rtf').click()">📁 Apni ringtone chunein</button><button class="btn" style="background:#128c7e;font-size:14px;width:auto;padding:11px 16px" onclick="testRT()">▶ Test</button></div>
+<input type="file" id="rtf" accept="audio/*" hidden onchange="pickRT(this)">
+<button class="btn" onclick="saveSet()">Save</button>`)}
 function saveSet(){
   const n=$('#sn').value.trim();if(!n)return;
   me.name=n;me.about=$('#sa').value.trim();me.dark=$('#sd').checked;saveMe();
