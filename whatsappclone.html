@@ -94,6 +94,7 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 #cc{position:absolute;bottom:0;left:0;right:0;z-index:10;gap:16px;padding:40px 16px calc(22px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,#000b)}
 #cc button{width:58px;height:58px;font-size:24px;background:#ffffff30;backdrop-filter:blur(6px)}
 #cc .endb{background:#e53935;width:68px;height:68px}
+#offb{display:none;background:#fff3cd;color:#664d03;font-size:13px;padding:7px 12px;gap:8px;align-items:center;flex-wrap:wrap}#offb button{font-size:13px;background:#00a884;color:#fff;border-radius:14px;padding:4px 11px}
 #snd{display:none;position:fixed;bottom:0;left:0;right:0;background:#ffd54f;color:#000;text-align:center;padding:12px;z-index:99;font-size:14px;cursor:pointer;font-weight:600}
 .tl.a video{opacity:0}.tl.a::before{content:attr(data-i);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:700;color:#fff;background:#2a3942}
 #rg{width:min(92%,360px)}
@@ -125,6 +126,7 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 <div class="top"><button id="back" onclick="closeChat()">←</button><div class="av" id="cav" style="width:40px;height:40px;font-size:16px;background:#fff3"></div>
 <div style="flex:1;cursor:pointer;min-width:0" onclick="info()"><b id="cname" style="font-size:16px;display:block"></b><small id="csub" style="opacity:.85;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></small></div>
 <button onclick="startCall(0)" title="Audio call">📞</button><button onclick="startCall(1)" title="Video call">🎥</button></div>
+<div id="offb"></div>
 <div id="msgs"></div>
 <div id="ep"></div>
 <div id="bar">
@@ -400,7 +402,16 @@ function sub(){
   if(isG(cur)){const g=groups[cur];return g?Object.keys(g.members).map(p=>p==me.phone?'You':nm(p)).join(', '):''}
   const u=users[cur]||{};return u.online?'online':(u.lastSeen?'last seen '+day(u.lastSeen):'');
 }
-function head(){if(!cur)return;$('#cname').textContent=nm(cur);$('#cav').textContent=isG(cur)?'👥':ini(nm(cur));$('#csub').textContent=sub()}
+function head(){if(!cur)return;$('#cname').textContent=nm(cur);$('#cav').textContent=isG(cur)?'👥':ini(nm(cur));$('#csub').textContent=sub();ob()}
+function pn(p){let d=String(p).replace(/\D/g,'');if(d.startsWith('00'))d=d.slice(2);else if(d.startsWith('0'))d='92'+d.slice(1);return'+'+d}
+function ob(){
+  const b=$('#offb');if(!b)return;
+  if(!cur||isG(cur)||(users[cur]||{}).online){b.style.display='none';return}
+  b.style.display='flex';
+  b.innerHTML='<span>⚪ Offline hai: message internet milte hi pahunch jayega</span><button onclick="gsm()">📞 Normal call</button><button onclick="sms()">✉️ SMS</button>';
+}
+function gsm(){location.href='tel:'+pn(cur)}
+function sms(){const t=$('#txt').value.trim();location.href='sms:'+pn(cur)+(t?'?body='+encodeURIComponent(t):'')}
 function info(){
   if(!isG(cur)){const u=users[cur]||{};return modal(`<h3>${esc(u.name||cur)}</h3><p>📱 ${esc(cur)}</p><p>${esc(u.about||'')}</p><button class="btn" onclick="closeM()">Band karein</button>`)}
   const g=groups[cur];if(!g)return;
@@ -571,7 +582,7 @@ async function startCall(video){
   const r={room,from:me.phone,name:isG(cur)?groups[cur].name+' • '+me.name:me.name,video:!!video,ts:TS};
   targets.forEach(t=>db.ref('wa_ring/'+t).set(r));
   sendPush(targets,'c');startBack();ringPush(room,targets);
-  setTimeout(()=>{if(call&&call.room==room&&!call.connected){endCall();alert('Koi jawab nahi diya')}},45000);
+  setTimeout(()=>{if(call&&call.room==room&&!call.connected){endCall();if(targets.length==1){if(confirm('Jawab nahi mila. Normal phone call (SIM se) karein?'))location.href='tel:'+pn(targets[0])}else alert('Koi jawab nahi diya')}},45000);
 }
 async function joinRoom(room,video){
   let st;try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:video?{facingMode:'user'}:false})}catch(e){return alert('Microphone/Camera ki ijazat chahiye')}
