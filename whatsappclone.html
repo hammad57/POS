@@ -13,7 +13,7 @@ button{cursor:pointer;border:0;background:none;font-size:20px;color:inherit}
 input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bottom:10px;font-size:15px}
 .btn{background:#00a884;color:#fff;padding:11px;border-radius:8px;width:100%;font-size:16px}
 #login{position:fixed;inset:0;background:#00a884;display:flex;align-items:center;justify-content:center;z-index:50}
-#login div{background:#fff;padding:28px;border-radius:12px;width:330px;max-width:92%;text-align:center}
+#login>div{background:#fff;padding:28px;border-radius:12px;width:330px;max-width:92%;text-align:center}
 #login h2{color:#008069;margin-bottom:6px}#login small{color:#667781;display:block;margin-bottom:14px}
 #app{display:none;height:100%;max-width:1400px;margin:auto;background:#fff;position:relative;overflow:hidden}
 #side{width:380px;height:100%;border-right:1px solid #ddd;display:flex;flex-direction:column;float:left}
@@ -27,7 +27,7 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 #list{flex:1;overflow:auto}
 .row{display:flex;gap:12px;padding:11px 14px;cursor:pointer;align-items:center;border-bottom:1px solid #f0f0f0}
 .row:hover,.di:hover{background:#f5f6f6}
-.av{width:46px;height:46px;border-radius:50%;background:#00a884;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex:none}
+.av{width:46px;height:46px;border-radius:50%;background:#00a884;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex:none;overflow:hidden}
 .av.g{background:#6b7c85}
 .av.st{box-shadow:0 0 0 3px #fff,0 0 0 5px #25d366}.av.st.seen{box-shadow:0 0 0 3px #fff,0 0 0 5px #bbb}
 .inf{flex:1;min-width:0}.inf b{display:block;font-size:16px;color:#111}
@@ -35,7 +35,7 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 .meta{text-align:right;font-size:12px;color:#667781}
 .badge{background:#25d366;color:#fff;border-radius:12px;padding:1px 7px;font-size:12px;display:inline-block;margin-top:4px}
 #msgs{flex:1;overflow:auto;padding:14px 8%;display:flex;flex-direction:column;gap:5px}
-.m{max-width:75%;padding:6px 8px 4px;border-radius:8px;font-size:15px;box-shadow:0 1px 1px #0002;word-wrap:break-word;-webkit-touch-callout:none;user-select:text}
+.m{max-width:75%;padding:6px 8px 4px;border-radius:8px;font-size:var(--fs,15px);box-shadow:0 1px 1px #0002;word-wrap:break-word;-webkit-touch-callout:none;user-select:text}
 .m.out{align-self:flex-end;background:#d9fdd3}.m.in{align-self:flex-start;background:#fff}
 .m img,.m video{max-width:300px;width:100%;border-radius:6px;display:block;cursor:pointer}
 .m audio{width:240px;max-width:100%}
@@ -94,24 +94,45 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 #cc{position:absolute;bottom:0;left:0;right:0;z-index:10;gap:16px;padding:40px 16px calc(22px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,#000b)}
 #cc button{width:58px;height:58px;font-size:24px;background:#ffffff30;backdrop-filter:blur(6px)}
 #cc .endb{background:#e53935;width:68px;height:68px}
-#offb{display:none;background:#fff3cd;color:#664d03;font-size:13px;padding:7px 12px;gap:8px;align-items:center;flex-wrap:wrap}#offb button{font-size:13px;background:#00a884;color:#fff;border-radius:14px;padding:4px 11px}
 #snd{display:none;position:fixed;bottom:0;left:0;right:0;background:#ffd54f;color:#000;text-align:center;padding:12px;z-index:99;font-size:14px;cursor:pointer;font-weight:600}
 .tl.a video{opacity:0}.tl.a::before{content:attr(data-i);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:700;color:#fff;background:#2a3942}
-#rg{position:fixed;inset:0;top:0;left:0;transform:none;width:100%;max-width:none;border-radius:0;box-shadow:none;background:linear-gradient(#0e4a5c,#08161f);color:#fff;z-index:95;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(90px + env(safe-area-inset-top,0px)) 20px calc(70px + env(safe-area-inset-bottom,0px))}
-#rg .cb{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;opacity:.9}
-#rg .cb button{width:74px;height:74px;border-radius:50%;font-size:30px;color:#fff;box-shadow:0 4px 16px #0008}
+#rg{width:min(92%,360px)}
+#side{position:relative}
+#fab{position:absolute;right:18px;top:62%;width:56px;height:56px;border-radius:50%;background:#00a884;color:#fff;font-size:24px;box-shadow:0 4px 14px #0006;z-index:4;display:flex;align-items:center;justify-content:center}
+#fab:active{transform:scale(.94)}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.av.xl{width:96px;height:96px;font-size:38px;margin:0 auto 12px}
+select{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bottom:10px;font-size:15px;background:#fff}
+.sysm{align-self:center;background:#e1f2fb;color:#54656f;font-size:12px;padding:4px 12px;border-radius:8px;max-width:85%;text-align:center}
+.sq{border-left:3px solid #25d366;background:#0000000d;border-radius:4px;padding:4px 8px;margin-bottom:4px;font-size:12px;color:#54656f}
+.sn{cursor:pointer}.rb{background:#e7f6ee;color:#008069;border-radius:6px;padding:0 5px;font-size:10px;font-weight:700;margin-left:4px}
+#lockbar{display:none;background:#f0f2f5;color:#667781;text-align:center;padding:16px;font-size:14px;border-top:1px solid #ddd}
+#upl{position:fixed;left:12px;bottom:12px;width:min(360px,calc(100% - 24px));z-index:70;display:flex;flex-direction:column;gap:8px}
+.up{background:#fff;color:#111;border-radius:12px;padding:10px 12px;box-shadow:0 4px 18px #0005}
+.up .ut{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}.up .ut span{flex:1}
+.up .ub{height:8px;background:#e3e8ea;border-radius:6px;overflow:hidden;margin-top:8px}.up .ub i{display:block;height:100%;width:0;background:#25d366;transition:width .2s}
+.up.er .ub i{background:#e53935}.up button{font-size:14px;padding:2px 6px}
+#ts{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#323b40;color:#fff;padding:10px 18px;border-radius:20px;z-index:120;display:none;font-size:14px;max-width:90%}
+.sth{width:46px;height:46px;border-radius:8px;flex:none;background:#2a3942;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}
+.sth img{width:100%;height:100%;object-fit:cover}
+.gh{padding:8px 4px;color:#008069;font-size:13px;font-weight:700}
 @media(max-width:760px){
 #side{width:100%;float:none;position:absolute;inset:0;z-index:2;background:#fff}
 #main{margin-left:0;position:absolute;inset:0}
 #app.open #side{display:none}#back{display:block}#msgs{padding:10px 8px}.m{max-width:85%}}
 </style></head><body>
 
-<div id="login"><div>
+<div id="login"><div><div id="ls1">
 <h2>WhatsApp Clone</h2><small>Naya account banane ya login karne ke liye details likhein</small>
 <input id="ln" placeholder="Aap ka naam (sirf naye account ke liye)">
 <input id="lp" placeholder="Phone number (923001234567)" inputmode="numeric">
 <input id="lpw" type="password" placeholder="Password (kam az kam 4 harf)" onkeydown="if(event.key=='Enter')login()">
-<button class="btn" onclick="login()">Login / Register</button>
+<button class="btn" onclick="login()">Login / Register</button></div>
+<div id="ls2" style="display:none"><h2>Profile photo</h2><small>Apni photo lagayein taake dost aap ko pehchan saken. Ye zaroori nahi, skip bhi kar sakte hain.</small>
+<div class="av xl" id="rpv"></div>
+<button class="btn" id="rph" style="background:#e9f7f3;color:#008069;margin-bottom:8px" onclick="regPhoto()">📷 Photo chunein</button>
+<button class="btn" id="rpb2" onclick="finishReg()">Skip</button>
+<button style="font-size:14px;color:#667781;margin-top:10px" onclick="regBack()">← Wapas</button></div>
 </div></div>
 
 <div id="app">
@@ -121,6 +142,7 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 <div class="tabs"><div id="t1" class="on" onclick="setTab('chats')">CHATS</div><div id="t2" onclick="setTab('status')">STATUS</div></div>
 <input id="q" placeholder="Search ya naya chat..." oninput="renderList()">
 <div id="list"></div>
+<button id="fab" onclick="fabMenu()" title="Groups">👥</button>
 </div>
 <div id="main">
 <div id="empty">WhatsApp Clone<br>Chat shuru karne ke liye kisi contact ya group ko select karein</div>
@@ -128,9 +150,9 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 <div class="top"><button id="back" onclick="closeChat()">←</button><div class="av" id="cav" style="width:40px;height:40px;font-size:16px;background:#fff3"></div>
 <div style="flex:1;cursor:pointer;min-width:0" onclick="info()"><b id="cname" style="font-size:16px;display:block"></b><small id="csub" style="opacity:.85;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></small></div>
 <button onclick="startCall(0)" title="Audio call">📞</button><button onclick="startCall(1)" title="Video call">🎥</button></div>
-<div id="offb"></div>
 <div id="msgs"></div>
 <div id="ep"></div>
+<div id="lockbar"></div>
 <div id="bar">
 <button onclick="$('#ep').style.display=$('#ep').style.display=='block'?'none':'block'">😊</button>
 <button onclick="$('#fi').click()" title="Attach">📎</button><input id="fi" type="file" hidden onchange="pick(this)">
@@ -138,19 +160,20 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 <button id="mic" onclick="rec()">🎤</button><button onclick="sendText()">➤</button>
 </div></div></div>
 
-<div id="dr"><div class="dh"><div class="av" id="dav"></div><b id="dn"></b><small id="dab"></small></div>
+<div id="dr"><div class="dh"><div class="av" id="dav" onclick="settings()" style="cursor:pointer"></div><b id="dn"></b><small id="dab"></small></div>
+<div class="di" onclick="drawer(0);fabMenu()">👥 Groups</div>
 <div class="di" onclick="settings()">⚙️ Settings</div>
 <div class="di" onclick="pwd()">🔑 Password reset</div>
 <div class="di" onclick="enableNotif(1)">🔔 Notifications / Ringtone on karein</div>
 <div class="di" onclick="help()">❓ Help</div>
 <div class="di" onclick="about()">ℹ️ About</div>
-<div class="di" style="color:#667781;cursor:default">🏷️ Version 2.0.0</div>
+<div class="di" style="color:#667781;cursor:default">🏷️ Version 2.1.0</div>
 <div class="di" onclick="logout()" style="color:#c0392b">⎋ Logout</div></div>
 <div id="drb" onclick="drawer(0)"></div>
 </div>
 
 <div id="md" onclick="if(event.target==this)closeM()"><div id="mdb"></div></div>
-<div id="rg"></div>
+<div id="rg"></div><div id="upl"></div><div id="ts"></div>
 <div id="snd" onclick="enableNotif()">🔔 Awaaz (ringtone) aur notifications on karne ke liye yahan tap karein</div>
 <div id="viewer"><div class="vb" id="vbar"></div><div id="vh"></div><button id="vx" onclick="closeV()">✕</button><div id="vc"></div>
 <div id="vf"><span id="vo"><button id="vl" onclick="likeS()">🤍</button><input id="sc" placeholder="Comment likhein..." onfocus="clearTimeout(vt)" onkeydown="if(event.key=='Enter')comS()"><button onclick="comS()">➤</button></span>
@@ -165,6 +188,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ====== SETTINGS ====== */
+const DBU='https://earn-platform-76c26-default-rtdb.firebaseio.com';
 const PUSH_URL='https://walclone-push.mysw786.workers.dev';   // Cloudflare Worker ka URL yahan likhein (band app par notification ke liye)
 const VAPID_PUB='BCOXyUWncyxLQaSn8LXOwa6-Yw9siIYP1Kv9Kd0_2oS-sLVYKlTEBEVw8AhYObtljfI2eP0ygmwRsbJqPyryuqE';
 const METERED_APP='waclone';  // metered.ca app name (e.g. 'myapp' => myapp.metered.live)
@@ -182,45 +206,19 @@ function chkBanner(){
   const need=!AC||AC.state!=='running'||('Notification' in window&&Notification.permission==='default');
   b.style.display=need?'block':'none';
 }
-function tone(f,d,v,at,ty){
+function tone(f,d,v,at){
   if(!AC||AC.state!=='running')return;at=at||0;
-  const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+at;o.type=ty||'sine';o.frequency.value=f;
+  const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+at;o.type='sine';o.frequency.value=f;
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.03);g.gain.setValueAtTime(v,t+d-.06);g.gain.linearRampToValueAtTime(0,t+d);
   o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.05);
 }
 function ringOnce(){[0,.5].forEach(a=>{tone(880,.18,.35,a);tone(1109,.18,.35,a+.2);tone(1319,.25,.35,a+.4)})}
 function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
-var ringAud=null,autoAcc=0;
-const TONES={
-  classic:{n:'Classic',iv:2500,p:()=>{[0,.5].forEach(a=>{tone(880,.18,.35,a);tone(1109,.18,.35,a+.2);tone(1319,.25,.35,a+.4)})}},
-  melody:{n:'Melody',iv:3000,p:()=>{[523,659,784,1047,784,659].forEach((f,i)=>tone(f,.28,.3,i*.3))}},
-  digital:{n:'Digital',iv:1800,p:()=>{[0,.25,.5].forEach(a=>tone(1000,.15,.25,a,'square'))}},
-  soft:{n:'Soft bell',iv:3500,p:()=>{tone(659,.9,.3,0);tone(988,1.2,.25,.5)}}
-};
-const getRT=()=>{try{return JSON.parse(localStorage.wa_rt)||{k:'classic'}}catch(e){return{k:'classic'}}};
-function setRT(k){const r=getRT();r.k=k;try{localStorage.wa_rt=JSON.stringify(r)}catch(e){}}
-function pickRT(i){
-  const f=i.files[0];i.value='';if(!f)return;
-  if(f.size>2*1024*1024)return alert('Ringtone 2MB se choti honi chahiye (30-40 second ki mp3 theek rehti hai)');
-  const r=new FileReader();
-  r.onload=()=>{try{localStorage.wa_rt=JSON.stringify({k:'custom',d:r.result,n:f.name})}catch(e){return alert('Ye file save nahi ho saki, koi choti file chunein')}settings()};
-  r.readAsDataURL(f);
-}
-function testRT(){unlockAudio();if(rg)return;if(ringT){stopRing();return}startRing();setTimeout(()=>{if(!rg)stopRing()},7000)}
-function startRing(){
-  stopRing();const rt=getRT();
-  if(rt.k=='custom'&&rt.d){
-    try{ringAud=new Audio(rt.d);ringAud.loop=true;const pl=ringAud.play();if(pl)pl.catch(()=>chkBanner())}catch(e){}
-    vib([500,250,500]);ringT=setInterval(()=>vib([500,250,500]),2500);
-  }else{
-    const T=TONES[rt.k]||TONES.classic;T.p();vib([500,250,500]);ringT=setInterval(()=>{T.p();vib([500,250,500])},T.iv);
-  }
-  chkBanner();
-}
-function stopRing(){clearInterval(ringT);ringT=null;if(ringAud){try{ringAud.pause()}catch(e){}ringAud=null}vib(0)}
+function startRing(){stopRing();ringOnce();vib([500,250,500]);ringT=setInterval(()=>{ringOnce();vib([500,250,500])},2500);chkBanner()}
+function stopRing(){clearInterval(ringT);ringT=null;vib(0)}
 function startBack(){stopBack();const p=()=>{tone(425,1,.15)};p();backT=setInterval(p,4000)}
 function stopBack(){clearInterval(backT);backT=null}
-function beep(){tone(880,.12,.25);tone(1175,.16,.25,.13)}
+function beep(){if(me&&me.mute)return;tone(880,.12,.25);tone(1175,.16,.25,.13)}
 function notify(title,body,tag,data){
   if(!('Notification' in window)||Notification.permission!=='granted'||!navigator.serviceWorker)return;
   navigator.serviceWorker.ready.then(r=>r.showNotification(title,{body,tag,renotify:true,vibrate:[200,100,200],data})).catch(()=>{});
@@ -285,6 +283,34 @@ const fmt=t=>t?new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit
 const day=t=>{const d=new Date(t);return d.toDateString()==new Date().toDateString()?fmt(t):d.toLocaleDateString([],{day:'numeric',month:'short'})};
 const ini=n=>(n||'?').trim()[0].toUpperCase();
 const nm=k=>isG(k)?(groups[k]||{}).name||'Group':(users[k]||{}).name||k;
+let regP=null,tph=null;
+const photoOf=k=>isG(k)?(groups[k]||{}).photo:k==me.phone?me.photo:(users[k]||{}).photo;
+const avc=(k,n)=>{const p=photoOf(k);return p?`<img src="${esc(p)}" alt="">`:isG(k)?'👥':esc(ini(n||nm(k)))};
+const gid=k=>k.slice(2);
+const own=g=>g.owner||g.admin;
+const isOwner=(g,p)=>own(g)==(p||me.phone);
+const isAdm=(g,p)=>!!(g.admins&&g.admins[p||me.phone]);
+const actAdm=g=>isAdm(g)&&!g.aoff;
+const can=(g,perm)=>!!g&&(isOwner(g)||(actAdm(g)&&g.admins[me.phone][perm]===true));
+const canActOn=(g,t,perm)=>t!=me.phone&&!isOwner(g,t)&&can(g,perm)&&(isOwner(g)||!isAdm(g,t));
+const rl=(g,p)=>isOwner(g,p)?'Owner':isAdm(g,p)?'Admin':'';
+const rb=(g,p)=>{const r=rl(g,p);return r?` <span class="rb">${r}</span>`:''};
+const rk=(g,p)=>isOwner(g,p)?0:isAdm(g,p)?1:2;
+const PERMS=[['chat','🔒 Group chat lock / unlock'],['mute','🤐 Member ka message lock (mute)'],['del','🗑️ Members ke messages delete'],['kick','🚪 Member ko remove (kick)'],['ban','⛔ Member ko ban / unban'],['add','➕ Naye members add'],['edit','✏️ Group naam / photo / description']];
+const DEF={chat:true,mute:true,del:true,kick:true,ban:false,add:true,edit:false};
+function canSend(g){if(!g||!g.members||!g.members[me.phone])return false;if(isOwner(g)||actAdm(g))return true;if(g.locked)return false;if(g.muted&&g.muted[me.phone])return false;return true}
+const why=g=>g.muted&&g.muted[me.phone]?'🔒 Aap ka chat is group mein lock kar diya gaya hai':'🔒 Sirf admins is group mein message bhej sakte hain';
+const sysMsg=(k,t)=>db.ref(`wa_chats/${k}/messages`).push({type:'sys',text:t,from:me.phone,ts:TS});
+function toast(t){const e=$('#ts');e.textContent=t;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',2600)}
+function pickPhoto(cb){
+  const i=document.createElement('input');i.type='file';i.accept='image/*';
+  i.onchange=()=>{const f=i.files[0];if(!f)return;if(!f.type.startsWith('image/'))return alert('Sirf photo chunein');
+    const img=new Image();img.onload=()=>{const S=192,c=document.createElement('canvas');c.width=c.height=S;const m=Math.min(img.width,img.height);
+      c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);URL.revokeObjectURL(img.src);cb(c.toDataURL('image/jpeg',.75))};
+    img.onerror=()=>alert('Photo load nahi ho saki');img.src=URL.createObjectURL(f)};
+  i.click();
+}
+function zoomK(k){const p=photoOf(k);if(p){closeM();zoom(p)}}
 let me=JSON.parse(localStorage.wa_me||'null'),cur=null,users={},groups={},inbox={},statuses={},tab='chats',allMode=false,off=null,oseen=0,tmr=null,msgs={},rc=null,chunks=[],call=null,rg=null,vq=[],vi=0,vt=null,lp;
 const saveMe=()=>localStorage.wa_me=JSON.stringify(me);
 const sha=async s=>{try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('wa'+s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=5381;for(const c of 'wa'+s)h=(h*33)^c.charCodeAt(0);return'x'+(h>>>0)}};
@@ -296,9 +322,20 @@ async function login(){
     const h=await sha(pw),a=(await db.ref('wa_auth/'+phone).get()).val(),u=(await db.ref('wa_users/'+phone).get()).val()||{};
     if(a&&a!==h)return alert('Password ghalat hai');
     if(!u.name&&!name)return alert('Naya account hai, apna naam likhein');
-    if(!a)await db.ref('wa_auth/'+phone).set(h);
-    me={phone,name:u.name||name,about:u.about||'Hey there! I am using WhatsApp Clone'};saveMe();start();enableNotif();
+    if(!u.name){regP={phone,name,h,a,photo:''};$('#ls1').style.display='none';$('#ls2').style.display='block';regUI();return}
+    me={phone,name:u.name,about:u.about||'Hey there! I am using WhatsApp Clone',photo:u.photo||''};saveMe();start();enableNotif();
   }catch(e){alert('Database se connect nahi ho saka. Rules check karein.\n'+e.message)}
+}
+function regUI(){const p=regP.photo;$('#rpv').innerHTML=p?`<img src="${p}">`:esc(ini(regP.name));$('#rpb2').textContent=p?'Continue ➜':'Skip (baad mein lagayein)';$('#rph').textContent=p?'📷 Photo badlein':'📷 Photo chunein'}
+function regPhoto(){pickPhoto(d=>{regP.photo=d;regUI()})}
+function regBack(){regP=null;$('#ls2').style.display='none';$('#ls1').style.display='block'}
+async function finishReg(){
+  const r=regP;if(!r)return;const about='Hey there! I am using WhatsApp Clone';
+  try{
+    if(!r.a)await db.ref('wa_auth/'+r.phone).set(r.h);
+    await db.ref('wa_users/'+r.phone).update({name:r.name,phone:r.phone,about,photo:r.photo||null});
+    me={phone:r.phone,name:r.name,about,photo:r.photo||''};regP=null;saveMe();start();enableNotif();
+  }catch(e){alert('Account nahi ban saka.\n'+e.message)}
 }
 function logout(){
   if(!confirm('Logout karein?'))return;
@@ -308,18 +345,17 @@ function logout(){
   localStorage.removeItem('wa_pid');localStorage.removeItem('wa_me');setTimeout(()=>location.reload(),300);
 }
 function profile(){
-  $('#dn').textContent=me.name;$('#dav').textContent=ini(me.name);$('#dab').textContent=me.about||'';
+  $('#dn').textContent=me.name;$('#dav').innerHTML=avc(me.phone,me.name);$('#dab').textContent=me.about||'';
 }
 function start(){
   $('#login').style.display='none';$('#app').style.display='block';
-  if(me.dark)document.body.classList.add('dark');profile();
+  prefs();profile();
   db.ref('.info/connected').on('value',s=>{
     if(!s.val())return;const r=db.ref('wa_users/'+me.phone);
-    r.update({name:me.name,phone:me.phone,about:me.about||'',online:true});
-    r.onDisconnect().update({online:false,lastSeen:TS});
+    r.update({name:me.name,phone:me.phone,about:me.about||''});presence();
   });
-  db.ref('wa_users').on('value',s=>{users=s.val()||{};renderList();head()});
-  db.ref('wa_groups').on('value',s=>{groups={};s.forEach(c=>{const g=c.val();if(g.members&&g.members[me.phone])groups['g_'+c.key]=g});renderList();head()});
+  db.ref('wa_users').on('value',s=>{users=s.val()||{};const mu=users[me.phone];if(mu&&(mu.photo||'')!==(me.photo||'')){me.photo=mu.photo||'';saveMe();profile()}renderList();head()});
+  db.ref('wa_groups').on('value',s=>{groups={};s.forEach(c=>{const g=c.val();if(g.members&&g.members[me.phone])groups['g_'+c.key]=g});if(cur&&isG(cur)&&!groups[cur]){closeChat();closeM();toast('Ye group ab aap ke liye available nahi')}renderList();head()});
   db.ref('.info/serverTimeOffset').on('value',s=>so=s.val()||0);
   db.ref('wa_inbox/'+me.phone).on('value',s=>{
     const n=s.val()||{};
@@ -333,8 +369,7 @@ function start(){
   db.ref('wa_ring/'+me.phone).on('value',s=>ring(s.val()));
   emojiInit();
   regSW().then(()=>{if(window.Notification&&Notification.permission==='granted')setupPush()});
-  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(!e.data)return;if(e.data.open)openChat(e.data.open);if(e.data.accept){if(rg)acc();else{autoAcc=1;setTimeout(()=>autoAcc=0,15000)}}});
-  if(new URLSearchParams(location.search).get('accept')){autoAcc=1;setTimeout(()=>autoAcc=0,15000)}
+  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.open)openChat(e.data.open)});
   const qc=new URLSearchParams(location.search).get('chat');if(qc)setTimeout(()=>openChat(qc),1500);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&swReg)swReg.getNotifications().then(l=>l.forEach(n=>{if(n.tag!=='call'||!rg)n.close()})).catch(()=>{})});
   setTimeout(chkBanner,900);
@@ -344,16 +379,27 @@ function modal(h){$('#mdb').innerHTML=h;$('#md').style.display='flex'}
 function closeM(){$('#md').style.display='none'}
 function setTab(t){tab=t;$('#t1').className=t=='chats'?'on':'';$('#t2').className=t=='status'?'on':'';$('#q').style.display=t=='chats'?'':'none';renderList()}
 
-function settings(){drawer(0);modal(`<h3>⚙️ Settings</h3><input id="sn" value="${esc(me.name)}" placeholder="Naam"><input id="sa" value="${esc(me.about||'')}" placeholder="About"><label class="ck"><input type="checkbox" id="sd" ${me.dark?'checked':''}> Dark mode</label>
-<h3 style="margin-top:12px">🔔 Call ringtone (sirf is mobile ke liye)</h3>
-<select id="rts" onchange="setRT(this.value)" style="width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bottom:8px;font-size:15px">${Object.entries(TONES).map(([k,t])=>`<option value="${k}" ${getRT().k==k?'selected':''}>${t.n}</option>`).join('')}${getRT().d?`<option value="custom" ${getRT().k=='custom'?'selected':''}>🎵 ${esc(getRT().n||'Meri ringtone')}</option>`:''}</select>
-<div style="display:flex;gap:8px;margin-bottom:10px"><button class="btn" style="background:#667781;font-size:14px" onclick="$('#rtf').click()">📁 Apni ringtone chunein</button><button class="btn" style="background:#128c7e;font-size:14px;width:auto;padding:11px 16px" onclick="testRT()">▶ Test</button></div>
-<input type="file" id="rtf" accept="audio/*" hidden onchange="pickRT(this)">
+function prefs(){document.body.classList.toggle('dark',!!me.dark);document.documentElement.style.setProperty('--fs',({s:'13px',m:'15px',l:'18px'})[me.fs||'m'])}
+function presence(){const r=db.ref('wa_users/'+me.phone);r.onDisconnect().cancel();r.update({online:!me.hs});r.onDisconnect().update(me.hs?{online:false}:{online:false,lastSeen:TS})}
+function settings(){drawer(0);tph=undefined;modal(`<h3>⚙️ Settings</h3>
+<div style="text-align:center"><div class="av xl" id="spv" onclick="zoomK('${me.phone}')">${avc(me.phone,me.name)}</div>
+<div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px"><button class="btn" style="width:auto;padding:7px 14px;font-size:14px" onclick="setPhoto()">📷 Photo badlein</button><button class="btn" style="width:auto;padding:7px 14px;font-size:14px;background:#6b7c85" onclick="setPhoto(1)">Hatayein</button></div></div>
+<input id="sn" value="${esc(me.name)}" placeholder="Naam"><input id="sa" value="${esc(me.about||'')}" placeholder="About">
+<label class="ck"><input type="checkbox" id="sd" ${me.dark?'checked':''}> Dark mode</label>
+<label class="ck"><input type="checkbox" id="ss" ${me.mute?'':'checked'}> Message ki awaaz (beep)</label>
+<label class="ck"><input type="checkbox" id="sh" ${me.hs?'checked':''}> Online / last seen chhupayein</label>
+<label class="ck"><input type="checkbox" id="sr" ${me.nr?'':'checked'}> Read receipts (seen) bhejein</label>
+<div style="font-size:13px;color:#667781;margin:6px 0 4px">Message ka font size</div>
+<select id="sf2"><option value="s" ${me.fs=='s'?'selected':''}>Chota</option><option value="m" ${!me.fs||me.fs=='m'?'selected':''}>Normal</option><option value="l" ${me.fs=='l'?'selected':''}>Bara</option></select>
 <button class="btn" onclick="saveSet()">Save</button>`)}
+function setPhoto(rm){const up=d=>{tph=d;$('#spv').innerHTML=d?`<img src="${d}">`:esc(ini($('#sn').value||me.name))};rm?up(''):pickPhoto(up)}
 function saveSet(){
-  const n=$('#sn').value.trim();if(!n)return;
-  me.name=n;me.about=$('#sa').value.trim();me.dark=$('#sd').checked;saveMe();
-  document.body.classList.toggle('dark',me.dark);db.ref('wa_users/'+me.phone).update({name:me.name,about:me.about});profile();closeM();
+  const n=$('#sn').value.trim();if(!n)return alert('Naam likhein');
+  me.name=n;me.about=$('#sa').value.trim();me.dark=$('#sd').checked;me.mute=!$('#ss').checked;me.hs=$('#sh').checked;me.nr=!$('#sr').checked;me.fs=$('#sf2').value;
+  if(tph!==undefined)me.photo=tph;
+  saveMe();prefs();
+  db.ref('wa_users/'+me.phone).update({name:me.name,about:me.about,photo:me.photo||null,...(me.hs?{lastSeen:null}:{})});
+  presence();profile();closeM();toast('Settings save ho gayin');
 }
 function pwd(){drawer(0);modal(`<h3>🔑 Password reset</h3><input id="po" type="password" placeholder="Purana password"><input id="pn" type="password" placeholder="Naya password (4+ harf)"><button class="btn" onclick="savePw()">Password badlein</button>`)}
 async function savePw(){
@@ -362,8 +408,8 @@ async function savePw(){
   if(a&&a!==await sha(o))return alert('Purana password ghalat hai');
   await db.ref('wa_auth/'+me.phone).set(await sha(n));closeM();alert('Password badal gaya');
 }
-function help(){drawer(0);modal(`<h3>❓ Help</h3><p><b>Chat:</b> list mein 💬 dabayein ya search karke user chunein.</p><p><b>Message delete / reaction:</b> message par long press (computer par right click) karein.</p><p><b>Group:</b> 👥 dabayein, naam likhein aur members chunein.</p><p><b>Call:</b> chat ke upar 📞 ya 🎥 dabayein. Group mein sab members ko call jati hai.</p><p><b>Status:</b> STATUS tab mein text, photo ya video lagayein. Aap dekh sakte hain kis ne dekha, like ya comment kiya.</p><p><b>Files:</b> 📎 se 5MB tak ki photo, video ya file bhejein.</p><button class="btn" onclick="closeM()">Theek hai</button>`)}
-function about(){drawer(0);modal(`<h3>ℹ️ About</h3><p>WhatsApp Clone, version 2.0.0</p><p>Realtime chat, groups, status, audio/video calls aur file sharing. Data Firebase Realtime Database mein save hota hai.</p><button class="btn" onclick="closeM()">Band karein</button>`)}
+function help(){drawer(0);modal(`<h3>❓ Help</h3><p><b>Chat:</b> list mein 💬 dabayein ya search karke user chunein.</p><p><b>Profile photo:</b> Settings mein photo badlein ya hatayein.</p><p><b>Message delete / reaction:</b> message par long press (computer par right click) karein.</p><p><b>Group:</b> neeche 👥 button se naya group banayein ya apne groups kholein. Group info mein members par tap karke unhein message ya call karein.</p><p><b>Group roles:</b> Owner sab control rakhta hai, admins ki permissions owner tay karta hai.</p><p><b>Call:</b> chat ke upar 📞 ya 🎥 dabayein.</p><p><b>Status:</b> STATUS tab mein text, photo ya video lagayein. Upload ka percent neeche nazar aata hai. Status par comment aap ke chat mein message ban kar aata hai.</p><p><b>Files:</b> 📎 se 5MB tak ki photo, video ya file bhejein.</p><button class="btn" onclick="closeM()">Theek hai</button>`)}
+function about(){drawer(0);modal(`<h3>ℹ️ About</h3><p>WhatsApp Clone, version 2.1.0</p><p>Realtime chat, groups, status, audio/video calls aur file sharing. Data Firebase Realtime Database mein save hota hai.</p><button class="btn" onclick="closeM()">Band karein</button>`)}
 
 function renderList(){
   const L=$('#list');if(!me)return;
@@ -382,7 +428,7 @@ function renderList(){
   L.innerHTML=h;
 }
 function row(k,n,sub,t,u){
-  return `<div class="row" onclick="openChat('${k}')"><div class="av ${isG(k)?'g':''}">${isG(k)?'👥':esc(ini(n))}</div><div class="inf"><b>${esc(n)}</b><small>${esc(sub)}</small></div><div class="meta">${t}${u?`<br><span class="badge">${u}</span>`:''}</div></div>`;
+  return `<div class="row" onclick="openChat('${k}')"><div class="av ${isG(k)?'g':''}">${avc(k,n)}</div><div class="inf"><b>${esc(n)}</b><small>${esc(sub)}</small></div><div class="meta">${t}${u?`<br><span class="badge">${u}</span>`:''}</div></div>`;
 }
 
 function openChat(k){
@@ -405,48 +451,187 @@ function sub(){
   if(isG(cur)){const g=groups[cur];return g?Object.keys(g.members).map(p=>p==me.phone?'You':nm(p)).join(', '):''}
   const u=users[cur]||{};return u.online?'online':(u.lastSeen?'last seen '+day(u.lastSeen):'');
 }
-function head(){if(!cur)return;$('#cname').textContent=nm(cur);$('#cav').textContent=isG(cur)?'👥':ini(nm(cur));$('#csub').textContent=sub();ob()}
-function pn(p){let d=String(p).replace(/\D/g,'');if(d.startsWith('00'))d=d.slice(2);else if(d.startsWith('0'))d='92'+d.slice(1);return'+'+d}
-function ob(){
-  const b=$('#offb');if(!b)return;
-  if(!cur||isG(cur)||(users[cur]||{}).online){b.style.display='none';return}
-  b.style.display='flex';
-  b.innerHTML='<span>⚪ Offline hai: message internet milte hi pahunch jayega</span><button onclick="gsm()">📞 Normal call</button><button onclick="sms()">✉️ SMS</button>';
+function head(){
+  if(!cur)return;$('#cname').textContent=nm(cur);$('#cav').innerHTML=avc(cur);$('#csub').textContent=sub();
+  if(isG(cur)){const g=groups[cur],ok=canSend(g);$('#bar').style.display=ok?'flex':'none';$('#lockbar').style.display=ok?'none':'block';if(g&&!ok)$('#lockbar').textContent=why(g)}
+  else{$('#bar').style.display='flex';$('#lockbar').style.display='none'}
 }
-function gsm(){location.href='tel:'+pn(cur)}
-function sms(){const t=$('#txt').value.trim();location.href='sms:'+pn(cur)+(t?'?body='+encodeURIComponent(t):'')}
 function info(){
-  if(!isG(cur)){const u=users[cur]||{};return modal(`<h3>${esc(u.name||cur)}</h3><p>📱 ${esc(cur)}</p><p>${esc(u.about||'')}</p><button class="btn" onclick="closeM()">Band karein</button>`)}
-  const g=groups[cur];if(!g)return;
-  modal(`<h3>👥 ${esc(g.name)}</h3>${Object.keys(g.members).map(p=>`<div class="ck">${esc(p==me.phone?'You':nm(p))}${p==g.admin?' <small style="color:#008069">(admin)</small>':''}</div>`).join('')}<button class="btn" style="background:#e53935;margin-top:10px" onclick="leave()">Group chhorein</button>`);
+  if(!isG(cur)){const u=users[cur]||{};return modal(`<div style="text-align:center"><div class="av xl" onclick="zoomK('${cur}')">${avc(cur)}</div><h3 style="margin-bottom:4px">${esc(u.name||cur)}</h3><p>📱 ${esc(cur)}</p><p>${esc(u.about||'')}</p></div><div class="di" onclick="clearChat()">🧹 Chat saaf karein (sirf mere liye)</div><button class="btn" style="margin-top:10px" onclick="closeM()">Band karein</button>`)}
+  gInfo();
 }
-function leave(){
+const mini=p=>`<div class="av" style="width:40px;height:40px;font-size:16px">${avc(p)}</div>`;
+const back=f=>`<button class="btn" style="background:#e9f7f3;color:#008069;margin-top:10px" onclick="${f}">← Wapas</button>`;
+function gInfo(){
+  const g=groups[cur];if(!g)return;
+  const ms=Object.keys(g.members||{}).sort((a,b)=>rk(g,a)-rk(g,b)||nm(a).localeCompare(nm(b))),ow=isOwner(g),bn=Object.keys(g.banned||{}).length;
+  modal(`<div style="text-align:center"><div class="av g xl" onclick="zoomK('${cur}')">${avc(cur)}</div><h3 style="margin-bottom:2px">${esc(g.name)}</h3><p style="color:#667781">Group • ${ms.length} members</p>${g.desc?`<p>${esc(g.desc)}</p>`:''}${g.locked?'<p>🔒 Chat locked (sirf admins)</p>':''}</div>
+  ${can(g,'edit')?`<div class="di" onclick="gEdit()">✏️ Group info badlein</div>`:''}
+  ${can(g,'add')?`<div class="di" onclick="gAdd()">➕ Members add karein</div>`:''}
+  ${can(g,'chat')?`<div class="di" onclick="gLock()">${g.locked?'🔓 Chat unlock karein':'🔒 Chat lock karein (sirf admins)'}</div>`:''}
+  ${ow?`<div class="di" onclick="adminPanel()">🛡️ Admins aur permissions</div>`:''}
+  ${(ow||can(g,'ban'))?`<div class="di" onclick="banList()">⛔ Banned list (${bn})</div>`:''}
+  <div class="di" onclick="clearChat()">🧹 Chat saaf karein (sirf mere liye)</div>
+  <div class="gh">MEMBERS (${ms.length})</div>
+  ${ms.map(p=>`<div class="row" style="padding:8px 4px" onclick="mSheet('${p}')">${mini(p)}<div class="inf"><b>${esc(p==me.phone?'You':nm(p))}${rb(g,p)}</b><small>${esc((users[p]||{}).about||p)}</small></div>${g.muted&&g.muted[p]?'<span title="Locked">🔒</span>':''}</div>`).join('')}
+  <button class="btn" style="background:#e53935;margin-top:12px" onclick="leaveGroup()">🚪 Group chhorein</button>
+  ${ow?`<button class="btn" style="background:#b71c1c;margin-top:8px" onclick="delGroup()">🗑️ Group delete karein</button>`:''}`);
+}
+function mSheet(p){
+  const g=groups[cur];if(!g||!g.members[p])return;const me_=p==me.phone,u=users[p]||{},ow=isOwner(g),ad=isAdm(g,p),mu=g.muted&&g.muted[p];
+  let h=`<div style="text-align:center"><div class="av xl" onclick="zoomK('${p}')">${avc(p)}</div><h3 style="margin-bottom:2px">${esc(nm(p))}${me_?' (You)':''}${rb(g,p)}</h3><p style="color:#667781">📱 ${p}<br>${esc(u.about||'')}</p>${mu?'<p>🔒 Is member ka chat lock hai</p>':''}</div>`;
+  if(!me_)h+=`<div class="di" onclick="dm('${p}')">💬 Message</div><div class="di" onclick="dmc('${p}',0)">📞 Audio call</div><div class="di" onclick="dmc('${p}',1)">🎥 Video call</div>`;
+  if(ow&&!me_){
+    h+=ad?`<div class="di" onclick="permPanel('${p}')">⚙️ Admin permissions</div><div class="di" onclick="rmAdm('${p}',1)">➖ Admin hataein</div>`:`<div class="di" onclick="mkAdm('${p}')">🛡️ Admin banayein</div>`;
+    h+=`<div class="di" onclick="transferOwner('${p}')">👑 Owner banayein (ownership transfer)</div>`;
+  }
+  if(canActOn(g,p,'mute'))h+=`<div class="di" onclick="gMute('${p}')">${mu?'🔓 Member unlock karein':'🔒 Member lock karein (message nahi bhej sakega)'}</div>`;
+  if(canActOn(g,p,'kick'))h+=`<div class="di" style="color:#c0392b" onclick="gKick('${p}')">🚪 Group se remove karein</div>`;
+  if(canActOn(g,p,'ban'))h+=`<div class="di" style="color:#c0392b" onclick="gKick('${p}',1)">⛔ Ban karein</div>`;
+  modal(h+back('gInfo()'));
+}
+function dm(p){closeM();openChat(p)}
+function dmc(p,v){closeM();openChat(p);setTimeout(()=>startCall(v),300)}
+function adminPanel(){
+  const g=groups[cur];if(!g||!isOwner(g))return;
+  const ms=Object.keys(g.members).filter(p=>p!=me.phone),ad=ms.filter(p=>isAdm(g,p)),nr=ms.filter(p=>!isAdm(g,p));
+  modal(`<h3>🛡️ Admins aur permissions</h3>
+  <label class="ck"><input type="checkbox" ${g.aoff?'':'checked'} onchange="setAoff(this.checked)"> <span><b>Admin access on</b><br><small>Off karne par sab admins ke ikhtiyarat band ho jate hain</small></span></label>
+  <div class="gh">ADMINS (${ad.length})</div>${ad.map(p=>`<div class="row" style="padding:8px 4px;cursor:default">${mini(p)}<div class="inf"><b>${esc(nm(p))}</b></div><button style="font-size:14px;color:#008069" onclick="permPanel('${p}')">⚙️ Permissions</button><button style="font-size:14px;color:#e53935" onclick="rmAdm('${p}')">Hatayein</button></div>`).join('')||'<p style="color:#667781">Koi admin nahi</p>'}
+  <div class="gh">ADMIN BANAYEIN</div>${nr.map(p=>`<div class="row" style="padding:8px 4px;cursor:default">${mini(p)}<div class="inf"><b>${esc(nm(p))}</b></div><button style="font-size:14px;color:#008069" onclick="mkAdm('${p}')">➕ Admin</button></div>`).join('')||'<p style="color:#667781">Koi aur member nahi</p>'}
+  ${back('gInfo()')}`);
+}
+function permPanel(p){
+  const g=groups[cur];if(!g||!isOwner(g)||!isAdm(g,p))return;const a=g.admins[p]||{};
+  modal(`<h3>🛡️ ${esc(nm(p))} ki permissions</h3><p style="color:#667781;font-size:13px">Admin sirf normal members ko control kar sakta hai. Owner par us ka koi ikhtiyar nahi hota.</p>${PERMS.map(([k,l])=>`<label class="ck"><input type="checkbox" ${a[k]===true?'checked':''} onchange="setPerm('${p}','${k}',this.checked)"> ${l}</label>`).join('')}<div style="display:flex;gap:8px;margin:10px 0"><button class="btn" style="background:#25d366" onclick="setAll('${p}',true)">Sab on</button><button class="btn" style="background:#6b7c85" onclick="setAll('${p}',false)">Sab off</button></div>${back('adminPanel()')}`);
+}
+function setPerm(p,k,v){const g=groups[cur];if(!g||!isOwner(g))return;db.ref(`wa_groups/${gid(cur)}/admins/${p}/${k}`).set(!!v);g.admins[p][k]=!!v}
+function setAll(p,v){const g=groups[cur];if(!g||!isOwner(g))return;const o={};PERMS.forEach(([k])=>o[k]=v);db.ref(`wa_groups/${gid(cur)}/admins/${p}`).set(o);g.admins[p]=o;permPanel(p)}
+function setAoff(on){const g=groups[cur];if(!g||!isOwner(g))return;db.ref(`wa_groups/${gid(cur)}/aoff`).set(on?null:true);g.aoff=on?null:true;sysMsg(cur,on?'Admin access on kar diya gaya':'Admin access off kar diya gaya')}
+function mkAdm(p){
+  const g=groups[cur];if(!g||!isOwner(g)||isOwner(g,p)||!g.members[p])return;
+  db.ref(`wa_groups/${gid(cur)}/admins/${p}`).set({...DEF});g.admins=g.admins||{};g.admins[p]={...DEF};
+  sysMsg(cur,`${nm(p)} ko admin bana diya gaya`);permPanel(p);
+}
+function rmAdm(p,close){
+  const g=groups[cur];if(!g||!isOwner(g))return;
+  db.ref(`wa_groups/${gid(cur)}/admins/${p}`).remove();if(g.admins)delete g.admins[p];
+  sysMsg(cur,`${nm(p)} ab admin nahi raha`);close?closeM():adminPanel();
+}
+async function transferOwner(p){
+  const g=groups[cur];if(!g||!isOwner(g)||!g.members[p])return;
+  if(!confirm(nm(p)+' ko group ka owner bana dein? Aap admin ban jayein ge.'))return;
+  const id=gid(cur),up={[`wa_groups/${id}/owner`]:p,[`wa_groups/${id}/admin`]:p,[`wa_groups/${id}/admins/${p}`]:null,[`wa_groups/${id}/admins/${me.phone}`]:{...DEF,chat:true,ban:true,add:true,edit:true}};
+  await db.ref().update(up);sysMsg(cur,`${nm(p)} ab group ka owner hai`);closeM();toast('Ownership transfer ho gayi');
+}
+function gLock(){
+  const g=groups[cur];if(!can(g,'chat'))return;const v=!g.locked;
+  db.ref(`wa_groups/${gid(cur)}/locked`).set(v?true:null);g.locked=v?true:null;
+  sysMsg(cur,v?'Group chat lock kar di gayi: ab sirf admins message bhej sakte hain':'Group chat unlock kar di gayi');gInfo();
+}
+async function gMute(p){
+  const g=groups[cur];if(!g||!canActOn(g,p,'mute'))return;const v=!(g.muted&&g.muted[p]);
+  await db.ref(`wa_groups/${gid(cur)}/muted/${p}`).set(v?true:null);
+  sysMsg(cur,`${nm(p)} ka chat ${v?'lock':'unlock'} kar diya gaya`);closeM();toast(v?'Member lock ho gaya':'Member unlock ho gaya');
+}
+async function gKick(p,ban){
+  const g=groups[cur];if(!g||!canActOn(g,p,ban?'ban':'kick'))return;
+  if(!confirm((ban?'Ban karein: ':'Group se remove karein: ')+nm(p)+'?'))return;
+  const k=cur,id=gid(k),up={[`wa_groups/${id}/members/${p}`]:null,[`wa_groups/${id}/admins/${p}`]:null,[`wa_groups/${id}/muted/${p}`]:null,[`wa_inbox/${p}/${k}`]:null};
+  if(ban)up[`wa_groups/${id}/banned/${p}`]=true;
+  await sysMsg(k,`${nm(p)} ko group se ${ban?'ban':'remove'} kar diya gaya`);await db.ref().update(up);closeM();toast(ban?'Member ban ho gaya':'Member remove ho gaya');
+}
+function banList(){
+  const g=groups[cur];if(!g)return;const b=Object.keys(g.banned||{}),cu=can(g,'ban');
+  modal(`<h3>⛔ Banned list (${b.length})</h3>${b.map(p=>`<div class="row" style="padding:8px 4px;cursor:default">${mini(p)}<div class="inf"><b>${esc(nm(p))}</b><small>${p}</small></div>${cu?`<button style="font-size:14px;color:#008069" onclick="gUnban('${p}')">Unban</button>`:''}</div>`).join('')||'<p style="color:#667781">Koi banned member nahi</p>'}${back('gInfo()')}`);
+}
+async function gUnban(p){
+  const g=groups[cur];if(!g||!can(g,'ban'))return;
+  await db.ref(`wa_groups/${gid(cur)}/banned/${p}`).remove();if(g.banned)delete g.banned[p];sysMsg(cur,`${nm(p)} ko unban kar diya gaya`);banList();
+}
+const gmRow=u=>`<label class="ck gmr" data-s="${esc(((u.name||'')+' '+u.phone).toLowerCase())}"><input type="checkbox" class="gm" value="${u.phone}"><div class="av" style="width:34px;height:34px;font-size:14px">${avc(u.phone,u.name)}</div><span>${esc(u.name)} <small>${u.phone}</small></span></label>`;
+function filterGm(q){q=q.toLowerCase();document.querySelectorAll('.gmr').forEach(e=>e.style.display=e.dataset.s.includes(q)?'':'none')}
+function gAdd(){
+  const g=groups[cur];if(!g||!can(g,'add'))return;
+  const us=Object.values(users).filter(u=>u.phone&&!g.members[u.phone]&&!(g.banned&&g.banned[u.phone]));
+  modal(`<h3>➕ Members add karein</h3><input placeholder="Search..." oninput="filterGm(this.value)">${us.map(gmRow).join('')||'<p>Koi aur user nahi mila.</p>'}<button class="btn" onclick="gAddDo()">Add karein</button>${back('gInfo()')}`);
+}
+async function gAddDo(){
+  const g=groups[cur];if(!g||!can(g,'add'))return;
+  const sel=[...document.querySelectorAll('.gm:checked')].map(e=>e.value);if(!sel.length)return alert('Kam az kam ek member chunein');
+  const id=gid(cur);
+  for(const p of sel){await db.ref(`wa_groups/${id}/members/${p}`).set(true);db.ref(`wa_inbox/${p}/${cur}`).set({last:'Aap ko group mein add kiya gaya',ts:TS,from:me.phone,unread:1})}
+  sysMsg(cur,`${me.name} ne ${sel.map(nm).join(', ')} ko add kiya`);sendPush(sel,'m');closeM();toast('Members add ho gaye');
+}
+function gPhoto(rm){const up=d=>{tph=d;const e=$('#gpv');e.innerHTML=d?`<img src="${d}">`:e.dataset.d};rm?up(''):pickPhoto(up)}
+function gEdit(){
+  const g=groups[cur];if(!can(g,'edit'))return;tph=undefined;
+  modal(`<h3>✏️ Group info</h3><div style="text-align:center"><div class="av g xl" id="gpv" data-d="👥" onclick="gPhoto()" style="cursor:pointer">${avc(cur)}</div><div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px"><button class="btn" style="width:auto;padding:7px 14px;font-size:14px" onclick="gPhoto()">📷 Photo</button><button class="btn" style="width:auto;padding:7px 14px;font-size:14px;background:#6b7c85" onclick="gPhoto(1)">Hatayein</button></div></div><input id="gen" value="${esc(g.name)}" maxlength="40" placeholder="Group ka naam"><input id="ged" value="${esc(g.desc||'')}" maxlength="120" placeholder="Description (optional)"><button class="btn" onclick="gSave()">Save</button>${back('gInfo()')}`);
+}
+function gSave(){
+  const g=groups[cur];if(!can(g,'edit'))return;const n=$('#gen').value.trim();if(!n)return alert('Group ka naam likhein');
+  const up={name:n,desc:$('#ged').value.trim()||null};if(tph!==undefined)up.photo=tph||null;
+  db.ref('wa_groups/'+gid(cur)).update(up);if(n!=g.name)sysMsg(cur,`${me.name} ne group ka naam "${n}" rakh diya`);closeM();toast('Group update ho gaya');
+}
+async function leaveGroup(){
+  const g=groups[cur];if(!g)return;if(isOwner(g))return ownerLeave();
   if(!confirm('Group chhorein?'))return;
-  const k=cur;closeChat();closeM();
-  db.ref(`wa_groups/${k.slice(2)}/members/${me.phone}`).remove();db.ref(`wa_inbox/${me.phone}/${k}`).remove();
+  const k=cur,id=gid(k);await sysMsg(k,me.name+' ne group chhor diya');
+  closeM();closeChat();
+  await db.ref().update({[`wa_groups/${id}/members/${me.phone}`]:null,[`wa_groups/${id}/admins/${me.phone}`]:null,[`wa_inbox/${me.phone}/${k}`]:null});
+}
+function ownerLeave(){
+  const g=groups[cur],o=Object.keys(g.members).filter(p=>p!=me.phone);
+  if(!o.length){if(confirm('Aap akele member hain. Group delete kar dein?'))delGroup(1);return}
+  modal(`<h3>👑 Naya owner chunein</h3><p>Aap is group ke owner hain. Chhorne se pehle kisi ko owner banana zaroori hai.</p>${o.map((p,i)=>`<label class="ck"><input type="radio" name="no" value="${p}" ${i?'':'checked'}>${esc(nm(p))}</label>`).join('')}<button class="btn" onclick="doOwnerLeave()">Transfer karke group chhorein</button><button class="btn" style="background:#e53935;margin-top:8px" onclick="delGroup()">Group delete karein</button>${back('gInfo()')}`);
+}
+async function doOwnerLeave(){
+  const g=groups[cur],r=document.querySelector('input[name=no]:checked');if(!g||!r||!isOwner(g))return;
+  const p=r.value,k=cur,id=gid(k);
+  await sysMsg(k,`${me.name} ne ${nm(p)} ko owner bana kar group chhor diya`);closeM();closeChat();
+  await db.ref().update({[`wa_groups/${id}/owner`]:p,[`wa_groups/${id}/admin`]:p,[`wa_groups/${id}/admins/${p}`]:null,[`wa_groups/${id}/admins/${me.phone}`]:null,[`wa_groups/${id}/members/${me.phone}`]:null,[`wa_inbox/${me.phone}/${k}`]:null});
+}
+async function delGroup(sk){
+  const g=groups[cur];if(!g||!isOwner(g))return;
+  if(!sk&&!confirm('Group "'+g.name+'" aur us ki poori chat sab members ke liye delete ho jaye gi. Pakka?'))return;
+  const k=cur,id=gid(k),up={[`wa_groups/${id}`]:null,[`wa_chats/${k}`]:null,[`wa_seen/${k}`]:null,[`wa_typing/${k}`]:null};
+  Object.keys(g.members).forEach(p=>up[`wa_inbox/${p}/${k}`]=null);
+  closeM();closeChat();await db.ref().update(up);toast('Group delete ho gaya');
+}
+async function clearChat(){
+  closeM();if(!confirm('Is chat ke tamam messages sirf aap ke liye saaf honge. Theek hai?'))return;
+  const id=CID(cur),m=(await db.ref(`wa_chats/${id}/messages`).get()).val()||{},up={};
+  Object.keys(m).forEach(k=>up[`${k}/hide/${me.phone}`]=true);
+  if(Object.keys(up).length)await db.ref(`wa_chats/${id}/messages`).update(up);toast('Chat saaf ho gayi');
+}
+function fabMenu(){
+  const gs=Object.entries(groups);
+  modal(`<h3>👥 Groups</h3><button class="btn" onclick="newGroup()">➕ Naya group banayein</button><div class="gh" style="margin-top:14px">MERE GROUPS (${gs.length})</div>${gs.map(([k,g])=>`<div class="row" style="padding:8px 4px" onclick="closeM();openChat('${k}')"><div class="av g" style="width:40px;height:40px;font-size:16px">${avc(k)}</div><div class="inf"><b>${esc(g.name)}</b><small>${rl(g,me.phone)||'Member'} • ${Object.keys(g.members).length} members</small></div></div>`).join('')||'<p style="color:#667781">Abhi aap kisi group mein nahi hain.</p>'}<button class="btn" style="background:#6b7c85;margin-top:12px" onclick="closeM()">Band karein</button>`);
 }
 function newGroup(){
-  const us=Object.values(users).filter(u=>u.phone!=me.phone);
-  modal(`<h3>👥 Naya group</h3><input id="gn" placeholder="Group ka naam">${us.map(u=>`<label class="ck"><input type="checkbox" class="gm" value="${u.phone}">${esc(u.name)} <small>${u.phone}</small></label>`).join('')||'<p>Pehle doosre users login karein.</p>'}<button class="btn" onclick="mkGroup()">Group banayein</button>`);
+  tph='';const us=Object.values(users).filter(u=>u.phone&&u.phone!=me.phone);
+  modal(`<h3>👥 Naya group</h3><div style="text-align:center"><div class="av g xl" id="gpv" data-d="📷" onclick="gPhoto()" style="cursor:pointer">📷</div><small style="color:#667781;display:block;margin-bottom:10px">Group photo (optional)</small></div><input id="gn" placeholder="Group ka naam" maxlength="40"><input id="gd" placeholder="Description (optional)" maxlength="120"><input placeholder="Members search..." oninput="filterGm(this.value)">${us.map(gmRow).join('')||'<p>Pehle doosre users login karein.</p>'}<button class="btn" onclick="mkGroup()">Group banayein</button>`);
 }
 async function mkGroup(){
-  const n=$('#gn').value.trim(),sel=[...document.querySelectorAll('.gm:checked')].map(e=>e.value);
+  const n=$('#gn').value.trim(),sel=[...document.querySelectorAll('.gm:checked')].map(e=>e.value),d=$('#gd').value.trim();
   if(!n||!sel.length)return alert('Naam likhein aur kam az kam ek member chunein');
   const members={[me.phone]:true};sel.forEach(p=>members[p]=true);
-  const r=db.ref('wa_groups').push();await r.set({name:n,admin:me.phone,members,ts:TS});
-  const k='g_'+r.key;
+  const r=db.ref('wa_groups').push(),k='g_'+r.key,g={name:n,owner:me.phone,admin:me.phone,members,ts:TS};
+  if(d)g.desc=d;if(tph)g.photo=tph;
+  await r.set(g);
   Object.keys(members).forEach(p=>db.ref(`wa_inbox/${p}/${k}`).set({last:'Group ban gaya',ts:TS,from:me.phone,unread:0}));
-  closeM();setTimeout(()=>openChat(k),400);
+  sysMsg(k,`${me.name} ne group "${n}" banaya`);tph=null;closeM();setTimeout(()=>openChat(k),400);
 }
 function markSeen(){
   if(!cur)return;
-  if(!isG(cur))db.ref(`wa_seen/${CID(cur)}/${me.phone}`).set(TS);
+  if(!isG(cur)&&!me.nr)db.ref(`wa_seen/${CID(cur)}/${me.phone}`).set(TS);
   if(inbox[cur]&&inbox[cur].unread)db.ref(`wa_inbox/${me.phone}/${cur}/unread`).set(0);
 }
 function bubble(k,m){
   let d=msgs[k];
   if(m.hide&&m.hide[me.phone]){if(d)d.remove();delete msgs[k];return}
   const isNew=!d;if(isNew){d=msgs[k]=document.createElement('div');$('#msgs').appendChild(d)}
+  if(m.type=='sys'){d.className='sysm';d.textContent=m.text||'';d.oncontextmenu=d.ontouchstart=null;if(isNew)$('#msgs').scrollTop=$('#msgs').scrollHeight;return}
   const out=m.from==me.phone;d.className='m '+(out?'out':'in');d.dataset.t=m.text||'';
   let c;
   if(m.type=='deleted')c='<i style="color:#667781">🚫 Ye message delete kar diya gaya</i>';
@@ -455,9 +640,10 @@ function bubble(k,m){
   else if(m.type=='audio')c=`<audio src="${m.data}" controls></audio>`;
   else if(m.type=='file')c=`<a class="file" href="${m.data}" download="${esc(m.name)}">📄<span>${esc(m.name)}<br><small>${(m.size/1024).toFixed(0)} KB</small></span></a>`;
   else c=esc(m.text).replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank">$1</a>');
-  const sn=isG(cur)&&!out?`<div class="sn">${esc(m.name||nm(m.from))}</div>`:'';
+  const gg=isG(cur)?groups[cur]:null,sn=isG(cur)&&!out?`<div class="sn" onclick="mSheet('${m.from}')">${esc(m.name||nm(m.from))}${gg?rb(gg,m.from):''}</div>`:'',
+    sq=m.sref?`<div class="sq"><b>${out?'Aap ne status par reply kiya':'Aap ke status par reply'}</b><br>${m.sref.t=='image'?'📷 Photo':m.sref.t=='video'?'🎥 Video':'📝 '+esc(m.sref.x||'')}</div>`:'';
   const r=m.r?Object.values(m.r):[];
-  d.innerHTML=sn+c+`<div class="t">${fmt(m.ts)} ${out?`<span class="tk" data-ts="${m.ts||0}">${isG(cur)?'✓':'✓✓'}</span>`:''}</div>`+(r.length?`<div class="rx">${[...new Set(r)].join('')}${r.length>1?' '+r.length:''}</div>`:'');
+  d.innerHTML=sn+sq+c+`<div class="t">${fmt(m.ts)} ${out?`<span class="tk" data-ts="${m.ts||0}">${isG(cur)?'✓':'✓✓'}</span>`:''}</div>`+(r.length?`<div class="rx">${[...new Set(r)].join('')}${r.length>1?' '+r.length:''}</div>`:'');
   d.oncontextmenu=e=>{e.preventDefault();menu(k,m)};
   d.ontouchstart=()=>{lp=setTimeout(()=>menu(k,m),500)};d.ontouchend=d.ontouchmove=()=>clearTimeout(lp);
   const b=$('#msgs');if(isNew)b.scrollTop=b.scrollHeight;
@@ -465,11 +651,13 @@ function bubble(k,m){
 }
 function ticks(){if(isG(cur))return;document.querySelectorAll('.tk').forEach(e=>e.classList.toggle('s',oseen>0&&+e.dataset.ts<=oseen))}
 function menu(k,m){
-  if(m.type=='deleted')return;
+  if(m.type=='deleted'||m.type=='sys')return;
+  const ad=isG(cur)&&m.from!=me.phone&&groups[cur]&&canActOn(groups[cur],m.from,'del');
   modal(`<div class="rxs">${'👍 ❤️ 😂 😮 😢 🙏'.split(' ').map(e=>`<button onclick="react('${k}','${e}')">${e}</button>`).join('')}</div>
   ${m.type=='text'?`<div class="di" onclick="navigator.clipboard.writeText(msgs['${k}'].dataset.t);closeM()">📋 Copy</div>`:''}
   <div class="di" onclick="delMe('${k}')">🗑️ Delete for me</div>
-  ${m.from==me.phone?`<div class="di" onclick="delAll('${k}')">🗑️ Delete for everyone</div>`:''}`);
+  ${m.from==me.phone?`<div class="di" onclick="delAll('${k}')">🗑️ Delete for everyone</div>`:''}
+  ${ad?`<div class="di" onclick="delAll('${k}')">🛡️ Delete for everyone (Admin)</div>`:''}`);
 }
 const mref=k=>db.ref(`wa_chats/${CID(cur)}/messages/${k}`);
 async function react(k,e){closeM();const r=mref(k).child('r/'+me.phone);(await r.get()).val()==e?r.remove():r.set(e)}
@@ -477,14 +665,17 @@ function delMe(k){closeM();mref(k).child('hide/'+me.phone).set(true)}
 function delAll(k){closeM();if(confirm('Ye message sab ke liye delete ho jaye ga. Theek hai?'))mref(k).update({type:'deleted',text:null,data:null,r:null})}
 function zoom(s){vq=[];$('#vbar').innerHTML='';$('#vh').textContent='';$('#vf').style.display='none';$('#vc').innerHTML=`<img src="${s}">`;$('#viewer').style.display='flex'}
 
-function send(m){
-  if(!cur)return;m.from=me.phone;m.name=me.name;m.ts=TS;
-  db.ref(`wa_chats/${CID(cur)}/messages`).push(m);
-  const last=m.type=='text'?m.text:({image:'📷 Photo',video:'🎥 Video',audio:'🎤 Voice message'})[m.type]||'📄 '+m.name;
+function send(m){sendTo(cur,m)}
+function sendTo(k,m){
+  if(!k)return;const g=isG(k)?groups[k]:null;
+  if(isG(k)&&!canSend(g))return alert(g?why(g):'Ye group available nahi');
+  m.from=me.phone;m.name=me.name;m.ts=TS;
+  db.ref(`wa_chats/${CID(k)}/messages`).push(m);
+  const last=m.sref?'💬 Status: '+m.text:m.type=='text'?m.text:({image:'📷 Photo',video:'🎥 Video',audio:'🎤 Voice message'})[m.type]||'📄 '+m.name;
   const o={last:last.slice(0,80),ts:TS,from:me.phone};
-  const t=isG(cur)?Object.keys((groups[cur]||{}).members||{}):[me.phone,cur];
-  t.forEach(p=>{const k=isG(cur)?cur:(p==me.phone?cur:me.phone),r=db.ref(`wa_inbox/${p}/${k}`);r.update(o);if(p!=me.phone)r.child('unread').transaction(n=>(n||0)+1)});
-  if(!isG(cur))db.ref(`wa_typing/${CID(cur)}/${me.phone}`).set(false);
+  const t=isG(k)?Object.keys(g.members):[me.phone,k];
+  t.forEach(p=>{const ik=isG(k)?k:(p==me.phone?k:me.phone),r=db.ref(`wa_inbox/${p}/${ik}`);r.update(o);if(p!=me.phone)r.child('unread').transaction(n=>(n||0)+1)});
+  if(!isG(k))db.ref(`wa_typing/${CID(k)}/${me.phone}`).set(false);
   sendPush(t.filter(p=>p!=me.phone),'m');
 }
 function sendText(){const t=$('#txt').value.trim();if(!t)return;$('#txt').value='';send({type:'text',text:t})}
@@ -521,20 +712,55 @@ async function rec(){
 /* ===== STATUS ===== */
 function renderStatus(L){
   const g={};Object.entries(statuses).forEach(([k,s])=>(g[s.from]=g[s.from]||[]).push({k,...s}));
-  const mine=g[me.phone];
-  let h=`<div class="row" style="cursor:default"><div class="av ${mine?'st':''}" onclick="${mine?`viewStatus('${me.phone}')`:''}">${esc(ini(me.name))}</div><div class="inf"><b>My status</b><small>${mine?mine.length+' update(s)':'Update daalein'}</small></div><button onclick="statusText()">✏️</button><button onclick="$('#sf').click()">📷</button></div><div style="padding:8px 14px;color:#008069;font-size:13px;font-weight:700">RECENT UPDATES</div>`;
+  Object.values(g).forEach(a=>a.sort((x,y)=>x.ts-y.ts));
+  const mine=g[me.phone]||[],ur=Object.keys(ups).length;
+  let h=`<div class="row" onclick="${mine.length?`viewStatus('${me.phone}')`:'statusText()'}"><div class="av ${mine.length?'st':''}">${avc(me.phone,me.name)}</div><div class="inf"><b>My status</b><small>${ur?'⬆️ Upload ho raha hai…':mine.length?mine.length+' update(s) • '+day(mine.at(-1).ts):'Update daalein'}</small></div><button onclick="event.stopPropagation();statusText()">✏️</button><button onclick="event.stopPropagation();$('#sf').click()">📷</button></div>`;
+  if(mine.length)h+=`<div class="gh" style="padding:8px 14px">MY UPDATES (${mine.length})</div>`+mine.slice().reverse().map(s=>`<div class="row" onclick="viewStatus('${me.phone}','${s.k}')"><div class="sth" ${s.type=='text'?`style="background:${s.bg}"`:''}>${s.type=='image'?`<img src="${s.data}">`:s.type=='video'?'🎥':'📝'}</div><div class="inf"><b>${s.type=='text'?esc((s.text||'').slice(0,30)):s.type=='image'?'Photo':'Video'}</b><small>${day(s.ts)} • 👁 ${Object.keys(s.v||{}).length} ❤️ ${Object.keys(s.l||{}).length} 💬 ${Object.keys(s.c||{}).length}</small></div><button onclick="event.stopPropagation();delSK('${s.k}')">🗑️</button></div>`).join('');
+  h+=`<div style="padding:8px 14px;color:#008069;font-size:13px;font-weight:700">RECENT UPDATES</div>`;
   const o=Object.keys(g).filter(p=>p!=me.phone).sort((a,b)=>g[b].at(-1).ts-g[a].at(-1).ts);
   o.forEach(p=>{const un=g[p].some(s=>!(s.v&&s.v[me.phone]));
-    h+=`<div class="row" onclick="viewStatus('${p}')"><div class="av st ${un?'':'seen'}">${esc(ini(nm(p)))}</div><div class="inf"><b>${esc(nm(p))}</b><small>${day(g[p].at(-1).ts)}</small></div></div>`});
+    h+=`<div class="row" onclick="viewStatus('${p}')"><div class="av st ${un?'':'seen'}">${avc(p)}</div><div class="inf"><b>${esc(nm(p))}</b><small>${day(g[p].at(-1).ts)}</small></div></div>`});
   if(!o.length)h+='<div style="padding:14px;color:#667781">Koi recent status nahi.</div>';
   L.innerHTML=h;
 }
+function delSK(k){if(confirm('Ye status delete karein?'))db.ref('wa_status/'+k).remove()}
 const colors=['#128c7e','#8e44ad','#c0392b','#2980b9','#d35400','#16a085'];
 function statusText(){const t=prompt('Status likhein:');if(t)db.ref('wa_status').push({from:me.phone,type:'text',text:t,bg:colors[Math.random()*6|0],ts:TS})}
-function postStatusFile(i){const f=i.files[0];i.value='';if(f)readFile(f,(d,t)=>{if(t!='image'&&t!='video')return alert('Sirf photo ya video');db.ref('wa_status').push({from:me.phone,type:t,data:d,ts:TS})})}
-function viewStatus(p){
+/* status upload with real progress (REST PUT + XHR upload progress) */
+const ups={};
+function renderUps(){
+  $('#upl').innerHTML=Object.entries(ups).map(([id,u])=>`<div class="up ${u.err?'er':''}"><div class="ut"><span>${u.err?'❌ Status upload fail':u.pct>=100?'✅ Status upload ho gaya':'⬆️ Status upload ho raha hai…'}</span><b id="upp_${id}">${u.err?'':u.pct+'%'}</b>${u.err&&u.obj?`<button onclick="retryUp('${id}')">🔁</button>`:''}${u.pct<100?`<button onclick="cancelUp('${id}')">✕</button>`:''}</div><div class="ub"><i id="upb_${id}" style="width:${u.pct}%"></i></div><small style="color:#667781">${esc(u.lbl)}${u.msg?' • '+esc(u.msg):''}</small></div>`).join('');
+}
+function updUp(id){const u=ups[id],a=document.getElementById('upp_'+id),b=document.getElementById('upb_'+id);if(!u||!a||!b)return;a.textContent=u.pct+'%';b.style.width=u.pct+'%'}
+function upFail(id,msg){const u=ups[id];if(!u)return;u.err=1;u.msg=msg;renderUps()}
+function cancelUp(id){const u=ups[id];if(!u)return;try{u.x&&u.x.abort()}catch(e){}delete ups[id];renderUps();if(tab=='status')renderList()}
+function retryUp(id){if(ups[id]&&ups[id].obj)sendUp(id)}
+function sendUp(id){
+  const u=ups[id];if(!u)return;u.err=0;u.pct=0;u.msg='';renderUps();if(tab=='status')renderList();
+  const x=new XMLHttpRequest();u.x=x;
+  x.open('PUT',`${DBU}/wa_status/${id}.json`);
+  x.upload.onprogress=e=>{if(e.lengthComputable){u.pct=Math.min(99,Math.round(e.loaded/e.total*100));updUp(id)}};
+  x.onload=()=>{
+    if(x.status>=200&&x.status<300){
+      u.pct=100;u.msg='Aap ki status list mein show ho gaya';u.obj=null;renderUps();toast('✅ Status upload ho gaya');
+      setTimeout(()=>{delete ups[id];renderUps();if(tab=='status')renderList()},2500);
+    }else upFail(id,'Server ne reject kiya ('+x.status+')');
+  };
+  x.onerror=()=>upFail(id,'Network masla, dobara koshish karein');
+  x.ontimeout=()=>upFail(id,'Time out');
+  x.send(JSON.stringify({...u.obj,ts:{'.sv':'timestamp'}}));
+}
+function postStatusFile(i){
+  const f=i.files[0];i.value='';if(!f)return;
+  if(!/^(image|video)\//.test(f.type))return alert('Sirf photo ya video');
+  if(!f.type.startsWith('image/')&&f.size>5*1024*1024)return alert('File 5MB se choti honi chahiye (Realtime Database ki limit)');
+  const id=db.ref('wa_status').push().key;
+  ups[id]={pct:0,lbl:f.type.startsWith('video/')?'🎥 Video':'📷 Photo',msg:'Tayyar ho raha hai…'};renderUps();if(tab=='status')renderList();
+  readFile(f,(d,t)=>{if(!ups[id])return;ups[id].obj={from:me.phone,type:t,data:d};sendUp(id)});
+}
+function viewStatus(p,sk){
   vq=Object.entries(statuses).filter(([k,s])=>s.from==p).sort((a,b)=>a[1].ts-b[1].ts).map(([k,s])=>({k,...s}));
-  vi=0;$('#viewer').style.display='flex';showS();
+  vi=sk?Math.max(0,vq.findIndex(x=>x.k==sk)):0;$('#viewer').style.display='flex';showS();
 }
 const nx=()=>{vi++;showS()};
 function showS(){
@@ -559,8 +785,10 @@ function updS(){
 }
 function likeS(){const r=db.ref(`wa_status/${vq[vi].k}/l/${me.phone}`);(statuses[vq[vi].k]||{}).l&&statuses[vq[vi].k].l[me.phone]?r.remove():r.set(true)}
 function comS(){
-  const t=$('#sc').value.trim();if(!t)return;$('#sc').value='';$('#sc').blur();
-  db.ref(`wa_status/${vq[vi].k}/c`).push({from:me.phone,name:me.name,text:t,ts:TS});vt=setTimeout(nx,3000);
+  const s=vq[vi],t=$('#sc').value.trim();if(!s||!t)return;$('#sc').value='';$('#sc').blur();
+  db.ref(`wa_status/${s.k}/c`).push({from:me.phone,name:me.name,text:t,ts:TS});
+  if(s.from!=me.phone)sendTo(s.from,{type:'text',text:t,sref:{t:s.type,x:s.type=='text'?(s.text||'').slice(0,80):''}});
+  toast('💬 Comment bhej diya gaya');vt=setTimeout(nx,3000);
 }
 function infoS(){
   clearTimeout(vt);const s=statuses[vq[vi].k]||{};
@@ -585,7 +813,7 @@ async function startCall(video){
   const r={room,from:me.phone,name:isG(cur)?groups[cur].name+' • '+me.name:me.name,video:!!video,ts:TS};
   targets.forEach(t=>db.ref('wa_ring/'+t).set(r));
   sendPush(targets,'c');startBack();ringPush(room,targets);
-  setTimeout(()=>{if(call&&call.room==room&&!call.connected){endCall();if(targets.length==1){if(confirm('Jawab nahi mila. Normal phone call (SIM se) karein?'))location.href='tel:'+pn(targets[0])}else alert('Koi jawab nahi diya')}},45000);
+  setTimeout(()=>{if(call&&call.room==room&&!call.connected){endCall();alert('Koi jawab nahi diya')}},45000);
 }
 async function joinRoom(room,video){
   let st;try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:video?{facingMode:'user'}:false})}catch(e){return alert('Microphone/Camera ki ijazat chahiye')}
@@ -670,10 +898,8 @@ function ring(v){
   const e=$('#rg');
   if(!v||Date.now()+so-v.ts>6e4||call){e.style.display='none';rg=null;stopRing();return}
   if(rg&&rg.room==v.room&&ringT)return;
-  rg=v;e.innerHTML=`<div style="text-align:center"><div style="font-size:15px;opacity:.85">${v.video?'🎥 Incoming video call':'📞 Incoming audio call'}</div><div style="font-size:30px;font-weight:700;margin:10px 0 26px;padding:0 10px">${esc(v.name)}</div><div class="av" style="width:120px;height:120px;font-size:52px;margin:0 auto;background:#ffffff30">${esc(ini(v.name))}</div><div style="margin-top:24px;opacity:.7;letter-spacing:3px;font-size:13px">CALLING…</div></div><div style="display:flex;gap:90px"><div class="cb"><button onclick="dec()" style="background:#e53935">📞</button>Decline</div><div class="cb"><button onclick="acc()" style="background:#25d366">📞</button>Accept</div></div>`;
-  e.style.display='flex';
-  if(autoAcc){autoAcc=0;setTimeout(acc,400);return}
-  startRing();
+  rg=v;e.innerHTML=`<b>${esc(v.name)}</b><br>${v.video?'🎥 Video':'📞 Audio'} call aa rahi hai<br><br><button class="btn" style="background:#25d366;width:auto;padding:8px 18px" onclick="acc()">Accept</button> <button class="btn" style="background:#e53935;width:auto;padding:8px 18px" onclick="dec()">Decline</button>`;
+  e.style.display='block';startRing();
   clearTimeout(rgt);rgt=setTimeout(()=>{e.style.display='none';stopRing();rg=null},45000);
   if(document.hidden&&!PUSH_URL)notify('📞 '+v.name,(v.video?'Video':'Audio')+' call aa rahi hai','call',{call:1});
 }
