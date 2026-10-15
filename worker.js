@@ -1,6 +1,6 @@
 /* Cloudflare Worker - WhatsApp Clone push sender (free plan) */
 const DB='https://earn-platform-76c26-default-rtdb.firebaseio.com';
-const SUBJECT='mailto:admin@example.com';   // apni email likh dein
+const SUBJECT='mailto:Mysw786@gmail.com';   // apni email likh dein
 const VAPID_PUB='BCOXyUWncyxLQaSn8LXOwa6-Yw9siIYP1Kv9Kd0_2oS-sLVYKlTEBEVw8AhYObtljfI2eP0ygmwRsbJqPyryuqE';
 const VAPID_JWK={kty:'EC',crv:'P-256',
   x:'I5fJRadzLEtBpKfwtc7Brr5jD2yIhg_Uq_0p3T_ahL4',
@@ -29,7 +29,7 @@ async function pushTo(phone,kind){
     try{
       const r=await fetch(s.endpoint,{method:'POST',headers:{
         Authorization:await vapid(s.endpoint),
-        TTL:kind==='c'?'45':'86400',Urgency:'high','Content-Length':'0'}});
+        TTL:(kind==='c'||kind==='x')?'60':'86400',Urgency:'high','Content-Length':'0'}});
       if(r.status===404||r.status===410)await fetch(`${DB}/wa_push/${phone}/${id}.json`,{method:'DELETE'});
       else if(r.ok)n++;
     }catch(e){}
