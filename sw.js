@@ -15,7 +15,8 @@ self.addEventListener('push',e=>e.waitUntil((async()=>{
       return self.registration.showNotification('📞 '+(r.name||'Incoming call'),{
         body:(r.video?'Video':'Audio')+' call aa rahi hai - kholne ke liye tap karein',
         tag:'call',renotify:true,requireInteraction:true,
-        vibrate:[600,300,600,300,600,300,600,300,600],data:{call:1}});
+        vibrate:[600,300,600,300,600,300,600,300,600],data:{call:1},
+        actions:[{action:'accept',title:'✅ Accept'},{action:'decline',title:'❌ Decline'}]});
     }
     const old=(await self.registration.getNotifications({tag:'call'})).filter(n=>n.title.startsWith('📞'));
     if(old.length)return self.registration.showNotification('📵 Missed call',{body:old[0].title.replace('📞 ',''),tag:'call',renotify:true,vibrate:[200,100,200],data:{}});
@@ -34,12 +35,18 @@ self.addEventListener('push',e=>e.waitUntil((async()=>{
 self.addEventListener('notificationclick',e=>{
   e.notification.close();
   const d=e.notification.data||{};
+  if(e.action==='decline'){
+    e.waitUntil(fetch(DB+'/wa_ring/'+ME+'.json',{method:'DELETE'}).catch(()=>{}));
+    return;
+  }
+  const acc=e.action==='accept';
   e.waitUntil((async()=>{
     const cl=await self.clients.matchAll({type:'window',includeUncontrolled:true});
     for(const c of cl){
       if(d.k)c.postMessage({open:d.k});
+      if(acc)c.postMessage({accept:1});
       return c.focus();
     }
-    return self.clients.openWindow(self.registration.scope+(d.k?'?chat='+encodeURIComponent(d.k):''));
+    return self.clients.openWindow(self.registration.scope+(acc?'?accept=1':(d.k?'?chat='+encodeURIComponent(d.k):'')));
   })());
 });
