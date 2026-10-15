@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ur"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>WA Admin Console</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.min.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#0b0f14;--p:#131a22;--p2:#192230;--b:#263243;--t:#e7edf5;--m:#8a9bb0;--a:#f5b83d;--ok:#4ade80;--bad:#ff5d5d;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0}
+html,body{background:var(--bg);color:var(--t);font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--b);background:var(--p2);padding:7px 12px;border-radius:8px}
+button:hover{border-color:var(--a)}button.pr{background:var(--a);color:#161008;border-color:var(--a);font-weight:700}
+button.dg{color:var(--bad);border-color:#5a2a2a}button.sm{padding:4px 9px;font-size:13px}
+input,select{font:inherit;color:var(--t);background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:8px 10px;max-width:100%}
+#gate{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);z-index:99;padding:20px}
+#gate h1{font:700 13px var(--mono);letter-spacing:.3em;color:var(--a)}
+#dots{display:flex;gap:14px;height:18px}#dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--m)}#dots i.f{background:var(--a);border-color:var(--a)}
+#pad{display:grid;grid-template-columns:repeat(3,72px);gap:12px}#pad button{height:64px;font:600 22px var(--mono);border-radius:50%;padding:0}
+#pm{min-height:20px;color:var(--bad);font-size:13px;text-align:center}
+.shake{animation:sk .3s}@keyframes sk{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+#app{display:none}
+header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--b);padding:calc(10px + env(safe-area-inset-top,0px)) 14px 0}
+.hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.hd b{font:700 14px var(--mono);letter-spacing:.18em;color:var(--a)}
+.chip{font:12px var(--mono);color:var(--m);border:1px solid var(--b);border-radius:20px;padding:2px 10px}.chip.on{color:var(--ok);border-color:#1f5a36}
+.sp{flex:1}
+nav{display:flex;gap:2px;overflow-x:auto;margin-top:8px}
+nav button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;color:var(--m);padding:9px 12px;white-space:nowrap}
+nav button.on{color:var(--t);border-color:var(--a)}
+main{max-width:1100px;margin:auto;padding:16px 14px 60px}
+h2{font-size:17px;margin:4px 0 12px}h3{font:700 12px var(--mono);letter-spacing:.14em;color:var(--m);margin:22px 0 8px;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.k{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:12px}
+.k small{color:var(--m);font-size:12px;display:block}.k b{font:700 26px var(--mono)}.k em{display:block;font-style:normal;color:var(--m);font-size:12px}
+.box{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:12px}
+.r{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--b);flex-wrap:wrap}.r:last-child{border:0}
+.r .n{flex:1;min-width:140px}.r .n small{display:block;color:var(--m);font-size:12px;word-break:break-all}
+.dot{width:9px;height:9px;border-radius:50%;background:#556;display:inline-block;margin-right:6px}.dot.on{background:var(--ok)}
+.bar{height:10px;background:var(--p2);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--a)}
+.bl{display:flex;align-items:center;gap:8px;font:12px var(--mono);margin:5px 0}.bl span:first-child{width:96px;color:var(--m)}.bl .bar{flex:1}
+.chart{display:flex;align-items:flex-end;gap:5px;height:110px}.chart div{flex:1;background:var(--a);border-radius:3px 3px 0 0;min-height:2px;position:relative}
+.chart small{position:absolute;top:-16px;left:0;right:0;text-align:center;font:10px var(--mono);color:var(--m)}
+.lb{display:flex;gap:5px;font:10px var(--mono);color:var(--m)}.lb span{flex:1;text-align:center}
+.row2{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+#md{position:fixed;inset:0;background:#000a;z-index:80;display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:20px 10px}
+#mb{background:var(--p);border:1px solid var(--b);border-radius:14px;padding:16px;width:640px;max-width:100%}
+.msg{padding:8px 10px;border-radius:8px;background:var(--p2);margin-bottom:6px;font-size:14px;word-break:break-word}
+.msg small{color:var(--m);display:block;font:11px var(--mono)}.msg img{max-width:140px;border-radius:6px;display:block;margin-top:4px}
+#ts{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--a);color:#161008;padding:9px 16px;border-radius:20px;font-weight:700;z-index:120;display:none}
+.warn{color:var(--a);font-size:13px}.mut{color:var(--m);font-size:13px}
+</style></head><body>
+
+<div id="gate"><h1>ADMIN CONSOLE</h1><div id="dots"><i></i><i></i><i></i><i></i></div>
+<div id="pad"></div><div id="pm"></div></div>
+
+<div id="app">
+<header><div class="hd"><b>WA ADMIN</b><span class="chip" id="c1">users</span><span class="chip" id="c2">online</span><span class="chip" id="c3">calls</span><span class="sp"></span><button class="sm" onclick="location.reload()">🔒 Lock</button></div>
+<nav id="nav"></nav></header>
+<main id="v"></main>
+</div>
+<div id="md" onclick="if(event.target==this)cm()"><div id="mb"></div></div><div id="ts"></div>
+
+<script>
+const DBU='https://earn-platform-76c26-default-rtdb.firebaseio.com',WORKER='https://walclone-push.mysw786.workers.dev';
+const PINH='2c0d959eea408cfb8d72ae5f3a4f585f3e6ffe57e514665e6379fbb478b1f96d';
+firebase.initializeApp({databaseURL:DBU,projectId:'earn-platform-76c26'});
+const db=firebase.database(),$=s=>document.querySelector(s),R=p=>db.ref(p),get=async p=>(await R(p).get()).val();
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const kb=o=>JSON.stringify(o==null?'':o).length/1024,fk=k=>k>=1024?(k/1024).toFixed(1)+' MB':k.toFixed(0)+' KB';
+const tm=t=>t?new Date(t).toLocaleString([],{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'-';
+const sha=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+let U={},G={},D={},SC=null,tab='ov',live={ring:0,rooms:0};
+const nm=p=>(U[p]||{}).name||p;
+
+/* ===== PIN GATE ===== */
+let pin='',fails=+sessionStorage.af||0,lock=+sessionStorage.al||0,idle;
+$('#pad').innerHTML=[1,2,3,4,5,6,7,8,9,'⌫',0,''].map(d=>d===''?'<span></span>':`<button data-k="${d}">${d}</button>`).join('');
+$('#pad').onclick=e=>{const b=e.target.closest('[data-k]');if(b)key(b.dataset.k)};
+addEventListener('keydown',e=>{if($('#gate').style.display=='none')return;if(/^\d$/.test(e.key))key(e.key);else if(e.key=='Backspace')key('⌫')});
+function dots(){document.querySelectorAll('#dots i').forEach((d,i)=>d.classList.toggle('f',i<pin.length))}
+async function key(d){
+  if(Date.now()<lock){$('#pm').textContent='Bohat ghalat koshishen. '+Math.ceil((lock-Date.now())/1000)+' second baad try karein';return}
+  if(d=='⌫')pin=pin.slice(0,-1);else if(pin.length<4)pin+=d;dots();
+  if(pin.length<4)return;
+  if(await sha('adm'+pin)===PINH){fails=0;sessionStorage.af=0;$('#gate').style.display='none';$('#app').style.display='block';boot()}
+  else{fails++;sessionStorage.af=fails;$('#pm').textContent='Ghalat code';
+    if(fails>=5){lock=Date.now()+60000*Math.min(fails-4,10);sessionStorage.al=lock;$('#pm').textContent='5 ghalat koshishen: kuch der ruk jayein'}
+    const g=$('#dots');g.classList.add('shake');setTimeout(()=>g.classList.remove('shake'),350);pin='';dots()}
+}
+
+/* ===== helpers ===== */
+function toast(t){const e=$('#ts');e.textContent=t;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',2600)}
+function modal(h){$('#mb').innerHTML=h;$('#md').style.display='flex'}function cm(){$('#md').style.display='none'}
+const card=(l,v,s)=>`<div class="k"><small>${l}</small><b>${v}</b>${s?`<em>${s}</em>`:''}</div>`;
+async function shallow(n){const r=await fetch(`${DBU}/${n}.json?shallow=true`);return Object.keys(await r.json()||{})}
+function ask(word,msg){return prompt(msg+'\n\nConfirm karne ke liye "'+word+'" likhein:')===word}
+function chatTitle(id){if(id.startsWith('g_'))return '👥 '+((G[id.slice(2)]||{}).name||id);return id.split('_').map(nm).join(' ↔ ')}
+async function wipeChat(id){
+  const up={['wa_chats/'+id]:null,['wa_seen/'+id]:null,['wa_typing/'+id]:null};
+  if(id.startsWith('g_'))Object.keys((G[id.slice(2)]||{}).members||{}).forEach(p=>up[`wa_inbox/${p}/${id}`]=null);
+  else{const[a,b]=id.split('_');up[`wa_inbox/${a}/${b}`]=null;up[`wa_inbox/${b}/${a}`]=null}
+  await R('/').update(up);
+}
+
+/* ===== boot ===== */
+function boot(){
+  const T=[['ov','📊 Overview'],['us','👤 Users'],['ch','💬 Chats'],['gr','👥 Groups'],['st','🟢 Status'],['lv','📡 Live'],['tl','🛠 Tools']];
+  $('#nav').innerHTML=T.map(([k,l])=>`<button data-t="${k}">${l}</button>`).join('');
+  $('#nav').onclick=e=>{const b=e.target.closest('[data-t]');if(b)go(b.dataset.t)};
+  R('wa_users').on('value',s=>{U=s.val()||{};hdr();if(tab=='us')users()});
+  R('wa_groups').on('value',s=>{G=s.val()||{};if(tab=='gr')groups()});
+  R('wa_ring').on('value',s=>{live.ring=Object.keys(s.val()||{}).length;hdr()});
+  R('wa_rooms').on('value',s=>{live.rooms=Object.keys(s.val()||{}).length;hdr()});
+  document.body.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b)ACT[b.dataset.a](b.dataset.p,b.dataset.q)});
+  ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{clearTimeout(idle);idle=setTimeout(()=>location.reload(),10*60*1000)}));
+  go('ov');
+}
+function hdr(){const o=Object.values(U).filter(u=>u.online).length;$('#c1').textContent=Object.keys(U).length+' users';$('#c2').textContent='● '+o+' online';$('#c2').className='chip'+(o?' on':'');$('#c3').textContent=live.ring+' ringing · '+live.rooms+' rooms'}
+function go(t){tab=t;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));({ov:ovp,us:users,ch:chats,gr:groups,st:status,lv:livep,tl:tools})[t]()}
+
+/* ===== OVERVIEW / USAGE ===== */
+function ovp(){
+  $('#v').innerHTML=`<h2>Usage aur data ka jaiza</h2><div class="row2"><button class="pr" data-a="scan">🔍 Database scan karein</button><span class="mut" id="pg">Scan poora database padhta hai (photos/videos bhi), is liye Firebase ka download use hota hai. Zarurat par hi chalayein.</span></div><div id="ovo"></div>
+  <p class="mut" style="margin-top:18px">Asli bandwidth/billing: <a style="color:var(--a)" target="_blank" href="https://console.firebase.google.com/project/earn-platform-76c26/usage">Firebase Console → Usage</a></p>`;
+  if(SC)ovr();
+}
+async function scan(){
+  const pg=t=>$('#pg').textContent=t;SC={nodes:{},types:{},days:{},snd:{},msgs:0,chats:{},chatN:0};D={};
+  for(const n of['wa_users','wa_auth','wa_inbox','wa_groups','wa_status','wa_push','wa_ring','wa_rooms','wa_seen','wa_typing']){pg('Padh raha hoon: '+n);const v=await get(n);D[n]=v||{};SC.nodes[n]=kb(v)}
+  const ids=await shallow('wa_chats');SC.chatN=ids.length;SC.nodes.wa_chats=0;let i=0;
+  for(const id of ids){pg(`Chats: ${++i}/${ids.length}`);const m=await get('wa_chats/'+id+'/messages')||{};let c=0,sz=0;
+    for(const x of Object.values(m)){c++;sz+=kb(x);const ty=x.type||'text';SC.types[ty]=(SC.types[ty]||0)+1;SC.snd[x.from]=(SC.snd[x.from]||0)+1;
+      if(x.ts){const d=new Date(x.ts).toISOString().slice(0,10);SC.days[d]=(SC.days[d]||0)+1}}
+    SC.chats[id]={c,sz};SC.msgs+=c;SC.nodes.wa_chats+=sz}
+  pg('Scan mukammal: '+tm(Date.now()));ovr();
+}
+function ovr(){
+  const N=SC.nodes,tot=Object.values(N).reduce((a,b)=>a+b,0),push=Object.values(D.wa_push||{}).reduce((a,x)=>a+Object.keys(x).length,0);
+  const max=Math.max(...Object.values(N),1),days=[];for(let i=13;i>=0;i--){const d=new Date(Date.now()-i*864e5).toISOString().slice(0,10);days.push([d.slice(5),SC.days[d]||0])}
+  const dm=Math.max(...days.map(d=>d[1]),1),top=Object.entries(SC.snd).sort((a,b)=>b[1]-a[1]).slice(0,5),tmax=Math.max(...Object.values(SC.types),1);
+  $('#ovo').innerHTML=`<div class="grid">${card('Users',Object.keys(U).length,Object.values(U).filter(u=>u.online).length+' online')}${card('Groups',Object.keys(G).length)}${card('Chats',SC.chatN)}${card('Messages',SC.msgs)}${card('Status posts',Object.keys(D.wa_status||{}).length)}${card('Push devices',push)}${card('DB size (andaza)',fk(tot),((tot/1048576)*100).toFixed(2)+'% of 1 GB free')}</div>
+  <h3>Storage free limit (1 GB)</h3><div class="bar"><i style="width:${Math.max(.5,tot/10485.76)}%"></i></div>
+  <h3>Node ke hisab se size</h3><div class="box">${Object.entries(N).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="bl"><span>${k}</span><div class="bar"><i style="width:${v/max*100}%"></i></div><span style="width:70px;text-align:right">${fk(v)}</span></div>`).join('')}</div>
+  <h3>Pichle 14 din ke messages</h3><div class="box"><div class="chart">${days.map(d=>`<div style="height:${d[1]/dm*100}%"><small>${d[1]||''}</small></div>`).join('')}</div><div class="lb">${days.map(d=>`<span>${d[0].slice(3)}</span>`).join('')}</div></div>
+  <h3>Message types</h3><div class="box">${Object.entries(SC.types).map(([k,v])=>`<div class="bl"><span>${k}</span><div class="bar"><i style="width:${v/tmax*100}%"></i></div><span style="width:50px;text-align:right">${v}</span></div>`).join('')||'<span class="mut">Koi message nahi</span>'}</div>
+  <h3>Sab se active users</h3><div class="box">${top.map(([p,c])=>`<div class="bl"><span style="width:auto;flex:1;color:var(--t)">${esc(nm(p))} <small class="mut">${p}</small></span><span>${c} msgs</span></div>`).join('')||'<span class="mut">-</span>'}</div>`;
+}
+
+/* ===== USERS ===== */
+function users(){
+  const q=($('#uq')||{}).value||'';
+  const L=Object.values(U).filter(u=>!q||(u.name||'').toLowerCase().includes(q.toLowerCase())||String(u.phone).includes(q)).sort((a,b)=>(b.online?1:0)-(a.online?1:0)||(a.name||'').localeCompare(b.name||''));
+  $('#v').innerHTML=`<h2>Users (${Object.keys(U).length})</h2><div class="row2"><input id="uq" placeholder="Naam ya number search" value="${esc(q)}" oninput="users();$('#uq').focus();$('#uq').setSelectionRange(99,99)"></div><div class="box" style="padding:0">${L.map(u=>`<div class="r"><div class="n"><span class="dot ${u.online?'on':''}"></span><b>${esc(u.name||'-')}</b><small>${u.phone} · ${u.online?'online':'last seen '+tm(u.lastSeen)}${SC&&SC.snd[u.phone]?' · '+SC.snd[u.phone]+' msgs':''}</small></div>
+  <button class="sm" data-a="uv" data-p="${u.phone}">Details</button><button class="sm" data-a="ue" data-p="${u.phone}">Edit</button><button class="sm" data-a="pw" data-p="${u.phone}">Password</button><button class="sm dg" data-a="ud" data-p="${u.phone}">Delete</button></div>`).join('')||'<div class="r mut">Koi user nahi</div>'}</div>`;
+}
+
+/* ===== CHATS ===== */
+async function chats(){
+  $('#v').innerHTML='<h2>Chats</h2><p class="mut">Load ho raha hai…</p>';
+  const ids=await shallow('wa_chats');
+  $('#v').innerHTML=`<h2>Chats (${ids.length})</h2><div class="box" style="padding:0">${ids.map(id=>`<div class="r"><div class="n">${esc(chatTitle(id))}<small>${id}${SC&&SC.chats[id]?' · '+SC.chats[id].c+' msgs · '+fk(SC.chats[id].sz):''}</small></div><button class="sm" data-a="co" data-p="${id}">Kholein</button><button class="sm dg" data-a="cd" data-p="${id}">Delete</button></div>`).join('')||'<div class="r mut">Koi chat nahi</div>'}</div>`;
+}
+async function openChat(id){
+  modal('<p class="mut">Load ho raha hai…</p>');
+  const m=(await R(`wa_chats/${id}/messages`).limitToLast(200).get()).val()||{},E=Object.entries(m);
+  modal(`<div class="row2"><b style="flex:1">${esc(chatTitle(id))}</b><button class="sm" onclick="cm()">✕</button></div><p class="mut">Aakhri ${E.length} messages</p>${E.map(([k,x])=>`<div class="msg"><small>${esc(nm(x.from))} · ${tm(x.ts)} · ${x.type||'text'}${x.size?' · '+fk(x.size/1024):''}</small>${x.type=='image'?`<img src="${x.data}">`:x.type=='deleted'?'<i>deleted</i>':x.type&&x.type!='text'?'📎 '+esc(x.name||x.type):esc(x.text)}<br><button class="sm dg" data-a="md" data-p="${id}" data-q="${k}">Delete</button></div>`).join('')||'<p class="mut">Khali</p>'}`);
+}
+
+/* ===== GROUPS ===== */
+function groups(){
+  $('#v').innerHTML=`<h2>Groups (${Object.keys(G).length})</h2><div class="box" style="padding:0">${Object.entries(G).map(([k,g])=>`<div class="r"><div class="n"><b>${esc(g.name)}</b><small>Admin: ${esc(nm(g.admin))} · ${Object.keys(g.members||{}).length} members · ${tm(g.ts)}</small></div><button class="sm" data-a="gv" data-p="${k}">Members</button><button class="sm" data-a="gr" data-p="${k}">Rename</button><button class="sm dg" data-a="gd" data-p="${k}">Delete</button></div>`).join('')||'<div class="r mut">Koi group nahi</div>'}</div>`;
+}
+
+/* ===== STATUS ===== */
+async function status(){
+  $('#v').innerHTML='<h2>Status</h2><p class="mut">Load ho raha hai…</p>';
+  const S=await get('wa_status')||{},E=Object.entries(S).sort((a,b)=>b[1].ts-a[1].ts);
+  $('#v').innerHTML=`<h2>Status posts (${E.length})</h2><div class="row2"><button class="dg" data-a="sold">24 ghante se purane delete karein</button></div><div class="box" style="padding:0">${E.map(([k,s])=>`<div class="r"><div class="n"><b>${esc(nm(s.from))}</b> · ${s.type}<small>${tm(s.ts)} · 👁 ${Object.keys(s.v||{}).length} ❤️ ${Object.keys(s.l||{}).length} 💬 ${Object.keys(s.c||{}).length} · ${fk(kb(s))}${s.type=='text'?' · '+esc(s.text):''}</small></div><button class="sm dg" data-a="sd" data-p="${k}">Delete</button></div>`).join('')||'<div class="r mut">Koi status nahi</div>'}</div>`;
+}
+
+/* ===== LIVE ===== */
+async function livep(){
+  $('#v').innerHTML='<h2>Live</h2><p class="mut">Load ho raha hai…</p>';
+  const [ri,ro,pu]=await Promise.all([get('wa_ring'),get('wa_rooms'),get('wa_push')]);
+  const RI=Object.entries(ri||{}),RO=Object.entries(ro||{}),PU=Object.entries(pu||{});
+  $('#v').innerHTML=`<h2>Live calls aur notifications</h2>
+  <h3>Ringing (${RI.length})</h3><div class="box" style="padding:0">${RI.map(([p,r])=>`<div class="r"><div class="n">${esc(nm(p))} ← ${esc(r.name)}<small>${r.video?'video':'audio'} · ${tm(r.ts)}</small></div><button class="sm dg" data-a="rd" data-p="${p}">Clear</button></div>`).join('')||'<div class="r mut">Koi nahi</div>'}</div>
+  <h3>Call rooms (${RO.length})</h3><div class="box" style="padding:0">${RO.map(([k,r])=>`<div class="r"><div class="n">${k}<small>Peers: ${Object.keys(r.peers||{}).map(nm).join(', ')||'-'}</small></div><button class="sm dg" data-a="rm" data-p="${k}">Delete</button></div>`).join('')||'<div class="r mut">Koi nahi</div>'}</div>
+  <h3>Push devices (${PU.reduce((a,[,x])=>a+Object.keys(x).length,0)})</h3><div class="box" style="padding:0">${PU.map(([p,x])=>`<div class="r"><div class="n">${esc(nm(p))}<small>${p} · ${Object.keys(x).length} device(s)</small></div><button class="sm dg" data-a="pd" data-p="${p}">Remove</button></div>`).join('')||'<div class="r mut">Koi nahi</div>'}</div>
+  <h3>Test push</h3><div class="row2"><input id="tp" placeholder="Phone number (923...)" inputmode="numeric"><button class="pr" data-a="tpush">Bhejein</button><span class="mut" id="tpr"></span></div>`;
+}
+
+/* ===== TOOLS ===== */
+const NODES={'Messages/Chats':['wa_chats','wa_seen','wa_typing','wa_inbox'],'Status':['wa_status'],'Calls':['wa_ring','wa_rooms'],'Push devices':['wa_push'],'Groups (+ unki chats)':['wa_groups'],'Sab kuch (poora reset)':['wa_users','wa_auth','wa_inbox','wa_groups','wa_status','wa_push','wa_ring','wa_rooms','wa_seen','wa_typing','wa_chats']};
+function tools(){
+  $('#v').innerHTML=`<h2>Tools</h2>
+  <h3>Backup (JSON download)</h3><div class="row2"><select id="bk">${['wa_users','wa_groups','wa_chats','wa_status','wa_inbox','wa_push','wa_auth'].map(n=>`<option>${n}</option>`).join('')}</select><button data-a="bk">⬇ Download</button></div>
+  <h3>Purane messages saaf karein</h3><div class="row2"><span>Itne din se purane:</span><input id="od" type="number" value="30" min="1" style="width:90px"><button class="dg" data-a="old">Delete</button><span class="mut" id="op"></span></div>
+  <h3>Reset (khatarnak)</h3><p class="warn">Pehle backup le lein. Reset wapas nahi hota.</p><div class="row2">${Object.keys(NODES).map(k=>`<button class="dg" data-a="rs" data-p="${k}">${k}</button>`).join('')}</div>`;
+}
+
+/* ===== ACTIONS ===== */
+const ACT={
+  scan,
+  async uv(p){const u=U[p]||{},[ib,pu,au]=await Promise.all([get('wa_inbox/'+p),get('wa_push/'+p),get('wa_auth/'+p)]);
+    modal(`<div class="row2"><b style="flex:1">${esc(u.name)}</b><button class="sm" onclick="cm()">✕</button></div><p>📱 ${p}<br>About: ${esc(u.about||'-')}<br>Status: ${u.online?'online':'last seen '+tm(u.lastSeen)}<br>Password set: ${au?'haan':'nahi'}<br>Push devices: ${Object.keys(pu||{}).length}</p><h3>Chats</h3>${Object.entries(ib||{}).map(([k,v])=>`<div class="msg"><small>${esc(chatTitle(k.startsWith('g_')?k:[p,k].sort().join('_')))} · ${tm(v.ts)} · unread ${v.unread||0}</small>${esc(v.last)}</div>`).join('')||'<p class="mut">Koi chat nahi</p>'}`)},
+  async ue(p){const u=U[p]||{},n=prompt('Naam',u.name);if(n===null)return;const a=prompt('About',u.about||'');if(a===null)return;await R('wa_users/'+p).update({name:n.trim()||u.name,about:a});toast('Update ho gaya')},
+  async pw(p){const c=prompt('Naya password likhein (4+ harf).\nKhali chhorein to password hat jayega aur user agli baar login par naya password bana sakega:');if(c===null)return;
+    if(!c){await R('wa_auth/'+p).remove();return toast('Password reset: user naya bana sakta hai')}
+    if(c.length<4)return alert('Kam az kam 4 harf');await R('wa_auth/'+p).set(await sha('wa'+c));toast('Password set ho gaya')},
+  async ud(p){if(!ask('DELETE','User "'+nm(p)+'" ka account delete hoga (messages rahenge).'))return;
+    const up={};['wa_users','wa_auth','wa_push','wa_inbox','wa_ring'].forEach(n=>up[`${n}/${p}`]=null);Object.entries(G).forEach(([k,g])=>{if((g.members||{})[p])up[`wa_groups/${k}/members/${p}`]=null});
+    await R('/').update(up);toast('User delete ho gaya')},
+  co:openChat,
+  async cd(id){if(!ask('DELETE','Ye chat aur is ke sab messages delete honge.'))return;await wipeChat(id);toast('Chat delete');chats()},
+  async md(id,k){await R(`wa_chats/${id}/messages/${k}`).remove();openChat(id)},
+  gv(k){const g=G[k];modal(`<div class="row2"><b style="flex:1">${esc(g.name)}</b><button class="sm" onclick="cm()">✕</button></div>${Object.keys(g.members||{}).map(p=>`<div class="r"><div class="n">${esc(nm(p))}${p==g.admin?' (admin)':''}<small>${p}</small></div><button class="sm dg" data-a="gm" data-p="${k}" data-q="${p}">Remove</button></div>`).join('')}`)},
+  async gm(k,p){await R(`wa_groups/${k}/members/${p}`).remove();await R(`wa_inbox/${p}/g_${k}`).remove();cm();toast('Member remove')},
+  async gr(k){const n=prompt('Naya naam',G[k].name);if(n&&n.trim())await R(`wa_groups/${k}/name`).set(n.trim())},
+  async gd(k){if(!ask('DELETE','Group "'+G[k].name+'" aur is ki chat delete hogi.'))return;await wipeChat('g_'+k);await R('wa_groups/'+k).remove();toast('Group delete')},
+  async sd(k){await R('wa_status/'+k).remove();status()},
+  async sold(){const S=await get('wa_status')||{},up={};Object.entries(S).forEach(([k,s])=>{if(s.ts<Date.now()-864e5)up['wa_status/'+k]=null});await R('/').update(up);toast(Object.keys(up).length+' purane status delete');status()},
+  async rd(p){await R('wa_ring/'+p).remove();livep()},
+  async rm(k){await R('wa_rooms/'+k).remove();livep()},
+  async pd(p){await R('wa_push/'+p).remove();livep()},
+  async tpush(){const p=$('#tp').value.replace(/\D/g,'');if(!p)return;$('#tpr').textContent='Bhej raha hoon…';
+    try{const r=await(await fetch(WORKER,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({to:[p],kind:'m'})})).json();$('#tpr').textContent=r.sent?'Bhej di gayi ('+r.sent+' device)':'Koi device registered nahi'}catch(e){$('#tpr').textContent='Worker error'}},
+  async bk(){const n=$('#bk').value,v=await get(n),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(v,null,1)],{type:'application/json'}));a.download=n+'_'+new Date().toISOString().slice(0,10)+'.json';a.click()},
+  async old(){const d=+$('#od').value;if(!d||!ask('DELETE','Har chat ke '+d+' din se purane messages delete honge.'))return;
+    const cut=Date.now()-d*864e5,ids=await shallow('wa_chats');let n=0,i=0;
+    for(const id of ids){$('#op').textContent=`${++i}/${ids.length}`;const m=await get(`wa_chats/${id}/messages`)||{},up={};
+      Object.entries(m).forEach(([k,x])=>{if(x.ts&&x.ts<cut)up[`wa_chats/${id}/messages/${k}`]=null});if(Object.keys(up).length){n+=Object.keys(up).length;await R('/').update(up)}}
+    $('#op').textContent='';toast(n+' messages delete');SC=null},
+  async rs(k){const full=k.startsWith('Sab'),w=full?'DELETE ALL':'RESET';if(!ask(w,'"'+k+'" ka data hamesha ke liye delete hoga.'))return;
+    const up={};NODES[k].forEach(n=>up[n]=null);
+    if(k.startsWith('Groups'))for(const g of Object.keys(G))await wipeChat('g_'+g);
+    await R('/').update(up);SC=null;toast('Reset mukammal')}
+};
+</script></body></html>
