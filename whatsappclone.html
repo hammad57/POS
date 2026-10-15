@@ -161,7 +161,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ====== SETTINGS ====== */
-const PUSH_URL='';   // Cloudflare Worker ka URL yahan likhein (band app par notification ke liye)
+const PUSH_URL='https://walclone-push.mysw786.workers.dev';   // Cloudflare Worker ka URL yahan likhein (band app par notification ke liye)
 const VAPID_PUB='BCOXyUWncyxLQaSn8LXOwa6-Yw9siIYP1Kv9Kd0_2oS-sLVYKlTEBEVw8AhYObtljfI2eP0ygmwRsbJqPyryuqE';
 const METERED_APP='waclone';  // metered.ca app name (e.g. 'myapp' => myapp.metered.live)
 const METERED_KEY='2f08278fc724d5f100c61bf4ffb961e966b3';  // metered.ca API key
@@ -223,6 +223,15 @@ async function enableNotif(manual){
     else if(Notification.permission==='denied'&&manual)alert('Notifications block hain. Chrome menu → Site settings → Notifications mein is site ko Allow karein.');
   }
   chkBanner();
+}
+function ringPush(room,targets){
+  let n=0;const iv=setInterval(async()=>{
+    n++;if(!call||call.room!=room||call.connected||n>8)return clearInterval(iv);
+    let any=false;for(const t of targets){try{if((await db.ref('wa_ring/'+t).get()).val())any=true}catch(e){}}
+    if(!any)return clearInterval(iv);
+    sendPush(targets,'c');
+  },5000);
+  if(call)call.rpi=iv;
 }
 function sendPush(to,kind){
   if(!PUSH_URL||!to.length)return;
@@ -530,7 +539,7 @@ async function startCall(video){
   call.targets=targets;
   const r={room,from:me.phone,name:isG(cur)?groups[cur].name+' • '+me.name:me.name,video:!!video,ts:TS};
   targets.forEach(t=>db.ref('wa_ring/'+t).set(r));
-  sendPush(targets,'c');startBack();
+  sendPush(targets,'c');startBack();ringPush(room,targets);
   setTimeout(()=>{if(call&&call.room==room&&!call.connected){endCall();alert('Koi jawab nahi diya')}},45000);
 }
 async function joinRoom(room,video){
@@ -605,6 +614,7 @@ function tg(x){
 }
 function endCall(){
   if(!call)return;const c=call;call=null;
+  clearInterval(c.rpi);if(!c.connected&&c.targets&&c.targets.length)sendPush(c.targets,'x');
   c.off.forEach(f=>f());Object.values(c.pcs).forEach(p=>p.close());c.stream.getTracks().forEach(t=>t.stop());
   stopBack();stopRing();
   const r=db.ref('wa_rooms/'+c.room);r.child('peers/'+me.phone).remove();r.child('sig/'+me.phone).remove();
