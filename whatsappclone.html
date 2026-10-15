@@ -97,7 +97,9 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 #offb{display:none;background:#fff3cd;color:#664d03;font-size:13px;padding:7px 12px;gap:8px;align-items:center;flex-wrap:wrap}#offb button{font-size:13px;background:#00a884;color:#fff;border-radius:14px;padding:4px 11px}
 #snd{display:none;position:fixed;bottom:0;left:0;right:0;background:#ffd54f;color:#000;text-align:center;padding:12px;z-index:99;font-size:14px;cursor:pointer;font-weight:600}
 .tl.a video{opacity:0}.tl.a::before{content:attr(data-i);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:700;color:#fff;background:#2a3942}
-#rg{width:min(92%,360px)}
+#rg{position:fixed;inset:0;top:0;left:0;transform:none;width:100%;max-width:none;border-radius:0;box-shadow:none;background:linear-gradient(#0e4a5c,#08161f);color:#fff;z-index:95;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(90px + env(safe-area-inset-top,0px)) 20px calc(70px + env(safe-area-inset-bottom,0px))}
+#rg .cb{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;opacity:.9}
+#rg .cb button{width:74px;height:74px;border-radius:50%;font-size:30px;color:#fff;box-shadow:0 4px 16px #0008}
 @media(max-width:760px){
 #side{width:100%;float:none;position:absolute;inset:0;z-index:2;background:#fff}
 #main{margin-left:0;position:absolute;inset:0}
@@ -188,7 +190,7 @@ function tone(f,d,v,at,ty){
 }
 function ringOnce(){[0,.5].forEach(a=>{tone(880,.18,.35,a);tone(1109,.18,.35,a+.2);tone(1319,.25,.35,a+.4)})}
 function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
-var ringAud=null;
+var ringAud=null,autoAcc=0;
 const TONES={
   classic:{n:'Classic',iv:2500,p:()=>{[0,.5].forEach(a=>{tone(880,.18,.35,a);tone(1109,.18,.35,a+.2);tone(1319,.25,.35,a+.4)})}},
   melody:{n:'Melody',iv:3000,p:()=>{[523,659,784,1047,784,659].forEach((f,i)=>tone(f,.28,.3,i*.3))}},
@@ -331,7 +333,8 @@ function start(){
   db.ref('wa_ring/'+me.phone).on('value',s=>ring(s.val()));
   emojiInit();
   regSW().then(()=>{if(window.Notification&&Notification.permission==='granted')setupPush()});
-  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.open)openChat(e.data.open)});
+  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(!e.data)return;if(e.data.open)openChat(e.data.open);if(e.data.accept){if(rg)acc();else{autoAcc=1;setTimeout(()=>autoAcc=0,15000)}}});
+  if(new URLSearchParams(location.search).get('accept')){autoAcc=1;setTimeout(()=>autoAcc=0,15000)}
   const qc=new URLSearchParams(location.search).get('chat');if(qc)setTimeout(()=>openChat(qc),1500);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&swReg)swReg.getNotifications().then(l=>l.forEach(n=>{if(n.tag!=='call'||!rg)n.close()})).catch(()=>{})});
   setTimeout(chkBanner,900);
@@ -667,8 +670,10 @@ function ring(v){
   const e=$('#rg');
   if(!v||Date.now()+so-v.ts>6e4||call){e.style.display='none';rg=null;stopRing();return}
   if(rg&&rg.room==v.room&&ringT)return;
-  rg=v;e.innerHTML=`<b>${esc(v.name)}</b><br>${v.video?'🎥 Video':'📞 Audio'} call aa rahi hai<br><br><button class="btn" style="background:#25d366;width:auto;padding:8px 18px" onclick="acc()">Accept</button> <button class="btn" style="background:#e53935;width:auto;padding:8px 18px" onclick="dec()">Decline</button>`;
-  e.style.display='block';startRing();
+  rg=v;e.innerHTML=`<div style="text-align:center"><div style="font-size:15px;opacity:.85">${v.video?'🎥 Incoming video call':'📞 Incoming audio call'}</div><div style="font-size:30px;font-weight:700;margin:10px 0 26px;padding:0 10px">${esc(v.name)}</div><div class="av" style="width:120px;height:120px;font-size:52px;margin:0 auto;background:#ffffff30">${esc(ini(v.name))}</div><div style="margin-top:24px;opacity:.7;letter-spacing:3px;font-size:13px">CALLING…</div></div><div style="display:flex;gap:90px"><div class="cb"><button onclick="dec()" style="background:#e53935">📞</button>Decline</div><div class="cb"><button onclick="acc()" style="background:#25d366">📞</button>Accept</div></div>`;
+  e.style.display='flex';
+  if(autoAcc){autoAcc=0;setTimeout(acc,400);return}
+  startRing();
   clearTimeout(rgt);rgt=setTimeout(()=>{e.style.display='none';stopRing();rg=null},45000);
   if(document.hidden&&!PUSH_URL)notify('📞 '+v.name,(v.video?'Video':'Audio')+' call aa rahi hai','call',{call:1});
 }
