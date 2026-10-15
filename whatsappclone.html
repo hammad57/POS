@@ -80,6 +80,20 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 #cc{display:flex;gap:20px;justify-content:center;padding:16px}
 #cc button{width:56px;height:56px;border-radius:50%;background:#3b4a54}
 #rg{display:none;position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#fff;color:#111;padding:16px 22px;border-radius:12px;box-shadow:0 4px 20px #0006;z-index:95;text-align:center}
+#call{background:#000;overflow:hidden}
+#ct{position:absolute;top:0;left:0;right:0;z-index:10;padding:14px 14px 30px;text-align:center;font-size:14px;background:linear-gradient(#000b,transparent);pointer-events:none;padding-top:calc(14px + env(safe-area-inset-top,0px))}
+#tiles{position:absolute;inset:0;display:block;padding:0;gap:0}
+.tl{position:absolute;min-height:0;background:#1f2c34;border-radius:0;transition:top .25s,width .25s,height .25s}
+.tl video{width:100%;height:100%;object-fit:cover}
+.tl.big{inset:0;z-index:1;border-radius:0}
+.tl.big span{left:14px;bottom:110px}
+.tl.sm{right:12px;width:104px;height:150px;border-radius:14px;z-index:6;border:2px solid #fff7;cursor:pointer;box-shadow:0 3px 12px #0009}
+.tl.sm span{display:none}
+.tl.self video{transform:scaleX(-1)}.tl.self.env video{transform:none}
+.tl.sm.a::before{font-size:34px}.tl.self.a.sm{display:none}
+#cc{position:absolute;bottom:0;left:0;right:0;z-index:10;gap:16px;padding:40px 16px calc(22px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,#000b)}
+#cc button{width:58px;height:58px;font-size:24px;background:#ffffff30;backdrop-filter:blur(6px)}
+#cc .endb{background:#e53935;width:68px;height:68px}
 #snd{display:none;position:fixed;bottom:0;left:0;right:0;background:#ffd54f;color:#000;text-align:center;padding:12px;z-index:99;font-size:14px;cursor:pointer;font-weight:600}
 .tl.a video{opacity:0}.tl.a::before{content:attr(data-i);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:700;color:#fff;background:#2a3942}
 #rg{width:min(92%,360px)}
@@ -138,7 +152,7 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 <div id="vf"><span id="vo"><button id="vl" onclick="likeS()">🤍</button><input id="sc" placeholder="Comment likhein..." onfocus="clearTimeout(vt)" onkeydown="if(event.key=='Enter')comS()"><button onclick="comS()">➤</button></span>
 <span id="vw" style="display:none;justify-content:center"><button id="vi" onclick="infoS()" style="background:#fff2;border-radius:20px;padding:8px 18px;font-size:16px"></button><button onclick="delS()">🗑️</button></span></div></div>
 <input id="sf" type="file" accept="image/*,video/*" hidden onchange="postStatusFile(this)">
-<div id="call"><div id="ct"></div><div id="tiles"></div><div id="cc"><button id="cm" onclick="tg('a')">🎤</button><button id="cv" onclick="tg('v')">📷</button><button onclick="endCall()" style="background:#e53935">📞</button></div></div>
+<div id="call"><div id="ct"></div><div id="tiles"></div><div id="cc"><button id="cf" onclick="flip()" title="Camera badlein">🔄</button><button id="cv" onclick="tg('v')" title="Camera on/off">📷</button><button class="endb" onclick="endCall()" title="Call khatam">📞</button><button id="cm" onclick="tg('a')" title="Mute">🎤</button></div></div>
 
 <script>
 firebase.initializeApp({databaseURL:"https://earn-platform-76c26-default-rtdb.firebaseio.com",projectId:"earn-platform-76c26"});
@@ -149,8 +163,8 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 /* ====== SETTINGS ====== */
 const PUSH_URL='';   // Cloudflare Worker ka URL yahan likhein (band app par notification ke liye)
 const VAPID_PUB='BCOXyUWncyxLQaSn8LXOwa6-Yw9siIYP1Kv9Kd0_2oS-sLVYKlTEBEVw8AhYObtljfI2eP0ygmwRsbJqPyryuqE';
-const METERED_APP='';  // metered.ca app name (e.g. 'myapp' => myapp.metered.live)
-const METERED_KEY='';  // metered.ca API key
+const METERED_APP='waclone';  // metered.ca app name (e.g. 'myapp' => myapp.metered.live)
+const METERED_KEY='2f08278fc724d5f100c61bf4ffb961e966b3';  // metered.ca API key
 /* ====== AUDIO / RINGTONE ====== */
 let AC=null,ringT=null,backT=null,so=0,inReady=0,rgt=null,pushId=localStorage.wa_pid||'';
 function unlockAudio(){
@@ -522,8 +536,8 @@ async function startCall(video){
 async function joinRoom(room,video){
   let st;try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:video?{facingMode:'user'}:false})}catch(e){return alert('Microphone/Camera ki ijazat chahiye')}
   const ICE=await getIce();
-  call={room,video,pcs:{},stream:st,off:[],targets:[],ICE};
-  $('#call').style.display='flex';setCT('calling…');$('#cv').style.display=video?'':'none';
+  call={room,video,pcs:{},stream:st,off:[],targets:[],ICE,fm:'user',main:null};
+  $('#call').style.display='flex';setCT('calling…');$('#cv').style.display=video?'':'none';$('#cf').style.display=video?'':'none';
   tile(me.phone,st,1);
   const pr=db.ref(`wa_rooms/${room}/peers`),ex=Object.keys((await pr.get()).val()||{});
   pr.child(me.phone).set(true);pr.child(me.phone).onDisconnect().remove();
@@ -555,16 +569,34 @@ function onSig(x){
 }
 function tile(p,st,self){
   let t=$('#tl'+p);
-  if(!t){t=document.createElement('div');t.id='tl'+p;t.className='tl';t.innerHTML='<video autoplay playsinline></video><span></span>';$('#tiles').appendChild(t)}
+  if(!t){t=document.createElement('div');t.id='tl'+p;t.className='tl'+(self?' self':'');t.onclick=()=>{if(call&&t.classList.contains('sm')){call.main=p;layout()}};t.innerHTML='<video autoplay playsinline></video><span></span>';$('#tiles').appendChild(t)}
   const vd=t.firstChild;vd.srcObject=st;vd.muted=!!self;t.lastChild.textContent=self?'You':nm(p);
   t.dataset.i=ini(self?me.name:nm(p));t.classList.toggle('a',!(call&&call.video));
   const pl=vd.play&&vd.play();if(pl)pl.catch(()=>{$('#snd').style.display='block'});
   if(!self&&call){call.connected=1;stopBack()}
+  layout();
 }
 function drop(p){
   if(!call)return;const pc=call.pcs[p];if(pc){pc.close();delete call.pcs[p]}
-  const t=$('#tl'+p);if(t)t.remove();
+  const t=$('#tl'+p);if(t)t.remove();if(call.main==p)call.main=null;layout();
   if(call.connected&&!Object.keys(call.pcs).length)endCall();
+}
+function layout(){
+  if(!call)return;const ts=[...document.querySelectorAll('#tiles .tl')];if(!ts.length)return;
+  const rem=ts.filter(t=>!t.classList.contains('self'));
+  const m=(call.main&&ts.find(t=>t.id==='tl'+call.main))||rem[0]||ts[0];let i=0;
+  ts.forEach(t=>{const big=t===m;t.classList.toggle('big',big);t.classList.toggle('sm',!big);
+    if(big)t.style.top='';else{const hide=t.classList.contains('self')&&!call.video;t.style.top=(Math.max(70,70)+(hide?0:i++*162))+'px'}});
+}
+async function flip(){
+  if(!call||!call.video)return;const fm=call.fm=='user'?'environment':'user';
+  try{
+    const ns=await navigator.mediaDevices.getUserMedia({video:{facingMode:fm}}),nt=ns.getVideoTracks()[0],old=call.stream.getVideoTracks()[0];
+    if(old){nt.enabled=old.enabled;call.stream.removeTrack(old);old.stop()}
+    call.stream.addTrack(nt);call.fm=fm;
+    Object.values(call.pcs).forEach(pc=>{const s=pc.getSenders().find(s=>s.track&&s.track.kind=='video');if(s)s.replaceTrack(nt)});
+    const t=$('#tl'+me.phone);if(t){t.firstChild.srcObject=call.stream;t.classList.toggle('env',fm=='environment')}
+  }catch(e){alert('Camera switch nahi ho saka')}
 }
 function setCT(s){if(call)$('#ct').textContent=(call.video?'🎥 Video':'📞 Audio')+' call • '+s}
 function tg(x){
