@@ -136,6 +136,11 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 #cinfo .coav{width:110px;height:110px;border-radius:50%;background:#ffffff2e;font-size:44px;display:flex;align-items:center;justify-content:center;font-weight:700}
 #cinfo h2{margin:18px 12px 6px;font-size:24px;font-weight:600}
 #cinfo p{opacity:.85;font-size:16px;font-variant-numeric:tabular-nums}
+#side{position:relative}
+#list{padding-bottom:150px}
+#fabs{position:absolute;left:16px;bottom:28px;display:flex;flex-direction:column;gap:12px;z-index:5}
+.fab{width:54px;height:54px;border-radius:50%;background:#00a884;color:#fff;font-size:24px;box-shadow:0 3px 10px #0004}
+.fab.g{background:#6b7c85}
 @media(max-width:760px){
 #side{width:100%;float:none;position:absolute;inset:0;z-index:2;background:#fff}
 #main{margin-left:0;position:absolute;inset:0}
@@ -153,10 +158,11 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 <div id="app">
 <div id="side">
 <div class="top"><button onclick="drawer(1)">☰</button><b>WhatsApp Clone</b>
-<button title="New chat" onclick="allMode=!allMode;setTab('chats')">💬</button><button title="New group" onclick="newGroup()">👥</button><button title="New message" onclick="newMsg()">📝</button></div>
+<button title="New chat" onclick="allMode=!allMode;setTab('chats')">💬</button></div>
 <div class="tabs"><div id="t1" class="on" onclick="setTab('chats')">CHATS</div><div id="t2" onclick="setTab('status')">STATUS</div></div>
 <input id="q" placeholder="Search ya naya chat..." oninput="renderList()">
 <div id="list"></div>
+<div id="fabs"><button class="fab g" title="New group" onclick="newGroup()">👥</button><button class="fab" title="New message" onclick="newMsg()">📝</button></div>
 </div>
 <div id="main">
 <div id="empty">WhatsApp Clone<br>Chat shuru karne ke liye kisi contact ya group ko select karein</div>
