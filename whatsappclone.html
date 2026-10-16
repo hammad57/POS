@@ -6,12 +6,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#008069">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="WA Clone">
 <title>WhatsApp Clone</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif}
-html,body{height:100%;background:#d1d7db}
+html,body{height:100%;background:#d1d7db;overscroll-behavior-y:contain}
 body.dark{filter:invert(.9) hue-rotate(180deg)}
 body.dark img,body.dark video{filter:invert(1) hue-rotate(180deg)}
 button{cursor:pointer;border:0;background:none;font-size:20px;color:inherit}
@@ -121,6 +123,19 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 18px;border-radius:20px;z-index:130;display:none;font-size:14px;max-width:92%;text-align:center;box-shadow:0 4px 16px #0005}
 .bgsw{width:54px;height:54px;border-radius:10px;border:2px solid transparent;cursor:pointer;object-fit:cover;background:#eee}
 .bgsw.on{border-color:#00a884}
+.top{padding-top:calc(10px + env(safe-area-inset-top,0px))}
+#cc{gap:12px}
+#cc button.cb{width:52px;height:52px;font-size:22px}
+#cc .endb{width:64px;height:64px}
+#cc .endb,#callout .cbtns .endb{transform:rotate(135deg)}
+.cb.act{background:#fff!important;color:#111!important}
+#cinfo{display:none;position:absolute;inset:0;z-index:2;flex-direction:column;align-items:center;text-align:center;background:radial-gradient(circle at 50% 28%,#0e5f57,#042e2a 72%);padding-top:16vh}
+#call.aud #cinfo{display:flex}
+#call.aud #tiles{opacity:0;pointer-events:none}
+#call.aud #ct{display:none}
+#cinfo .coav{width:110px;height:110px;border-radius:50%;background:#ffffff2e;font-size:44px;display:flex;align-items:center;justify-content:center;font-weight:700}
+#cinfo h2{margin:18px 12px 6px;font-size:24px;font-weight:600}
+#cinfo p{opacity:.85;font-size:16px;font-variant-numeric:tabular-nums}
 @media(max-width:760px){
 #side{width:100%;float:none;position:absolute;inset:0;z-index:2;background:#fff}
 #main{margin-left:0;position:absolute;inset:0}
@@ -167,7 +182,7 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 <div class="di" onclick="about()">ℹ️ About</div>
 <div class="di" onclick="shareApp()">📤 Share app</div>
 <div class="di" onclick="dlApp()">⬇️ Download app</div>
-<div class="di" style="color:#667781;cursor:default">🏷️ Version 2.1.0</div>
+<div class="di" style="color:#667781;cursor:default">🏷️ Version 2.2.0</div>
 <div class="di" onclick="logout()" style="color:#c0392b">⎋ Logout</div>
 <div style="text-align:center;padding:12px;color:#8696a0;font-size:12px;border-top:1px solid #f0f0f0">Powered by <b style="color:#008069">Muluk Hussain</b></div></div>
 <div id="drb" onclick="drawer(0)"></div>
@@ -180,8 +195,8 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 <div id="vf"><span id="vo"><button id="vl" onclick="likeS()">🤍</button><input id="sc" placeholder="Comment likhein..." onfocus="clearTimeout(vt)" onkeydown="if(event.key=='Enter')comS()"><button onclick="comS()">➤</button></span>
 <span id="vw" style="display:none;justify-content:center"><button id="vi" onclick="infoS()" style="background:#fff2;border-radius:20px;padding:8px 18px;font-size:16px"></button><button onclick="delS()">🗑️</button></span></div></div>
 <input id="sf" type="file" accept="image/*,video/*" hidden onchange="postStatusFile(this)">
-<div id="call"><div id="ct"></div><div id="tiles"></div><div id="cc"><button id="cf" onclick="flip()" title="Camera badlein">🔄</button><button id="cv" onclick="tg('v')" title="Camera on/off">📷</button><button class="endb" onclick="endCall()" title="Call khatam">📞</button><button id="cm" onclick="tg('a')" title="Mute">🎤</button></div></div>
-<div id="callout"><div class="coav" id="coav">?</div><h2 id="coname"></h2><p id="cost">Calling…</p><div class="cbtns"><button onclick="tg('a')" title="Mute">🎤</button><button id="csp" onclick="tgSpk()" title="Speaker">🔊</button><button class="endb" onclick="endCall()" title="Call khatam">📞</button></div></div>
+<div id="call"><div id="cinfo"><div class="coav" id="cia">?</div><h2 id="cin"></h2><p id="cip"></p></div><div id="ct"></div><div id="tiles"></div><div id="cc"><button class="cb" id="cf" onclick="flip()" title="Camera badlein">🔄</button><button class="cb vbn" id="cv" onclick="tg('v')" title="Camera on/off">📷</button><button class="cb act" id="cs" onclick="tgSpk()" title="Speaker on/off">🔊</button><button class="cb mb" id="cm" onclick="tg('a')" title="Mute">🎤</button><button class="endb" onclick="endCall()" title="Call khatam">📞</button></div></div>
+<div id="callout"><div class="coav" id="coav">?</div><h2 id="coname"></h2><p id="cost">Calling…</p><div class="cbtns"><button class="cb mb" onclick="tg('a')" title="Mute">🎤</button><button class="cb act" id="csp" onclick="tgSpk()" title="Speaker on/off">🔊</button><button class="endb" onclick="endCall()" title="Call khatam">📞</button></div></div>
 <div id="toast"></div>
 
 <script>
@@ -305,7 +320,7 @@ function logout(){
   db.ref('wa_users/'+me.phone).update({online:false,lastSeen:TS});
   if(pushId)db.ref(`wa_push/${me.phone}/${pushId}`).remove();
   try{if(swReg)swReg.pushManager.getSubscription().then(s=>s&&s.unsubscribe())}catch(e){}
-  localStorage.removeItem('wa_pid');localStorage.removeItem('wa_me');setTimeout(()=>location.reload(),300);
+  localStorage.removeItem('wa_pid');localStorage.removeItem('wa_me');clearLocal();setTimeout(()=>location.reload(),300);
 }
 function profile(){
   $('#dn').textContent=me.name;$('#dav').textContent=ini(me.name);$('#dab').textContent=me.about||'';
@@ -313,13 +328,14 @@ function profile(){
 function start(){
   $('#login').style.display='none';$('#app').style.display='block';
   if(me.dark)document.body.classList.add('dark');profile();
+  loadL();try{if(localStorage.wa_tab=='status')setTab('status');else renderList()}catch(e){renderList()}
   db.ref('.info/connected').on('value',s=>{
     if(!s.val())return;const r=db.ref('wa_users/'+me.phone);
     r.update({name:me.name,phone:me.phone,about:me.about||'',online:true});
     r.onDisconnect().update({online:false,lastSeen:TS});
   });
-  db.ref('wa_users').on('value',s=>{users=s.val()||{};renderList();head()});
-  db.ref('wa_groups').on('value',s=>{groups={};s.forEach(c=>{const g=c.val();if(g.members&&g.members[me.phone])groups['g_'+c.key]=g});renderList();head()});
+  db.ref('wa_users').on('value',s=>{users=s.val()||{};renderList();head();saveL()});
+  db.ref('wa_groups').on('value',s=>{groups={};s.forEach(c=>{const g=c.val();if(g.members&&g.members[me.phone])groups['g_'+c.key]=g});renderList();head();saveL()});
   db.ref('.info/serverTimeOffset').on('value',s=>so=s.val()||0);
   db.ref('wa_inbox/'+me.phone).on('value',s=>{
     const n=s.val()||{};
@@ -328,23 +344,25 @@ function start(){
         beep();
         if(document.hidden&&!PUSH_URL)notify(isG(k)?nm(k)+' • '+nm(v.from):nm(v.from),v.last||'Naya message',k,{k});
       }});
-    inbox=n;inReady=1;renderList()});
+    inbox=n;inReady=1;renderList();saveL()});
   db.ref('wa_status').orderByChild('ts').startAt(Date.now()-864e5).on('value',s=>{statuses=s.val()||{};renderList();updS()});
   db.ref('wa_ring/'+me.phone).on('value',s=>ring(s.val()));
   emojiInit();
   regSW().then(()=>{if(window.Notification&&Notification.permission==='granted')setupPush()});
-  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.open)openChat(e.data.open)});
+  const tryAcc=n=>{if(rg){acc();return}if(n>0)setTimeout(()=>tryAcc(n-1),500)};
+  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{const d=e.data||{};if(d.open)openChat(d.open);if(d.accept)tryAcc(12)});
+  if(new URLSearchParams(location.search).get('accept'))tryAcc(16);
   const qc=new URLSearchParams(location.search).get('chat');if(qc)setTimeout(()=>openChat(qc),1500);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&swReg)swReg.getNotifications().then(l=>l.forEach(n=>{if(n.tag!=='call'||!rg)n.close()})).catch(()=>{})});
   setTimeout(chkBanner,900);
   applyBg();
   let rcur=null;try{rcur=localStorage.wa_cur}catch(e){}
-  if(rcur)setTimeout(()=>{try{openChat(rcur)}catch(e){}},1800);
+  if(rcur){try{openChat(rcur)}catch(e){}}
 }
 function drawer(o){$('#app').classList[o?'add':'remove']('dro')}
 function modal(h){$('#mdb').innerHTML=h;$('#md').style.display='flex'}
 function closeM(){$('#md').style.display='none'}
-function setTab(t){tab=t;$('#t1').className=t=='chats'?'on':'';$('#t2').className=t=='status'?'on':'';$('#q').style.display=t=='chats'?'':'none';renderList()}
+function setTab(t){tab=t;try{localStorage.wa_tab=t}catch(e){}$('#t1').className=t=='chats'?'on':'';$('#t2').className=t=='status'?'on':'';$('#q').style.display=t=='chats'?'':'none';renderList()}
 
 function settings(){
   drawer(0);
@@ -365,7 +383,7 @@ async function savePw(){
   await db.ref('wa_auth/'+me.phone).set(await sha(n));closeM();alert('Password badal gaya');
 }
 function help(){drawer(0);modal(`<h3>❓ Help</h3><p><b>Chat:</b> list mein 💬 dabayein ya search karke user chunein.</p><p><b>Message delete / reaction:</b> message par long press (computer par right click) karein.</p><p><b>Group:</b> 👥 dabayein, naam likhein aur members chunein.</p><p><b>Call:</b> chat ke upar 📞 ya 🎥 dabayein. Group mein sab members ko call jati hai.</p><p><b>Status:</b> STATUS tab mein text, photo ya video lagayein. Aap dekh sakte hain kis ne dekha, like ya comment kiya.</p><p><b>Files:</b> 📎 se 5MB tak ki photo, video ya file bhejein.</p><button class="btn" onclick="closeM()">Theek hai</button>`)}
-function about(){drawer(0);modal(`<h3>ℹ️ About</h3><p>WhatsApp Clone, version 2.1.0</p><p>Realtime chat, groups, status, audio/video calls aur file sharing. Data Firebase Realtime Database mein save hota hai.</p><button class="btn" onclick="closeM()">Band karein</button>`)}
+function about(){drawer(0);modal(`<h3>ℹ️ About</h3><p>WhatsApp Clone, version 2.2.0</p><p>Realtime chat, groups, status, audio/video calls aur file sharing. Data Firebase Realtime Database mein save hota hai.</p><button class="btn" onclick="closeM()">Band karein</button>`)}
 
 function renderList(){
   const L=$('#list');if(!me)return;
@@ -405,7 +423,7 @@ function openChat(k){
   }
   off=()=>offs.forEach(f=>f());markSeen();renderList();
 }
-function closeChat(){screen='main';try{localStorage.removeItem('wa_cur')}catch(e){}cacheFlush();$('#app').classList.remove('open');if(off)off();off=null;cur=null;$('#chat').style.display='none';$('#empty').style.display='flex'}
+function closeChat(){scr='main';try{localStorage.removeItem('wa_cur')}catch(e){}cacheFlush();$('#app').classList.remove('open');if(off)off();off=null;cur=null;$('#chat').style.display='none';$('#empty').style.display='flex'}
 function sub(){
   if(isG(cur)){const g=groups[cur];return g?Object.keys(g.members).map(p=>p==me.phone?'You':nm(p)).join(', '):''}
   const u=users[cur]||{};return u.online?'online':(u.lastSeen?'last seen '+day(u.lastSeen):'');
@@ -458,7 +476,7 @@ function bubble(k,m){
   d.oncontextmenu=e=>{e.preventDefault();menu(k,m)};
   d.ontouchstart=()=>{lp=setTimeout(()=>menu(k,m),500)};d.ontouchend=d.ontouchmove=()=>clearTimeout(lp);
   const b=$('#msgs');if(isNew)b.scrollTop=b.scrollHeight;
-  if(isNew&&!out)markSeen();ticks();cachePut(cur,k,m);
+  if(isNew&&!out)markSeen();ticks();cachePut(CID(cur),k,m);
 }
 function ticks(){if(isG(cur))return;document.querySelectorAll('.tk').forEach(e=>e.classList.toggle('s',oseen>0&&+e.dataset.ts<=oseen))}
 function menu(k,m){
@@ -511,13 +529,14 @@ async function rec(){
     rc=new MediaRecorder(st);chunks=[];
     rc.ondataavailable=e=>chunks.push(e.data);
     rc.onstop=()=>{
+      const mt=((rc&&rc.mimeType)||'audio/webm').split(';')[0];
       st.getTracks().forEach(t=>t.stop());stopWave();
       $('#vrec').classList.remove('on');b.textContent='🎤';
       if(rcDiscard){rcDiscard=false;rc=null;return}
       rc=null;
-      const bl=new Blob(chunks,{type:'audio/webm'});
+      const bl=new Blob(chunks,{type:mt});
       if(bl.size>5e6)return alert('Voice note bohot lamba hai');
-      const r=new FileReader();r.onload=()=>send({type:'audio',data:r.result,name:'voice.webm',size:bl.size});r.readAsDataURL(bl);
+      const r=new FileReader();r.onload=()=>send({type:'audio',data:r.result,name:'voice.'+(mt.includes('mp4')?'m4a':mt.includes('ogg')?'ogg':'webm'),size:bl.size});r.readAsDataURL(bl);
     };
     rc.start();b.textContent='⏹';
     $('#vrec').classList.add('on');recT0=Date.now();updTimer();
@@ -587,6 +606,7 @@ async function startCall(video){
   if(call||!cur)return;
   const targets=isG(cur)?Object.keys(groups[cur].members).filter(p=>p!=me.phone):[cur];
   const room=db.ref('wa_rooms').push().key;
+  setCI(isG(cur)?groups[cur].name:nm(cur));
   await joinRoom(room,video);if(!call)return;
   call.targets=targets;
   $('#coav').textContent=isG(cur)?'👥':ini(nm(cur));
@@ -602,8 +622,8 @@ async function startCall(video){
 async function joinRoom(room,video){
   let st;try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:video?{facingMode:'user'}:false})}catch(e){return alert('Microphone/Camera ki ijazat chahiye')}
   const ICE=await getIce();
-  call={room,video,pcs:{},stream:st,off:[],targets:[],ICE,fm:'user',main:null};
-  $('#call').style.display='flex';setCT('calling…');$('#cv').style.display=video?'':'none';$('#cf').style.display=video?'':'none';
+  call={room,video,pcs:{},stream:st,off:[],targets:[],ICE,fm:'user',main:null,spk:true,vol:1};
+  $('#call').classList.toggle('aud',!video);$('#call').style.display='flex';setCT('calling…');updSpk();$('#cv').style.display=video?'':'none';$('#cf').style.display=video?'':'none';
   tile(me.phone,st,1);
   const pr=db.ref(`wa_rooms/${room}/peers`),ex=Object.keys((await pr.get()).val()||{});
   pr.child(me.phone).set(true);pr.child(me.phone).onDisconnect().remove();
@@ -636,7 +656,7 @@ function onSig(x){
 function tile(p,st,self){
   let t=$('#tl'+p);
   if(!t){t=document.createElement('div');t.id='tl'+p;t.className='tl'+(self?' self':'');t.onclick=()=>{if(call&&t.classList.contains('sm')){call.main=p;layout()}};t.innerHTML='<video autoplay playsinline></video><span></span>';$('#tiles').appendChild(t)}
-  const vd=t.firstChild;vd.srcObject=st;vd.muted=!!self;t.lastChild.textContent=self?'You':nm(p);
+  const vd=t.firstChild;vd.srcObject=st;vd.muted=!!self;if(!self&&call&&call.vol!=null)vd.volume=call.vol;t.lastChild.textContent=self?'You':nm(p);
   t.dataset.i=ini(self?me.name:nm(p));t.classList.toggle('a',!(call&&call.video));
   const pl=vd.play&&vd.play();if(pl)pl.catch(()=>{$('#snd').style.display='block'});
   if(!self&&call){call.connected=1;stopBack();$('#callout').style.display='none'}
@@ -664,19 +684,31 @@ async function flip(){
     const t=$('#tl'+me.phone);if(t){t.firstChild.srcObject=call.stream;t.classList.toggle('env',fm=='environment')}
   }catch(e){alert('Camera switch nahi ho saka')}
 }
-function setCT(s){if(call)$('#ct').textContent=(call.video?'🎥 Video':'📞 Audio')+' call • '+s}
+function setCT(s){
+  if(!call)return;call.status=s=='connected'?'':s;
+  if(s=='connected'&&!call.t0){call.t0=Date.now();call.tmi=setInterval(callTick,1000)}
+  callTick();
+}
+function callTick(){
+  if(!call)return;const sec=call.t0?Math.floor((Date.now()-call.t0)/1000):0;
+  const tm=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0'),txt=call.status||(call.t0?tm:'connecting…');
+  $('#ct').textContent=(call.video?'🎥 Video':'📞 Audio')+' call • '+txt;$('#cip').textContent=txt;
+}
+function setCI(n){$('#cin').textContent=n||'';$('#cia').textContent=ini(n||'?')}
 function tg(x){
   if(!call)return;const t=x=='a'?call.stream.getAudioTracks():call.stream.getVideoTracks();
-  t.forEach(z=>z.enabled=!z.enabled);$(x=='a'?'#cm':'#cv').style.opacity=t[0]&&t[0].enabled?1:.4;
+  t.forEach(z=>z.enabled=!z.enabled);const on=!(t[0]&&!t[0].enabled);
+  document.querySelectorAll(x=='a'?'.mb':'.vbn').forEach(b=>{b.classList.toggle('act',!on);if(x=='a')b.textContent=on?'🎤':'🔇'});
 }
 function endCall(){
   if(!call)return;const c=call;call=null;
-  clearInterval(c.rpi);if(!c.connected&&c.targets&&c.targets.length)sendPush(c.targets,'x');
+  clearInterval(c.rpi);clearInterval(c.tmi);if(!c.connected&&c.targets&&c.targets.length)sendPush(c.targets,'x');
   c.off.forEach(f=>f());Object.values(c.pcs).forEach(p=>p.close());c.stream.getTracks().forEach(t=>t.stop());
   stopBack();stopRing();
   const r=db.ref('wa_rooms/'+c.room);r.child('peers/'+me.phone).remove();r.child('sig/'+me.phone).remove();
   c.targets.forEach(t=>db.ref('wa_ring/'+t).transaction(v=>v&&v.room==c.room?null:v));
-  $('#call').style.display='none';$('#callout').style.display='none';$('#tiles').innerHTML='';
+  $('#call').style.display='none';$('#call').classList.remove('aud');$('#callout').style.display='none';$('#tiles').innerHTML='';
+  document.querySelectorAll('.mb').forEach(b=>{b.classList.remove('act');b.textContent='🎤'});document.querySelectorAll('.vbn').forEach(b=>b.classList.remove('act'));
 }
 function ring(v){
   const e=$('#rg');
@@ -688,16 +720,18 @@ function ring(v){
   if(document.hidden&&!PUSH_URL)notify('📞 '+v.name,(v.video?'Video':'Audio')+' call aa rahi hai','call',{call:1});
 }
 function dec(){stopRing();clearTimeout(rgt);db.ref('wa_ring/'+me.phone).remove();$('#rg').style.display='none'}
-function acc(){const v=rg;if(!v)return;dec();rg=null;joinRoom(v.room,v.video)}
+function acc(){const v=rg;if(!v)return;dec();rg=null;setCI(v.name);joinRoom(v.room,v.video)}
 
 /* ===== BACK BUTTON / HISTORY / LOCAL CACHE / HELPERS ===== */
-let screen='main',lastRootBack=0,rcDiscard=false,recT0=0,recIv=null,recAn=null,cacheT=null;const cacheBuf={};
-try{history.replaceState({s:'main'},'');history.pushState({s:'main'},'')}catch(e){}
-function setScreen(s){screen=s;try{history.pushState({s},'')}catch(e){}}
+let scr='main',lastRootBack=0,exiting=false,rcDiscard=false,recT0=0,recIv=null,recAn=null,cacheT=null;const cacheBuf={};
+try{const st0=history.state;
+  if(!st0||!st0.s){history.replaceState({root:1,s:'main'},'');history.pushState({s:'main'},'')}
+  else if(st0.root){history.pushState({s:'main'},'')}
+}catch(e){}
+function setScreen(s){scr=s;try{if(history.state&&history.state.s===s)history.replaceState({s},'');else history.pushState({s},'')}catch(e){}}
 function toast(t){const e=$('#toast');if(!e)return;e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2200)}
 function topOverlay(){
-  if($('#callout').style.display=='flex')return()=>endCall();
-  if($('#call').style.display=='flex')return()=>endCall();
+  if($('#callout').style.display=='flex'||$('#call').style.display=='flex')return()=>toast('Call khatam karne ke liye laal button dabayein');
   if($('#md').style.display=='flex')return()=>closeM();
   if($('#viewer').style.display=='flex')return()=>closeV();
   if($('#app').classList.contains('dro'))return()=>drawer(0);
@@ -706,38 +740,63 @@ function topOverlay(){
   return null;
 }
 window.addEventListener('popstate',e=>{
+  if(exiting){
+    if(e.state&&e.state.root){exiting=false;toast('Ek baar aur back dabayein, app band ho jaye gi')}
+    else{try{history.back()}catch(e2){}}
+    return;
+  }
   const ov=topOverlay();
-  if(ov){ov();try{history.pushState({s:screen},'')}catch(e2){}return}
+  if(ov){ov();try{history.pushState({s:scr},'')}catch(e2){}return}
   const s=(e.state&&e.state.s)||'main';
-  if(screen=='chat'&&s=='main'){screen='main';closeChat();return}
-  if(screen=='main'){onRootBack();try{history.pushState({s:'main'},'')}catch(e2){}return}
-  screen=s;
+  if(scr=='chat'&&s=='main'){scr='main';closeChat();return}
+  if(scr=='main'){onRootBack();try{history.pushState({s:'main'},'')}catch(e2){}return}
+  scr=s;
 });
 function onRootBack(){
   const n=Date.now();
   if(n-lastRootBack<2000){lastRootBack=0;askExit()}else{lastRootBack=n;toast('Bahir nikalne ke liye dobara back dabayein')}
 }
 function askExit(){modal(`<h3>App band karein?</h3><p>Kya aap WhatsApp Clone band karna chahte hain?</p><div style="display:flex;gap:10px;margin-top:12px"><button class="btn" style="background:#e53935" onclick="doExit()">Yes</button><button class="btn" onclick="closeM()">No</button></div>`)}
-function doExit(){closeM();try{window.close()}catch(e){}setTimeout(()=>{if(!document.hidden)toast('App band karne ke liye browser ka tab band karein')},700)}
+function doExit(){closeM();exiting=true;try{window.close()}catch(e){}setTimeout(()=>{try{history.back()}catch(e){}},60)}
 /* chat messages ka local cache — refresh par foran load */
 function cachePut(chat,k,m){
   if(!chat)return;const c=cacheBuf[chat]=cacheBuf[chat]||{};
-  const cp=Object.assign({},m);if(cp.data&&cp.data.length>200000)cp.data=null;
-  c[k]=cp;const ks=Object.keys(c);if(ks.length>60)delete c[ks[0]];
+  const cp=Object.assign({},m);if(cp.data&&cp.data.length>60000)cp.data=null;
+  c[k]=cp;const ks=Object.keys(c);if(ks.length>50)delete c[ks[0]];
   clearTimeout(cacheT);cacheT=setTimeout(cacheFlush,600);
 }
-function cacheFlush(){try{for(const ch in cacheBuf)localStorage['wa_cache_'+ch]=JSON.stringify(cacheBuf[ch])}catch(e){}}
+function cacheFlush(){
+  for(const ch in cacheBuf){
+    const key='wa_cache_'+ch,val=JSON.stringify(cacheBuf[ch]);
+    try{localStorage[key]=val}catch(e){
+      try{Object.keys(localStorage).filter(x=>x.startsWith('wa_cache_')&&x!==key).forEach(x=>localStorage.removeItem(x));localStorage[key]=val}catch(e2){}
+    }
+  }
+}
 function cacheGet(chat){try{const o=JSON.parse(localStorage['wa_cache_'+chat]||'null');if(o&&typeof o=='object'){cacheBuf[chat]=o;return Object.entries(o)}}catch(e){}return null}
-/* chat background */
-function setBg(t,v,el){
-  document.querySelectorAll('.bgsw').forEach(x=>x.classList.remove('on'));if(el)el.classList.add('on');
+/* chat list (users/groups/inbox) ka local cache */
+let _sl=null;
+const ckey=n=>'wa_c_'+(me?me.phone:'x')+'_'+n;
+function saveL(){clearTimeout(_sl);_sl=setTimeout(()=>{try{localStorage[ckey('u')]=JSON.stringify(users);localStorage[ckey('g')]=JSON.stringify(groups);localStorage[ckey('i')]=JSON.stringify(inbox)}catch(e){}},400)}
+function loadL(){try{users=JSON.parse(localStorage[ckey('u')]||'{}');groups=JSON.parse(localStorage[ckey('g')]||'{}');inbox=JSON.parse(localStorage[ckey('i')]||'{}')}catch(e){}}
+function clearLocal(){try{Object.keys(localStorage).filter(k=>/^wa_(cache_|c_|cur|tab)/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){}}
+/* chat background (har user ke liye mobile mein save) */
+const bgKey=()=>'wa_bg_'+(me?me.phone:'');
+function paintBg(t,v){
   const m=$('#msgs');if(!m)return;
-  if(t=='image'){m.style.backgroundImage=`url("${v}")`;m.style.backgroundSize='cover';m.style.backgroundPosition='center';m.style.backgroundColor=''}
+  if(t=='image'&&v){m.style.backgroundImage='url("'+v+'")';m.style.backgroundSize='cover';m.style.backgroundPosition='center';m.style.backgroundColor=''}
   else{m.style.backgroundImage='';m.style.backgroundColor=v||''}
-  try{localStorage.wa_bg=JSON.stringify({t,v})}catch(e){}
+}
+async function setBg(t,v,el){
+  document.querySelectorAll('.bgsw').forEach(x=>x.classList.remove('on'));if(el)el.classList.add('on');
+  paintBg(t,v);let sv=v;
+  if(t=='image'&&v&&v.startsWith('http')){
+    try{const b=await(await fetch(v)).blob();sv=await new Promise((ok,no)=>{const f=new FileReader();f.onload=()=>ok(f.result);f.onerror=no;f.readAsDataURL(b)})}catch(e){}
+  }
+  try{localStorage[bgKey()]=JSON.stringify({t,v:sv})}catch(e){try{localStorage[bgKey()]=JSON.stringify({t,v})}catch(e2){}}
   toast('Background change ho gaya');
 }
-function applyBg(){try{const b=JSON.parse(localStorage.wa_bg||'null');if(b&&$('#msgs'))setBg(b.t,b.v)}catch(e){}}
+function applyBg(){try{const b=JSON.parse(localStorage[bgKey()]||localStorage.wa_bg||'null');if(b)paintBg(b.t,b.v)}catch(e){}}
 /* share / install */
 let _deferred=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferred=e});
@@ -746,14 +805,23 @@ async function shareApp(){
   if(navigator.share){try{await navigator.share(d)}catch(e){}}
   else{try{await navigator.clipboard.writeText(location.href);toast('Link copy ho gaya — ab share karein')}catch(e){prompt('Link copy karein:',location.href)}}
 }
+const isStandalone=()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+window.addEventListener('appinstalled',()=>toast('App install ho gayi'));
 async function dlApp(){
   drawer(0);
+  if(isStandalone()){toast('App pehle se install hai');return}
   if(_deferred){_deferred.prompt();try{const r=await _deferred.userChoice;if(r&&r.outcome=='accepted')toast('App install ho rahi hai')}catch(e){}_deferred=null;return}
   modal(`<h3>⬇️ Download app</h3><p>App ko mobile mein install karne ke liye:</p><p><b>Android (Chrome):</b> ⋮ menu → <b>"Add to Home screen"</b> ya <b>"Install app"</b> dabayein.</p><p><b>iPhone (Safari):</b> Share button → <b>"Add to Home Screen"</b> dabayein.</p><p>Phir home screen ke icon par tap karke app direct khulegi — link dobara search nahi karna parega.</p><button class="btn" onclick="closeM()">Theek hai</button>`);
 }
 /* naya message — naya number */
-function newMsg(){modal(`<h3>📝 Naya message</h3><p>Naya number likhein jis se chat karni hai:</p><input id="nmph" placeholder="Phone number (923001234567)" inputmode="numeric"><button class="btn" onclick="startNewMsg()">Start message</button>`)}
-function startNewMsg(){const p=$('#nmph').value.replace(/\D/g,'');if(p.length<6)return alert('Sahi phone number likhein');closeM();openChat(p)}
+function newMsg(){modal(`<h3>📝 Naya message</h3><p>Naya number likhein jis se chat karni hai:</p><input id="nmph" placeholder="Phone number (923001234567)" inputmode="numeric" onkeydown="if(event.key=='Enter')startNewMsg()"><button class="btn" onclick="startNewMsg()">Start message</button>`);setTimeout(()=>{const i=$('#nmph');if(i)i.focus()},100)}
+function startNewMsg(){
+  let p=$('#nmph').value.replace(/\D/g,'');if(p.length<6)return alert('Sahi phone number likhein');
+  if(!users[p]&&p[0]=='0'&&users['92'+p.slice(1)])p='92'+p.slice(1);
+  if(p==me.phone)return alert('Ye aap ka apna number hai');
+  closeM();if(!users[p])toast('Ye number abhi registered nahi hai. Jab woh login karega tab message dekh sakega');
+  openChat(p);
+}
 /* group settings */
 function gsettings(){
   if(!isG(cur))return;const g=groups[cur];if(!g)return;
@@ -775,15 +843,24 @@ async function mkAdd(){
   closeM();gsettings();
 }
 /* speaker on/off */
+function updSpk(){const on=!call||call.spk!==false;['#cs','#csp'].forEach(s=>{const b=$(s);if(!b)return;b.textContent=on?'🔊':'🔈';b.classList.toggle('act',on)})}
 async function tgSpk(){
-  if(!call)return;call.spk=!call.spk;
-  const b=$('#csp');b.textContent=call.spk?'🔊':'🔈';b.style.opacity=call.spk?1:.45;
+  if(!call)return;call.spk=call.spk===false;updSpk();
+  let routed=false;
   try{
-    const ds=await navigator.mediaDevices.enumerateDevices(),outs=ds.filter(d=>d.kind=='audiooutput'&&d.deviceId);
-    let id='';
-    if(!call.spk){const ear=outs.find(d=>/earpiece|phone|handset|receiver/i.test(d.label||''));if(ear)id=ear.deviceId}
-    document.querySelectorAll('#tiles video').forEach(v=>{if(!v.muted&&v.setSinkId)v.setSinkId(id).catch(()=>{})});
-  }catch(e){}
+    if(HTMLMediaElement.prototype.setSinkId&&navigator.mediaDevices.enumerateDevices){
+      const outs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind=='audiooutput');
+      let id='';
+      if(!call)return;
+      if(!call.spk){const ear=outs.find(d=>/earpiece|handset|receiver/i.test(d.label||''));if(ear){id=ear.deviceId;routed=true}}
+      else routed=true;
+      if(routed)for(const v of document.querySelectorAll('#tiles video'))if(!v.muted&&v.setSinkId)await v.setSinkId(id).catch(()=>{routed=false});
+    }
+  }catch(e){routed=false}
+  if(!call)return;
+  call.vol=(call.spk||routed)?1:.3;
+  document.querySelectorAll('#tiles video').forEach(v=>{if(!v.muted)v.volume=call.vol});
+  if(!call.spk&&!routed)toast('Is browser mein earpiece select nahi ho sakta, isliye awaaz halki kar di gayi hai. Phone kaan se laga kar sunein');
 }
 /* voice recording helpers */
 function updTimer(){const s=Math.floor((Date.now()-recT0)/1000);const e=$('#vrt');if(e)e.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
