@@ -1,1 +1,19 @@
-{"background_color":"#ffffff","description":"Realtime chat, groups, status aur calls","display":"standalone","icons":[{"sizes":"192x192","src":"icon-192.png","type":"image/png"},{"purpose":"any maskable","sizes":"512x512","src":"icon-512.png","type":"image/png"}],"name":"WhatsApp Clone","orientation":"portrait","scope":"./","short_name":"WA Clone","start_url":"./whatsappclone.html","theme_color":"#008069"}
+{
+  "id": "./whatsappclone.html",
+  "name": "WhatsApp Clone",
+  "short_name": "WA Clone",
+  "description": "Realtime chat, groups, status aur calls",
+  "start_url": "./whatsappclone.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#008069",
+  "categories": ["social", "communication"],
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
