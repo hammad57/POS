@@ -137,10 +137,13 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 #cinfo h2{margin:18px 12px 6px;font-size:24px;font-weight:600}
 #cinfo p{opacity:.85;font-size:16px;font-variant-numeric:tabular-nums}
 #side{position:relative}
-#list{padding-bottom:150px}
+#list{padding-bottom:230px}
 #fabs{position:absolute;right:16px;bottom:28px;display:flex;flex-direction:column;gap:12px;z-index:5}
 .fab{width:54px;height:54px;border-radius:50%;background:#00a884;color:#fff;font-size:24px;box-shadow:0 3px 10px #0004}
 .fab.g{background:#6b7c85}
+.fab.s{background:#25d366}
+.av{background-size:cover;background-position:center}
+body.dark .av[style*="background-image"]{filter:invert(1) hue-rotate(180deg)}
 @media(max-width:760px){
 #side{width:100%;float:none;position:absolute;inset:0;z-index:2;background:#fff}
 #main{margin-left:0;position:absolute;inset:0}
@@ -162,7 +165,7 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 <div class="tabs"><div id="t1" class="on" onclick="setTab('chats')">CHATS</div><div id="t2" onclick="setTab('status')">STATUS</div></div>
 <input id="q" placeholder="Search ya naya chat..." oninput="renderList()">
 <div id="list"></div>
-<div id="fabs"><button class="fab g" title="New group" onclick="newGroup()">👥</button><button class="fab" title="New message" onclick="newMsg()">📝</button></div>
+<div id="fabs"><button class="fab s" title="Status lagayein" onclick="statusFab()">📷</button><button class="fab g" title="New group" onclick="newGroup()">👥</button><button class="fab" title="New message" onclick="newMsg()">📝</button></div>
 </div>
 <div id="main">
 <div id="empty">WhatsApp Clone<br>Chat shuru karne ke liye kisi contact ya group ko select karein</div>
@@ -188,7 +191,7 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 <div class="di" onclick="about()">ℹ️ About</div>
 <div class="di" onclick="shareApp()">📤 Share app</div>
 <div class="di" onclick="dlApp()">⬇️ Download app</div>
-<div class="di" style="color:#667781;cursor:default">🏷️ Version 2.2.0</div>
+<div class="di" style="color:#667781;cursor:default">🏷️ Version 2.3.0</div>
 <div class="di" onclick="logout()" style="color:#c0392b">⎋ Logout</div>
 <div style="text-align:center;padding:12px;color:#8696a0;font-size:12px;border-top:1px solid #f0f0f0">Powered by <b style="color:#008069">Muluk Hussain</b></div></div>
 <div id="drb" onclick="drawer(0)"></div>
@@ -200,6 +203,7 @@ input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;margin-bot
 <div id="viewer"><div class="vb" id="vbar"></div><div id="vh"></div><button id="vx" onclick="closeV()">✕</button><div id="vc"></div>
 <div id="vf"><span id="vo"><button id="vl" onclick="likeS()">🤍</button><input id="sc" placeholder="Comment likhein..." onfocus="clearTimeout(vt)" onkeydown="if(event.key=='Enter')comS()"><button onclick="comS()">➤</button></span>
 <span id="vw" style="display:none;justify-content:center"><button id="vi" onclick="infoS()" style="background:#fff2;border-radius:20px;padding:8px 18px;font-size:16px"></button><button onclick="delS()">🗑️</button></span></div></div>
+<input id="pf" type="file" accept="image/*" hidden onchange="pickPhoto(this)">
 <input id="sf" type="file" accept="image/*,video/*" hidden onchange="postStatusFile(this)">
 <div id="call"><div id="cinfo"><div class="coav" id="cia">?</div><h2 id="cin"></h2><p id="cip"></p></div><div id="ct"></div><div id="tiles"></div><div id="cc"><button class="cb" id="cf" onclick="flip()" title="Camera badlein">🔄</button><button class="cb vbn" id="cv" onclick="tg('v')" title="Camera on/off">📷</button><button class="cb act" id="cs" onclick="tgSpk()" title="Speaker on/off">🔊</button><button class="cb mb" id="cm" onclick="tg('a')" title="Mute">🎤</button><button class="endb" onclick="endCall()" title="Call khatam">📞</button></div></div>
 <div id="callout"><div class="coav" id="coav">?</div><h2 id="coname"></h2><p id="cost">Calling…</p><div class="cbtns"><button class="cb mb" onclick="tg('a')" title="Mute">🎤</button><button class="cb act" id="csp" onclick="tgSpk()" title="Speaker on/off">🔊</button><button class="endb" onclick="endCall()" title="Call khatam">📞</button></div></div>
@@ -307,7 +311,7 @@ const day=t=>{const d=new Date(t);return d.toDateString()==new Date().toDateStri
 const ini=n=>(n||'?').trim()[0].toUpperCase();
 const nm=k=>isG(k)?(groups[k]||{}).name||'Group':(users[k]||{}).name||k;
 let me=JSON.parse(localStorage.wa_me||'null'),cur=null,users={},groups={},inbox={},statuses={},tab='chats',allMode=false,off=null,oseen=0,tmr=null,msgs={},rc=null,chunks=[],call=null,rg=null,vq=[],vi=0,vt=null,lp;
-const saveMe=()=>localStorage.wa_me=JSON.stringify(me);
+const saveMe=()=>localStorage.wa_me=JSON.stringify({phone:me.phone,name:me.name,about:me.about,dark:me.dark});
 const sha=async s=>{try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('wa'+s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=5381;for(const c of 'wa'+s)h=(h*33)^c.charCodeAt(0);return'x'+(h>>>0)}};
 
 async function login(){
@@ -329,18 +333,19 @@ function logout(){
   localStorage.removeItem('wa_pid');localStorage.removeItem('wa_me');clearLocal();setTimeout(()=>location.reload(),300);
 }
 function profile(){
-  $('#dn').textContent=me.name;$('#dav').textContent=ini(me.name);$('#dab').textContent=me.about||'';
+  $('#dn').textContent=me.name;setAvEl($('#dav'),me.phone,me.name);$('#dab').textContent=me.about||'';
 }
 function start(){
   $('#login').style.display='none';$('#app').style.display='block';
   if(me.dark)document.body.classList.add('dark');profile();
+  try{me.photo=localStorage['wa_pic_'+me.phone]||''}catch(e){me.photo=''}
   loadL();try{if(localStorage.wa_tab=='status')setTab('status');else renderList()}catch(e){renderList()}
   db.ref('.info/connected').on('value',s=>{
     if(!s.val())return;const r=db.ref('wa_users/'+me.phone);
     r.update({name:me.name,phone:me.phone,about:me.about||'',online:true});
     r.onDisconnect().update({online:false,lastSeen:TS});
   });
-  db.ref('wa_users').on('value',s=>{users=s.val()||{};renderList();head();saveL()});
+  db.ref('wa_users').on('value',s=>{users=s.val()||{};syncPic();renderList();head();saveL()});
   db.ref('wa_groups').on('value',s=>{groups={};s.forEach(c=>{const g=c.val();if(g.members&&g.members[me.phone])groups['g_'+c.key]=g});renderList();head();saveL()});
   db.ref('.info/serverTimeOffset').on('value',s=>so=s.val()||0);
   db.ref('wa_inbox/'+me.phone).on('value',s=>{
@@ -374,7 +379,7 @@ function settings(){
   drawer(0);
   const cols=Array.from({length:8},()=>`hsl(${Math.random()*360|0},65%,87%)`);
   const pics=Array.from({length:6},(_,i)=>`https://picsum.photos/seed/wabg${(Date.now()%997)}${i}/600/900`);
-  modal(`<h3>⚙️ Settings</h3><input id="sn" value="${esc(me.name)}" placeholder="Naam"><input id="sa" value="${esc(me.about||'')}" placeholder="About"><label class="ck"><input type="checkbox" id="sd" ${me.dark?'checked':''}> Dark mode</label><h3 style="margin:12px 0 8px">🎨 Chat background</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">${cols.map(c=>`<div class="bgsw" style="background:${c}" onclick="setBg('color','${c}',this)"></div>`).join('')}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">${pics.map(p=>`<img class="bgsw" src="${p}" loading="lazy" onclick="setBg('image','${p}',this)">`).join('')}</div><button class="btn" style="background:#95a5a6;margin-bottom:10px" onclick="setBg('color','','')">Default background</button><button class="btn" onclick="saveSet()">Save</button>`);
+  modal(`<h3>⚙️ Settings</h3><div style="text-align:center;margin-bottom:10px"><div id="spv" class="av" style="width:84px;height:84px;font-size:34px;margin:0 auto 8px"></div><button class="btn" style="width:auto;padding:8px 14px;font-size:14px" onclick="$('#pf').click()">📷 Profile photo badlein</button> <button class="btn" style="width:auto;padding:8px 14px;font-size:14px;background:#95a5a6" onclick="savePic('')">Hatayein</button></div><input id="sn" value="${esc(me.name)}" placeholder="Naam"><input id="sa" value="${esc(me.about||'')}" placeholder="About"><label class="ck"><input type="checkbox" id="sd" ${me.dark?'checked':''}> Dark mode</label><h3 style="margin:12px 0 8px">🎨 Chat background</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">${cols.map(c=>`<div class="bgsw" style="background:${c}" onclick="setBg('color','${c}',this)"></div>`).join('')}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">${pics.map(p=>`<img class="bgsw" src="${p}" loading="lazy" onclick="setBg('image','${p}',this)">`).join('')}</div><button class="btn" style="background:#95a5a6;margin-bottom:10px" onclick="setBg('color','','')">Default background</button><button class="btn" onclick="saveSet()">Save</button>`);paintSpv();
 }
 function saveSet(){
   const n=$('#sn').value.trim();if(!n)return;
@@ -389,7 +394,7 @@ async function savePw(){
   await db.ref('wa_auth/'+me.phone).set(await sha(n));closeM();alert('Password badal gaya');
 }
 function help(){drawer(0);modal(`<h3>❓ Help</h3><p><b>Chat:</b> list mein 💬 dabayein ya search karke user chunein.</p><p><b>Message delete / reaction:</b> message par long press (computer par right click) karein.</p><p><b>Group:</b> 👥 dabayein, naam likhein aur members chunein.</p><p><b>Call:</b> chat ke upar 📞 ya 🎥 dabayein. Group mein sab members ko call jati hai.</p><p><b>Status:</b> STATUS tab mein text, photo ya video lagayein. Aap dekh sakte hain kis ne dekha, like ya comment kiya.</p><p><b>Files:</b> 📎 se 5MB tak ki photo, video ya file bhejein.</p><button class="btn" onclick="closeM()">Theek hai</button>`)}
-function about(){drawer(0);modal(`<h3>ℹ️ About</h3><p>WhatsApp Clone, version 2.2.0</p><p>Realtime chat, groups, status, audio/video calls aur file sharing. Data Firebase Realtime Database mein save hota hai.</p><button class="btn" onclick="closeM()">Band karein</button>`)}
+function about(){drawer(0);modal(`<h3>ℹ️ About</h3><p>WhatsApp Clone, version 2.3.0</p><p>Realtime chat, groups, status, audio/video calls aur file sharing. Data Firebase Realtime Database mein save hota hai.</p><button class="btn" onclick="closeM()">Band karein</button>`)}
 
 function renderList(){
   const L=$('#list');if(!me)return;
@@ -408,7 +413,7 @@ function renderList(){
   L.innerHTML=h;
 }
 function row(k,n,sub,t,u){
-  return `<div class="row" onclick="openChat('${k}')"><div class="av ${isG(k)?'g':''}">${isG(k)?'👥':esc(ini(n))}</div><div class="inf"><b>${esc(n)}</b><small>${esc(sub)}</small></div><div class="meta">${t}${u?`<br><span class="badge">${u}</span>`:''}</div></div>`;
+  return `<div class="row" onclick="openChat('${k}')">${isG(k)?'<div class="av g">👥</div>':avH(k,n)}<div class="inf"><b>${esc(n)}</b><small>${esc(sub)}</small></div><div class="meta">${t}${u?`<br><span class="badge">${u}</span>`:''}</div></div>`;
 }
 
 function openChat(k){
@@ -434,7 +439,7 @@ function sub(){
   if(isG(cur)){const g=groups[cur];return g?Object.keys(g.members).map(p=>p==me.phone?'You':nm(p)).join(', '):''}
   const u=users[cur]||{};return u.online?'online':(u.lastSeen?'last seen '+day(u.lastSeen):'');
 }
-function head(){if(!cur)return;$('#cname').textContent=nm(cur);$('#cav').textContent=isG(cur)?'👥':ini(nm(cur));$('#csub').textContent=sub();$('#gset').style.display=isG(cur)?'':'none'}
+function head(){if(!cur)return;$('#cname').textContent=nm(cur);setAvEl($('#cav'),cur,nm(cur),isG(cur));$('#csub').textContent=sub();$('#gset').style.display=isG(cur)?'':'none'}
 function info(){
   if(!isG(cur)){const u=users[cur]||{};return modal(`<h3>${esc(u.name||cur)}</h3><p>📱 ${esc(cur)}</p><p>${esc(u.about||'')}</p><button class="btn" onclick="closeM()">Band karein</button>`)}
   const g=groups[cur];if(!g)return;
@@ -554,10 +559,10 @@ async function rec(){
 function renderStatus(L){
   const g={};Object.entries(statuses).forEach(([k,s])=>(g[s.from]=g[s.from]||[]).push({k,...s}));
   const mine=g[me.phone];
-  let h=`<div class="row" style="cursor:default"><div class="av ${mine?'st':''}" onclick="${mine?`viewStatus('${me.phone}')`:''}">${esc(ini(me.name))}</div><div class="inf"><b>My status</b><small>${mine?mine.length+' update(s)':'Update daalein'}</small></div><button onclick="statusText()">✏️</button><button onclick="$('#sf').click()">📷</button></div><div style="padding:8px 14px;color:#008069;font-size:13px;font-weight:700">RECENT UPDATES</div>`;
+  let h=`<div class="row" style="cursor:default">${avH(me.phone,me.name,mine?'st':'',`onclick="${mine?`viewStatus('${me.phone}')`:''}"`)}<div class="inf"><b>My status</b><small>${mine?mine.length+' update(s)':'Update daalein'}</small></div><button onclick="statusText()">✏️</button><button onclick="$('#sf').click()">📷</button></div><div style="padding:8px 14px;color:#008069;font-size:13px;font-weight:700">RECENT UPDATES</div>`;
   const o=Object.keys(g).filter(p=>p!=me.phone).sort((a,b)=>g[b].at(-1).ts-g[a].at(-1).ts);
   o.forEach(p=>{const un=g[p].some(s=>!(s.v&&s.v[me.phone]));
-    h+=`<div class="row" onclick="viewStatus('${p}')"><div class="av st ${un?'':'seen'}">${esc(ini(nm(p)))}</div><div class="inf"><b>${esc(nm(p))}</b><small>${day(g[p].at(-1).ts)}</small></div></div>`});
+    h+=`<div class="row" onclick="viewStatus('${p}')">${avH(p,nm(p),'st '+(un?'':'seen'))}<div class="inf"><b>${esc(nm(p))}</b><small>${day(g[p].at(-1).ts)}</small></div></div>`});
   if(!o.length)h+='<div style="padding:14px;color:#667781">Koi recent status nahi.</div>';
   L.innerHTML=h;
 }
@@ -890,6 +895,54 @@ document.addEventListener('click',e=>{
   const ep=$('#ep');
   if(ep&&ep.style.display=='block'&&!ep.contains(e.target)&&!(e.target.closest&&e.target.closest('#emojiBtn')))ep.style.display='none';
 });
+
+/* ===== profile photo ===== */
+function pic(p){const u=users[p]||{};return(me&&p==me.phone&&me.photo)||u.photo||''}
+function avH(p,n,cls,extra){const ph=pic(p);return `<div class="av ${cls||''}" ${extra||''}${ph?` style="background-image:url('${ph}')"`:''}>${ph?'':esc(ini(n))}</div>`}
+function setAvEl(el,p,n,grp){
+  if(!el)return;
+  if(grp){el.style.backgroundImage='';el.textContent='👥';return}
+  const ph=pic(p);el.style.backgroundImage=ph?`url('${ph}')`:'';el.textContent=ph?'':ini(n);
+}
+function paintSpv(){setAvEl($('#spv'),me.phone,me.name)}
+function pickPhoto(i){
+  const f=i.files[0];i.value='';if(!f)return;
+  const img=new Image();
+  img.onload=()=>{
+    const S=192,c=document.createElement('canvas');c.width=c.height=S;
+    const m=Math.min(img.width,img.height),sx=(img.width-m)/2,sy=(img.height-m)/2;
+    c.getContext('2d').drawImage(img,sx,sy,m,m,0,0,S,S);
+    URL.revokeObjectURL(img.src);savePic(c.toDataURL('image/jpeg',.75));
+  };
+  img.onerror=()=>alert('Photo load nahi ho saki');
+  img.src=URL.createObjectURL(f);
+}
+function savePic(d){
+  me.photo=d||'';
+  try{if(d)localStorage['wa_pic_'+me.phone]=d;else localStorage.removeItem('wa_pic_'+me.phone)}catch(e){}
+  db.ref('wa_users/'+me.phone+'/photo').set(d||null);
+  if(!users[me.phone])users[me.phone]={phone:me.phone,name:me.name};
+  users[me.phone].photo=d||null;
+  profile();renderList();head();paintSpv();toast(d?'Profile photo save ho gayi':'Profile photo hata di gayi');
+}
+/* firebase hi asal copy hai: mobile se delete ho jaye to wapis aa jati hai */
+function syncPic(){
+  if(!me)return;const fp=(users[me.phone]||{}).photo||'';
+  if(fp&&fp!==me.photo){me.photo=fp;try{localStorage['wa_pic_'+me.phone]=fp}catch(e){}profile();paintSpv()}
+  else if(!fp&&me.photo){db.ref('wa_users/'+me.phone+'/photo').set(me.photo)}
+}
+/* status icon */
+function statusFab(){
+  setTab('status');
+  modal(`<h3>Status lagayein</h3><div class="di" onclick="closeM();statusText()">✏️ Text status</div><div class="di" onclick="closeM();$('#sf').click()">📷 Photo / Video status</div><button class="btn" style="background:#95a5a6;margin-top:10px" onclick="closeM()">Band karein</button>`);
+}
+/* address bar chhupane ke liye (mobile browser): pehli tap par fullscreen */
+function goFull(){
+  if(isStandalone()||document.fullscreenElement||!(window.matchMedia&&matchMedia('(pointer:coarse)').matches))return;
+  const el=document.documentElement,f=el.requestFullscreen||el.webkitRequestFullscreen;
+  if(f){try{const r=f.call(el,{navigationUI:'hide'});if(r&&r.catch)r.catch(()=>{})}catch(e){}}
+}
+['click','touchend'].forEach(ev=>document.addEventListener(ev,goFull,{passive:true}));
 
 if(me)start();
 </script></body></html>
