@@ -1,8 +1,23 @@
 /* WhatsApp Clone - Service Worker (background notifications) */
 const DB='https://earn-platform-76c26-default-rtdb.firebaseio.com';
 const ME=new URL(self.location.href).searchParams.get('p')||'';
-self.addEventListener('install',()=>self.skipWaiting());
+self.addEventListener('install',e=>{
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./whatsappclone.html','./manifest.json','./icon-192.png','./icon-512.png'])).catch(()=>{}));
+});
 self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
+
+/* App shell offline cache — sirf same-origin files (Firebase/push ko haath nahi lagata) */
+const CACHE='wa-clone-v1';
+self.addEventListener('fetch',e=>{
+  const u=new URL(e.request.url);
+  if(e.request.method!=='GET'||u.origin!==self.location.origin)return;
+  e.respondWith(
+    caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{
+      const cp=res.clone();caches.open(CACHE).then(c=>c.put(e.request,cp)).catch(()=>{});return res;
+    }).catch(()=>caches.match('./whatsappclone.html')))
+  );
+});
 
 const j=async p=>{try{return await (await fetch(DB+p+'.json')).json()}catch(e){return null}};
 
