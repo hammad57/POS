@@ -50,8 +50,12 @@ header{width:100%;display:flex;align-items:center;justify-content:space-between;
 .cell{aspect-ratio:1;border-radius:7px;background:var(--cell);position:relative;transition:background .1s}
 .cell .blk{position:absolute;inset:0;border-radius:7px;box-shadow:inset 0 2px 3px rgba(255,255,255,.45),inset 0 -3px 4px rgba(0,0,0,.35),0 2px 5px rgba(0,0,0,.35);animation:pop .18s ease-out}
 @keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
-.cell.pv .blk{outline:2px dashed rgba(255,255,255,.75);outline-offset:-2px;opacity:.55;animation:none}
-.cell.pvbad .blk{outline:2px dashed var(--bad);outline-offset:-2px;opacity:.4;animation:none}
+/* drag shadow preview (ghost of where the piece will land) */
+.cell.pv::after{content:'';position:absolute;inset:0;border-radius:7px;background:var(--pvc,#a855f7);opacity:.5;box-shadow:inset 0 2px 4px rgba(255,255,255,.55),inset 0 -2px 4px rgba(0,0,0,.25);animation:pvPulse 1s ease-in-out infinite;pointer-events:none}
+@keyframes pvPulse{50%{opacity:.3}}
+.cell.pvbad::after{content:'';position:absolute;inset:0;border-radius:7px;background:rgba(255,70,70,.38);pointer-events:none}
+/* lines that WOULD blast if dropped here */
+.cell.willblast{background:rgba(255,213,42,.32)!important;box-shadow:0 0 12px rgba(255,213,42,.55)}
 .cell.clr .blk{animation:clrOut .32s ease-in forwards}
 @keyframes clrOut{40%{transform:scale(1.18);filter:brightness(2.2)}100%{transform:scale(0);filter:brightness(3);opacity:0}}
 .cell.flash{animation:cellFlash .3s}
@@ -446,7 +450,14 @@ function moveGhost(e){
   const p=dragging.p;
   if(canPlace(p,tr,tc)){
     dragging.valid=true;dragging.tr=tr;dragging.tc=tc;
-    eachPieceCell(p,tr,tc,(r,c)=>cellEls[r][c].classList.add('pv'));
+    // shadow preview of the piece at landing cells
+    eachPieceCell(p,tr,tc,(r,c)=>{const el=cellEls[r][c];el.classList.add('pv');el.style.setProperty('--pvc',COLORS[p.color][0])});
+    // highlight rows/cols that WOULD blast if dropped here
+    const rows=[],cols=[];
+    for(let r=0;r<N;r++){let f=true;for(let c=0;c<N;c++)if(!board[r][c]&&!pieceCovers(p,tr,tc,r,c)){f=false;break}if(f)rows.push(r)}
+    for(let c=0;c<N;c++){let f=true;for(let r=0;r<N;r++)if(!board[r][c]&&!pieceCovers(p,tr,tc,r,c)){f=false;break}if(f)cols.push(c)}
+    rows.forEach(r=>{for(let c=0;c<N;c++)cellEls[r][c].classList.add('willblast')});
+    cols.forEach(c=>{for(let r=0;r<N;r++)cellEls[r][c].classList.add('willblast')});
   }else{
     dragging.valid=false;
     eachPieceCell(p,tr,tc,(r,c)=>{if(r>=0&&r<N&&c>=0&&c<N)cellEls[r][c].classList.add('pvbad')});
@@ -456,8 +467,12 @@ function eachPieceCell(p,r,c,fn){
   const s=p.shape;
   for(let i=0;i<s.length;i++)for(let j=0;j<s[i].length;j++)if(s[i][j])fn(r+i,c+j);
 }
+function pieceCovers(p,r,c,rr,cc){
+  const s=p.shape,i=rr-r,j=cc-c;
+  return i>=0&&j>=0&&i<s.length&&j<s[0].length&&!!s[i][j];
+}
 function clearPreview(){
-  document.querySelectorAll('.cell.pv,.cell.pvbad').forEach(el=>{el.classList.remove('pv','pvbad')});
+  document.querySelectorAll('.cell.pv,.cell.pvbad,.cell.willblast').forEach(el=>{el.classList.remove('pv','pvbad','willblast');el.style.removeProperty('--pvc')});
 }
 /* ================= PLACE + BLAST ================= */
 function doPlace(i,p,r,c){
