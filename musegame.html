@@ -162,6 +162,27 @@
   .mtab.active{background:linear-gradient(135deg,#7c5cff,#22d3ee);color:#fff;border-color:transparent;
     box-shadow:0 6px 18px rgba(124,92,255,.45)}
   .modedesc{text-align:center;font-size:12px;color:var(--muted);min-height:18px;margin:2px 0}
+  /* ===== compact game layout ===== */
+  #gameScreen{gap:10px;padding-top:10px}
+  .topbar{width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:14px}
+  .topbar .brand h1{font-size:14px;letter-spacing:1px;white-space:nowrap}
+  .userchip{display:flex;align-items:center;gap:7px;flex:1;min-width:0}
+  .userchip .avatar{width:30px;height:30px;flex:0 0 30px;font-size:14px}
+  .userchip .uinfo{min-width:0}
+  .topbar #username{font-size:13px;max-width:110px}
+  .topbar .sline{font-size:10px}
+  .topbar .coinbox{font-size:15px;gap:5px}
+  .topbar .coin{width:16px;height:16px}
+  .iconbtn.sm{width:34px;height:34px;font-size:15px;border-radius:10px;flex:none}
+  #gameScreen .stats{gap:8px}
+  #gameScreen .stat{padding:6px 4px;border-radius:12px}
+  #gameScreen .stat small{font-size:9px}
+  #gameScreen .stat b{font-size:18px}
+  @media (max-width:380px){
+    .topbar .brand h1{font-size:11px}
+    .topbar #username{max-width:62px}
+    .topbar{gap:6px;padding:7px 8px}
+  }
 </style>
 </head>
 <body>
@@ -201,24 +222,19 @@
 
 <!-- ============ GAME SCREEN ============ -->
 <div id="gameScreen" class="app hidden">
-  <header>
-    <div class="brand"><h1>BLOCK BLAST</h1><small>PRO EDITION</small></div>
-    <div class="right">
-      <button class="iconbtn" id="muteBtn" title="Sound on/off">🔊</button>
-      <button class="iconbtn" id="newBtn" title="Restart stage">↻</button>
-    </div>
-  </header>
-
-  <div class="glass userbar">
-    <div class="user">
+  <header class="topbar glass">
+    <div class="brand"><h1>BLOCK BLAST</h1></div>
+    <div class="userchip">
       <div class="avatar" id="avatar">?</div>
-      <div style="min-width:0">
+      <div class="uinfo">
         <div id="username">Loading…</div>
         <div class="sline"><span class="dot" id="dot"></span><span id="statusText">Connecting…</span></div>
       </div>
     </div>
     <div class="coinbox"><span class="coin"></span><span id="coins">0</span></div>
-  </div>
+    <button class="iconbtn sm" id="muteBtn" title="Sound on/off">🔊</button>
+    <button class="iconbtn sm" id="newBtn" title="Restart stage">↻</button>
+  </header>
 
   <div class="stats">
     <div class="glass stat"><small>SCORE</small><b id="score">0</b></div>
@@ -228,6 +244,14 @@
 
   <div class="board-wrap" id="boardWrap"><div class="board" id="board"></div></div>
 
+  <div class="tray" id="tray"></div>
+
+  <div class="powerbar">
+    <button class="pw" id="pw_hammer">🔨<b>0</b><small>HAMMER</small></button>
+    <button class="pw" id="pw_shock">⚡<b>0</b><small>SHOCK</small></button>
+    <button class="pw" id="pw_bomb">💣<b>0</b><small>BOMB</small></button>
+  </div>
+
   <div class="glass stagehud">
     <button class="iconbtn" id="quitBtn" title="Stage map">🗺</button>
     <div class="goal">
@@ -236,17 +260,7 @@
     </div>
     <button class="iconbtn" id="shopBtn2" title="Power Shop">🛒</button>
   </div>
-
-  <div class="tray-title">Drag a block onto the board</div>
-  <div class="tray" id="tray"></div>
-
-  <div class="powerbar">
-    <button class="pw" id="pw_hammer">🔨<b>0</b><small>HAMMER</small></button>
-    <button class="pw" id="pw_shock">⚡<b>0</b><small>SHOCK</small></button>
-    <button class="pw" id="pw_bomb">💣<b>0</b><small>BOMB</small></button>
-  </div>
 </div>
-
 <div id="ghost" class="ghost hidden"></div>
 
 <div id="overlay" class="overlay hidden">
