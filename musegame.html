@@ -156,6 +156,12 @@
   #clearStars{font-size:34px;letter-spacing:4px;margin:8px 0;color:var(--gold);text-shadow:0 0 18px rgba(255,200,61,.7)}
   .btn2{background:rgba(255,255,255,.1);box-shadow:none;border:1px solid var(--line);margin-top:10px}
   .btnrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .modetabs{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .mtab{padding:11px 4px;border-radius:12px;border:1px solid var(--line);background:var(--panel);
+    color:var(--muted);font-weight:800;font-size:13px;letter-spacing:1px;cursor:pointer;transition:all .2s}
+  .mtab.active{background:linear-gradient(135deg,#7c5cff,#22d3ee);color:#fff;border-color:transparent;
+    box-shadow:0 6px 18px rgba(124,92,255,.45)}
+  .modedesc{text-align:center;font-size:12px;color:var(--muted);min-height:18px;margin:2px 0}
 </style>
 </head>
 <body>
@@ -181,6 +187,13 @@
     </div>
     <button class="btn" id="continueBtn">▶ Continue</button>
   </div>
+
+  <div class="modetabs">
+    <button class="mtab" data-mode="easy">😊 EASY</button>
+    <button class="mtab" data-mode="medium">😐 MEDIUM</button>
+    <button class="mtab" data-mode="hard">🔥 HARD</button>
+  </div>
+  <p class="modedesc" id="modeDesc"></p>
 
   <div id="stageGrid"></div>
   <p class="muted" style="text-align:center;font-size:13px">🔥 = Hard stage (double reward!)<br>Koi bhi unlocked stage dabao aur khelo 🎮</p>
@@ -224,14 +237,14 @@
     <button class="iconbtn" id="shopBtn2" title="Power Shop">🛒</button>
   </div>
 
+  <div class="tray-title">Drag a block onto the board</div>
+  <div class="tray" id="tray"></div>
+
   <div class="powerbar">
     <button class="pw" id="pw_hammer">🔨<b>0</b><small>HAMMER</small></button>
     <button class="pw" id="pw_shock">⚡<b>0</b><small>SHOCK</small></button>
     <button class="pw" id="pw_bomb">💣<b>0</b><small>BOMB</small></button>
   </div>
-
-  <div class="tray-title">Drag a block onto the board</div>
-  <div class="tray" id="tray"></div>
 </div>
 
 <div id="ghost" class="ghost hidden"></div>
@@ -285,10 +298,13 @@ const DB_PATH = "/blockblast/players";
 const N = 8;
 
 const COLORS = [
-  ["#ff7eb3","#e0338a"], ["#7afcff","#1ba3d6"], ["#ffe066","#f59f00"],
-  ["#8cff9e","#1fae4b"], ["#b99bff","#6a3fe0"], ["#ffa86b","#e0601e"],
-  ["#6ee7b7","#0d9488"]
+  ["#ff3b30", "#b71c1c"], // 1 Red
+  ["#ffd60a", "#c99400"], // 2 Yellow
+  ["#34c759", "#1c7a33"], // 3 Green
+  ["#0a84ff", "#004fc4"], // 4 Blue
+  ["#3a3a3c", "#000000"], // 5 Black (hard stages — sirf power-ups se toot-ta hai)
 ];
+const BLACK = 5;
 
 // X = block, . = empty, | = new row
 const SHAPE_DEFS = [
@@ -314,11 +330,16 @@ const SHAPES = SHAPE_DEFS.map(def => {
   return { w, h, cells };
 });
 
-function makePiece() {
+function makePiece(mode) {
   const s = SHAPES[rnd(SHAPES.length)];
-  return { w: s.w, h: s.h, cells: s.cells.map(p => [...p]), color: 1 + rnd(COLORS.length) };
+  // Easy: single colour • Medium: kabhi kabhi mixed • Hard: zyada mixed
+  const mixed = mode === "hard" ? Math.random() < 0.85
+              : mode === "medium" ? Math.random() < 0.40 : false;
+  const oneColor = 1 + rnd(4); // black (5) kabhi piece mein nahi aata
+  const cells = s.cells.map(([r, c]) => [r, c, mixed ? 1 + rnd(4) : oneColor]);
+  return { w: s.w, h: s.h, cells, color: cells[0][2] };
 }
-function newTray() { return [makePiece(), makePiece(), makePiece()]; }
+function newTray(mode) { return [makePiece(mode), makePiece(mode), makePiece(mode)]; }
 function emptyGrid() { return Array.from({ length: N }, () => Array(N).fill(0)); }
 
 function randomName() {
@@ -452,14 +473,15 @@ function shapeEl(piece, size, gap) {
   wrap.className = "shape";
   wrap.style.gridTemplateColumns = `repeat(${piece.w}, ${size}px)`;
   wrap.style.gap = gap + "px";
-  const set = new Set(piece.cells.map(([r, c]) => r * piece.w + c));
+  const cmap = new Map(piece.cells.map(([r, c, col]) => [r * piece.w + c, col || piece.color]));
   for (let r = 0; r < piece.h; r++) for (let c = 0; c < piece.w; c++) {
     const el = document.createElement("div");
-    el.className = "mini" + (set.has(r * piece.w + c) ? "" : " empty");
+    const col = cmap.get(r * piece.w + c);
+    el.className = "mini" + (col ? "" : " empty");
     el.style.width = el.style.height = size + "px";
-    if (set.has(r * piece.w + c)) {
-      el.style.setProperty("--c1", COLORS[piece.color - 1][0]);
-      el.style.setProperty("--c2", COLORS[piece.color - 1][1]);
+    if (col) {
+      el.style.setProperty("--c1", COLORS[col - 1][0]);
+      el.style.setProperty("--c2", COLORS[col - 1][1]);
     }
     wrap.appendChild(el);
   }
@@ -519,7 +541,7 @@ function findClears(placed) {
   for (const p of placed) {
     const r = Math.floor(p / N), c = p % N;
     const v = S.grid[r][c];
-    if (!v) continue;
+    if (!v || v === BLACK) continue; // black kabhi line-blast nahi hota
 
     // horizontal run through p
     let a = c, b = c;
@@ -591,23 +613,25 @@ function starsFor() {
   const r = S.score / S.target;
   return r >= 2 ? 3 : r >= 1.5 ? 2 : 1;
 }
+function modeProg() { return profile.modes[profile.mode]; }
 function saveStageProgress() {
-  const n = S.stage, st = starsFor();
-  profile.stars[n] = Math.max(profile.stars[n] || 0, st);
-  profile.stagesUnlocked = Math.max(profile.stagesUnlocked, Math.min(STAGE_COUNT, n + 1));
+  const n = S.stage, st = starsFor(), mp = modeProg();
+  mp.stars[n] = Math.max(mp.stars[n] || 0, st);
+  mp.unlocked = Math.max(mp.unlocked, Math.min(STAGE_COUNT, n + 1));
 }
 
 function startStage(n) {
   const hard = isHardStage(n);
+  const mode = profile.mode;
   S = {
-    grid: emptyGrid(), tray: newTray(), score: 0, streak: 0, over: false, gameCoins: 0,
-    stage: n, target: stageTarget(n), hard, clearShown: false
+    grid: emptyGrid(), tray: newTray(mode), score: 0, streak: 0, over: false, gameCoins: 0,
+    stage: n, target: stageTarget(n), hard, clearShown: false, mode
   };
-  if (hard) { // hard stage: board pehle se kuch blocks se bhara hoga
+  if (hard) { // hard stage: normal blocks + BLACK (ye sirf hammer/bomb/lightning se tootenge)
     let placed = 0, guard = 0;
-    while (placed < 8 && guard++ < 300) {
+    while (placed < 9 && guard++ < 300) {
       const r = rnd(N), c = rnd(N);
-      if (!S.grid[r][c]) { S.grid[r][c] = 1 + rnd(COLORS.length); placed++; }
+      if (!S.grid[r][c]) { S.grid[r][c] = placed < 3 ? BLACK : 1 + rnd(4); placed++; }
     }
   }
   busy = false; armed = null;
@@ -650,15 +674,23 @@ $("keepPlayingBtn").addEventListener("click", () => {
 });
 
 /* ==================== STAGE MAP ==================== */
+const MODE_DESC = {
+  easy:   "😊 Easy — single colour blocks, normal game",
+  medium: "😐 Medium — colours kabhi kabhi mix ayenge, thora mushkil",
+  hard:   "🔥 Hard — colours zyada mix ayenge, bohat mushkil!"
+};
 function renderMap() {
   $("mapCoins").textContent = profile.coins;
   $("mapName").textContent = profile.name;
   $("mapAvatar").textContent = profile.name.charAt(0).toUpperCase();
-  const totalStars = Object.values(profile.stars).reduce((a, b) => a + b, 0);
+  const mp = modeProg();
+  document.querySelectorAll(".mtab").forEach(b => b.classList.toggle("active", b.dataset.mode === profile.mode));
+  $("modeDesc").textContent = MODE_DESC[profile.mode];
+  const totalStars = Object.values(mp.stars).reduce((a, b) => a + b, 0);
   $("mapStars").textContent = totalStars + "/" + (STAGE_COUNT * 3);
   const g = $("stageGrid"); g.innerHTML = "";
   for (let n = 1; n <= STAGE_COUNT; n++) {
-    const locked = n > profile.stagesUnlocked, st = profile.stars[n] || 0, hard = isHardStage(n);
+    const locked = n > mp.unlocked, st = mp.stars[n] || 0, hard = isHardStage(n);
     const b = document.createElement("button");
     b.className = "stage" + (locked ? " locked" : st ? " cleared" : " open") + (hard ? " hard" : "");
     b.innerHTML = locked ? "🔒"
@@ -674,7 +706,12 @@ function showMap() {
   $("mapScreen").classList.remove("hidden");
   renderMap();
 }
-$("continueBtn").addEventListener("click", () => { unlockAudio(); sfx.pick(); startStage(profile.stagesUnlocked); });
+$("continueBtn").addEventListener("click", () => { unlockAudio(); sfx.pick(); startStage(modeProg().unlocked); });
+document.querySelectorAll(".mtab").forEach(b => b.addEventListener("click", () => {
+  if (profile.mode === b.dataset.mode) return;
+  profile.mode = b.dataset.mode;
+  sfx.pick(); renderMap(); scheduleSave();
+}));
 $("quitBtn").addEventListener("click", () => { sfx.pick(); showMap(); pushRemote(); });
 $("mapBtn").addEventListener("click", () => { sfx.pick(); showMap(); });
 
@@ -682,7 +719,7 @@ $("mapBtn").addEventListener("click", () => { sfx.pick(); showMap(); });
 function commit(idx, r, c) {
   busy = true;
   const piece = S.tray[idx];
-  piece.cells.forEach(([dr, dc]) => { S.grid[r + dr][c + dc] = piece.color; });
+  piece.cells.forEach(([dr, dc, col]) => { S.grid[r + dr][c + dc] = col || piece.color; });
   const placed = piece.cells.map(([dr, dc]) => (r + dr) * N + (c + dc));
   S.tray[idx] = null;
   sfx.place();
@@ -724,7 +761,7 @@ function finishTurn(pts, coins) {
   if (pts) showPopup("+" + pts);
   if (coins) bump($("coins"));
 
-  if (S.tray.every(p => !p)) { S.tray = newTray(); renderTray(true); }
+  if (S.tray.every(p => !p)) { S.tray = newTray(S.mode); renderTray(true); }
   busy = false;
   updateUI();
 
@@ -774,7 +811,7 @@ function updateUI() {
   $("username").textContent = profile.name;
   $("avatar").textContent = profile.name.charAt(0).toUpperCase();
   if (S && S.stage) {
-    $("stageLabel").textContent = "STAGE " + S.stage + (S.hard ? " 🔥" : "");
+    $("stageLabel").textContent = "STAGE " + S.stage + " • " + (S.mode || "easy").toUpperCase() + (S.hard ? " 🔥" : "");
     $("goalLabel").textContent = S.score + " / " + S.target;
     $("pfill").style.width = Math.min(100, (S.score / S.target) * 100) + "%";
   }
@@ -801,27 +838,75 @@ function scheduleSave() {
   clearTimeout(saveT);
   saveT = setTimeout(pushRemote, 900);
 }
+/* ---- poora profile (Firebase mein save hone wala sara data) ---- */
+function fullProfile() {
+  return {
+    name: profile.name,
+    coins: profile.coins,
+    bestScore: profile.bestScore,
+    gamesPlayed: profile.gamesPlayed,
+    totalLines: profile.totalLines,
+    mode: profile.mode,
+    modes: profile.modes,
+    powerups: profile.powerups,
+    createdAt: profile.createdAt,
+    lastSeen: Date.now()
+  };
+}
+/* ---- offline progress ko Firebase data se merge karo (behtreen value rakho) ---- */
+function mergeProfile(remote) {
+  profile.coins = Math.max(profile.coins | 0, remote.coins | 0);
+  profile.bestScore = Math.max(profile.bestScore | 0, remote.bestScore | 0);
+  profile.gamesPlayed = Math.max(profile.gamesPlayed | 0, remote.gamesPlayed | 0);
+  profile.totalLines = Math.max(profile.totalLines | 0, remote.totalLines | 0);
+  ["hammer", "shock", "bomb"].forEach(k => {
+    profile.powerups[k] = Math.max(profile.powerups[k] | 0, ((remote.powerups || {})[k]) | 0);
+  });
+  ["easy", "medium", "hard"].forEach(m => {
+    const rp = (remote.modes || {})[m], lp = profile.modes[m];
+    if (rp && lp) {
+      lp.unlocked = Math.max(lp.unlocked | 0, rp.unlocked | 0);
+      Object.keys(rp.stars || {}).forEach(s => {
+        lp.stars[s] = Math.max(lp.stars[s] || 0, rp.stars[s] || 0);
+      });
+    }
+  });
+  if (remote.name) profile.name = remote.name;
+  if (remote.mode && profile.modes[remote.mode]) profile.mode = remote.mode;
+}
+/* ---- internet wapas aaye ya game khule to local data Firebase bhej do ---- */
+async function syncNow() {
+  if (!uid || !isOnline) return;
+  setStatus("saving");
+  try {
+    const remote = await dbGet(uid);
+    if (remote) mergeProfile(remote);
+    await dbPut(uid, fullProfile());
+    setStatus("synced");
+    saveLocal(); renderPowerbar(); updateUI();
+    if (!$("mapScreen").classList.contains("hidden")) renderMap();
+  } catch (e) {
+    console.warn(e);
+    setStatus("offline");
+  }
+}
 async function pushRemote() {
   clearTimeout(saveT);
   if (!uid) return;
+  if (!isOnline) { setStatus("offline"); return; }
   try {
-    await dbPatch(uid, {
-      name: profile.name,
-      coins: profile.coins,
-      bestScore: profile.bestScore,
-      gamesPlayed: profile.gamesPlayed,
-      totalLines: profile.totalLines,
-      stagesUnlocked: profile.stagesUnlocked,
-      stars: profile.stars,
-      powerups: profile.powerups,
-      lastSeen: Date.now()
-    });
+    await dbPatch(uid, fullProfile());
     setStatus("synced");
   } catch (e) {
     console.warn(e);
     setStatus("offline");
   }
 }
+
+let isOnline = (typeof navigator !== "undefined") ? navigator.onLine : true;
+window.addEventListener("online", () => { isOnline = true; syncNow(); });
+window.addEventListener("offline", () => { isOnline = false; setStatus("offline"); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && isOnline) syncNow(); });
 
 /* ==================== AUTO LOGIN ==================== */
 async function init() {
@@ -833,23 +918,26 @@ async function init() {
   const local = JSON.parse(localStorage.getItem("bb_profile") || "null");
   profile = Object.assign({
     name: randomName(), coins: 0, bestScore: 0, gamesPlayed: 0, totalLines: 0, createdAt: Date.now(),
-    stagesUnlocked: 1, stars: {}, powerups: { hammer: 0, shock: 0, bomb: 0 }
+    mode: "easy", powerups: { hammer: 1, shock: 1, bomb: 1 } // naye khilari ko 1-1 power-up muft
   }, local || {});
   // purane saves mein naye fields na hon to default lagao
-  if (!profile.powerups) profile.powerups = { hammer: 0, shock: 0, bomb: 0 };
-  if (!profile.stars) profile.stars = {};
-  if (!profile.stagesUnlocked) profile.stagesUnlocked = 1;
+  if (!profile.powerups) profile.powerups = { hammer: 1, shock: 1, bomb: 1 };
+  ["hammer", "shock", "bomb"].forEach(k => { if (!(k in profile.powerups)) profile.powerups[k] = 0; });
+  if (!profile.modes) {
+    // purani progress easy mode mein migrate karo
+    profile.modes = {
+      easy:   { unlocked: (local && local.stagesUnlocked) || 1, stars: (local && local.stars) || {} },
+      medium: { unlocked: 1, stars: {} },
+      hard:   { unlocked: 1, stars: {} }
+    };
+    delete profile.stagesUnlocked; delete profile.stars;
+  }
+  if (!profile.mode || !profile.modes[profile.mode]) profile.mode = "easy";
 
-  try {
-    const remote = await dbGet(uid);
-    if (remote) {
-      profile = Object.assign(profile, remote);
-    } else {
-      await dbPut(uid, { ...profile });   // first visit: create account in Firebase
-    }
-    setStatus("synced");
-  } catch (e) {
-    console.warn(e);
+  // game khulte hi: mobile ka saved data + Firebase merge, phir sara data Firebase bhej do
+  if (isOnline) {
+    await syncNow();
+  } else {
     setStatus("offline");
   }
 
@@ -875,9 +963,9 @@ async function init() {
 
 /* ==================== POWER-UP SHOP ==================== */
 const SHOP = [
-  { id: "hammer", icon: "🔨", name: "Hammer", desc: "Ek block toro — kisi bhi bhare khane par tap karo", price: 600 },
-  { id: "shock",  icon: "⚡", name: "Shock Lightning", desc: "Bijli giraye — aik random row + column saaf kar de", price: 600 },
-  { id: "bomb",   icon: "💣", name: "Bomb", desc: "3x3 area blast — jahan tap karo wahan dhamaka", price: 600 }
+  { id: "hammer", icon: "🔨", name: "Hammer", desc: "Sirf aik targeted cell ka block toro", price: 600 },
+  { id: "shock",  icon: "⚡", name: "Shock Lightning", desc: "Jis cell par tap karo — uski poori ROW + COLUMN blast (har colour)", price: 600 },
+  { id: "bomb",   icon: "💣", name: "Bomb", desc: "Plus (+) shape blast — target cell aur uske 4 taraf (top/bottom/left/right)", price: 600 }
 ];
 let armed = null;
 
@@ -893,12 +981,18 @@ SHOP.forEach(p => {
   $("pw_" + p.id).addEventListener("click", () => {
     unlockAudio();
     if ((profile.powerups[p.id] || 0) <= 0) { openShop(); return; }
-    if (p.id === "shock") { useShock(); return; }
     armed = (armed === p.id) ? null : p.id;
     renderPowerbar();
-    if (armed) { sfx.pick(); showPopup(p.icon + " — board par tap karo"); }
+    if (armed) { sfx.pick(); showPopup(p.icon + " " + p.name + " — target cell par tap karo"); }
   });
 });
+
+function finishPowerUse() {
+  armed = null;
+  renderBoard(); renderPowerbar(); updateUI();
+  if (!S.clearShown && S.score >= S.target) { stageClear(); return; }
+  scheduleSave();
+}
 
 boardEl.addEventListener("click", e => {
   if (!armed || busy || !S || S.over) return;
@@ -906,51 +1000,52 @@ boardEl.addEventListener("click", e => {
   const idx = cellEls.indexOf(cell);
   if (idx < 0) return;
   const r = Math.floor(idx / N), c = idx % N;
+
   if (armed === "hammer") {
+    // sirf aik targeted cell ka block tootega
     if (!S.grid[r][c]) { sfx.invalid(); return; }
     S.grid[r][c] = 0; spawnParticles(idx);
     tone(200, .15, "square", .2, 80);
+    profile.powerups.hammer--;
+    S.score += 10;
+    finishPowerUse();
   } else if (armed === "bomb") {
-    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
-      const rr = r + dr, cc = c + dc;
+    // plus (+) shape: target cell + 1 left + 1 right + 1 top + 1 bottom
+    const cells = [[r, c], [r, c - 1], [r, c + 1], [r - 1, c], [r + 1, c]];
+    let hit = false;
+    cells.forEach(([rr, cc]) => {
       if (rr >= 0 && rr < N && cc >= 0 && cc < N && S.grid[rr][cc]) {
-        S.grid[rr][cc] = 0; spawnParticles(rr * N + cc);
+        S.grid[rr][cc] = 0; spawnParticles(rr * N + cc); hit = true;
       }
-    }
-    sfx.clear(2, 1); shake();
-  }
-  profile.powerups[armed]--;
-  S.score += 10;
-  armed = null;
-  renderBoard(); renderPowerbar(); updateUI();
-  if (!S.clearShown && S.score >= S.target) { stageClear(); return; }
-  scheduleSave();
-});
-
-function useShock() {
-  if (busy || !S || S.over) return;
-  const r = rnd(N), c = rnd(N), cells = [];
-  for (let k = 0; k < N; k++) {
-    if (S.grid[r][k]) cells.push(r * N + k);
-    if (S.grid[k][c]) cells.push(k * N + c);
-  }
-  if (!cells.length) { sfx.invalid(); showPopup("Board khaali hai!"); return; }
-  busy = true;
-  cells.forEach(i => cellEls[i].classList.add("preview"));
-  tone(1200, .3, "sawtooth", .15, 200);
-  setTimeout(() => {
-    cells.forEach(i => {
-      cellEls[i].classList.remove("preview");
-      S.grid[Math.floor(i / N)][i % N] = 0; spawnParticles(i);
     });
-    profile.powerups.shock--;
-    S.score += cells.length * 2;
-    busy = false;
-    renderBoard(); renderPowerbar(); updateUI();
-    if (!S.clearShown && S.score >= S.target) { stageClear(); return; }
-    scheduleSave();
-  }, 380);
-}
+    if (!hit) { sfx.invalid(); return; }
+    sfx.clear(2, 1); shake();
+    profile.powerups.bomb--;
+    S.score += 10;
+    finishPowerUse();
+  } else if (armed === "shock") {
+    // targeted cell ki poori ROW (left-right) + poori COLUMN (top-bottom), har colour ke blocks
+    const cells = [];
+    for (let k = 0; k < N; k++) {
+      if (S.grid[r][k]) cells.push(r * N + k);
+      if (k !== r && S.grid[k][c]) cells.push(k * N + c);
+    }
+    if (!cells.length) { sfx.invalid(); showPopup("Yahan kuch nahi hai!"); return; }
+    busy = true;
+    cells.forEach(i => cellEls[i].classList.add("preview")); // bijli ki chamak
+    tone(1200, .3, "sawtooth", .15, 200);
+    setTimeout(() => {
+      cells.forEach(i => {
+        cellEls[i].classList.remove("preview");
+        S.grid[Math.floor(i / N)][i % N] = 0; spawnParticles(i);
+      });
+      profile.powerups.shock--;
+      S.score += cells.length * 2;
+      busy = false;
+      finishPowerUse();
+    }, 380);
+  }
+});
 
 function openShop() { renderShop(); $("shopOverlay").classList.remove("hidden"); }
 function renderShop() {
