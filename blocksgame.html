@@ -279,8 +279,8 @@
 <script>
 /* ==================== CONFIG ==================== */
 const DB_URL  = "https://dailytasktracker-1851b-default-rtdb.firebaseio.com";
-const DB_PATH = "/blockblast/players";
-const DATA_KEY = "bb_data";      // whole account + current game, saved on the device
+const DB_PATH = "/Cludeblockblast/players";
+const DATA_KEY = "cb_data";      // whole account + current game, saved on the device
 const N = 8;
 const BLACK = 5;                 // black blocks: never match in a line, only power-ups break them
 const COLOR_COUNT = 5;           // 1 Red, 2 Yellow, 3 Green, 4 Blue, 5 Black
@@ -967,8 +967,8 @@ function buy(k) {
 
 /* ==================== AUTO LOGIN + LOAD ==================== */
 async function init() {
-  uid = localStorage.getItem("bb_uid");
-  if (!uid) { uid = makeId(); localStorage.setItem("bb_uid", uid); }
+  uid = localStorage.getItem("cb_uid");
+  if (!uid) { uid = makeId(); localStorage.setItem("cb_uid", uid); }
 
   // 1) Device data first: the game works fully offline from here
   data = loadLocal();
