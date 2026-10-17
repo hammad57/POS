@@ -386,46 +386,48 @@ function anyFit(pieces) {
   })());
 }
 function findClears(placed) {
+  // A blast is a straight line (horizontal or vertical) of 3+ same-colour blocks
+  // that goes through a newly placed block AND reaches at least one block that
+  // was already on the board. Only that straight line blasts.
   const placedSet = new Set(placed);
-  // Full rows/columns no longer blast on their own: only same-colour groups blast,
-  // so blocks of other colours in the same line stay on the board.
-  const rows = [], cols = [];
+  const seen = new Set();
   const set = new Set();
-  rows.forEach(r => { for (let c = 0; c < N; c++) set.add(r * N + c); });
-  cols.forEach(c => { for (let r = 0; r < N; r++) set.add(r * N + c); });
-
-  // Same-colour groups: 3 or more touching blocks of one colour blast together
-  const visited = new Array(N * N).fill(false);
   let groups = 0;
-  for (const start of placed) {
-    const sr = Math.floor(start / N), sc = start % N;
-    const v = S.grid[sr][sc];
-    if (!v || visited[start]) continue;
-    const comp = [];
-    const stack = [start];
-    visited[start] = true;
-    while (stack.length) {
-      const idx = stack.pop();
-      comp.push(idx);
-      const r = Math.floor(idx / N), c = idx % N;
-      [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].forEach(([nr, nc]) => {
-        if (nr < 0 || nr >= N || nc < 0 || nc >= N) return;
-        const ni = nr * N + nc;
-        if (!visited[ni] && S.grid[nr][nc] === v) {
-          visited[ni] = true;
-          stack.push(ni);
-        }
-      });
-    }
-    // must reach at least one block that was already on the board, so a
-    // lone 3+ piece of one colour never blasts by itself
-    if (comp.length >= 3 && comp.some(i => !placedSet.has(i))) {
-      groups++;
-      comp.forEach(i => set.add(i));
-    }
+
+  const tryRun = (cells) => {
+    // cells: array of indices in order along the line
+    if (cells.length < 3) return;
+    if (!cells.some(i => !placedSet.has(i))) return;   // lone new piece never blasts
+    const key = cells.join(",");
+    if (seen.has(key)) return;
+    seen.add(key);
+    groups++;
+    cells.forEach(i => set.add(i));
+  };
+
+  for (const p of placed) {
+    const r = Math.floor(p / N), c = p % N;
+    const v = S.grid[r][c];
+    if (!v) continue;
+
+    // horizontal run through p
+    let a = c, b = c;
+    while (a - 1 >= 0 && S.grid[r][a - 1] === v) a--;
+    while (b + 1 < N && S.grid[r][b + 1] === v) b++;
+    const h = [];
+    for (let k = a; k <= b; k++) h.push(r * N + k);
+    tryRun(h);
+
+    // vertical run through p
+    let top = r, bot = r;
+    while (top - 1 >= 0 && S.grid[top - 1][c] === v) top--;
+    while (bot + 1 < N && S.grid[bot + 1][c] === v) bot++;
+    const vert = [];
+    for (let k = top; k <= bot; k++) vert.push(k * N + c);
+    tryRun(vert);
   }
 
-  return { lines: rows.length + cols.length, groups, cells: [...set] };
+  return { lines: 0, groups, cells: [...set] };
 }
 
 /* ==================== EFFECTS ==================== */
