@@ -169,6 +169,21 @@
   .final small{display:block;color:var(--muted);font-size:10px;letter-spacing:1px}
   .final b{font-size:20px}
 
+  .topbar{width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px}
+  .stageslot{display:flex;align-items:center;gap:6px;min-width:0}
+  #stageLabel{font-weight:800;letter-spacing:1px;font-size:13px;white-space:nowrap}
+  #moodSelect{background:rgba(255,255,255,.1);color:var(--text);border:1px solid var(--line);border-radius:8px;
+    padding:4px 6px;font-size:12px;font-weight:700;cursor:pointer;outline:none}
+  #moodSelect option{background:#1a1140;color:#eef2ff}
+  .stageslot .hard{font-size:9px;padding:2px 7px;letter-spacing:1px;white-space:nowrap}
+  .iconbtn.sm{width:32px;height:32px;font-size:15px;border-radius:9px}
+  .userslot{display:flex;align-items:center;gap:6px;min-width:0;margin-left:auto}
+  .userslot .avatar{width:26px;height:26px;flex:0 0 26px;font-size:12px}
+  .userslot .dot{flex:0 0 8px}
+  #username{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
+  .userslot .coinbox{font-size:13px;gap:5px}
+  .userslot .coin{width:14px;height:14px;flex:0 0 14px}
+
   @media (max-width:380px){ .tray{gap:6px} .slot{min-height:100px} .stage-grid{gap:7px} }
 </style>
 </head>
@@ -185,15 +200,23 @@
     </div>
   </header>
 
-  <div class="glass userbar">
-    <div class="user">
-      <div class="avatar" id="avatar">?</div>
-      <div style="min-width:0">
-        <div id="username">Loading…</div>
-        <div class="sline"><span class="dot" id="dot"></span><span id="statusText">Connecting…</span></div>
-      </div>
+  <div class="glass topbar">
+    <div class="stageslot hidden" id="stageSlot">
+      <span id="stageLabel">STAGE 1</span>
+      <select id="moodSelect" title="Mood">
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+      <span id="hardBadge" class="hard hidden">HARD STAGE</span>
+      <button class="iconbtn sm" id="restartBtn" title="Restart stage">↻</button>
     </div>
-    <div class="coinbox"><span class="coin"></span><span id="coins">0</span></div>
+    <div class="userslot">
+      <div class="avatar" id="avatar">?</div>
+      <span class="dot" id="dot" title="Connecting…"></span>
+      <span id="username">Loading…</span>
+      <div class="coinbox"><span class="coin"></span><span id="coins">0</span></div>
+    </div>
   </div>
 
   <!-- MAP SCREEN -->
@@ -215,15 +238,6 @@
 
   <!-- GAME SCREEN -->
   <section id="gameScreen" class="hidden">
-    <div class="stagebar">
-      <div class="glass stagechip">
-        <span id="stageLabel">STAGE 1</span>
-        <span id="moodBadge" class="mood-badge">EASY</span>
-        <span id="hardBadge" class="hard hidden">HARD STAGE</span>
-      </div>
-      <button class="iconbtn" id="restartBtn" title="Restart stage">↻</button>
-    </div>
-
     <div class="stats">
       <div class="glass stat"><small>SCORE</small><b id="score">0</b></div>
       <div class="glass stat"><small>TARGET</small><b id="target">0</b></div>
@@ -232,7 +246,6 @@
 
     <div class="board-wrap" id="boardWrap"><div class="board" id="board"></div></div>
 
-    <div class="tray-title">Block ko board par drag karein</div>
     <div class="tray" id="tray"></div>
 
     <div class="items" id="items"></div>
@@ -521,8 +534,8 @@ function setStatus(kind) {
     synced:     ["Synced to cloud", "ok"],
     offline:    ["Offline – data device par save ho raha hai", "err"]
   };
-  $("statusText").textContent = map[kind][0];
   $("dot").className = "dot " + map[kind][1];
+  $("dot").title = map[kind][0];
 }
 
 /* ==================== BOARD / TRAY UI ==================== */
@@ -761,6 +774,7 @@ function gameOver() {
 function showScreen(which) {
   $("mapScreen").classList.toggle("hidden", which !== "map");
   $("gameScreen").classList.toggle("hidden", which !== "game");
+  $("stageSlot").classList.toggle("hidden", which !== "game");
   window.scrollTo(0, 0);
 }
 
@@ -922,7 +936,7 @@ function updateUI() {
     $("score").textContent = S.score;
     $("target").textContent = S.target;
     $("stageLabel").textContent = `STAGE ${S.stage}`;
-    $("moodBadge").textContent = MOODS[S.mood].name.toUpperCase();
+    $("moodSelect").value = S.mood;
     $("hardBadge").classList.toggle("hidden", !S.hard);
   }
   $("lines").textContent = profile.totalLines;
@@ -1134,6 +1148,21 @@ document.querySelectorAll(".mood-btn").forEach(b => b.addEventListener("click", 
   renderMap();
   updateUI();
 }));
+
+$("moodSelect").addEventListener("change", e => {
+  const m = e.target.value;
+  if (!MOODS[m] || m === profile.mood) return;
+  profile.mood = m;
+  if (S && !S.over) {
+    const n = Math.min(S.stage, curProgress() + 1);
+    startStage(n);
+    toast(`${MOODS[m].name} mood laga diya. Stage ${n} shuru`);
+  } else {
+    touch();
+    renderMap();
+  }
+  updateUI();
+});
 
 /* ==================== START ==================== */
 refreshMuteButton();
