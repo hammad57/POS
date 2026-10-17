@@ -143,7 +143,7 @@
   <div class="stats">
     <div class="glass stat"><small>SCORE</small><b id="score">0</b></div>
     <div class="glass stat"><small>BEST</small><b id="best">0</b></div>
-    <div class="glass stat"><small>LINES</small><b id="lines">0</b></div>
+    <div class="glass stat"><small>BLASTS</small><b id="lines">0</b></div>
   </div>
 
   <div class="board-wrap" id="boardWrap"><div class="board" id="board"></div></div>
@@ -385,14 +385,11 @@ function anyFit(pieces) {
     return false;
   })());
 }
-function findClears() {
+function findClears(placed) {
+  const placedSet = new Set(placed);
+  // Full rows/columns no longer blast on their own: only same-colour groups blast,
+  // so blocks of other colours in the same line stay on the board.
   const rows = [], cols = [];
-  for (let r = 0; r < N; r++) if (S.grid[r].every(v => v)) rows.push(r);
-  for (let c = 0; c < N; c++) {
-    let full = true;
-    for (let r = 0; r < N; r++) if (!S.grid[r][c]) { full = false; break; }
-    if (full) cols.push(c);
-  }
   const set = new Set();
   rows.forEach(r => { for (let c = 0; c < N; c++) set.add(r * N + c); });
   cols.forEach(c => { for (let r = 0; r < N; r++) set.add(r * N + c); });
@@ -400,7 +397,7 @@ function findClears() {
   // Same-colour groups: 3 or more touching blocks of one colour blast together
   const visited = new Array(N * N).fill(false);
   let groups = 0;
-  for (let start = 0; start < N * N; start++) {
+  for (const start of placed) {
     const sr = Math.floor(start / N), sc = start % N;
     const v = S.grid[sr][sc];
     if (!v || visited[start]) continue;
@@ -420,7 +417,9 @@ function findClears() {
         }
       });
     }
-    if (comp.length >= 3) {
+    // must reach at least one block that was already on the board, so a
+    // lone 3+ piece of one colour never blasts by itself
+    if (comp.length >= 3 && comp.some(i => !placedSet.has(i))) {
       groups++;
       comp.forEach(i => set.add(i));
     }
@@ -479,7 +478,7 @@ function commit(idx, r, c) {
   flash(placed, "pop", 320);
   renderTray();
 
-  const res = findClears();
+  const res = findClears(placed);
   let pts = placed.length, coins = 0;
 
   const hits = res.lines + res.groups;
@@ -490,7 +489,7 @@ function commit(idx, r, c) {
          + res.groups * 15
          + (S.streak > 1 ? S.streak * 20 : 0);
     coins = res.lines * 5 + res.groups * 3 + (S.streak > 1 ? S.streak * 2 : 0);
-    profile.totalLines += res.lines;
+    profile.totalLines += res.groups;
     sfx.clear(hits, S.streak);
     res.cells.forEach(i => { cellEls[i].classList.add("clearing"); spawnParticles(i); });
     if (hits >= 2) shake();
