@@ -396,7 +396,37 @@ function findClears() {
   const set = new Set();
   rows.forEach(r => { for (let c = 0; c < N; c++) set.add(r * N + c); });
   cols.forEach(c => { for (let r = 0; r < N; r++) set.add(r * N + c); });
-  return { lines: rows.length + cols.length, cells: [...set] };
+
+  // Same-colour groups: 3 or more touching blocks of one colour blast together
+  const visited = new Array(N * N).fill(false);
+  let groups = 0;
+  for (let start = 0; start < N * N; start++) {
+    const sr = Math.floor(start / N), sc = start % N;
+    const v = S.grid[sr][sc];
+    if (!v || visited[start]) continue;
+    const comp = [];
+    const stack = [start];
+    visited[start] = true;
+    while (stack.length) {
+      const idx = stack.pop();
+      comp.push(idx);
+      const r = Math.floor(idx / N), c = idx % N;
+      [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].forEach(([nr, nc]) => {
+        if (nr < 0 || nr >= N || nc < 0 || nc >= N) return;
+        const ni = nr * N + nc;
+        if (!visited[ni] && S.grid[nr][nc] === v) {
+          visited[ni] = true;
+          stack.push(ni);
+        }
+      });
+    }
+    if (comp.length >= 3) {
+      groups++;
+      comp.forEach(i => set.add(i));
+    }
+  }
+
+  return { lines: rows.length + cols.length, groups, cells: [...set] };
 }
 
 /* ==================== EFFECTS ==================== */
@@ -452,16 +482,18 @@ function commit(idx, r, c) {
   const res = findClears();
   let pts = placed.length, coins = 0;
 
-  if (res.lines) {
+  const hits = res.lines + res.groups;
+  if (hits) {
     S.streak++;
     pts += res.cells.length * 10
          + (res.lines > 1 ? res.lines * res.lines * 25 : 0)
+         + res.groups * 15
          + (S.streak > 1 ? S.streak * 20 : 0);
-    coins = res.lines * 5 + (S.streak > 1 ? S.streak * 2 : 0);
+    coins = res.lines * 5 + res.groups * 3 + (S.streak > 1 ? S.streak * 2 : 0);
     profile.totalLines += res.lines;
-    sfx.clear(res.lines, S.streak);
+    sfx.clear(hits, S.streak);
     res.cells.forEach(i => { cellEls[i].classList.add("clearing"); spawnParticles(i); });
-    if (res.lines >= 2) shake();
+    if (hits >= 2) shake();
     setTimeout(() => {
       res.cells.forEach(i => { S.grid[Math.floor(i / N)][i % N] = 0; });
       renderBoard();
