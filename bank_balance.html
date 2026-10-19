@@ -1186,8 +1186,10 @@
     }
 
     function buildReminderMessage(bank) {
-        const incomes = allTransactions.filter(t => t.bankId === bank.id && !t.excludeFromBalance && t.type === 'Income');
-        const total = incomes.reduce((s, t) => s + parseFloat(t.amount || 0), 0);
+        const now = new Date();
+        const monthYear = now.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+        const bankTxns = allTransactions.filter(t => t.bankId === bank.id);
+        const incomes = bankTxns.filter(t => !t.excludeFromBalance && t.type === 'Income');
         const sorted = [...incomes].sort((a, b) => {
             if (a.date < b.date) return 1;
             if (a.date > b.date) return -1;
@@ -1196,13 +1198,17 @@
         const last = sorted[0];
         const lastAmt = last ? 'Rs. ' + parseFloat(last.amount).toLocaleString() : '---';
         const lastDate = last ? last.date : '---';
-        return 'Assalam o Alikum!\n' +
-            'Ap ki monthly payment abhi tak nahi pahunchi braye meherbani apni payment time sy bhaij dain. Shukria\n\n' +
-            '*User Detail*\n' +
-            'Name: ' + bank.name + '\n' +
-            'Total Amount: Rs. ' + total.toLocaleString() + '\n' +
+        const remaining = bankTxns.reduce((s, t) => {
+            if (t.excludeFromBalance) return s;
+            const amt = parseFloat(t.amount);
+            if (t.type === 'Income' || t.type === 'Adjustment In') return s + amt;
+            if (t.type === 'Expense' || t.type === 'Adjustment Out') return s - amt;
+            return s;
+        }, 0);
+        return 'Assalam o Alikum. Your payment is due for the month of ' + monthYear + '.\n\n' +
             'Last Paid Amount: ' + lastAmt + '\n' +
-            'Last Paid Date: ' + lastDate + '\n\n' +
+            'Last Paid Date: ' + lastDate + '\n' +
+            'Remaining Balance: Rs. ' + remaining.toLocaleString() + '\n\n' +
             '_Auto Generated message with AI Tool_';
     }
 
