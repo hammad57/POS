@@ -152,19 +152,85 @@
         .fab-home:hover { transform: scale(1.1); color: #00d2ff; background: #000; }
         [data-theme="dark"] .fab-home { background: #0984e3; }
 
-        .top-home-btn {
-            position: fixed; top: 20px; left: 300px;
-            background: linear-gradient(135deg, #4f46e5, #3b82f6);
-            color: #ffffff !important; text-decoration: none !important;
-            padding: 10px 20px; border-radius: 50px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-weight: 600; font-size: 15px;
-            display: flex; align-items: center; gap: 8px;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-            z-index: 9999; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        /* ===== Professional Pro Upgrade ===== */
+        .pro-header {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            border-radius: 22px;
+            padding: 22px 28px;
+            color: #fff;
+            box-shadow: 0 15px 35px rgba(15, 32, 39, 0.35);
+            position: relative;
+            overflow: hidden;
         }
-        .top-home-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6); background: linear-gradient(135deg, #4338ca, #2563eb); }
+        .pro-header::before {
+            content: '';
+            position: absolute; top: -60px; right: -60px;
+            width: 220px; height: 220px; border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+        }
+        .pro-header::after {
+            content: '';
+            position: absolute; bottom: -80px; left: 20%;
+            width: 180px; height: 180px; border-radius: 50%;
+            background: rgba(9,132,227,0.15);
+        }
+        .pro-logo {
+            width: 58px; height: 58px; border-radius: 16px;
+            background: linear-gradient(145deg, #0984e3, #00cec9);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; color: #fff;
+            box-shadow: 0 8px 20px rgba(9,132,227,0.45);
+            position: relative; z-index: 1;
+        }
+        .pro-header h2 { position: relative; z-index: 1; }
+        .pro-header .subtitle { position: relative; z-index: 1; font-size: 0.78rem; letter-spacing: 3px; text-transform: uppercase; opacity: 0.7; }
+        .pro-btn {
+            border: none; border-radius: 50px; padding: 10px 22px;
+            font-weight: 600; font-size: 0.9rem; color: #fff;
+            display: inline-flex; align-items: center; gap: 8px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+            transition: 0.25s; position: relative; z-index: 1;
+            text-decoration: none; cursor: pointer;
+        }
+        .pro-btn:hover { transform: translateY(-2px); color: #fff; }
+        .pro-btn-blue { background: linear-gradient(145deg, #0984e3, #0652a3); }
+        .pro-btn-amber { background: linear-gradient(145deg, #f39c12, #d68910); }
+        .pro-btn-dark { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); }
+        .pro-theme-select {
+            border-radius: 50px; border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.12); color: #fff;
+            padding: 10px 16px; font-weight: 600; font-size: 0.9rem;
+            position: relative; z-index: 1; cursor: pointer; outline: none;
+        }
+        .pro-theme-select option { color: #2d3436; }
+        .section-title { display: flex; align-items: center; gap: 12px; }
+        .section-badge {
+            width: 38px; height: 38px; border-radius: 12px;
+            background: linear-gradient(145deg, #0984e3, #0652a3);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; box-shadow: 0 6px 14px rgba(9,132,227,0.35);
+            flex-shrink: 0;
+        }
+        .bank-card-mini { position: relative; }
+        .bank-card-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .wa-btn {
+            flex: 1; border: none; border-radius: 12px; padding: 9px 10px;
+            background: linear-gradient(145deg, #25D366, #128C7E);
+            color: #fff; font-weight: 600; font-size: 0.85rem;
+            display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+            box-shadow: 0 5px 12px rgba(37,211,102,0.35);
+            transition: 0.25s; cursor: pointer;
+        }
+        .wa-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(37,211,102,0.45); color: #fff; }
+        .wa-btn i { font-size: 1.15rem; }
+        .edit-bank-btn {
+            border: 1px solid rgba(9,132,227,0.3); border-radius: 12px; padding: 9px 12px;
+            background: rgba(9,132,227,0.08); color: var(--accent-blue);
+            font-size: 1rem; transition: 0.25s; cursor: pointer;
+        }
+        .edit-bank-btn:hover { background: rgba(9,132,227,0.18); transform: translateY(-2px); }
+        .pro-footer { text-align: center; padding: 25px 10px 10px; color: #95a5a6; font-size: 0.8rem; }
+        .pro-footer strong { color: var(--accent-blue); }
 
         /* Security Overlay Styling */
         #authOverlay {
@@ -232,14 +298,6 @@
     </div>
 </div>
 
-<a href="https://hammad57.github.io/POS/index.html" class="top-home-btn" title="Go to Dashboard">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-    </svg>
-    Home
-</a>
-
 <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 2000;">
     <div id="errorToast" class="toast error-toast-3d" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
@@ -257,21 +315,19 @@
 </a>
 
 <div class="main-container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="pro-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
-            <div class="card-3d p-2 rounded-circle" style="width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
-                <i class="bi bi-bank2 text-primary fs-4"></i>
+            <div class="pro-logo"><i class="bi bi-bank2"></i></div>
+            <div>
+                <h2 class="fw-bold mb-0">Money Vault <span style="color:#74b9ff;">3D Pro</span></h2>
+                <div class="subtitle">Professional Edition</div>
             </div>
-            <h2 class="fw-bold mb-0">Money Vault <span class="text-primary">3D Pro</span></h2>
         </div>
-        <div class="d-flex gap-3">
-            <button class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm" onclick="openTransferModal()">
-                <i class="bi bi-arrow-left-right me-2"></i> Transfer
-            </button>
-            <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="openBankModal()">
-                <i class="bi bi-plus-circle me-2"></i> Add Bank
-            </button>
-            <select id="themeSelector" class="form-select border-0 shadow-sm rounded-pill" style="width: 130px;" onchange="changeTheme(this.value)">
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="https://hammad57.github.io/POS/index.html" class="pro-btn pro-btn-dark"><i class="bi bi-house-door-fill"></i> Home</a>
+            <button class="pro-btn pro-btn-amber" onclick="openTransferModal()"><i class="bi bi-arrow-left-right"></i> Transfer</button>
+            <button class="pro-btn pro-btn-blue" onclick="openBankModal()"><i class="bi bi-plus-circle"></i> Add Bank</button>
+            <select id="themeSelector" class="pro-theme-select" onchange="changeTheme(this.value)">
                 <option value="light">☀️ Light</option>
                 <option value="dark">🌙 Dark</option>
             </select>
@@ -279,13 +335,13 @@
     </div>
 
     <div class="row g-4 mb-4">
-        <div class="col-md-4" onclick="resetChartToAll()"><div id="mainCard-Balance" class="card-3d grad-balance active-tab"><h6>Total Balance</h6><h2 id="totalBalance">Rs. 0</h2></div></div>
-        <div class="col-md-4" onclick="updateView('Income')"><div id="mainCard-Income" class="card-3d grad-income"><h6>Total Income</h6><h2 id="totalIncome">Rs. 0</h2></div></div>
-        <div class="col-md-4" onclick="updateView('Expense')"><div id="mainCard-Expense" class="card-3d grad-expense"><h6>Total Expense</h6><h2 id="totalExpense">Rs. 0</h2></div></div>
+        <div class="col-md-4" onclick="resetChartToAll()"><div id="mainCard-Balance" class="card-3d grad-balance active-tab"><h6><i class="bi bi-wallet-fill me-2"></i>Total Balance</h6><h2 id="totalBalance">Rs. 0</h2></div></div>
+        <div class="col-md-4" onclick="updateView('Income')"><div id="mainCard-Income" class="card-3d grad-income"><h6><i class="bi bi-arrow-down-circle-fill me-2"></i>Total Income</h6><h2 id="totalIncome">Rs. 0</h2></div></div>
+        <div class="col-md-4" onclick="updateView('Expense')"><div id="mainCard-Expense" class="card-3d grad-expense"><h6><i class="bi bi-arrow-up-circle-fill me-2"></i>Total Expense</h6><h2 id="totalExpense">Rs. 0</h2></div></div>
     </div>
 
     <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
-        <h5 class="fw-bold m-0"><i class="bi bi-calendar-check me-2"></i>Monthly Overview</h5>
+        <h5 class="fw-bold m-0 section-title"><span class="section-badge"><i class="bi bi-calendar-check"></i></span> Monthly Overview</h5>
         <input type="month" id="monthSelector" class="date-input w-auto fw-bold text-primary" onchange="updateMonthlyStats()">
     </div>
     <div class="row g-4 mb-5">
@@ -303,7 +359,7 @@
         </div>
     </div>
 
-    <h5 class="fw-bold mb-3"><i class="bi bi-wallet2 me-2"></i>Bank Accounts (Click to view details)</h5>
+    <h5 class="fw-bold mb-3 section-title"><span class="section-badge"><i class="bi bi-wallet2"></i></span> Bank Accounts <small class="text-muted fw-normal" style="font-size:0.8rem;">(Click card to view details)</small></h5>
     <div id="bankCardsContainer" class="d-flex flex-wrap gap-3 mb-5"></div>
 
     <div id="dashboardContent" style="display: none; transition: 0.5s opacity;">
@@ -347,6 +403,8 @@
     </div>
 </div>
 
+<div class="pro-footer">Powered by <strong>Money Vault 3D Pro</strong> &middot; Professional Edition</div>
+
 <button class="fab-btn" onclick="openTransactionModal()"><i class="bi bi-plus-lg"></i></button>
 
 <div class="modal fade" id="downloadModal" tabindex="-1">
@@ -374,8 +432,9 @@
         <div class="modal-content rounded-4 p-4 border-0">
             <h5 class="fw-bold mb-3">Add New Bank</h5>
             <form id="bankForm">
-                <input type="text" id="newBankName" class="form-control mb-3" placeholder="Bank Name" required>
+                <input type="text" id="newBankName" class="form-control mb-3" placeholder="Bank / User Name" required>
                 <input type="text" id="newBankNumber" class="form-control mb-3" placeholder="Account Number">
+                <input type="tel" id="newBankMobile" class="form-control mb-3" placeholder="Mobile Number (WhatsApp) e.g. 03001234567">
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="excludeFromBalance">
                     <label class="form-check-label small fw-bold" for="excludeFromBalance">
@@ -383,6 +442,22 @@
                     </label>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Save Bank</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Bank / User Modal (mobile number add/edit) -->
+<div class="modal fade" id="editBankModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 p-4 border-0">
+            <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Bank / User</h5>
+            <form id="editBankForm">
+                <input type="hidden" id="editBankId">
+                <div class="mb-3"><label class="small fw-bold">Bank / User Name</label><input type="text" id="editBankName" class="form-control" required></div>
+                <div class="mb-3"><label class="small fw-bold">Account Number</label><input type="text" id="editBankNumber" class="form-control"></div>
+                <div class="mb-3"><label class="small fw-bold">Mobile Number (WhatsApp)</label><input type="tel" id="editBankMobile" class="form-control" placeholder="03001234567"></div>
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Save Changes</button>
             </form>
         </div>
     </div>
@@ -496,6 +571,8 @@
     const eModal = new bootstrap.Modal(document.getElementById('entryModal'));
     const tModal = new bootstrap.Modal(document.getElementById('transferModal'));
     const errorToast = new bootstrap.Toast(document.getElementById('errorToast'), { delay: 5000 });
+    const ebModal = new bootstrap.Modal(document.getElementById('editBankModal'));
+    let pendingWhatsAppBankId = null;
 
     // Security check on load
     onValue(ref(db, 'settings/app_password'), (snap) => {
@@ -590,6 +667,14 @@
                         <h6>${bank.name} ${excludeIcon}</h6>
                         <span class="acc-num">${bank.number || '---'}</span>
                         <div class="bal-amt">Rs. ${balance.toLocaleString()}</div>
+                        <div class="bank-card-actions">
+                            <button class="wa-btn" onclick="event.stopPropagation(); openWhatsApp('${bank.id}')" title="WhatsApp par payment reminder bhejein">
+                                <i class="bi bi-whatsapp"></i> WhatsApp
+                            </button>
+                            <button class="edit-bank-btn" onclick="event.stopPropagation(); openEditBankModal('${bank.id}')" title="Edit (mobile number add karein)">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </div>
                     </div>`;
             }
         });
@@ -1056,6 +1141,7 @@
         push(ref(db, 'bank_accounts'), { 
             name: document.getElementById('newBankName').value, 
             number: document.getElementById('newBankNumber').value,
+            mobile: document.getElementById('newBankMobile').value.trim(),
             excludeFromBalance: document.getElementById('excludeFromBalance').checked
         }); 
         bModal.hide(); 
@@ -1089,6 +1175,88 @@
         setTimeout(() => { document.getElementById('dashboardContent').scrollIntoView({ behavior: 'smooth' }); }, 100);
     };
     
+    // ===== WhatsApp Payment Reminder =====
+    function normalizePhoneForWA(num) {
+        let d = String(num || '').replace(/\D/g, '');
+        if (!d) return '';
+        if (d.startsWith('0')) d = '92' + d.slice(1);
+        else if (d.startsWith('92')) d = d;
+        else if (d.length === 10 && d.startsWith('3')) d = '92' + d;
+        return d;
+    }
+
+    function buildReminderMessage(bank) {
+        const incomes = allTransactions.filter(t => t.bankId === bank.id && !t.excludeFromBalance && t.type === 'Income');
+        const total = incomes.reduce((s, t) => s + parseFloat(t.amount || 0), 0);
+        const sorted = [...incomes].sort((a, b) => {
+            if (a.date < b.date) return 1;
+            if (a.date > b.date) return -1;
+            return (a.id < b.id) ? 1 : -1;
+        });
+        const last = sorted[0];
+        const lastAmt = last ? 'Rs. ' + parseFloat(last.amount).toLocaleString() : '---';
+        const lastDate = last ? last.date : '---';
+        return 'Assalam o Alikum!\n' +
+            'Ap ki monthly payment abhi tak nahi pahunchi braye meherbani apni payment time sy bhaij dain. Shukria\n\n' +
+            '*User Detail*\n' +
+            'Name: ' + bank.name + '\n' +
+            'Total Amount: Rs. ' + total.toLocaleString() + '\n' +
+            'Last Paid Amount: ' + lastAmt + '\n' +
+            'Last Paid Date: ' + lastDate + '\n\n' +
+            '_Auto Generated message with AI Tool_';
+    }
+
+    window.openWhatsApp = (bankId) => {
+        const bank = allBanks.find(b => b.id === bankId);
+        if (!bank) return;
+        const mobile = (bank.mobile || '').trim();
+        if (!mobile) {
+            pendingWhatsAppBankId = bankId;
+            document.getElementById('errorMessage').innerText = bank.name + ' ka WhatsApp number mojood nahi — pehle mobile number add karein.';
+            errorToast.show();
+            window.openEditBankModal(bankId);
+            return;
+        }
+        const phone = normalizePhoneForWA(mobile);
+        if (!phone) {
+            document.getElementById('errorMessage').innerText = 'Mobile number durust nahi hai.';
+            errorToast.show();
+            return;
+        }
+        const msg = buildReminderMessage(bank);
+        window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
+    };
+
+    window.openEditBankModal = (id) => {
+        const b = allBanks.find(x => x.id === id);
+        if (!b) return;
+        document.getElementById('editBankId').value = id;
+        document.getElementById('editBankName').value = b.name || '';
+        document.getElementById('editBankNumber').value = b.number || '';
+        document.getElementById('editBankMobile').value = b.mobile || '';
+        ebModal.show();
+    };
+
+    document.getElementById('editBankForm').onsubmit = (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editBankId').value;
+        update(ref(db, 'bank_accounts/' + id), {
+            name: document.getElementById('editBankName').value,
+            number: document.getElementById('editBankNumber').value,
+            mobile: document.getElementById('editBankMobile').value.trim()
+        }).then(() => {
+            ebModal.hide();
+            if (pendingWhatsAppBankId) {
+                const pid = pendingWhatsAppBankId;
+                pendingWhatsAppBankId = null;
+                setTimeout(() => window.openWhatsApp(pid), 500);
+            }
+        }).catch(err => {
+            document.getElementById('errorMessage').innerText = 'Save nahi ho saka: ' + err.message;
+            errorToast.show();
+        });
+    };
+
     window.changeTheme = (v) => { set(ref(db, 'settings/theme'), v); };
     window.closeHistory = () => { 
         document.getElementById('dashboardContent').style.display = 'none'; 
