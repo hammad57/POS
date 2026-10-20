@@ -1204,7 +1204,9 @@
             ? incomes.map(t => t.date + ' - Rs. ' + parseFloat(t.amount).toLocaleString()).join('\n')
             : '---';
         const payCount = incomes.length ? ' (' + incomes.length + ' payments)' : '';
-        return bank.name + '\n' +
+        const shortName = bank.name.replace(/\s+Loan$/, '');
+        return 'Assalam o Alikum\n' +
+            '*' + shortName + '*\n\n' +
             'Loan Date: ' + loanDate + '\n' +
             'Loan Amount: Rs. ' + loanTotal.toLocaleString() + '\n' +
             'Loan Recovered: Rs. ' + recoveredTotal.toLocaleString() + payCount + '\n' +
