@@ -66,6 +66,9 @@
         box-shadow: var(--shadow-3d); border: none;
         padding: 20px; position: relative; overflow: hidden;
     }
+    .sum-card { cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .sum-card:hover { transform: translateY(-4px); }
+    .sum-card:active { transform: translateY(-1px) scale(0.99); }
     .sum-card h6 { font-size: 0.85rem; font-weight: 600; opacity: 0.85; margin-bottom: 8px; }
     .sum-card h2 { font-weight: 800; margin: 0; }
     .sum-card small { opacity: 0.75; font-weight: 500; }
@@ -147,28 +150,28 @@
 
     <div class="row g-3 mb-4">
         <div class="col-md-3 col-6">
-            <div class="card-3d sum-card grad-open">
+            <div class="card-3d sum-card grad-open" onclick="openOpeningModal()" title="Click: Opening Balance set karein">
                 <h6><i class="bi bi-wallet-fill me-2"></i>Opening Balance</h6>
                 <h2 id="openingAmt">---</h2>
                 <small id="openingDate">---</small>
             </div>
         </div>
         <div class="col-md-3 col-6">
-            <div class="card-3d sum-card grad-inc">
+            <div class="card-3d sum-card grad-inc" onclick="openEntryModal('income')" title="Click: Income add karein">
                 <h6><i class="bi bi-arrow-down-circle-fill me-2"></i>Total Income</h6>
                 <h2 id="totalInc">Rs. 0</h2>
                 <small id="incSince">---</small>
             </div>
         </div>
         <div class="col-md-3 col-6">
-            <div class="card-3d sum-card grad-exp">
+            <div class="card-3d sum-card grad-exp" onclick="openEntryModal('expense')" title="Click: Expense add karein">
                 <h6><i class="bi bi-arrow-up-circle-fill me-2"></i>Daily Expenses</h6>
                 <h2 id="totalExp">Rs. 0</h2>
                 <small id="expSince">---</small>
             </div>
         </div>
         <div class="col-md-3 col-6">
-            <div class="card-3d sum-card grad-rem" id="remCard">
+            <div class="card-3d sum-card grad-rem" id="remCard" onclick="document.getElementById('historyCard').scrollIntoView({behavior: 'smooth'})" title="Click: Neeche hisab dekhein">
                 <h6><i class="bi bi-piggy-bank-fill me-2"></i>Remaining Balance</h6>
                 <h2 id="remainingAmt">---</h2>
                 <small>Baqi raqam</small>
@@ -184,7 +187,7 @@
         </div>
     </div>
 
-    <div class="card-3d mb-4">
+    <div class="card-3d mb-4" id="historyCard">
         <div id="expenseList"></div>
     </div>
 
