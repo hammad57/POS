@@ -71,6 +71,7 @@
     .sum-card small { opacity: 0.75; font-weight: 500; }
     .grad-open { background: linear-gradient(145deg, #0984e3, #0056b3); color: #fff; }
     .grad-exp { background: linear-gradient(145deg, #d63031, #a91e1e); color: #fff; }
+    .grad-inc { background: linear-gradient(145deg, #6c5ce7, #4834d4); color: #fff; }
     .grad-rem { background: linear-gradient(145deg, #00b894, #008967); color: #fff; }
     .grad-rem.negative { background: linear-gradient(145deg, #e17055, #c0392b); }
 
@@ -94,6 +95,7 @@
     .exp-row:last-child { border-bottom: none; }
     .exp-remarks { font-weight: 600; }
     .exp-amt { font-weight: 800; color: #d63031; }
+    .exp-amt.inc { color: #00b894; }
     .fab-btn {
         position: fixed; bottom: 40px; right: 40px; width: 75px; height: 75px; border-radius: 50%;
         background: linear-gradient(145deg, #00b894, #008967); color: white; border: none; font-size: 35px;
@@ -144,21 +146,28 @@
     </div>
 
     <div class="row g-3 mb-4">
-        <div class="col-md-4 col-12">
+        <div class="col-md-3 col-6">
             <div class="card-3d sum-card grad-open">
                 <h6><i class="bi bi-wallet-fill me-2"></i>Opening Balance</h6>
                 <h2 id="openingAmt">---</h2>
                 <small id="openingDate">---</small>
             </div>
         </div>
-        <div class="col-md-4 col-12">
+        <div class="col-md-3 col-6">
+            <div class="card-3d sum-card grad-inc">
+                <h6><i class="bi bi-arrow-down-circle-fill me-2"></i>Total Income</h6>
+                <h2 id="totalInc">Rs. 0</h2>
+                <small id="incSince">---</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
             <div class="card-3d sum-card grad-exp">
                 <h6><i class="bi bi-arrow-up-circle-fill me-2"></i>Daily Expenses</h6>
                 <h2 id="totalExp">Rs. 0</h2>
                 <small id="expSince">---</small>
             </div>
         </div>
-        <div class="col-md-4 col-12">
+        <div class="col-md-3 col-6">
             <div class="card-3d sum-card grad-rem" id="remCard">
                 <h6><i class="bi bi-piggy-bank-fill me-2"></i>Remaining Balance</h6>
                 <h2 id="remainingAmt">---</h2>
@@ -168,8 +177,11 @@
     </div>
 
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h5 class="fw-bold m-0 section-title"><span class="section-badge"><i class="bi bi-calendar-day"></i></span> Rozana Kharcha</h5>
-        <button class="pro-btn pro-btn-green" onclick="openOpeningModal()"><i class="bi bi-gear-fill"></i> Set Opening Balance</button>
+        <h5 class="fw-bold m-0 section-title"><span class="section-badge"><i class="bi bi-calendar-day"></i></span> Rozana Hisab</h5>
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="pro-btn pro-btn-green" onclick="openEntryModal('income')"><i class="bi bi-plus-circle-fill"></i> Add Income</button>
+            <button class="pro-btn pro-btn-green" onclick="openOpeningModal()"><i class="bi bi-gear-fill"></i> Set Opening Balance</button>
+        </div>
     </div>
 
     <div class="card-3d mb-4">
@@ -179,7 +191,7 @@
     <div class="pro-footer">Powered by <strong>Money Vault 3D Pro</strong> &middot; Daily Expense Tracker</div>
 </div>
 
-<button class="fab-btn" onclick="openExpenseModal()" title="Add Expense"><i class="bi bi-plus-lg"></i></button>
+<button class="fab-btn" onclick="openEntryModal('expense')" title="Add Expense"><i class="bi bi-plus-lg"></i></button>
 
 <div class="modal fade" id="openingModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -201,10 +213,16 @@
             <h5 class="fw-bold mb-4 text-danger" id="expenseModalTitle"><i class="bi bi-dash-circle me-2"></i>Add Daily Expense</h5>
             <form id="expenseForm">
                 <input type="hidden" id="editExpKey">
-                <div class="mb-3"><label class="small fw-bold">Daily Expense Amount (Rs.)</label><input type="number" id="expInputAmt" class="form-control" min="0" step="any" required></div>
+                <div class="btn-group w-100 mb-3" role="group" aria-label="Entry type">
+                    <input type="radio" class="btn-check" name="entryType" id="typeExpense" value="expense" checked onchange="updateEntryTypeUI()">
+                    <label class="btn btn-outline-danger fw-bold" for="typeExpense"><i class="bi bi-arrow-up-circle me-1"></i> Expense</label>
+                    <input type="radio" class="btn-check" name="entryType" id="typeIncome" value="income" onchange="updateEntryTypeUI()">
+                    <label class="btn btn-outline-success fw-bold" for="typeIncome"><i class="bi bi-arrow-down-circle me-1"></i> Income</label>
+                </div>
+                <div class="mb-3"><label class="small fw-bold">Amount (Rs.)</label><input type="number" id="expInputAmt" class="form-control" min="0" step="any" required></div>
                 <div class="mb-3"><label class="small fw-bold">Date</label><input type="date" id="expInputDate" class="form-control" required></div>
-                <div class="mb-3"><label class="small fw-bold">Remarks / Kis cheez par kharcha</label><input type="text" id="expInputRemarks" class="form-control" placeholder="e.g. Sabzi, Petrol, Doodh"></div>
-                <button type="submit" class="btn btn-danger w-100 py-2 fw-bold">Save Expense</button>
+                <div class="mb-3"><label class="small fw-bold">Remarks / Detail</label><input type="text" id="expInputRemarks" class="form-control" placeholder="e.g. Tankhwah, Sabzi, Petrol, Doodh"></div>
+                <button type="submit" id="expSaveBtn" class="btn btn-danger w-100 py-2 fw-bold">Save Expense</button>
             </form>
         </div>
     </div>
@@ -273,14 +291,19 @@
         document.getElementById('openingDate').innerText = oDate ? ('Date: ' + oDate) : 'Pehle set karein';
 
         const relevant = oDate ? expenses.filter(e => e.date >= oDate) : expenses.slice();
-        const totalExp = relevant.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+        const incList = relevant.filter(e => e.type === 'income');
+        const expList = relevant.filter(e => e.type !== 'income');
+        const totalInc = incList.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+        const totalExp = expList.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+        document.getElementById('totalInc').innerText = fmtRs(totalInc);
+        document.getElementById('incSince').innerText = oDate ? ('Since ' + oDate) : '';
         document.getElementById('totalExp').innerText = fmtRs(totalExp);
         document.getElementById('expSince').innerText = oDate ? ('Since ' + oDate) : '';
 
         const remEl = document.getElementById('remainingAmt');
         const remCard = document.getElementById('remCard');
         if (oAmt !== null) {
-            const remaining = oAmt - totalExp;
+            const remaining = oAmt + totalInc - totalExp;
             remEl.innerText = fmtRs(remaining);
             remCard.classList.toggle('negative', remaining < 0);
         } else {
@@ -290,7 +313,7 @@
 
         const list = document.getElementById('expenseList');
         if (!relevant.length) {
-            list.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-emoji-smile fs-2 d-block mb-2"></i>Koi expense nahi — neeche + dabaa kar pehla kharcha add karein.</div>';
+            list.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-emoji-smile fs-2 d-block mb-2"></i>Koi entry nahi — neeche + dabaa kar pehli entry add karein.</div>';
             return;
         }
         const grouped = {};
@@ -298,13 +321,15 @@
         const dates = Object.keys(grouped).sort().reverse();
         let html = '';
         dates.forEach(d => {
-            const dayTotal = grouped[d].reduce((s, e) => s + parseFloat(e.amount || 0), 0);
-            html += `<div class="date-group-header"><span><i class="bi bi-calendar-event me-2"></i>${d}</span><span>${fmtRs(dayTotal)}</span></div>`;
+            const dayInc = grouped[d].filter(e => e.type === 'income').reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+            const dayExp = grouped[d].filter(e => e.type !== 'income').reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+            html += `<div class="date-group-header"><span><i class="bi bi-calendar-event me-2"></i>${d}</span><span>${dayInc ? '<span class="text-success">+ ' + fmtRs(dayInc) + '</span> &nbsp;' : ''}<span class="text-danger">- ${fmtRs(dayExp)}</span></span></div>`;
             grouped[d].forEach(e => {
+                const isInc = e.type === 'income';
                 html += `<div class="exp-row">
-                    <div><div class="exp-remarks">${escapeHtml(e.remarks || 'Expense')}</div></div>
+                    <div><div class="exp-remarks">${escapeHtml(e.remarks || (isInc ? 'Income' : 'Expense'))} <span class="badge ${isInc ? 'bg-success' : 'bg-danger'} ms-1">${isInc ? 'Income' : 'Expense'}</span></div></div>
                     <div class="d-flex align-items-center gap-2">
-                        <span class="exp-amt">${fmtRs(e.amount)}</span>
+                        <span class="exp-amt${isInc ? ' inc' : ''}">${isInc ? '+ ' : '- '}${fmtRs(e.amount)}</span>
                         <button class="btn btn-sm btn-outline-primary" onclick="editExpense('${e.id}')"><i class="bi bi-pencil"></i></button>
                         <button class="btn btn-sm btn-outline-danger" onclick="deleteExpense('${e.id}')"><i class="bi bi-trash"></i></button>
                     </div>
@@ -324,11 +349,25 @@
         oModal.show();
     };
 
-    window.openExpenseModal = () => {
+    window.updateEntryTypeUI = () => {
+        const isInc = document.querySelector('input[name="entryType"]:checked').value === 'income';
+        const title = document.getElementById('expenseModalTitle');
+        const btn = document.getElementById('expSaveBtn');
+        const editing = !!document.getElementById('editExpKey').value;
+        title.className = 'fw-bold mb-4 ' + (isInc ? 'text-success' : 'text-danger');
+        title.innerHTML = isInc
+            ? '<i class="bi bi-plus-circle me-2"></i>' + (editing ? 'Edit Income' : 'Add Income')
+            : '<i class="bi bi-dash-circle me-2"></i>' + (editing ? 'Edit Expense' : 'Add Daily Expense');
+        btn.className = 'btn w-100 py-2 fw-bold ' + (isInc ? 'btn-success' : 'btn-danger');
+        btn.innerText = isInc ? 'Save Income' : 'Save Expense';
+    };
+
+    window.openEntryModal = (type) => {
         document.getElementById('expenseForm').reset();
         document.getElementById('editExpKey').value = '';
         document.getElementById('expInputDate').value = todayStr();
-        document.getElementById('expenseModalTitle').innerHTML = '<i class="bi bi-dash-circle me-2"></i>Add Daily Expense';
+        document.getElementById(type === 'income' ? 'typeIncome' : 'typeExpense').checked = true;
+        window.updateEntryTypeUI();
         eModal.show();
     };
 
@@ -339,7 +378,8 @@
         document.getElementById('expInputAmt').value = e.amount;
         document.getElementById('expInputDate').value = e.date;
         document.getElementById('expInputRemarks').value = e.remarks || '';
-        document.getElementById('expenseModalTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Edit Expense';
+        document.getElementById(e.type === 'income' ? 'typeIncome' : 'typeExpense').checked = true;
+        window.updateEntryTypeUI();
         eModal.show();
     };
 
@@ -364,7 +404,8 @@
         const data = {
             amount: document.getElementById('expInputAmt').value,
             date: document.getElementById('expInputDate').value,
-            remarks: document.getElementById('expInputRemarks').value
+            remarks: document.getElementById('expInputRemarks').value,
+            type: document.querySelector('input[name="entryType"]:checked').value
         };
         if (key) update(ref(db, 'daily_expense/expenses/' + key), data);
         else push(ref(db, 'daily_expense/expenses'), data);
