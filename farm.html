@@ -126,7 +126,7 @@ input, select, textarea { color-scheme: dark; }
         <div class="space-y-1.5 text-xs">
             <button onclick="toggleSideMenu(); window.scrollTo({top:0,behavior:'smooth'})" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🏠</span><span class="font-semibold text-zinc-200">Dashboard</span></button>
             <button onclick="toggleSideMenu(); openPurchaseModal()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🐔</span><span class="font-semibold text-zinc-200">Purchase Hens</span></button>
-            <button onclick="toggleSideMenu(); openSaleModal()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">💰</span><span class="font-semibold text-emerald-400">Sale Out Eggs</span></button>
+            <button disabled aria-disabled="true" class="w-full bg-emerald-900/40 p-3 rounded-xl flex items-center gap-3 text-left cursor-not-allowed"><span class="text-base">💰</span><span class="font-semibold text-emerald-400">Sale Out Eggs</span></button>
             <button onclick="toggleSideMenu(); openUserSettingsModal()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">⚙️</span><span class="font-semibold text-zinc-200">Settings</span></button>
             <button onclick="toggleSideMenu(); openTeamListModal()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">👥</span><span class="font-semibold text-zinc-200">My Team</span></button>
             <button onclick="toggleSideMenu(); copyReferralLink()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🔗</span><span class="font-semibold text-zinc-200">Copy Invite Link</span></button>
@@ -296,7 +296,7 @@ input, select, textarea { color-scheme: dark; }
             <span class="font-bold text-sm text-white">Buy via Bank</span>
             <span class="text-[10px] text-emerald-300 mt-0.5">Manual Payment</span>
         </button>
-        <button onclick="openSaleModal()" class="border border-amber-700/60 bg-gradient-to-br from-emerald-950 to-emerald-900 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md transition-all hover-lift">
+        <button disabled aria-disabled="true" class="border border-amber-700/60 bg-gradient-to-br from-emerald-950 to-emerald-900 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md cursor-not-allowed">
             <span class="text-3xl mb-1.5">💰</span>
             <span class="font-bold text-sm text-yellow-400">Sale Out Eggs</span>
             <span class="text-[10px] text-zinc-400 mt-0.5">Instant Cashout</span>
