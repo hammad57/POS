@@ -221,13 +221,13 @@ input, select, textarea { color-scheme: dark; }
             <div class="flex items-center justify-between mb-1">
                 <p class="text-[10px] text-emerald-300 font-bold tracking-widest uppercase">Total Balance</p>
                 <div class="flex items-center gap-1.5 bg-black/30 px-2 py-1 rounded-full border border-emerald-800/60">
-                    <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-dot"></span>
-                    <span class="text-[9px] text-emerald-400 font-bold tracking-wider">LIVE</span>
+                    <span class="w-3 h-3 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin inline-block"></span>
+                    <span class="text-[9px] text-emerald-400 font-bold tracking-wider">LOADING</span>
                 </div>
             </div>
             <div class="flex items-end gap-2 mb-2">
                 <span class="text-lg text-yellow-500 font-bold mb-1">PKR</span>
-                <h2 id="lblBalancePKR" class="text-4xl font-black gold-text leading-none">0.00</h2>
+                <h2 id="lblBalancePKR" class="text-4xl font-black gold-text leading-none">****</h2>
             </div>
             <div class="grid grid-cols-2 gap-2 mb-4 text-[10px]">
                 <div class="flex items-center gap-1.5">
@@ -236,7 +236,7 @@ input, select, textarea { color-scheme: dark; }
                 </div>
                 <div class="flex items-center gap-1.5 justify-end">
                     <span class="text-zinc-500">Total Eggs:</span>
-                    <span id="lblTotalEggs" class="text-yellow-400 font-bold">0</span>
+                    <span id="lblTotalEggs" class="text-yellow-400 font-bold">****</span>
                 </div>
             </div>
 
@@ -445,7 +445,7 @@ input, select, textarea { color-scheme: dark; }
 
         <div class="bg-black/40 border border-emerald-800/60 p-4 rounded-xl mb-5 text-center">
             <p class="text-[10px] text-zinc-400 uppercase tracking-widest mb-1">Available Balance</p>
-            <h4 id="instBalPKR" class="text-2xl font-black text-white neon-text">0.00 PKR</h4>
+            <h4 id="instBalPKR" class="text-2xl font-black text-white neon-text">****</h4>
         </div>
 
         <div class="space-y-4">
@@ -672,6 +672,7 @@ let cachedPurchases = [], cachedWithdrawals = [];
 
 const dayMs = 24 * 60 * 60 * 1000;
 const HEN_LIFESPAN_MS = 120 * dayMs;
+const BALANCE_HIDDEN_TEMP = true; // TEMP: balances masked (**** + Loading) for all users - set to false to show balances again
 
 /* ============ HELPERS ============ */
 const $ = id => document.getElementById(id);
@@ -1064,9 +1065,9 @@ function updateMainBalanceDisplay() {
     const totalEggs = num(currentUserData.availableEggs) + num(currentUserData.giftEggs);
     const totalPKR = totalEggs * currentLiveEggPrice;
     const pkr = $('lblBalancePKR');
-    if (pkr) pkr.innerText = totalPKR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (pkr) pkr.innerText = BALANCE_HIDDEN_TEMP ? "****" : totalPKR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const eg = $('lblTotalEggs');
-    if (eg) eg.innerText = totalEggs;
+    if (eg) eg.innerText = BALANCE_HIDDEN_TEMP ? "****" : totalEggs;
 }
 
 /* ============ PURCHASE HISTORY ============ */
@@ -1322,7 +1323,7 @@ function openInstantBalancePurchase() {
     const totalEggs = num(currentUserData.availableEggs) + num(currentUserData.giftEggs);
     const lockedBalancePKR = totalEggs * lockedEggPrice;
 
-    $('instBalPKR').innerText = lockedBalancePKR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' PKR';
+    $('instBalPKR').innerText = BALANCE_HIDDEN_TEMP ? '****' : lockedBalancePKR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' PKR';
     $('instBalRate').innerText = `Locked Rate: ${lockedEggPrice} PKR / Egg`;
     $('instPurchaseQty').value = 1;
     updateInstHenPriceValue(1);
@@ -1352,7 +1353,7 @@ function processInstantPurchase() {
     const totalEggs = avail + gift;
 
     if (totalEggs < requiredEggs) {
-        showCustomAlert("Insufficient Balance", `You need ${requiredEggs} eggs (= ${totalCost} PKR @ ${lockedEggPrice}). You have ${totalEggs}.`);
+        showCustomAlert("Insufficient Balance", `You need ${requiredEggs} eggs (= ${totalCost} PKR @ ${lockedEggPrice}). You have ${BALANCE_HIDDEN_TEMP ? "****" : totalEggs}.`);
         return;
     }
 
@@ -1533,7 +1534,7 @@ function selectDealer(key, name, min, max) {
     $('lblSelectedDealerLimit').innerText = `Limit: ${min} – ${max} eggs`;
 
     const eggs = num(currentUserData?.availableEggs) + num(currentUserData?.giftEggs);
-    $('lblSaleCurrentEggs').innerText = eggs;
+    $('lblSaleCurrentEggs').innerText = BALANCE_HIDDEN_TEMP ? "****" : eggs;
 
     const inp = $('wdEggQty');
     inp.min = min; inp.max = max; inp.value = '';
