@@ -126,7 +126,7 @@ input, select, textarea { color-scheme: dark; }
         <div class="space-y-1.5 text-xs">
             <button onclick="toggleSideMenu(); window.scrollTo({top:0,behavior:'smooth'})" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🏠</span><span class="font-semibold text-zinc-200">Dashboard</span></button>
             <button onclick="toggleSideMenu(); openPurchaseModal()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🐔</span><span class="font-semibold text-zinc-200">Purchase Hens</span></button>
-            <button disabled aria-disabled="true" class="w-full bg-emerald-900/40 p-3 rounded-xl flex items-center gap-3 text-left cursor-not-allowed"><span class="text-base">💰</span><span class="font-semibold text-emerald-400">Sale Out Eggs</span></button>
+            <button onclick="toggleSideMenu(); openSaleModal()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">💰</span><span class="font-semibold text-emerald-400">Sale Out Eggs</span></button>
             <button onclick="toggleSideMenu(); openUserSettingsModal()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">⚙️</span><span class="font-semibold text-zinc-200">Settings</span></button>
             <button onclick="toggleSideMenu(); openTeamListModal()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">👥</span><span class="font-semibold text-zinc-200">My Team</span></button>
             <button onclick="toggleSideMenu(); copyReferralLink()" class="w-full bg-emerald-900/40 hover:bg-emerald-800/60 p-3 rounded-xl flex items-center gap-3 text-left transition-colors"><span class="text-base">🔗</span><span class="font-semibold text-zinc-200">Copy Invite Link</span></button>
@@ -139,8 +139,19 @@ input, select, textarea { color-scheme: dark; }
     </div>
 </div>
 
+<!-- APP SPLASH: covers the screen while the saved session restores, so a logged-in user never sees the login screen flash on refresh -->
+<div id="appSplash" style="background:linear-gradient(180deg,#0a331d 0%,#051a0f 60%,#020b06 100%)" class="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-4 px-6 text-center">
+    <div class="text-6xl">🐔</div>
+    <div class="text-yellow-400 font-black text-xl tracking-wide">Green Land Poultry Farm</div>
+    <div class="w-11 h-11 border-4 border-emerald-400/20 border-t-emerald-400 rounded-full animate-spin"></div>
+    <div class="text-[11px] text-zinc-400 tracking-[0.3em]">LOADING</div>
+</div>
+<script>
+// Splash safety net: if no screen was revealed within 12s (very slow network / script problem), fall back to the login screen instead of staying stuck on the splash.
+setTimeout(function(){var s=document.getElementById('appSplash');var d=document.getElementById('dashboardContainer');if(s&&!s.classList.contains('hidden')&&d&&d.classList.contains('hidden')){s.classList.add('hidden');var a=document.getElementById('authContainer');if(a)a.classList.remove('hidden');}},12000);
+</script>
 <!-- AUTH SCREEN -->
-<div id="authContainer" class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-8 px-4">
+<div id="authContainer" class="hidden min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-8 px-4">
     <div class="rotating-bg-box"></div>
     <div class="text-center z-10 mb-5 fade-in">
         <div class="inline-flex items-center justify-center w-14 h-14 glass border border-yellow-500/40 rounded-2xl shadow-lg mb-2.5 neon-border">
@@ -221,13 +232,13 @@ input, select, textarea { color-scheme: dark; }
             <div class="flex items-center justify-between mb-1">
                 <p class="text-[10px] text-emerald-300 font-bold tracking-widest uppercase">Total Balance</p>
                 <div class="flex items-center gap-1.5 bg-black/30 px-2 py-1 rounded-full border border-emerald-800/60">
-                    <span class="w-3 h-3 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin inline-block"></span>
-                    <span class="text-[9px] text-emerald-400 font-bold tracking-wider">LOADING</span>
+                    <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-dot"></span>
+                    <span class="text-[9px] text-emerald-400 font-bold tracking-wider">LIVE</span>
                 </div>
             </div>
             <div class="flex items-end gap-2 mb-2">
                 <span class="text-lg text-yellow-500 font-bold mb-1">PKR</span>
-                <h2 id="lblBalancePKR" class="text-4xl font-black gold-text leading-none">****</h2>
+                <h2 id="lblBalancePKR" class="text-4xl font-black gold-text leading-none">0.00</h2>
             </div>
             <div class="grid grid-cols-2 gap-2 mb-4 text-[10px]">
                 <div class="flex items-center gap-1.5">
@@ -236,7 +247,7 @@ input, select, textarea { color-scheme: dark; }
                 </div>
                 <div class="flex items-center gap-1.5 justify-end">
                     <span class="text-zinc-500">Total Eggs:</span>
-                    <span id="lblTotalEggs" class="text-yellow-400 font-bold">****</span>
+                    <span id="lblTotalEggs" class="text-yellow-400 font-bold">0</span>
                 </div>
             </div>
 
@@ -296,7 +307,7 @@ input, select, textarea { color-scheme: dark; }
             <span class="font-bold text-sm text-white">Buy via Bank</span>
             <span class="text-[10px] text-emerald-300 mt-0.5">Manual Payment</span>
         </button>
-        <button disabled aria-disabled="true" class="border border-amber-700/60 bg-gradient-to-br from-emerald-950 to-emerald-900 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md cursor-not-allowed">
+        <button onclick="openSaleModal()" class="border border-amber-700/60 bg-gradient-to-br from-emerald-950 to-emerald-900 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md transition-all hover-lift">
             <span class="text-3xl mb-1.5">💰</span>
             <span class="font-bold text-sm text-yellow-400">Sale Out Eggs</span>
             <span class="text-[10px] text-zinc-400 mt-0.5">Instant Cashout</span>
@@ -445,7 +456,7 @@ input, select, textarea { color-scheme: dark; }
 
         <div class="bg-black/40 border border-emerald-800/60 p-4 rounded-xl mb-5 text-center">
             <p class="text-[10px] text-zinc-400 uppercase tracking-widest mb-1">Available Balance</p>
-            <h4 id="instBalPKR" class="text-2xl font-black text-white neon-text">****</h4>
+            <h4 id="instBalPKR" class="text-2xl font-black text-white neon-text">0.00 PKR</h4>
         </div>
 
         <div class="space-y-4">
@@ -672,7 +683,7 @@ let cachedPurchases = [], cachedWithdrawals = [];
 
 const dayMs = 24 * 60 * 60 * 1000;
 const HEN_LIFESPAN_MS = 120 * dayMs;
-const BALANCE_HIDDEN_TEMP = true; // TEMP: balances masked (**** + Loading) for all users - set to false to show balances again
+const BALANCE_HIDDEN_TEMP = false; // Balances + eggs VISIBLE for all users (display re-enabled by owner request; was temporarily masked)
 
 /* ============ HELPERS ============ */
 const $ = id => document.getElementById(id);
@@ -910,6 +921,18 @@ function logout() {
     auth.signOut().then(() => { toggleAuthMode(false); });
 }
 
+/* ============ APP REVEAL (professional session restore — splash first, screens switch only when auth state is known: no login flash on refresh) ============ */
+function revealApp(screen) {
+    const splash = $('appSplash');
+    if (splash) splash.classList.add('hidden');
+    if (screen === 'dashboard') {
+        $('authContainer').classList.add('hidden');
+        $('dashboardContainer').classList.remove('hidden');
+    } else {
+        $('dashboardContainer').classList.add('hidden');
+        $('authContainer').classList.remove('hidden');
+    }
+}
 /* ============ AUTH STATE ============ */
 auth.onAuthStateChanged(user => {
     // Always detach old listeners on state change
@@ -929,10 +952,9 @@ auth.onAuthStateChanged(user => {
                 auth.signOut();
                 return;
             }
-            if (!val) return;
+            if (!val) { revealApp('auth'); return; }
 
-            $('authContainer').classList.add('hidden');
-            $('dashboardContainer').classList.remove('hidden');
+            revealApp('dashboard');
             currentUserData = val;
             syncFarmDashboardData(val);
 
@@ -940,7 +962,7 @@ auth.onAuthStateChanged(user => {
             timerInterval = setInterval(updateBatchesTimers, 1000);
 
             setTimeout(checkAndShowHenPopup, 1500);
-        }, err => console.error('User read failed:', err));
+        }, err => { console.error('User read failed:', err); revealApp('auth'); });
 
         // Team stats
         const teamRef = db.ref('users').orderByChild('referredBy').equalTo(currentUid);
@@ -981,8 +1003,7 @@ auth.onAuthStateChanged(user => {
     } else {
         currentUid = null;
         currentUserData = null;
-        $('authContainer').classList.remove('hidden');
-        $('dashboardContainer').classList.add('hidden');
+        revealApp('auth');
         toggleAuthMode(refNameParam ? true : false);
     }
 });
