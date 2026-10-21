@@ -69,6 +69,18 @@ th,td{border-bottom:1px solid #1e293b}
   </div>
 </div>
 
+<!-- OWNER LOCK (shared app password with the other POS apps on this origin; only shown when a password is set in settings/app_password) -->
+<div id="lockOverlay" class="overlay hiddenx" style="z-index:99999">
+  <div class="card p-6 w-full max-w-sm text-center animate-in">
+    <div class="text-4xl mb-2">🔒</div>
+    <h3 class="font-bold text-yellow-400 mb-1">Owner Panel Locked</h3>
+    <p class="text-[11px] text-slate-400 mb-4">Enter the app password to continue.</p>
+    <input type="password" id="lockPassword" class="input text-center mb-3" placeholder="Password" onkeydown="if(event.key==='Enter')checkLockPassword()">
+    <button class="btn bg-emerald-600 text-white w-full" onclick="checkLockPassword()">Unlock Panel</button>
+    <div id="lockErrorMsg" class="text-red-400 text-xs font-bold mt-3 hiddenx">✕ Password galat hai!</div>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="app" class="min-h-screen md:flex">
   <!-- SIDEBAR -->
@@ -107,10 +119,10 @@ th,td{border-bottom:1px solid #1e293b}
     <div class="p-3 border-t border-slate-800">
       <div class="flex items-center gap-2 mb-2">
         <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
-        <div class="text-[10px] text-emerald-400 font-bold">LIVE • Direct Mode</div>
+        <div id="lockStatus" class="text-[10px] text-emerald-400 font-bold">LIVE • Checking access…</div>
       </div>
-      <div id="ownerIdentity" class="text-[10px] text-slate-500 font-mono break-all mb-2">Signed in as Owner</div>
-      <button id="signOutBtn" class="btn w-full bg-red-950/60 border border-red-800 text-red-300">🔄 Reload Panel</button>
+      <div id="ownerIdentity" class="text-[10px] text-slate-500 font-mono break-all mb-2">Owner Panel</div>
+      <button id="reloadBtn" class="btn w-full bg-red-950/60 border border-red-800 text-red-300">🔄 Reload Panel</button>
     </div>
   </aside>
 
@@ -218,7 +230,7 @@ th,td{border-bottom:1px solid #1e293b}
         <div class="card p-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
           <div>
             <h3 class="font-bold text-yellow-400 text-sm">👥 User Management</h3>
-            <p class="text-[10px] text-slate-500 mt-0.5">Click "Hens" to control individual hen batches</p>
+            <p class="text-[10px] text-slate-500 mt-0.5">Click "💰 Balance" to update any user's egg balance, or "Hens" to control hen batches</p>
           </div>
           <div class="flex gap-2 w-full md:w-auto">
             <input id="userSearch" class="input md:w-80" placeholder="🔍 Search name / email / mobile / UID">
@@ -233,7 +245,7 @@ th,td{border-bottom:1px solid #1e293b}
                   <th class="p-3">User</th>
                   <th class="p-3">Contact</th>
                   <th class="p-3">Hens</th>
-                  <th class="p-3">Eggs</th>
+                  <th class="p-3">Balance (Eggs)</th>
                   <th class="p-3">Status</th>
                   <th class="p-3 text-right">Actions</th>
                 </tr>
@@ -588,6 +600,57 @@ th,td{border-bottom:1px solid #1e293b}
   </div>
 </div>
 
+<!-- ============ UPDATE BALANCE MODAL ============ -->
+<div id="balanceModal" class="overlay hiddenx">
+  <div class="modal card w-full max-w-md p-5 animate-in">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-yellow-400 text-sm">💰 Update User Balance</h3>
+      <button class="text-2xl leading-none hover:text-red-400" onclick="closeModal('balanceModal')">&times;</button>
+    </div>
+    <div class="mb-4">
+      <div class="font-bold text-slate-100" id="balUserName">—</div>
+      <div class="text-[10px] text-slate-500 font-mono break-all" id="balUserUid">—</div>
+    </div>
+    <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <div class="text-[9px] text-slate-500 font-bold">AVAILABLE</div>
+        <div id="balCurrentAvail" class="text-lg font-black text-emerald-400 mt-0.5">0</div>
+      </div>
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <div class="text-[9px] text-slate-500 font-bold">GIFT</div>
+        <div id="balCurrentGift" class="text-lg font-black text-amber-400 mt-0.5">0</div>
+      </div>
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <div class="text-[9px] text-slate-500 font-bold">TOTAL BALANCE</div>
+        <div id="balCurrentTotal" class="text-lg font-black text-yellow-400 mt-0.5">0</div>
+      </div>
+    </div>
+    <input type="hidden" id="balUid">
+    <label class="text-xs text-slate-400 font-bold">New Available Eggs
+      <input id="balAvail" class="input mt-1" type="number" min="0" step="1" oninput="updateBalancePreview()">
+    </label>
+    <div class="flex flex-wrap gap-1.5 mt-2 mb-3">
+      <button class="btn bg-slate-800 text-slate-200" onclick="adjustBalance('balAvail', 10)">+10</button>
+      <button class="btn bg-slate-800 text-slate-200" onclick="adjustBalance('balAvail', 50)">+50</button>
+      <button class="btn bg-slate-800 text-slate-200" onclick="adjustBalance('balAvail', 100)">+100</button>
+      <button class="btn bg-slate-800 text-slate-200" onclick="adjustBalance('balAvail', -10)">−10</button>
+      <button class="btn bg-slate-800 text-slate-200" onclick="adjustBalance('balAvail', -50)">−50</button>
+      <button class="btn bg-slate-800 text-slate-200" onclick="adjustBalance('balAvail', -100)">−100</button>
+    </div>
+    <label class="text-xs text-slate-400 font-bold">New Gift Eggs
+      <input id="balGift" class="input mt-1" type="number" min="0" step="1" oninput="updateBalancePreview()">
+    </label>
+    <label class="text-xs text-slate-400 font-bold block mt-3">Reason / Note (optional)
+      <input id="balReason" class="input mt-1" placeholder="e.g. Correction, bonus, adjustment">
+    </label>
+    <div id="balPreview" class="mt-3 text-xs font-bold text-slate-400"></div>
+    <div class="flex gap-2 mt-4">
+      <button class="btn bg-emerald-600 text-white flex-1" onclick="saveBalance()">💾 Save Balance</button>
+      <button class="btn bg-slate-800 text-slate-200 flex-1" onclick="closeModal('balanceModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ HENS CONTROL MODAL (NEW) ============ -->
 <div id="hensControlModal" class="overlay hiddenx">
   <div class="modal card w-full max-w-5xl p-5 animate-in">
@@ -757,6 +820,7 @@ const HEN_LIFESPAN_DAYS = 120;
 let users = {}, purchases = {}, withdrawals = {}, dealers = {}, announcements = {}, rates = {};
 let selectedReject = { type: null, id: null };
 let listenersStarted = false;
+let panelUnlocked = false;
 let editingBatch = { uid: null, key: null };
 
 /* ============ UTILITIES ============ */
@@ -824,7 +888,7 @@ function ownerAllowed(user) {
   return allowedEmail || allowedUid;
 }
 
-function requireOwner() { return true; }
+function requireOwner() { return panelUnlocked; }
 
 function audit(action, path = "", detail = "") {
   const item = { action, path, detail, mode: "DIRECT_OPEN_OWNER_PANEL", timestamp: firebase.database.ServerValue.TIMESTAMP };
@@ -863,16 +927,60 @@ document.querySelectorAll(".side-btn").forEach(b => b.onclick = () => showTab(b.
 $("menuBtn").onclick = () => $("sidebar").classList.toggle("-translate-x-full");
 $("refreshBtn").onclick = refreshAll;
 $("quickBackupBtn").onclick = downloadBackup;
-if ($("signOutBtn")) $("signOutBtn").onclick = () => location.reload();
+if ($("reloadBtn")) $("reloadBtn").onclick = () => location.reload();
 
-/* ============ STARTUP ============ */
-window.addEventListener("DOMContentLoaded", () => {
+/* ============ STARTUP (gated by shared app password when one is set) ============ */
+function startApp() {
   startListeners();
   showTab("dashboard");
   $("userSearch").addEventListener("input", renderUsers);
   const bs = $("batchSearch");
   if (bs) bs.addEventListener("input", renderAllBatches);
-});
+}
+
+function setLockStatus(text, colorClass) {
+  $("lockStatus").innerText = text;
+  $("lockStatus").className = "text-[10px] font-bold " + colorClass;
+}
+
+function initPanel() {
+  db.ref("settings/app_password").once("value").then(snap => {
+    const pw = snap.val();
+    if (!pw || sessionStorage.getItem("appUnlocked") === "true") {
+      panelUnlocked = true;
+      $("lockOverlay").classList.add("hiddenx");
+      setLockStatus(pw ? "🔒 Protected • Unlocked" : "⚠️ Open Access — No App Password Set", pw ? "text-emerald-400" : "text-amber-400");
+      startApp();
+    } else {
+      setLockStatus("🔒 Locked — Password Required", "text-red-400");
+      $("lockOverlay").classList.remove("hiddenx");
+      setTimeout(() => $("lockPassword").focus(), 100);
+    }
+  }).catch(() => {
+    // Cannot verify (e.g. rules block the read) — keep previous direct-open behavior.
+    panelUnlocked = true;
+    $("lockOverlay").classList.add("hiddenx");
+    setLockStatus("LIVE • Direct Mode", "text-emerald-400");
+    startApp();
+  });
+}
+
+window.checkLockPassword = () => {
+  db.ref("settings/app_password").once("value").then(snap => {
+    if ($("lockPassword").value === snap.val()) {
+      sessionStorage.setItem("appUnlocked", "true");
+      panelUnlocked = true;
+      $("lockOverlay").classList.add("hiddenx");
+      $("lockErrorMsg").classList.add("hiddenx");
+      setLockStatus("🔒 Protected • Unlocked", "text-emerald-400");
+      startApp();
+    } else {
+      $("lockErrorMsg").classList.remove("hiddenx");
+    }
+  });
+};
+
+window.addEventListener("DOMContentLoaded", initPanel);
 
 /* ============ LISTENERS ============ */
 function startListeners() {
@@ -1046,12 +1154,13 @@ function renderUsers() {
         <div class="text-slate-300 truncate max-w-[180px]">${esc(u.email || "—")}</div>
         <div class="text-[10px] text-slate-500 font-mono">${esc(u.mobile || "")}</div>
       </td>
-      <td class="p-3 text-yellow-400 font-bold">${num(u.totalHens)} <span class="text-[9px] text-slate-500 font-normal">(${batchCount} batches)</span></td>
-      <td class="p-3 text-emerald-400 font-bold">${eggs}</td>
+      <td class="p-3 text-yellow-400 font-bold">${num(u.totalHens).toLocaleString()} <span class="text-[9px] text-slate-500 font-normal">(${batchCount} batches)</span></td>
+      <td class="p-3"><span class="text-emerald-400 font-bold">${eggs.toLocaleString()}</span> <span class="text-[9px] text-slate-500 font-normal">(${num(u.availableEggs).toLocaleString()} avail • ${num(u.giftEggs).toLocaleString()} gift)</span></td>
       <td class="p-3">
         <span class="badge ${blocked ? "badge-expired" : "badge-active"}">${blocked ? "BLOCKED" : "ACTIVE"}</span>
       </td>
       <td class="p-3 text-right whitespace-nowrap space-x-1">
+        <button class="btn bg-emerald-600 text-white border border-emerald-500" onclick="openBalanceModal('${esc(uid)}')">💰 Balance</button>
         <button class="btn bg-amber-900/50 text-amber-300 border border-amber-800" onclick="openHensControlModal('${esc(uid)}')">🐔 Hens</button>
         <button class="btn bg-blue-900/50 text-blue-300 border border-blue-800" onclick="openUser('${esc(uid)}')">Manage</button>
         <button class="btn ${blocked ? "bg-emerald-900/50 text-emerald-300" : "bg-amber-900/50 text-amber-300"} border border-slate-700" onclick="toggleBlock('${esc(uid)}')">${blocked ? "Unblock" : "Block"}</button>
@@ -1129,6 +1238,73 @@ async function saveUser() {
   }
 }
 window.saveUser = saveUser;
+
+/* =========================================================
+   UPDATE BALANCE MODAL — owner can update any user's balance
+   ========================================================= */
+function openBalanceModal(uid) {
+  const u = users[uid] || {};
+  $("balUid").value = uid;
+  $("balUserName").innerText = u.name || "Anonymous";
+  $("balUserUid").innerText = uid;
+  $("balCurrentAvail").innerText = num(u.availableEggs).toLocaleString();
+  $("balCurrentGift").innerText = num(u.giftEggs).toLocaleString();
+  $("balCurrentTotal").innerText = (num(u.availableEggs) + num(u.giftEggs)).toLocaleString();
+  $("balAvail").value = num(u.availableEggs);
+  $("balGift").value = num(u.giftEggs);
+  $("balReason").value = "";
+  updateBalancePreview();
+  openModal("balanceModal");
+}
+window.openBalanceModal = openBalanceModal;
+
+function adjustBalance(field, delta) {
+  const el = $(field);
+  el.value = Math.max(0, Math.floor(num(el.value) + delta));
+  updateBalancePreview();
+}
+window.adjustBalance = adjustBalance;
+
+function updateBalancePreview() {
+  const u = users[$("balUid").value] || {};
+  const oldTotal = num(u.availableEggs) + num(u.giftEggs);
+  const newTotal = Math.max(0, Math.floor(num($("balAvail").value))) + Math.max(0, Math.floor(num($("balGift").value)));
+  const diff = newTotal - oldTotal;
+  const el = $("balPreview");
+  if (diff === 0) {
+    el.innerText = "No change — total stays " + oldTotal.toLocaleString() + " eggs.";
+    el.className = "mt-3 text-xs font-bold text-slate-400";
+  } else if (diff > 0) {
+    el.innerText = "Change: +" + diff.toLocaleString() + " eggs → new total " + newTotal.toLocaleString() + " eggs.";
+    el.className = "mt-3 text-xs font-bold text-emerald-400";
+  } else {
+    el.innerText = "Change: " + diff.toLocaleString() + " eggs → new total " + newTotal.toLocaleString() + " eggs.";
+    el.className = "mt-3 text-xs font-bold text-red-400";
+  }
+}
+window.updateBalancePreview = updateBalancePreview;
+
+async function saveBalance() {
+  if (!requireOwner()) return;
+  const uid = $("balUid").value;
+  const u = users[uid] || {};
+  const newAvail = Math.max(0, Math.floor(num($("balAvail").value)));
+  const newGift = Math.max(0, Math.floor(num($("balGift").value)));
+  const oldAvail = num(u.availableEggs), oldGift = num(u.giftEggs);
+  const reason = $("balReason").value.trim();
+  try {
+    showLoader("Updating balance...");
+    await db.ref("users/" + uid).update({ availableEggs: newAvail, giftEggs: newGift });
+    audit("UPDATE_BALANCE", "users/" + uid, `availableEggs ${oldAvail} → ${newAvail}, giftEggs ${oldGift} → ${newGift}` + (reason ? ` | Reason: ${reason}` : ""));
+    toast(`Balance updated: ${(newAvail + newGift).toLocaleString()} eggs.`);
+    closeModal("balanceModal");
+  } catch (e) {
+    toast(e.message, false);
+  } finally {
+    hideLoader();
+  }
+}
+window.saveBalance = saveBalance;
 
 async function toggleBlock(uid) {
   const blocked = users[uid]?.status === "blocked";
