@@ -35,6 +35,7 @@
   .st-cancelled { background: #fee2e2; color: #991b1b; }
   #toast { display: none; position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #0b5136; color: #fff; padding: 11px 20px; border-radius: 999px; font-size: 14.5px; box-shadow: 0 6px 20px rgba(0,0,0,.3); z-index: 50; }
   .empty { text-align: center; color: #66766e; padding: 24px 10px; font-size: 15px; }
+  .aitem { display:flex; gap:10px; margin-bottom:8px; align-items:flex-start; } .aitem img { width:56px; height:56px; object-fit:cover; border-radius:8px; }
   .demo-banner { background: #fff8e1; border: 1px solid #ffe082; color: #6d5410; border-radius: 10px; padding: 10px 13px; font-size: 14px; margin-bottom: 14px; line-height: 1.55; }
 </style>
 </head>
@@ -171,9 +172,21 @@
       if (!list.length) { box.innerHTML = '<div class="empty">Abhi koi order nahi aaya.</div>'; return; }
       box.innerHTML = list.map(function(o) {
         var opts = STATUSES.map(function(s) { return '<option value="' + s + '"' + (s === (o.status || 'Pending') ? ' selected' : '') + '>' + s + '</option>'; }).join('');
-        return '<div class="ocard"><div class="otop"><b>' + escapeHtml(o.product) + '</b><span class="st ' + statusClass(o.status) + '">' + escapeHtml(o.status || 'Pending') + '</span></div>'
-          + '<div class="ometa">Code: <b>' + escapeHtml(o.code) + '</b> · ' + escapeHtml(o.price)
-          + (o.colour ? ' · Colour: ' + escapeHtml(o.colour) : '') + (o.size ? ' · Size: ' + escapeHtml(o.size) : '')
+        var items = (o.items && o.items.length) ? o.items : [{ code: o.code, product: o.product, price: o.price, qty: 1, colour: o.colour || '', size: o.size || '', img: '' }];
+        var title = items[0].product + (items.length > 1 ? ' + ' + (items.length - 1) + ' mazeed items' : '');
+        var itemsHtml = items.map(function(it, idx) {
+          var pr = (typeof it.price === 'number') ? 'PKR ' + it.price.toLocaleString('en-US') : escapeHtml(it.price || '');
+          var rev = (o.reviews && o.reviews[idx]) ? ' · ⭐ Review: ' + '★'.repeat(o.reviews[idx].stars) + (o.reviews[idx].text ? ' — ' + escapeHtml(o.reviews[idx].text) : '') : '';
+          return '<div class="aitem">' + (it.img ? '<img src="' + it.img + '" alt="">' : '') + '<div><b>' + escapeHtml(it.product) + '</b><br><span style="color:#44524c;font-size:13.5px;">Code: ' + escapeHtml(it.code) + (it.colour ? ' · Colour: ' + escapeHtml(it.colour) : '') + (it.size ? ' · Size: ' + escapeHtml(it.size) : '') + ' · Qty: ' + (it.qty || 1) + ' · ' + pr + rev + '</span></div></div>';
+        }).join('');
+        var payLine = 'Payment: ' + escapeHtml(o.payment === 'Online' ? 'Online Purchase (Easypaisa)' : (o.payment || 'Cash on Delivery'));
+        if (o.payment === 'Online' && o.trxId) payLine += ' · Trx ID: <b>' + escapeHtml(o.trxId) + '</b>';
+        var totalsLine = '';
+        if (typeof o.subtotal === 'number') totalsLine = '<br>Subtotal: PKR ' + o.subtotal.toLocaleString('en-US') + ' · Delivery: ' + (o.delivery === 0 ? 'FREE' : 'PKR ' + (o.delivery || 0)) + (o.bonusRedeemed ? ' · Bonus Redeemed: -PKR ' + o.bonusRedeemed : '') + ' · <b>Total: PKR ' + o.total.toLocaleString('en-US') + '</b>';
+        else totalsLine = '<br>' + escapeHtml(o.price);
+        return '<div class="ocard"><div class="otop"><b>' + escapeHtml(title) + '</b><span class="st ' + statusClass(o.status) + '">' + escapeHtml(o.status || 'Pending') + '</span></div>'
+          + itemsHtml
+          + '<div class="ometa">' + payLine + totalsLine
           + '<br>👤 ' + escapeHtml(o.customer) + ' · 📱 ' + escapeHtml(o.phone)
           + '<br>🏠 ' + escapeHtml(o.address)
           + (o.remarks ? '<br>📝 Remarks: ' + escapeHtml(o.remarks) : '')
