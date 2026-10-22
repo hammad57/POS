@@ -162,6 +162,30 @@
   .pay-box label { display:block; margin:8px 0; font-weight:600; cursor:pointer; }
   form.cartform label { display:block; font-size:14px; font-weight:600; margin:12px 0 5px; }
   form.cartform input, form.cartform textarea { width:100%; padding:11px 12px; border:1px solid #cfd8d3; border-radius:10px; font-size:15px; font-family:inherit; }
+
+  /* ===== Professional drawer / wishlist / horizontal categories (2026-10-23) ===== */
+  .drawer { display: flex; flex-direction: column; padding: 0; overflow-y: auto; }
+  .drawer-profile { background: linear-gradient(135deg, #0b5136, #0b7a4b); color: #fff; padding: 18px 16px 16px; position: relative; flex: 0 0 auto; }
+  .drawer-x.light { position: absolute; top: 10px; right: 12px; color: #fff; }
+  .dp-row { display: flex; gap: 12px; align-items: center; }
+  .dp-avatar { width: 54px; height: 54px; border-radius: 50%; background: #ffdf00; color: #0b5136; font-weight: 800; font-size: 23px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+  .dp-name { font-weight: 800; font-size: 17px; line-height: 1.25; word-break: break-word; }
+  .dp-phone { font-size: 13px; opacity: .88; }
+  .dp-bonus { display: inline-block; margin-top: 7px; background: #ffdf00; color: #1c1500; border-radius: 999px; padding: 3px 12px; font-size: 13px; font-weight: 800; cursor: pointer; }
+  .drawer-nav { padding: 12px; display: flex; flex-direction: column; gap: 2px; }
+  .drawer-nav .d-item { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; }
+  .drawer-foot { margin-top: auto; padding: 12px; border-top: 1px solid #e4e9e6; flex: 0 0 auto; }
+  .d-logout { width: 100%; background: #0b7a4b; color: #fff; border: none; padding: 13px; border-radius: 11px; font-weight: 800; font-size: 15.5px; cursor: pointer; font-family: inherit; }
+  .d-login { width: 100%; background: #0b7a4b; color: #fff; border: none; padding: 13px; border-radius: 11px; font-weight: 800; font-size: 15.5px; cursor: pointer; font-family: inherit; }
+  #catTiles { display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden; padding: 6px 2px 14px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+  #catTiles .cat-tile { flex: 0 0 min(255px, 76vw); scroll-snap-align: start; margin: 0; }
+  .gcard { position: relative; }
+  .wish-btn { position: absolute; top: 8px; right: 8px; width: 37px; height: 37px; border-radius: 50%; border: 1px solid #e4e9e6; background: rgba(255,255,255,.94); font-size: 17px; cursor: pointer; z-index: 3; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 7px rgba(0,0,0,.13); padding: 0; }
+  .wish-btn.on { background: #ffe9ec; border-color: #ff9fb2; }
+  .wish-toggle-btn { display: inline-block; background: #fff; color: #b3261e; border: 2px solid #ffb3c1; padding: 10px 16px; border-radius: 11px; font-weight: 700; font-size: 14.5px; cursor: pointer; font-family: inherit; }
+  .wish-toggle-btn.on { background: #ffe9ec; }
+  #notifPop { position: fixed; inset: 0; background: rgba(10,25,18,.55); z-index: 9998; display: flex; align-items: center; justify-content: center; padding: 18px; }
+  .notif-card { background: #fff; border-radius: 18px; padding: 24px 22px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
 </style>
 </head>
 <body>
@@ -177,47 +201,58 @@
 
 <div id="drawerOverlay" class="drawer-overlay" onclick="closeDrawer()"></div>
 <aside id="drawer" class="drawer">
-  <div class="drawer-head"><span>🛍️ Sale Online</span><button class="drawer-x" type="button" onclick="closeDrawer()" aria-label="Band karein">✕</button></div>
-  <button class="d-item" type="button" onclick="drawerGo('home')">🏠 Home</button>
-  <button class="d-item" type="button" onclick="drawerGo('products')">🛍️ Products</button>
-  <button class="d-item" type="button" onclick="drawerGo('cart')">🛒 Mera Cart <span id="drawerCartCount"></span></button>
-  <button class="d-item" type="button" onclick="drawerGo('orders')">🧾 Meray Orders</button>
-  <button class="d-item" type="button" onclick="drawerGo('help')">❓ Help</button>
-  <button class="d-item" type="button" onclick="drawerGo('about')">ℹ️ About</button>
-  <div class="d-sep"></div>
-  <a class="d-item" href="https://wa.me/923423944508" target="_blank" rel="noopener">💬 WhatsApp par rabta karein</a>
-  <a class="d-item" href="SaleonlieAdmin.html">🛠️ Admin (Owner ke liye)</a>
-  <div class="d-sep"></div>
-  <div id="drawerAccount"></div>
+  <div class="drawer-profile">
+    <button class="drawer-x light" type="button" onclick="closeDrawer()" aria-label="Close">&#10005;</button>
+    <div class="dp-row">
+      <div class="dp-avatar" id="drAvatar">&#128100;</div>
+      <div>
+        <div class="dp-name" id="drName">Guest</div>
+        <div class="dp-phone" id="drPhone">Not logged in</div>
+        <div class="dp-bonus" id="drBonus" onclick="closeDrawer(); showBonusInfo();">&#11088; Bonus: Rs. 0</div>
+      </div>
+    </div>
+  </div>
+  <nav class="drawer-nav">
+    <button class="d-item" type="button" onclick="drawerGo('home')">&#127968; <span>Home</span></button>
+    <button class="d-item" type="button" onclick="drawerGo('products')">&#128717;&#65038; <span>Products</span></button>
+    <button class="d-item" type="button" onclick="drawerGo('cart')">&#128722; <span>My Cart</span> <span id="drawerCartCount"></span></button>
+    <button class="d-item" type="button" onclick="drawerGo('orders')">&#129534; <span>My Orders</span></button>
+    <button class="d-item" type="button" onclick="drawerGo('wishlist')">&#10084;&#65038; <span>My Wishlist</span> <span id="drawerWishCount"></span></button>
+    <button class="d-item" type="button" onclick="shareStore()">&#128279; <span>Share Store</span></button>
+    <button class="d-item" type="button" onclick="drawerGo('help')">&#10067; <span>Help</span></button>
+    <button class="d-item" type="button" onclick="drawerGo('about')">&#8505;&#65038; <span>About</span></button>
+    <a class="d-item" href="https://wa.me/923423944508" target="_blank" rel="noopener">&#128172; <span>Contact on WhatsApp</span></a>
+  </nav>
+  <div class="drawer-foot" id="drawerAccount"></div>
 </aside>
 
 <div id="authModal" class="modal" onclick="if(event.target===this) closeAuth()">
   <div class="modal-card">
-    <button class="modal-x" type="button" onclick="closeAuth()" aria-label="Band karein">✕</button>
-    <h3 style="margin-bottom:10px;">Apna Account</h3>
+    <button class="modal-x" type="button" onclick="closeAuth()" aria-label="Close">✕</button>
+    <h3 style="margin-bottom:10px;">My Account</h3>
     <div class="auth-tabs">
       <button id="tab-login" type="button" class="active" onclick="switchAuth('login')">Login</button>
       <button id="tab-signup" type="button" onclick="switchAuth('signup')">Signup</button>
     </div>
-    <form id="form-login" class="auth-form" onsubmit="return doLogin(event)">
+    <form id="form-login" class="auth-form" autocomplete="off" onsubmit="return doLogin(event)">
       <label for="liPhone">Mobile Number</label>
-      <input id="liPhone" type="tel" name="phone" autocomplete="tel" inputmode="numeric" placeholder="Masalan: 03XX-XXXXXXX" required>
+      <input id="liPhone" type="tel" name="so_li_phone" autocomplete="off" inputmode="numeric" placeholder="Example: 03XX-XXXXXXX" required>
       <label for="liPass">Password</label>
-      <input id="liPass" type="password" name="password" autocomplete="current-password" placeholder="Apna password" required>
+      <input id="liPass" type="password" name="so_li_pass" autocomplete="new-password" placeholder="Your password" required>
       <div class="auth-err" id="loginErr"></div>
-      <button class="cta" type="submit">Login karein</button>
-      <p class="auth-note">Login ke baad page refresh ya band karke dobara kholne par aap khud-ba-khud login rahenge — bar bar login nahi karna padega.</p>
+      <button class="cta" type="submit">Login</button>
+      <p class="auth-note">After login, you will stay logged in even if you refresh or reopen the page — no need to log in again and again.</p>
     </form>
-    <form id="form-signup" class="auth-form" style="display:none;" onsubmit="return doSignup(event)">
-      <label for="suName">Aap ka Naam</label>
-      <input id="suName" type="text" name="name" autocomplete="name" placeholder="Masalan: Fatima Khan" required>
+    <form id="form-signup" class="auth-form" autocomplete="off" style="display:none;" onsubmit="return doSignup(event)">
+      <label for="suName">Your Name</label>
+      <input id="suName" type="text" name="so_su_name" autocomplete="off" placeholder="Example: Fatima Khan" required>
       <label for="suPhone">Mobile Number</label>
-      <input id="suPhone" type="tel" name="phone" autocomplete="tel" inputmode="numeric" placeholder="Masalan: 03XX-XXXXXXX" required>
-      <label for="suPass">Password banayein</label>
-      <input id="suPass" type="password" name="new-password" autocomplete="new-password" placeholder="Kam az kam 4 characters" required>
+      <input id="suPhone" type="tel" name="so_su_phone" autocomplete="off" inputmode="numeric" placeholder="Example: 03XX-XXXXXXX" required>
+      <label for="suPass">Create a Password</label>
+      <input id="suPass" type="password" name="so_su_pass" autocomplete="new-password" placeholder="At least 4 characters" required>
       <div class="auth-err" id="signupErr"></div>
-      <button class="cta" type="submit">Account banayein</button>
-      <p class="auth-note">Mehfooz mashwara: apna bank/ATM wala password yahan istemal na karein — is shop ke liye alag asan password rakhein.</p>
+      <button class="cta" type="submit">Create Account</button>
+      <p class="auth-note">Safety tip: do not use your bank/ATM password here — keep a separate, simple password for this shop.</p>
     </form>
   </div>
 </div>
@@ -225,23 +260,23 @@
 <div class="wrap">
 
   <section id="view-home">
-    <div class="card home-bonus" onclick="showBonusInfo()"><span id="homeBonusText">⭐ Bonus Balance: Rs. 0 — is par click karein</span><p style="font-size:13.5px;color:#66766e;margin-top:4px;">Har delivered order par review dene par bonus milta hai, jo agle order mein redeem ho sakta hai.</p></div>
+    <div class="card home-bonus" onclick="showBonusInfo()"><span id="homeBonusText">⭐ Bonus Balance: Rs. 0 — tap to learn more</span><p style="font-size:13.5px;color:#66766e;margin-top:4px;">Earn bonus by reviewing your delivered orders — redeem it on your next order.</p></div>
     <div class="card">
       <h3 class="sec-title" style="margin-top:0">🛍️ Categories</h3>
       <!--CAT_TILES_START--><div id="catTiles">
-        <div class="cat-tile" onclick="openCategory('Cosmetics')"><img src="https://static.markaz.app/pakistan/products/1598-77-MZ1598203722TEWHHB-773992001-product-1.webp" alt="Cosmetics"><div><div class="cat-name">💄 Cosmetics</div><div class="cat-count">16 products</div><div class="cat-go">Products dekhein &#8594;</div></div></div>
-        <div class="cat-tile" onclick="openCategory('Women\'s Unstitched')"><img src="https://static.markaz.app/pakistan/products/2664-3-MZ2664200097RKSS-773598001-product-1.webp" alt="Women&#x27;s Unstitched"><div><div class="cat-name">🧵 Women&#x27;s Unstitched</div><div class="cat-count">16 products</div><div class="cat-go">Products dekhein &#8594;</div></div></div>
-        <div class="cat-tile" onclick="openCategory('Women\'s Stitched')"><img src="https://static.markaz.app/pakistan/products/2381-11-MZ2381200912MBASWE-771734001-product-1.webp" alt="Women&#x27;s Stitched"><div><div class="cat-name">👗 Women&#x27;s Stitched</div><div class="cat-count">38 products</div><div class="cat-go">Products dekhein &#8594;</div></div></div>
-        <div class="cat-tile" onclick="openCategory('Men\'s Unstitched')"><img src="https://static.markaz.app/pakistan/products/648-70-MZ64800000529AISDBYADFS-765453001-product-1.webp" alt="Men&#x27;s Unstitched"><div><div class="cat-name">🧶 Men&#x27;s Unstitched</div><div class="cat-count">16 products</div><div class="cat-go">Products dekhein &#8594;</div></div></div>
-        <div class="cat-tile" onclick="openCategory('Men\'s Stitched')"><img src="https://static.markaz.app/pakistan/products/1009-167-MZ1009200243RN-770296001-product-1.webp" alt="Men&#x27;s Stitched"><div><div class="cat-name">👔 Men&#x27;s Stitched</div><div class="cat-count">16 products</div><div class="cat-go">Products dekhein &#8594;</div></div></div>
-        <div class="cat-tile" onclick="openCategory('Kids Clothing')"><img src="https://static.markaz.app/pakistan/products/1119-35-MZ1119204119BYBR-768307001-product-1.webp" alt="Kids Clothing"><div><div class="cat-name">🧒 Kids Clothing</div><div class="cat-count">16 products</div><div class="cat-go">Products dekhein &#8594;</div></div></div>
-        <div class="cat-tile" onclick="openCategory('Women\'s Handbags')"><img src="https://static.markaz.app/pakistan/products/1454-37-MZ1454200660SHAH-772642001-product-1.webp" alt="Women&#x27;s Handbags"><div><div class="cat-name">👜 Women&#x27;s Handbags</div><div class="cat-count">16 products</div><div class="cat-go">Products dekhein &#8594;</div></div></div>
+        <div class="cat-tile" onclick="openCategory('Cosmetics')"><img src="https://static.markaz.app/pakistan/products/1598-77-MZ1598203722TEWHHB-773992001-product-1.webp" alt="Cosmetics"><div><div class="cat-name">💄 Cosmetics</div><div class="cat-count">16 products</div><div class="cat-go">View Products &#8594;</div></div></div>
+        <div class="cat-tile" onclick="openCategory('Women\'s Unstitched')"><img src="https://static.markaz.app/pakistan/products/2664-3-MZ2664200097RKSS-773598001-product-1.webp" alt="Women&#x27;s Unstitched"><div><div class="cat-name">🧵 Women&#x27;s Unstitched</div><div class="cat-count">16 products</div><div class="cat-go">View Products &#8594;</div></div></div>
+        <div class="cat-tile" onclick="openCategory('Women\'s Stitched')"><img src="https://static.markaz.app/pakistan/products/2381-11-MZ2381200912MBASWE-771734001-product-1.webp" alt="Women&#x27;s Stitched"><div><div class="cat-name">👗 Women&#x27;s Stitched</div><div class="cat-count">38 products</div><div class="cat-go">View Products &#8594;</div></div></div>
+        <div class="cat-tile" onclick="openCategory('Men\'s Unstitched')"><img src="https://static.markaz.app/pakistan/products/648-70-MZ64800000529AISDBYADFS-765453001-product-1.webp" alt="Men&#x27;s Unstitched"><div><div class="cat-name">🧶 Men&#x27;s Unstitched</div><div class="cat-count">16 products</div><div class="cat-go">View Products &#8594;</div></div></div>
+        <div class="cat-tile" onclick="openCategory('Men\'s Stitched')"><img src="https://static.markaz.app/pakistan/products/1009-167-MZ1009200243RN-770296001-product-1.webp" alt="Men&#x27;s Stitched"><div><div class="cat-name">👔 Men&#x27;s Stitched</div><div class="cat-count">16 products</div><div class="cat-go">View Products &#8594;</div></div></div>
+        <div class="cat-tile" onclick="openCategory('Kids Clothing')"><img src="https://static.markaz.app/pakistan/products/1119-35-MZ1119204119BYBR-768307001-product-1.webp" alt="Kids Clothing"><div><div class="cat-name">🧒 Kids Clothing</div><div class="cat-count">16 products</div><div class="cat-go">View Products &#8594;</div></div></div>
+        <div class="cat-tile" onclick="openCategory('Women\'s Handbags')"><img src="https://static.markaz.app/pakistan/products/1454-37-MZ1454200660SHAH-772642001-product-1.webp" alt="Women&#x27;s Handbags"><div><div class="cat-name">👜 Women&#x27;s Handbags</div><div class="cat-count">16 products</div><div class="cat-go">View Products &#8594;</div></div></div>
       </div><!--CAT_TILES_END-->
     </div>
 
     <div class="card">
-      <h3 class="sec-title">🛍️ Tamam Products</h3>
-      <p class="muted">Jo product pasand aaye, us par click karein — us ki mukammal detail khul jayegi.</p>
+      <h3 class="sec-title">🛍️ All Products</h3>
+      <p class="muted">Tap any product to see its complete details.</p>
       <div class="grid-products" id="gridProducts">
         <div class="gcard" data-cat="Men&#x27;s Stitched"><img src="https://static.markaz.app/pakistan/products/1009-167-MZ1009200243RN-770296001-product-1.webp" alt="Men’s Black Printed Sweatshirt &amp; Trouser 2-Piece Set" onclick="showProduct('MZ1009200243RN')"><div class="gbody"><div class="gname" onclick="showProduct('MZ1009200243RN')">Men’s Black Printed Sweatshirt &amp; Trouser 2-Piece Set</div><div class="gcode">Code: MZ1009200243RN</div><div class="gprice">PKR 2,070</div><div class="gdate">2026-10-22</div><button class="cta" type="button" onclick="addToCart('MZ1009200243RN')">🛒 Add to Cart</button></div></div>
         <div class="gcard" data-cat="Men&#x27;s Stitched"><img src="https://static.markaz.app/pakistan/products/2847-167-MZ2847201011FNAL-770856001-product-1.webp" alt="2 Pcs Men&#x27;s Fleece Printed Hoodie Track Suit" onclick="showProduct('MZ2847201011FNAL')"><div class="gbody"><div class="gname" onclick="showProduct('MZ2847201011FNAL')">2 Pcs Men&#x27;s Fleece Printed Hoodie Track Suit</div><div class="gcode">Code: MZ2847201011FNAL</div><div class="gprice">PKR 2,519</div><div class="gdate">2026-10-22</div><button class="cta" type="button" onclick="addToCart('MZ2847201011FNAL')">🛒 Add to Cart</button></div></div>
@@ -398,30 +433,31 @@
         </div>
         <div>
           <h2 class="pname" id="dName"></h2>
-          <div class="price-row"><span class="price" id="dPrice"></span><button class="cta small" type="button" onclick="showView('cart')">🛒 Cart dekhein</button></div>
+          <div class="price-row"><span class="price" id="dPrice"></span><button class="cta small" type="button" onclick="showView('cart')">🛒 View Cart</button></div>
           <div class="adv-pill" id="dAdv"></div>
+          <div style="margin-top:10px;"><button id="detailWishBtn" class="wish-toggle-btn" type="button" onclick="toggleWishlist(currentDetailCode)">🤍 Add to Wishlist</button></div>
           <br><span class="stock" id="dStock">In Stock</span>
           <div class="chips" id="dChips"></div>
           <table class="details" id="dDetails"></table>
-          <div class="infobox">🚚 <b>Delivery:</b> 3–5 din mein · Charges: PKR 99 per order (Rs. 5,999+ par FREE)<br>💵 <b>Cash on Delivery</b> available hai<br>↩️ Easy 7-day return (unused items par)</div>
+          <div class="infobox">🚚 <b>Delivery:</b> 3–5 working days · Charges: PKR 99 per order (FREE on Rs. 5,999+)<br>💵 <b>Cash on Delivery</b> available<br>↩️ Easy 7-day return (on unused items)</div>
           <button class="cta" type="button" onclick="addToCartCurrent()">🛒 Add to Cart</button>
         </div>
       </div>
     </div>
 
     <div class="card" id="order">
-      <h3 style="margin-bottom:10px;">🛒 Cart mein shamil karein</h3>
+      <h3 style="margin-bottom:10px;">🛒 Add to Cart</h3>
       <div class="order-summary">
         <b>Product Code:</b> <span id="ordCode">MZ2199200480BICN</span><br>
         <b>Product:</b> <span id="ordProduct">3 Pcs Women&#x27;s Stitched Shamoz Silk Hand Work Lehenga Choli</span><br>
-        <b>Price:</b> <span id="ordPrice">PKR 3,470</span> · <b>Delivery:</b> PKR 99 per order (Rs. 5,999 ya zyada par FREE)
+        <b>Price:</b> <span id="ordPrice">PKR 3,470</span> · <b>Delivery:</b> PKR 99 per order (FREE on Rs. 5,999 or more)
       </div>
       <div id="colourField">
-        <label for="fColour">Colour chunein *</label>
+        <label for="fColour">Select Colour *</label>
         <select id="fColour"><option>Purple</option><option>Blue</option><option>Green</option><option>Black</option><option>Maroon</option></select>
       </div>
       <div id="sizeField">
-        <label for="fSize">Size chunein *</label>
+        <label for="fSize">Select Size *</label>
         <select id="fSize"><option>Standard Size</option></select>
       </div>
       <label for="fQty">Quantity</label>
@@ -431,12 +467,12 @@
         <button class="qty-btn" type="button" onclick="var q=document.getElementById('fQty'); q.value=(parseInt(q.value)||1)+1;">+</button>
       </div>
       <button class="cta" type="button" onclick="addToCartCurrent()">🛒 Add to Cart</button>
-      <button class="cta" type="button" onclick="showView('cart')" style="background:#ffb703;color:#1c1500;">🛒 Cart dekhein aur Order place karein</button>
-      <p class="pay-hint">💡 Pehle aik ya aik se zyada items <b>Add to Cart</b> karein, phir <b>Cart</b> mein ja kar tamam items, price aur delivery charges dekh kar aik hi order place karein. Delivery charges har order par sirf <b>Rs. 99</b> hain — Rs. 5,999 ya zyada ki khareedari par <b>FREE home delivery</b>.</p>
+      <button class="cta" type="button" onclick="showView('cart')" style="background:#ffb703;color:#1c1500;">🛒 View Cart & Place Order</button>
+      <p class="pay-hint">💡 Add one or more items with <b>Add to Cart</b>, then go to the <b>Cart</b> to review all items, prices and delivery charges and place a single order. Delivery charges are only <b>Rs. 99</b> per order — and <b>FREE home delivery</b> on purchases of Rs. 5,999 or more.</p>
       <div class="adv-box">
         <b>💳 Advance Payment — Rs. 110 Discount</b>
-        <p>Cash on Delivery ki bajaye advance payment karna chahein to WhatsApp par rabta karein — product ki mukammal tafseel khud message mein chali jayegi aur aap ko <b>Rs. 110 ka discount</b> bhee milega.</p>
-        <button class="cta adv" type="button" id="advPayBtn" onclick="advancePay()">WhatsApp par Advance Payment ki baat karein</button>
+        <p>If you prefer advance payment instead of Cash on Delivery, contact us on WhatsApp — the complete product details will be included in the message automatically and you will also get a <b>Rs. 110 discount</b>.</p>
+        <button class="cta adv" type="button" id="advPayBtn" onclick="advancePay()">Discuss Advance Payment on WhatsApp</button>
       </div>
     </div>
 
@@ -448,7 +484,7 @@
 
     <section id="view-cart" style="display:none;">
     <div class="card">
-      <h3 class="sec-title">🛒 Mera Cart</h3>
+      <h3 class="sec-title">🛒 My Cart</h3>
       <div id="cartBox"></div>
       <div id="cartSummary"></div>
       <div id="freeHint" class="free-hint" style="display:none;"></div>
@@ -458,82 +494,91 @@
     <div class="card" id="cartCheckoutCard">
       <h3 style="margin-bottom:10px;">📝 Order Details — Checkout</h3>
       <form class="cartform" onsubmit="return placeCartOrder(event)">
-        <label for="cName">Aap ka Naam *</label>
-        <input id="cName" type="text" required placeholder="Masalan: Fatima Khan">
-        <label for="cPhone">Rabta / WhatsApp Number *</label>
-        <input id="cPhone" type="tel" required placeholder="Masalan: 03XX-XXXXXXX">
+        <label for="cName">Your Name *</label>
+        <input id="cName" type="text" required placeholder="Example: Fatima Khan">
+        <label for="cPhone">Contact / WhatsApp Number *</label>
+        <input id="cPhone" type="tel" required placeholder="Example: 03XX-XXXXXXX">
         <label for="cAddress">Delivery Address *</label>
-        <textarea id="cAddress" required placeholder="Makan no, gali, area, sheher" style="min-height:64px;resize:vertical;"></textarea>
+        <textarea id="cAddress" required placeholder="House no, street, area, city" style="min-height:64px;resize:vertical;"></textarea>
         <label for="cRemarks">Remarks</label>
-        <textarea id="cRemarks" placeholder="Koi bhee extra baat jo aap batana chahein, yahan likhein" style="min-height:64px;resize:vertical;"></textarea>
+        <textarea id="cRemarks" placeholder="Anything else you would like to tell us (optional)" style="min-height:64px;resize:vertical;"></textarea>
         <div class="pay-box">
-          <b>💵 Payment ka tareeqa chunein *</b>
-          <label><input type="radio" name="payMethod" value="COD" checked onchange="cartPayChange()"> Cash on Delivery (parcel milne par payment)</label>
+          <b>💵 Select Payment Method *</b>
+          <label><input type="radio" name="payMethod" value="COD" checked onchange="cartPayChange()"> Cash on Delivery (pay when your parcel arrives)</label>
           <label><input type="radio" name="payMethod" value="Online" onchange="cartPayChange()"> 💳 Online Purchase — Easypaisa 0342-3944508 (Malook Hussain)</label>
           <div id="trxWrap" style="display:none;margin-top:8px;">
-            <label for="trxId" style="margin:0 0 5px;">Trx ID (aakhri 5 digit ya poori Trx ID) *</label>
-            <input id="trxId" type="text" placeholder="Masalan: 12345 ya poori Trx ID" style="width:100%;padding:11px 12px;border:1px solid #cfd8d3;border-radius:10px;font-size:15px;">
-            <p style="font-size:13px;color:#66766e;margin-top:5px;">Easypaisa par payment karne ke baad us ki Trx ID yahan likhein — ye ID order ke saath admin ko bhee jayegi.</p>
+            <label for="trxId" style="margin:0 0 5px;">Trx ID (last 5 digits or full Trx ID) *</label>
+            <input id="trxId" type="text" placeholder="Example: 12345 or the full Trx ID" style="width:100%;padding:11px 12px;border:1px solid #cfd8d3;border-radius:10px;font-size:15px;">
+            <p style="font-size:13px;color:#66766e;margin-top:5px;">After paying via Easypaisa, enter the Trx ID here — it will be sent to the admin with your order.</p>
           </div>
         </div>
-        <button class="cta" type="submit" id="placeCartBtn">Order Now — WhatsApp par bhejein</button>
+        <button class="cta" type="submit" id="placeCartBtn">Order Now — Send on WhatsApp</button>
         <div class="note-ok" id="cartNote"></div>
       </form>
     </div>
   </section>
 
+<section id="view-wishlist" style="display:none;">
+    <div class="card">
+      <h3 style="margin-top:0">❤️ My Wishlist</h3>
+      <p class="muted">Products you saved for later. Tap the heart on any product to add or remove it.</p>
+      <div class="grid-products" id="wishGrid"></div>
+      <div class="empty" id="wishEmpty" style="display:none;">Your wishlist is empty.<br>Tap the ❤️ heart on any product to save it here.</div>
+    </div>
+  </section>
+
 <section id="view-orders" style="display:none;">
     <div class="card">
-      <h3 class="sec-title">🧾 Meray Orders</h3>
-      <div id="ordersBox"><div class="empty">Orders load ho rahe hain...</div></div>
-      <button class="cta small" type="button" onclick="loadOrders()">🔄 Refresh karein</button>
+      <h3 class="sec-title">🧾 My Orders</h3>
+      <div id="ordersBox"><div class="empty">Orders are loading...</div></div>
+      <button class="cta small" type="button" onclick="loadOrders()">🔄 Refresh</button>
     </div>
   </section>
 
   <section id="view-help" style="display:none;">
     <div class="card">
-      <h3 class="sec-title">❓ Help — Aam Sawalat</h3>
-      <p class="help-q">Order kaise karein?</p>
-      <p class="help-a">Jo product pasand aaye, us par <b>🛒 Add to Cart</b> dabayein — aik ya aik se zyada items cart mein daal sakte hain. Phir <b>Cart</b> mein ja kar apna naam, mobile number, address aur payment ka tareeqa likhein, phir <b>Order Now</b> dabayein — aap ka order WhatsApp par bhej diya jayega aur yahan save bhee ho jayega.</p>
+      <h3 class="sec-title">❓ Help — Frequently Asked Questions</h3>
+      <p class="help-q">How do I place an order?</p>
+      <p class="help-a">Tap <b>🛒 Add to Cart</b> on any product you like — you can add one or more items. Then open the <b>Cart</b>, enter your name, mobile number, address and payment method, and tap <b>Order Now</b> — your order will be sent on WhatsApp and also saved here.</p>
       <p class="help-q">Mera order save kaise hota hai aur status kahan dikhega?</p>
-      <p class="help-a">Order usi mobile number ke saath save hota hai jo aap form mein likhte hain. Upar <b>Meray Orders</b> page par login karke apne tamam orders aur un ka status (Pending, Confirmed, Shipped, Delivered) dekh sakte hain.</p>
-      <p class="help-q">Payment kaise karni hai?</p>
-      <p class="help-a">Do tareeqay hain: <b>Cash on Delivery</b> — parcel milne par paisay dein; ya <b>Easypaisa</b> — 0342-3944508 (Account Title: Malook Hussain) par pehle bhej dein.</p>
-      <p class="help-q">Advance payment par discount milta hai?</p>
-      <p class="help-a">Ji haan! Cash on Delivery ki bajaye <b>advance payment</b> (Easypaisa) karne par <b>Rs. 110 discount</b> milta hai. Order Form ke neeche wale Advance Payment button se WhatsApp par rabta karein — product ki tafseel khud message mein chali jayegi.</p>
-      <p class="help-q">Delivery kitne din mein hogi aur charges?</p>
-      <p class="help-a">Delivery aam tor par <b>3–5 din</b> mein ho jati hai. Delivery charges har order par sirf <b>PKR 99</b> hain — chahe order mein aik item ho ya zyada. Rs. 5,999 ya us se zyada ki khareedari par <b>home delivery FREE</b> hai.</p>
-      <p class="help-q">Return ya exchange ho sakta hai?</p>
-      <p class="help-a">Ji, unused item ki <b>7 din</b> ke andar easy return ki sahulat hai. Size ya rang ka masla ho to WhatsApp par bata dein.</p>
-      <p class="help-q">Rabta kaise karein?</p>
-      <p class="help-a">Kisi bhee madad ke liye WhatsApp par message karein:<br><a class="wa-btn" href="https://wa.me/923423944508" target="_blank" rel="noopener">💬 WhatsApp par rabta karein</a></p>
+      <p class="help-a">Your order is saved with the mobile number you enter in the form. Log in and open the <b>My Orders</b> page to see all your orders and their status (Pending, Confirmed, Shipped, Delivered).</p>
+      <p class="help-q">How do I pay?</p>
+      <p class="help-a">There are two ways: <b>Cash on Delivery</b> — pay when your parcel arrives; or <b>Easypaisa</b> — send in advance to 0342-3944508 (Account Title: Malook Hussain).</p>
+      <p class="help-q">Is there a discount on advance payment?</p>
+      <p class="help-a">Yes! Paying in <b>advance</b> (Easypaisa) instead of Cash on Delivery gives you a <b>Rs. 110 discount</b>. Use the Advance Payment button below the order form to contact us on WhatsApp — the product details will be included in the message automatically.</p>
+      <p class="help-q">How long does delivery take, and what are the charges?</p>
+      <p class="help-a">Delivery usually takes <b>3–5 working days</b>. Delivery charges are only <b>PKR 99</b> per order — whether it has one item or many. On purchases of Rs. 5,999 or more, <b>home delivery is FREE</b>.</p>
+      <p class="help-q">Can I return or exchange an item?</p>
+      <p class="help-a">Yes — unused items can be returned easily within <b>7 days</b>. If there is any size or colour issue, just tell us on WhatsApp.</p>
+      <p class="help-q">How can I contact you?</p>
+      <p class="help-a">For any help, message us on WhatsApp:<br><a class="wa-btn" href="https://wa.me/923423944508" target="_blank" rel="noopener">💬 Contact us on WhatsApp</a></p>
     </div>
   </section>
 
   <section id="view-about" style="display:none;">
     <div class="card">
       <h3 class="sec-title">ℹ️ About — Sale Online</h3>
-      <p class="help-a"><b>Sale Online</b> khawateen ke liye aik online store hai jahan quality stitched suits aur night suits munasib qeemat par milte hain. Har product ki mukammal detail, asli pictures, sizes aur colours page par wazeh diye jate hain taake aap itminan se order kar saken.</p>
-      <p class="help-q">Humari sahulatain</p>
-      <p class="help-a">🚚 Poore Pakistan mein delivery — sirf 3–5 din mein, charges PKR 99 per order (Rs. 5,999+ par FREE)<br>💵 Cash on Delivery ki sahulat<br>↩️ 7 din easy return (unused items par)<br>🧾 Har order ka status online — Meray Orders page par</p>
-      <p class="help-q">Payment tareeqay</p>
-      <p class="help-a">Cash on Delivery, ya Easypaisa — 0342-3944508 (Account Title: Malook Hussain)</p>
-      <p class="help-q">Rabta</p>
-      <p class="help-a">Sawal ya madad ke liye WhatsApp par message karein:<br><a class="wa-btn" href="https://wa.me/923423944508" target="_blank" rel="noopener">💬 WhatsApp: 0342-3944508</a></p>
+      <p class="help-a"><b>Sale Online</b> is an online store offering quality stitched suits and fashion items at fair prices. Every product page shows complete details, real pictures, sizes and colours clearly, so you can order with full confidence.</p>
+      <p class="help-q">Our Services</p>
+      <p class="help-a">🚚 Delivery all over Pakistan — in just 3–5 working days, charges PKR 99 per order (FREE on Rs. 5,999+)<br>💵 Cash on Delivery available<br>↩️ 7-day easy return (on unused items)<br>🧾 Live order status online — on the My Orders page</p>
+      <p class="help-q">Payment Methods</p>
+      <p class="help-a">Cash on Delivery, or Easypaisa — 0342-3944508 (Account Title: Malook Hussain)</p>
+      <p class="help-q">Contact</p>
+      <p class="help-a">For questions or help, message us on WhatsApp:<br><a class="wa-btn" href="https://wa.me/923423944508" target="_blank" rel="noopener">💬 WhatsApp: 0342-3944508</a></p>
     </div>
   </section>
 
 </div>
 
 <footer class="site">
-  © 2026 Sale Online — Quality women's fashion, poore Pakistan mein delivery ke saath.<br>
-  Rabta: WhatsApp 0342-3944508
+  © 2026 Sale Online — Quality women's fashion, with delivery all over Pakistan.<br>
+  Contact: WhatsApp 0342-3944508
 </footer>
 
   <section id="view-products" class="view" style="display:none">
     <div class="card">
-      <h3 style="margin-top:0">🛍️ <span id="prodCatTitle">Tamam Products</span> (<span id="prodCatCount">0</span>)</h3>
-      <p class="muted">Hamari tamam products aik jagah — jo pasand aaye, usi par Add to Cart dabayein, phir Cart se order place karein.</p>
+      <h3 style="margin-top:0">🛍️ <span id="prodCatTitle">All Products</span> (<span id="prodCatCount">0</span>)</h3>
+      <p class="muted">All our products in one place — tap Add to Cart on anything you like, then place your order from the Cart.</p>
       <div class="cat-chips" id="catChips"></div>
       <div class="grid-products" id="gridAll">
         <div class="gcard" data-cat="Men&#x27;s Stitched"><img src="https://static.markaz.app/pakistan/products/1009-167-MZ1009200243RN-770296001-product-1.webp" alt="Men’s Black Printed Sweatshirt &amp; Trouser 2-Piece Set" onclick="showProduct('MZ1009200243RN')"><div class="gbody"><div class="gname" onclick="showProduct('MZ1009200243RN')">Men’s Black Printed Sweatshirt &amp; Trouser 2-Piece Set</div><div class="gcode">Code: MZ1009200243RN</div><div class="gprice">PKR 2,070</div><div class="gdate">2026-10-22</div><button class="cta" type="button" onclick="addToCart('MZ1009200243RN')">🛒 Add to Cart</button></div></div>
@@ -686,7 +731,7 @@
 <div id="lightbox" onclick="if(event.target===this) closeLB(false)">
   <img id="lbImg" src="" alt="Full screen picture">
   <div class="lb-cap" id="lbCap"></div>
-  <button class="lb-btn lb-close" type="button" onclick="closeLB(false)" aria-label="Band karein">✕</button>
+  <button class="lb-btn lb-close" type="button" onclick="closeLB(false)" aria-label="Close">✕</button>
   <div class="lb-zoombtns">
     <button class="lb-btn" type="button" onclick="zoomStep(1.3)" aria-label="Zoom in">+</button>
     <button class="lb-btn" type="button" onclick="zoomStep(0.77)" aria-label="Zoom out">−</button>
@@ -699,7 +744,7 @@
 
   // ================= FIREBASE SETUP =================
   // Firebase Realtime Database ka URL yahan lagega (masalan: https://project-default-rtdb.firebaseio.com)
-  // Jab tak URL khaali hai, page demo/local mode mein chalta hai (data sirf isi browser mein save hota hai).
+  // Until the URL is set, the page runs in demo/local mode (data is saved only in this browser).
   var DB_URL = "https://earn-platform-76c26-default-rtdb.firebaseio.com";
   var DB_ROOT = "saleonlie_shop";
 
@@ -830,7 +875,7 @@
     picIndex = 0;
     document.getElementById('dName').textContent = p.name;
     document.getElementById('dPrice').textContent = fmtPKR(p.sale);
-    document.getElementById('dAdv').innerHTML = '💳 Advance payment par <b>Rs. 110 OFF</b> — sirf ' + fmtPKR(p.sale - 110);
+    document.getElementById('dAdv').innerHTML = '💳 <b>Rs. 110 OFF</b> on advance payment — only ' + fmtPKR(p.sale - 110);
     document.getElementById('dStock').textContent = p.stock || 'In Stock';
     var isOOS = (p.stock || '').toLowerCase().indexOf('out') >= 0;
     document.getElementById('dStock').classList.toggle('oos', isOOS);
@@ -880,6 +925,7 @@
     if (currentView !== 'detail') backTarget = currentView;
     currentDetailCode = code;
     renderDetail(p);
+    refreshWishButtons();
     applySelection(p);
     showView('detail', true);
     if (toOrder) { setTimeout(function() { showView('cart'); }, 80); }
@@ -895,9 +941,9 @@
   }
   async function placeCartOrder(e) {
     e.preventDefault();
-    if (window.SHOP_CLOSED) { alert('Shop abhi band hai — filhal order nahi liya ja raha. Meharbani karke baad mein koshish karein.'); return false; }
+    if (window.SHOP_CLOSED) { alert('The shop is currently closed — orders are not being accepted right now. Please try again later.'); return false; }
     var cart = loadCart();
-    if (!cart.length) { alert('Cart khaali hai — pehle koi item Add to Cart karein.'); showView('products'); return false; }
+    if (!cart.length) { alert('Your cart is empty — please add an item first.'); showView('products'); return false; }
     var name = document.getElementById('cName').value.trim();
     var phone = cleanPhone(document.getElementById('cPhone').value);
     var address = document.getElementById('cAddress').value.trim();
@@ -905,9 +951,9 @@
     var payEl = document.querySelector('input[name="payMethod"]:checked');
     var pay = payEl ? payEl.value : 'COD';
     var trx = document.getElementById('trxId').value.trim();
-    if (!name || !phone || !address) { alert('Meharbani karke Naam, Rabta Number aur Delivery Address zaroor bharain.'); return false; }
-    if (phone.length < 10 || phone.length > 13) { alert('Rabta Number sahi likhein (masalan 03XX-XXXXXXX).'); return false; }
-    if (pay === 'Online' && trx.length < 5) { alert('Online Purchase ke liye Trx ID zaroori hai — aakhri 5 digit ya poori Trx ID likhein.'); return false; }
+    if (!name || !phone || !address) { alert('Please fill in your Name, Contact Number and Delivery Address.'); return false; }
+    if (phone.length < 10 || phone.length > 13) { alert('Please enter a valid contact number (example: 03XX-XXXXXXX).'); return false; }
+    if (pay === 'Online' && trx.length < 5) { alert('A Trx ID is required for Online Purchase — enter the last 5 digits or the full Trx ID.'); return false; }
     var totals = cartTotals();
     var order = { phone: phone, account: (currentUser ? currentUser.phone : ''), customer: name, address: address, remarks: remarks,
       items: cart, product: cart[0].product, code: cart[0].code, price: fmtPKR(cart[0].price),
@@ -916,7 +962,7 @@
     var savedId = null;
     try { savedId = await dbPush('orders', order); } catch (err) { savedId = null; }
     var lines = cart.map(function(it, i) { return (i + 1) + '. ' + it.product + ' (Code: ' + it.code + ')' + (it.colour ? ' | Colour: ' + it.colour : '') + (it.size ? ' | Size: ' + it.size : '') + ' x' + it.qty + ' = ' + fmtPKR(it.price * it.qty); }).join('\n');
-    var msg = "Assalam-o-Alaikum! Mujhe Sale Online se order karna hai.\n\n" + lines + "\n\n"
+    var msg = "Hello! I would like to place an order from Sale Online.\n\n" + lines + "\n\n"
       + "Subtotal: " + fmtPKR(totals.subtotal) + "\n"
       + "Delivery Charges: " + (totals.delivery === 0 ? 'FREE' : fmtPKR(totals.delivery)) + "\n"
       + (totals.redeemed ? "Bonus Redeemed: -" + fmtPKR(totals.redeemed) + "\n" : "")
@@ -933,7 +979,7 @@
       redeemApplied = false; bonusRedeemed = 0;
       saveCart([]); updateCartBadge();
       var note = document.getElementById('cartNote');
-      if (note) { note.innerHTML = '✅ <b>Order save ho gaya hai!</b> Is ka status <b>Meray Orders</b> page mein nazar aayega aur tafseel WhatsApp par bhej di gayi hai.'; note.style.display = 'block'; }
+      if (note) { note.innerHTML = '✅ <b>Your order has been saved!</b> You can track its status on the <b>My Orders</b> page, and the details have been sent on WhatsApp.'; note.style.display = 'block'; }
       setTimeout(function() { showView('orders'); }, 600);
     }
     return false;
@@ -967,7 +1013,7 @@
     var colour = document.getElementById('colourField').style.display !== 'none' ? document.getElementById('fColour').value : '';
     var size = document.getElementById('sizeField').style.display !== 'none' ? document.getElementById('fSize').value : '';
     var p = priceNum(); var d = p - 110;
-    var msg = "Assalam-o-Alaikum! Main Cash on Delivery ki bajaye ADVANCE PAYMENT karke order karna chahta/chahti hoon — Rs.110 discount ke liye.\n\n"
+    var msg = "Hello! I would like to place this order with ADVANCE PAYMENT instead of Cash on Delivery — for the Rs. 110 discount.\n\n"
       + "Product Code: " + selected.code + "\n"
       + "Product: " + selected.name + "\n"
       + "Price: " + selected.price + "\n"
@@ -975,7 +1021,7 @@
       + "Delivery Charges: PKR 99\n"
       + (colour ? "Colour: " + colour + "\n" : "")
       + (size ? "Size: " + size + "\n" : "")
-      + "\nMeharbani karke Easypaisa ki tafseel bhej dein aur mera order confirm kar dein. Shukriya!";
+      + "\nPlease send me the Easypaisa details and confirm my order. Thank you!";
     window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
   }
 
@@ -983,7 +1029,7 @@
   var currentView = 'home';
   function showView(v, noPush) {
     currentView = v;
-    ['home', 'products', 'orders', 'help', 'about', 'detail', 'cart'].forEach(function(x) {
+    ['home', 'products', 'orders', 'help', 'about', 'detail', 'cart', 'wishlist'].forEach(function(x) {
       var s = document.getElementById('view-' + x); if (s) s.style.display = (x === v ? 'block' : 'none');
       var n = document.getElementById('nav-' + x); if (n) n.classList.toggle('active', x === v);
     });
@@ -992,6 +1038,7 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (v === 'orders') loadOrders();
     if (v === 'cart') renderCart();
+    if (v === 'wishlist') renderWishlist();
     updateCartBadge(); updateHomeBonus();
   }
 
@@ -1004,12 +1051,16 @@
     else { box.innerHTML = '<button class="mini-btn" type="button" onclick="openAuth()">Login / Signup</button>'; }
     var da = document.getElementById('drawerAccount');
     if (da) {
-      if (currentUser) { da.innerHTML = '<div class="d-user">👤 ' + escapeHtml(currentUser.name) + ' · <span style="background:#ffdf00;border-radius:999px;padding:2px 9px;">⭐ Rs. ' + getBonusLocal() + '</span></div><button class="d-item" type="button" onclick="closeDrawer(); logout();">🚪 Logout</button>'; }
-      else { da.innerHTML = '<button class="d-item" type="button" onclick="closeDrawer(); openAuth();">🔐 Login / Signup</button>'; }
+      if (currentUser) { da.innerHTML = '<button class="d-logout" type="button" onclick="closeDrawer(); logout();">\u{1F6AA} Logout</button>'; }
+      else { da.innerHTML = '<button class="d-login" type="button" onclick="closeDrawer(); openAuth();">\u{1F510} Login / Signup</button>'; }
     }
+    var dn = document.getElementById('drName'); if (dn) dn.textContent = currentUser ? currentUser.name : 'Guest';
+    var dp = document.getElementById('drPhone'); if (dp) dp.textContent = currentUser ? currentUser.phone : 'Not logged in';
+    var av = document.getElementById('drAvatar'); if (av) av.textContent = currentUser ? (currentUser.name || '?').trim().charAt(0).toUpperCase() : '\u{1F464}';
+    var dbn = document.getElementById('drBonus'); if (dbn) dbn.innerHTML = '⭐ Bonus: Rs. ' + getBonusLocal();
   }
 
-  function openAuth(mode) { document.getElementById('authModal').style.display = 'flex'; switchAuth(mode || 'login'); }
+  function openAuth(mode) { document.getElementById('authModal').style.display = 'flex'; switchAuth(mode || 'login'); var lp = document.getElementById('liPhone'); if (lp) lp.value = ''; var lx = document.getElementById('liPass'); if (lx) lx.value = ''; }
   function closeAuth() { document.getElementById('authModal').style.display = 'none'; localStorage.setItem('saleonlie_seen', '1'); }
   function switchAuth(mode) {
     document.getElementById('form-login').style.display = (mode === 'login' ? 'block' : 'none');
@@ -1027,6 +1078,7 @@
     currentUser = { phone: phone, name: name };
     setAccountUI();
     refreshBonus();
+    syncWishlist();
     prefillOrderForm();
     closeAuth();
     if (currentView === 'orders') loadOrders();
@@ -1038,16 +1090,18 @@
     var phone = cleanPhone(document.getElementById('suPhone').value);
     var pass = document.getElementById('suPass').value;
     authError('signupErr', '');
-    if (name.length < 3) { authError('signupErr', 'Meharbani karke apna sahi naam likhein.'); return false; }
-    if (phone.length < 10 || phone.length > 13) { authError('signupErr', 'Mobile number sahi likhein (masalan 03XX-XXXXXXX).'); return false; }
+    if (name.length < 3) { authError('signupErr', 'Please enter your correct name.'); return false; }
+    if (phone.length < 10 || phone.length > 13) { authError('signupErr', 'Please enter a valid mobile number (example: 03XX-XXXXXXX).'); return false; }
     if (pass.length < 4) { authError('signupErr', 'Password kam az kam 4 characters ka rakhein.'); return false; }
     try {
+      var blk = await dbRead('blocked/' + phone);
+      if (blk) { authError('signupErr', 'This account has been blocked by the store admin. Please contact us on WhatsApp for help.'); return false; }
       var existing = await dbRead('users/' + phone);
-      if (existing) { authError('signupErr', 'Ye mobile number pehle se registered hai — Login wala hisa istemal karein.'); return false; }
+      if (existing) { authError('signupErr', 'This mobile number is already registered — please use the Login form.'); return false; }
       var passHash = await sha256(phone + ':' + pass);
       await dbWrite('users/' + phone, { name: name, pass: passHash, created: Date.now() });
       await startSession(phone, name, passHash);
-    } catch (err) { authError('signupErr', 'Account nahi ban saka — internet check karke dobara koshish karein.'); }
+    } catch (err) { authError('signupErr', 'Could not create your account — check your internet and try again.'); }
     return false;
   }
 
@@ -1056,13 +1110,15 @@
     var phone = cleanPhone(document.getElementById('liPhone').value);
     var pass = document.getElementById('liPass').value;
     authError('loginErr', '');
-    if (phone.length < 10 || phone.length > 13) { authError('loginErr', 'Mobile number sahi likhein — is khane mein sirf apna mobile number likhein (naam nahi).'); return false; }
+    if (phone.length < 10 || phone.length > 13) { authError('loginErr', 'Please enter a valid mobile number — enter only your mobile number in this field (not your name).'); return false; }
     try {
+      var blk2 = await dbRead('blocked/' + phone);
+      if (blk2) { authError('loginErr', 'This account has been blocked by the store admin. Please contact us on WhatsApp for help.'); return false; }
       var u = await dbRead('users/' + phone);
-      if (!u) { authError('loginErr', 'Is number par koi account nahi hai — pehle Signup karein.'); return false; }
-      if (u.pass !== await sha256(phone + ':' + pass)) { authError('loginErr', 'Password ghalat hai — dobara koshish karein.'); return false; }
+      if (!u) { authError('loginErr', 'No account exists for this number — please Sign up first.'); return false; }
+      if (u.pass !== await sha256(phone + ':' + pass)) { authError('loginErr', 'Incorrect password — please try again.'); return false; }
       await startSession(phone, u.name, u.pass);
-    } catch (err) { authError('loginErr', 'Login nahi ho saka — internet check karke dobara koshish karein.'); }
+    } catch (err) { authError('loginErr', 'Could not log in — check your internet and try again.'); }
     return false;
   }
 
@@ -1084,9 +1140,9 @@
     try {
       var s = JSON.parse(raw);
       var u = await dbRead('users/' + s.phone);
-      if (u && s.token === await sha256(s.phone + ':' + u.pass)) { currentUser = { phone: s.phone, name: u.name }; prefillOrderForm(); refreshBonus(); }
+      if (u && s.token === await sha256(s.phone + ':' + u.pass)) { currentUser = { phone: s.phone, name: u.name }; prefillOrderForm(); refreshBonus(); syncWishlist(); }
       else { localStorage.removeItem('saleonlie_session'); }
-    } catch (e) { /* offline par session rehne dein */ }
+    } catch (e) { /* keep the session when offline */ }
     setAccountUI();
   }
 
@@ -1116,23 +1172,23 @@
     var emojis = ['🎉', '⭐', '🎁', '💰', '✨'];
     var conf = '';
     for (var i = 0; i < 14; i++) { conf += '<span class="confetti" style="left:' + (4 + i * 7) + '%;animation-delay:' + (i % 5) * 0.18 + 's;">' + emojis[i % emojis.length] + '</span>'; }
-    d.innerHTML = conf + '<div class="celebrate-card"><div class="coin3d">🪙</div><h2 style="margin:10px 0 6px;">Mubarak ho! 🎉</h2><p style="font-size:20px;font-weight:800;color:#0b7a4b;">+ Rs. ' + amount + ' Bonus!</p><p style="color:#44524c;margin-top:6px;line-height:1.5;">Aap ka bonus balance update ho gaya hai.<br>Agle order mein Cart se <b>Redeem</b> karein.</p></div>';
+    d.innerHTML = conf + '<div class="celebrate-card"><div class="coin3d">🪙</div><h2 style="margin:10px 0 6px;">Congratulations! 🎉</h2><p style="font-size:20px;font-weight:800;color:#0b7a4b;">+ Rs. ' + amount + ' Bonus!</p><p style="color:#44524c;margin-top:6px;line-height:1.5;">Your bonus balance has been updated.<br>Redeem it from the Cart on your next order.</p></div>';
     document.body.appendChild(d);
     setTimeout(function() { if (d.parentNode) d.parentNode.removeChild(d); }, 3800);
     d.addEventListener('click', function() { if (d.parentNode) d.parentNode.removeChild(d); });
   }
   function showBonusInfo() {
-    alert('⭐ Bonus Balance\n\nHar delivered order par review dene par aap ko Rs. 11 bonus milta hai.\n\nYe balance agle order mein Cart mein ja kar "Redeem" dabane se total price se less ho jayega.\n\nHar delivery pe aap ko acha khasa bonus balance milega!');
+    alert('⭐ Bonus Balance\n\nYou earn Rs. 11 bonus for reviewing each delivered order.\n\nOn your next order, tap "Redeem" in the Cart and the bonus will be deducted from your total.\n\nKeep earning bonus on every delivery!');
   }
   async function submitReview(orderId, idx, code) {
     var stars = reviewStars[orderId + '_' + idx] || 0;
-    if (!stars) { alert('Meharbani karke pehle stars chunein (1 se 5 tak).'); return; }
+    if (!stars) { alert('Please select stars first (1 to 5).'); return; }
     var inp = document.getElementById('revText-' + orderId + '_' + idx);
     var text = inp ? inp.value.trim() : '';
     try {
       var o = await dbRead('orders/' + orderId);
-      if (!o) { alert('Order nahi mila — dobara koshish karein.'); return; }
-      if (o.reviews && o.reviews[idx]) { alert('Is item ka review pehle hi diya ja chuka hai.'); loadOrders(); return; }
+      if (!o) { alert('Order not found — please try again.'); return; }
+      if (o.reviews && o.reviews[idx]) { alert('This item has already been reviewed.'); loadOrders(); return; }
       var reviews = o.reviews || {}; reviews[idx] = { stars: stars, text: text, ts: Date.now(), code: code };
       await dbUpdate('orders/' + orderId, { reviews: reviews });
       var phone = o.account || o.phone;
@@ -1140,17 +1196,17 @@
       updateHomeBonus();
       showBonusCelebration(BONUS_PER_REVIEW);
       loadOrders();
-    } catch (err) { alert('Review save nahi ho saka — internet check karke dobara koshish karein.'); }
+    } catch (err) { alert('Could not save your review — check your internet and try again.'); }
   }
   async function loadOrders() {
     var box = document.getElementById('ordersBox');
     if (!box) return;
     var ids = myOrderIds();
     if (!currentUser && !ids.length) {
-      box.innerHTML = '<div class="empty">Apne orders aur un ka status dekhne ke liye pehle <b>Login</b> karein.<br><br><button class="cta small" type="button" onclick="openAuth()">Login / Signup</button></div>';
+      box.innerHTML = '<div class="empty">Please <b>Login</b> to see your orders and their status.<br><br><button class="cta small" type="button" onclick="openAuth()">Login / Signup</button></div>';
       return;
     }
-    box.innerHTML = '<div class="empty">Orders load ho rahe hain...</div>';
+    box.innerHTML = '<div class="empty">Orders are loading...</div>';
     try {
       var all = await dbRead('orders') || {};
       var mine = Object.keys(all).map(function(k) { var o = all[k]; o.id = k; return o; })
@@ -1161,21 +1217,21 @@
           return normPhone(o.phone || '') === me || (o.account && normPhone(o.account) === me);
         })
         .sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); });
-      if (!mine.length) { box.innerHTML = '<div class="empty">Abhi tak aap ka koi order nahi hai.<br>Pasandeeda product par <b>Add to Cart</b> dabakar pehla order karein!</div>'; return; }
-      var head = !currentUser ? '<div class="empty" style="padding:12px 10px;">📌 Ye orders <b>is device</b> se kiye gaye hain. Doosre device par dekhne ke liye usi number se Login karein jis se order kiya tha.</div>' : '';
+      if (!mine.length) { box.innerHTML = '<div class="empty">You have no orders yet.<br>Tap <b>Add to Cart</b> on any product you like to place your first order!</div>'; return; }
+      var head = !currentUser ? '<div class="empty" style="padding:12px 10px;">📌 These orders were placed from <b>this device</b>. To view them on another device, log in with the same number used for the order.</div>' : '';
       box.innerHTML = head + mine.map(function(o) {
         var items = orderItems(o);
         var total = (typeof o.total === 'number') ? o.total : (items.reduce(function(s, it) { return s + priceToNum(it.price) * (it.qty || 1); }, 0) + DELIVERY_FEE);
-        var title = items[0].product + (items.length > 1 ? ' + ' + (items.length - 1) + ' mazeed items' : '');
+        var title = items[0].product + (items.length > 1 ? ' + ' + (items.length - 1) + ' more items' : '');
         var delivered = (o.status || 'Pending') === 'Delivered';
         var itemsHtml = items.map(function(it, idx) {
           var reviewed = o.reviews && o.reviews[idx];
           var revHtml = '';
           if (delivered) {
-            if (reviewed) { revHtml = '<div class="rev-box">✅ Review diya gaya: ' + '★'.repeat(reviewed.stars) + '☆'.repeat(5 - reviewed.stars) + ' — <b>Rs. 11 bonus mil gaya</b>' + (reviewed.text ? '<br>“' + escapeHtml(reviewed.text) + '”' : '') + '</div>'; }
+            if (reviewed) { revHtml = '<div class="rev-box">✅ Your review: ' + '★'.repeat(reviewed.stars) + '☆'.repeat(5 - reviewed.stars) + ' — <b>Rs. 11 bonus earned</b>' + (reviewed.text ? '<br>“' + escapeHtml(reviewed.text) + '”' : '') + '</div>'; }
             else {
               var starsBtns = [1, 2, 3, 4, 5].map(function(n) { return '<button type="button" class="star-btn" data-rev="' + o.id + '_' + idx + '" data-star="' + n + '" onclick="setReviewStars(\'' + o.id + '\',' + idx + ',' + n + ')">★</button>'; }).join('');
-              revHtml = '<div class="rev-box"><b>⭐ Is item ko review dein — Rs. 11 bonus payein! (sirf aik dafa)</b><div>' + starsBtns + '</div><input id="revText-' + o.id + '_' + idx + '" type="text" placeholder="Apna tajurba likhein (ikhtiyari)"><button class="cta small" type="button" style="margin-top:8px;" onclick="submitReview(\'' + o.id + '\',' + idx + ',\'' + it.code + '\')">Review dein aur Rs. 11 bonus payein</button></div>';
+              revHtml = '<div class="rev-box"><b>⭐ Review this item — earn Rs. 11 bonus! (one time only)</b><div>' + starsBtns + '</div><input id="revText-' + o.id + '_' + idx + '" type="text" placeholder="Write your experience (optional)"><button class="cta small" type="button" style="margin-top:8px;" onclick="submitReview(\'' + o.id + '\',' + idx + ',\'' + it.code + '\')">Submit Review & Earn Rs. 11 Bonus</button></div>';
             }
           }
           return '<div class="oi-item"><img src="' + itemImg(it) + '" alt=""><div><b>' + escapeHtml(it.product) + '</b><div style="font-size:13.5px;color:#55645d;line-height:1.55;">Code: ' + escapeHtml(it.code) + (it.colour ? ' · Colour: ' + escapeHtml(it.colour) : '') + (it.size ? ' · Size: ' + escapeHtml(it.size) : '') + '<br>Qty: ' + (it.qty || 1) + ' × ' + fmtPKR(priceToNum(it.price)) + ' = <b>' + fmtPKR(priceToNum(it.price) * (it.qty || 1)) + '</b></div>' + revHtml + '</div></div>';
@@ -1184,14 +1240,14 @@
         if (o.payment === 'Online' && o.trxId) { var tr = String(o.trxId); payHtml += ' · Trx ID: ****' + tr.slice(-5); }
         if (typeof o.subtotal === 'number') payHtml += '<br><b>Subtotal:</b> ' + fmtPKR(o.subtotal) + ' · <b>Delivery:</b> ' + (o.delivery === 0 ? 'FREE' : fmtPKR(o.delivery || 0)) + (o.bonusRedeemed ? ' · <b>Bonus Redeemed:</b> -' + fmtPKR(o.bonusRedeemed) : '') + '<br><b>Total:</b> ' + fmtPKR(total);
         return '<div class="order-item"><div class="oi-top order-head" onclick="toggleOrder(\'' + o.id + '\')"><div style="display:flex;gap:10px;align-items:center;"><img src="' + itemImg(items[0]) + '" style="width:52px;height:52px;object-fit:cover;border-radius:10px;" alt=""><b>' + escapeHtml(title) + '</b></div><span><span class="st ' + statusClass(o.status) + '">' + escapeHtml(o.status || 'Pending') + '</span> <span id="orderArrow-' + o.id + '">▼</span></span></div>'
-          + '<div class="oi-meta">Total: <b>' + fmtPKR(total) + '</b> · Order date: ' + new Date(o.ts).toLocaleString('en-GB') + ' · Item par click karein, tafseel khul jayegi.</div>'
+          + '<div class="oi-meta">Total: <b>' + fmtPKR(total) + '</b> · Order date: ' + new Date(o.ts).toLocaleString('en-GB') + ' · Tap the item to see details.</div>'
           + '<div class="order-body" id="orderBody-' + o.id + '">' + itemsHtml
           + '<div class="oi-meta" style="border-top:1px dashed #dde6e0;padding-top:10px;">' + payHtml
           + '<br>👤 ' + escapeHtml(o.customer || '') + ' · 📱 ' + escapeHtml(o.phone || '')
           + '<br>🏠 ' + escapeHtml(o.address || '')
           + (o.remarks ? '<br>📝 Remarks: ' + escapeHtml(o.remarks) : '') + '</div></div></div>';
       }).join('');
-    } catch (e) { box.innerHTML = '<div class="empty">Orders load nahi ho sakay — internet check karke Refresh karein.</div>'; }
+    } catch (e) { box.innerHTML = '<div class="empty">Could not load orders — check your internet and tap Refresh.</div>'; }
   }
 
 
@@ -1219,7 +1275,7 @@
     var cards = document.querySelectorAll('#gridAll .gcard');
     var shown = 0;
     cards.forEach(function(card) { var ok = !cat || card.getAttribute('data-cat') === cat; card.style.display = ok ? '' : 'none'; if (ok) shown++; });
-    var t = document.getElementById('prodCatTitle'); if (t) t.textContent = cat ? cat : 'Tamam Products';
+    var t = document.getElementById('prodCatTitle'); if (t) t.textContent = cat ? cat : 'All Products';
     var cnt = document.getElementById('prodCatCount'); if (cnt) cnt.textContent = shown;
   }
   function openCategory(cat) { showView('products'); filterProducts(cat); }
@@ -1236,7 +1292,7 @@
     try {
       var s = await dbRead('settings');
       if (s) {
-        if (s.shop_open === false) { window.SHOP_CLOSED = true; showShopBanner('⛔ Shop abhi band hai — filhal orders nahi liye ja rahe. Thodi dair baad dobara koshish karein.', true); }
+        if (s.shop_open === false) { window.SHOP_CLOSED = true; showShopBanner('⛔ The shop is currently closed — orders are not being accepted. Please try again later.', true); }
         else if (s.announcement) { showShopBanner('📢 ' + s.announcement, false); }
       }
       var ov = await dbRead('overrides');
@@ -1273,7 +1329,7 @@
   }
   function addToCart(code, colour, size, qty) {
     var p = productByCode(code); if (!p) return;
-    if ((p.stock || '').toLowerCase().indexOf('out') >= 0) { alert('Ye product abhi Out of Stock hai.'); return; }
+    if ((p.stock || '').toLowerCase().indexOf('out') >= 0) { alert('This product is currently Out of Stock.'); return; }
     var cart = loadCart();
     var col = colour || ''; var sz = size || ''; var q = qty || 1;
     var found = null;
@@ -1281,7 +1337,7 @@
     if (found) found.qty = (found.qty || 1) + q; else cart.push({ code: p.code, product: p.name, price: p.sale, qty: q, colour: col, size: sz, img: (p.images && p.images[0]) ? p.images[0] : '' });
     saveCart(cart); updateCartBadge();
     var toastBox = document.getElementById('cartNote');
-    alert('✅ Cart mein add ho gaya!\n' + p.name + '\nCart mein ja kar order place karein.');
+    alert('✅ Added to cart!\n' + p.name + '\nOpen the Cart to place your order.');
   }
   function addToCartCurrent() {
     var p = productByCode(selected.code); if (!p) return;
@@ -1302,7 +1358,7 @@
   function removeCartItem(idx) { var cart = loadCart(); cart.splice(idx, 1); saveCart(cart); renderCart(); }
   function toggleRedeem() {
     var bonus = getBonusLocal();
-    if (!redeemApplied) { if (!bonus) { alert('Aap ka bonus balance 0 hai. Delivered order par review dein — har review par Rs. 11 bonus milta hai.'); return; } redeemApplied = true; bonusRedeemed = bonus; }
+    if (!redeemApplied) { if (!bonus) { alert('Your bonus balance is Rs. 0. Review a delivered order — every review earns you Rs. 11 bonus.'); return; } redeemApplied = true; bonusRedeemed = bonus; }
     else { redeemApplied = false; bonusRedeemed = 0; }
     renderCart();
   }
@@ -1311,7 +1367,7 @@
     var cart = loadCart();
     var checkout = document.getElementById('cartCheckoutCard'); if (checkout) checkout.style.display = cart.length ? '' : 'none';
     if (!cart.length) {
-      box.innerHTML = '<div class="empty">Cart khaali hai.<br>Products mein ja kar <b>🛒 Add to Cart</b> dabayein.</div>';
+      box.innerHTML = '<div class="empty">Your cart is empty.<br>Go to Products and tap <b>🛒 Add to Cart</b>.</div>';
       document.getElementById('cartSummary').innerHTML = '';
       document.getElementById('freeHint').style.display = 'none';
       document.getElementById('bonusBox').style.display = 'none';
@@ -1323,13 +1379,13 @@
         + '<div style="margin-top:8px;display:flex;gap:6px;align-items:center;"><button class="qty-btn" type="button" onclick="changeQty(' + i + ',-1)">−</button><span>' + (it.qty || 1) + '</span><button class="qty-btn" type="button" onclick="changeQty(' + i + ',1)">+</button><button type="button" onclick="removeCartItem(' + i + ')" style="margin-left:8px;background:none;border:none;color:#b3261e;cursor:pointer;font-weight:700;">🗑️ Hatayein</button></div></div></div>';
     }).join('');
     var totals = cartTotals();
-    document.getElementById('cartSummary').innerHTML = '<div class="order-summary"><b>Subtotal:</b> ' + fmtPKR(totals.subtotal) + '<br><b>Delivery Charges:</b> ' + (totals.delivery === 0 ? 'FREE 🎉' : fmtPKR(totals.delivery)) + ' (har order par sirf Rs. 99)<br>' + (totals.redeemed ? '<b>Bonus Redeemed:</b> -' + fmtPKR(totals.redeemed) + '<br>' : '') + '<b style="font-size:18px;">Total: ' + fmtPKR(totals.total) + '</b></div>';
+    document.getElementById('cartSummary').innerHTML = '<div class="order-summary"><b>Subtotal:</b> ' + fmtPKR(totals.subtotal) + '<br><b>Delivery Charges:</b> ' + (totals.delivery === 0 ? 'FREE 🎉' : fmtPKR(totals.delivery)) + ' (only Rs. 99 per order)<br>' + (totals.redeemed ? '<b>Bonus Redeemed:</b> -' + fmtPKR(totals.redeemed) + '<br>' : '') + '<b style="font-size:18px;">Total: ' + fmtPKR(totals.total) + '</b></div>';
     var fh = document.getElementById('freeHint');
-    if (totals.subtotal >= FREE_DELIVERY_MIN) { fh.className = 'free-hint ok'; fh.innerHTML = '🎉 <b>FREE Home Delivery!</b> Aap ne Rs. 99 ki delivery bacha li hai.'; fh.style.display = 'block'; }
-    else { var rem = FREE_DELIVERY_MIN - totals.subtotal; fh.className = 'free-hint'; fh.innerHTML = '💡 Sirf <b>Rs. ' + rem.toLocaleString('en-US') + ' ki mazeed khareedari</b> par <b>FREE home delivery</b> — aap <b>Save Rs. 99</b> karein ge! (Delivery charges Rs. 99 hain)'; fh.style.display = 'block'; }
+    if (totals.subtotal >= FREE_DELIVERY_MIN) { fh.className = 'free-hint ok'; fh.innerHTML = '🎉 <b>FREE Home Delivery!</b> You saved Rs. 99 in delivery charges.'; fh.style.display = 'block'; }
+    else { var rem = FREE_DELIVERY_MIN - totals.subtotal; fh.className = 'free-hint'; fh.innerHTML = '💡 Shop for just <b>Rs. ' + rem.toLocaleString('en-US') + ' more</b> to get <b>FREE home delivery</b> — and <b>Save Rs. 99</b>! (Delivery charges are Rs. 99)'; fh.style.display = 'block'; }
     var bb = document.getElementById('bonusBox');
     var bonus = getBonusLocal();
-    bb.innerHTML = '⭐ <b>Bonus Balance: Rs. ' + bonus + '</b> &nbsp; <button class="cta small" type="button" onclick="toggleRedeem()">' + (redeemApplied ? 'Redeem Hatayein' : '🎁 Redeem karein') + '</button>';
+    bb.innerHTML = '⭐ <b>Bonus Balance: Rs. ' + bonus + '</b> &nbsp; <button class="cta small" type="button" onclick="toggleRedeem()">' + (redeemApplied ? 'Remove Redeem' : '🎁 Redeem Bonus') + '</button>';
     bb.style.display = 'block';
     var sl = document.getElementById('savedLine');
     if (totals.redeemed) { sl.textContent = '🎉 You have saved Rs. ' + totals.redeemed + '! (Bonus balance se)'; sl.style.display = 'block'; } else sl.style.display = 'none';
@@ -1361,13 +1417,14 @@
   }
   function updateHomeBonus() {
     var bal = getBonusLocal();
+    var dbn2 = document.getElementById('drBonus'); if (dbn2) dbn2.innerHTML = '⭐ Bonus: Rs. ' + bal;
     var ht = document.getElementById('homeBonusText');
     if (ht) ht.innerHTML = '👤 ' + (currentUser ? escapeHtml(currentUser.name) + ' — ' : '') + '⭐ <span style="background:#ffdf00;border-radius:999px;padding:2px 10px;font-weight:800;">Bonus Balance: Rs. ' + bal + '</span>';
     var pills = document.querySelectorAll('.bonus-pill');
     pills.forEach(function(p) { p.textContent = '⭐ Bonus: Rs. ' + bal; });
     updateCartBadge();
   }
-  // ----- Mobile back button: aik step peeche, page band nahi -----
+  // ----- Mobile back button: one step back, page does not close -----
   try { history.replaceState({ view: 'home' }, ''); } catch (e) {}
   window.addEventListener('popstate', function(ev) {
     var lb = document.getElementById('lightbox');
@@ -1389,12 +1446,130 @@
     popNav = false;
   });
 
+
+  // ================= SHARE STORE =================
+  function shareStore() {
+    closeDrawer();
+    var url = 'https://hammad57.github.io/POS/Saleonlie.html';
+    if (navigator.share) { navigator.share({ title: 'Sale Online', text: 'Shop quality fashion online with Cash on Delivery all over Pakistan:', url: url }).catch(function() {}); }
+    else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function() { alert('Store link copied!\n' + url + '\nShare it with anyone.'); }, function() { alert('Store link:\n' + url); }); }
+    else { alert('Store link:\n' + url); }
+  }
+
+  // ================= WISHLIST =================
+  function loadWishlist() { try { var w = JSON.parse(localStorage.getItem('saleonlie_wishlist') || '[]'); return Array.isArray(w) ? w : []; } catch (e) { return []; } }
+  function saveWishlist(w) { try { localStorage.setItem('saleonlie_wishlist', JSON.stringify(w)); } catch (e) {} updateWishBadge(); }
+  function updateWishBadge() { var n = loadWishlist().length; var d = document.getElementById('drawerWishCount'); if (d) d.textContent = n ? '(' + n + ')' : ''; }
+  function inWishlist(code) { return loadWishlist().indexOf(code) >= 0; }
+  function wishSnapshot(code) { var p = productByCode(code); if (!p) return null; return { code: p.code, product: p.name, price: p.sale, img: (p.images && p.images[0]) || '', ts: Date.now() }; }
+  async function toggleWishlist(code) {
+    var w = loadWishlist(); var i = w.indexOf(code); var added = false;
+    if (i >= 0) { w.splice(i, 1); } else { w.push(code); added = true; }
+    saveWishlist(w); refreshWishButtons();
+    if (currentView === 'wishlist') renderWishlist();
+    if (currentUser) {
+      try {
+        if (added) { var snap = wishSnapshot(code); if (snap) await dbWrite('wishlists/' + currentUser.phone + '/' + code, snap); }
+        else { await dbDelete('wishlists/' + currentUser.phone + '/' + code); }
+      } catch (e) {}
+    }
+  }
+  function refreshWishButtons() {
+    document.querySelectorAll('.wish-btn').forEach(function(b) {
+      var on = inWishlist(b.getAttribute('data-code'));
+      b.classList.toggle('on', on); b.innerHTML = on ? '❤️' : '🤍';
+    });
+    var db = document.getElementById('detailWishBtn');
+    if (db && currentDetailCode) { var on2 = inWishlist(currentDetailCode); db.classList.toggle('on', on2); db.innerHTML = on2 ? '❤️ Saved in Wishlist' : '🤍 Add to Wishlist'; }
+  }
+  function initWishButtons() {
+    document.querySelectorAll('.gcard').forEach(function(card) {
+      var m = card.innerHTML.match(/showProduct\('([A-Z0-9]+)'\)/); if (!m) return;
+      if (card.querySelector('.wish-btn')) return;
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'wish-btn'; b.setAttribute('data-code', m[1]); b.setAttribute('aria-label', 'Add to wishlist');
+      b.onclick = function(ev) { ev.stopPropagation(); toggleWishlist(m[1]); };
+      card.appendChild(b);
+    });
+    refreshWishButtons(); updateWishBadge();
+  }
+  async function syncWishlist() {
+    if (!currentUser) return;
+    try {
+      var remote = await dbRead('wishlists/' + currentUser.phone) || {};
+      var local = loadWishlist();
+      var merged = local.slice();
+      Object.keys(remote).forEach(function(code) { if (merged.indexOf(code) < 0) merged.push(code); });
+      saveWishlist(merged);
+      for (var i = 0; i < local.length; i++) { if (!remote[local[i]]) { var snap = wishSnapshot(local[i]); if (snap) { try { await dbWrite('wishlists/' + currentUser.phone + '/' + local[i], snap); } catch (e) {} } } }
+      refreshWishButtons();
+      if (currentView === 'wishlist') renderWishlist();
+    } catch (e) {}
+  }
+  function renderWishlist() {
+    var g = document.getElementById('wishGrid'); var em = document.getElementById('wishEmpty'); if (!g) return;
+    var w = loadWishlist();
+    var items = w.map(function(code) { return productByCode(code); }).filter(Boolean);
+    em.style.display = items.length ? 'none' : 'block';
+    g.innerHTML = items.map(function(p) {
+      var oos = (p.stock || '').toLowerCase().indexOf('out') >= 0;
+      return '<div class="gcard"><img src="' + (p.images && p.images[0] ? p.images[0] : '') + '" alt="' + escapeHtml(p.name) + '" onclick="showProduct(\'' + p.code + '\')"><div class="gbody"><div class="gname" onclick="showProduct(\'' + p.code + '\')">' + escapeHtml(p.name) + '</div><div class="gcode">Code: ' + p.code + '</div><div class="gprice">PKR ' + Number(p.sale).toLocaleString('en-US') + '</div>' + (oos ? '<div class="gdate" style="color:#b3261e;font-weight:700;">Out of Stock</div>' : '<button class="cta" type="button" onclick="addToCart(\'' + p.code + '\')">🛒 Add to Cart</button>') + '<button class="wish-toggle-btn on" type="button" style="margin-top:8px;" onclick="toggleWishlist(\'' + p.code + '\')">❤️ Remove from Wishlist</button></div></div>';
+    }).join('');
+  }
+
+  // ================= SHUFFLE (mixed products, different on every visit) =================
+  function shuffleGrid(id) {
+    var g = document.getElementById(id); if (!g) return;
+    var cards = Array.prototype.slice.call(g.children);
+    for (var i = cards.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = cards[i]; cards[i] = cards[j]; cards[j] = t; }
+    cards.forEach(function(c) { g.appendChild(c); });
+  }
+
+  // ================= STORE EXTRAS: price overrides, offer, notifications =================
+  async function dbDelete(path) { var r = await fetch(dbUrl(path), { method: 'DELETE' }); if (!r.ok) throw new Error('DB delete fail'); return true; }
+  async function applyStoreExtras() {
+    try {
+      var po = await dbRead('price_overrides');
+      if (po) {
+        Object.keys(po).forEach(function(code) {
+          var price = po[code] && po[code].price;
+          if (typeof price !== 'number') return;
+          PRODUCTS.forEach(function(x) { if (x.code === code) x.sale = price; });
+          document.querySelectorAll('.gcard').forEach(function(card) {
+            if (card.innerHTML.indexOf("'" + code + "'") >= 0) { var gp = card.querySelector('.gprice'); if (gp) gp.textContent = 'PKR ' + price.toLocaleString('en-US'); }
+          });
+        });
+      }
+    } catch (e) {}
+    try {
+      var st = await dbRead('settings');
+      if (st && st.offer) showShopBanner('🎁 ' + st.offer, false);
+    } catch (e) {}
+    try {
+      var n = await dbRead('notifications/latest');
+      if (n && n.text && n.ts) {
+        var seen = 0; try { seen = parseInt(localStorage.getItem('saleonlie_notif_seen') || '0', 10) || 0; } catch (e) {}
+        if (n.ts > seen) {
+          var old = document.getElementById('notifPop'); if (old) old.remove();
+          var d = document.createElement('div'); d.id = 'notifPop';
+          d.innerHTML = '<div class="notif-card"><div style="font-size:38px;">🔔</div><h3 style="margin:10px 0 8px;">Store Notification</h3><p style="color:#44524c;line-height:1.6;font-size:15px;"></p><button class="cta" type="button" style="margin-top:16px;">OK</button></div>';
+          d.querySelector('p').textContent = n.text;
+          d.querySelector('button').onclick = function() { try { localStorage.setItem('saleonlie_notif_seen', String(n.ts)); } catch (e) {} d.remove(); };
+          document.body.appendChild(d);
+        }
+      }
+    } catch (e) {}
+  }
+
   // ================= INIT =================
   updateCartBadge(); updateHomeBonus();
   buildChips();
   filterProducts('');
   tryAutoLogin();
   applyPanelControls();
+  shuffleGrid('gridProducts');
+  shuffleGrid('gridAll');
+  initWishButtons();
+  applyStoreExtras();
   if (!localStorage.getItem('saleonlie_session') && !localStorage.getItem('saleonlie_seen')) {
     setTimeout(function() { if (!currentUser && !localStorage.getItem('saleonlie_session')) openAuth('signup'); }, 700);
   }

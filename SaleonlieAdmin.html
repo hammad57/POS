@@ -37,6 +37,22 @@
   .empty { text-align: center; color: #66766e; padding: 24px 10px; font-size: 15px; }
   .aitem { display:flex; gap:10px; margin-bottom:8px; align-items:flex-start; } .aitem img { width:56px; height:56px; object-fit:cover; border-radius:8px; }
   .demo-banner { background: #fff8e1; border: 1px solid #ffe082; color: #6d5410; border-radius: 10px; padding: 10px 13px; font-size: 14px; margin-bottom: 14px; line-height: 1.55; }
+
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .tab-btn { background: #e8eeeb; color: #33463c; border: none; padding: 11px 18px; border-radius: 999px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .tab-btn.active { background: #0b5136; color: #fff; }
+  .tab-badge { background: #b3261e; color: #fff; border-radius: 999px; padding: 1px 8px; font-size: 12px; margin-left: 5px; }
+  .irow { display: flex; gap: 12px; border: 1px solid #e4e9e6; border-radius: 12px; padding: 11px; margin-bottom: 10px; align-items: flex-start; background: #fff; }
+  .irow img { width: 58px; height: 58px; object-fit: cover; border-radius: 9px; flex: 0 0 auto; }
+  .irow .grow { flex: 1; min-width: 0; }
+  .badge-manual { background: #fff3cd; color: #7a5b00; font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .badge-oos { background: #fee2e2; color: #991b1b; font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .badge-ok { background: #dcfce7; color: #166534; font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .mini-input { width: 130px; padding: 9px 10px; display: inline-block; }
+  .urow { border: 1px solid #e4e9e6; border-radius: 12px; padding: 13px; margin-bottom: 10px; background: #fff; cursor: pointer; }
+  .udetail { border: 1px solid #cfe6d7; background: #f6fbf8; border-radius: 12px; padding: 14px; margin: -4px 0 12px; }
+  .danger { background: #b3261e !important; color: #fff !important; }
+  textarea { width: 100%; padding: 11px 12px; border: 1px solid #cfd8d3; border-radius: 10px; font-size: 15px; font-family: inherit; }
 </style>
 </head>
 <body>
@@ -88,6 +104,59 @@
       </div>
     </div>
     <div class="card">
+      <h3 style="margin-bottom:8px;">🔄 Update Store — Sync with Source</h3>
+      <p class="note" style="margin-top:0;">Press the button to match <b>every product</b> in your store with the source app: prices, stock and details are checked, and anything changed there is updated here too — so you never face a loss or a customer complaint.<br><b>Protected:</b> any price you changed manually will <b>NOT</b> be overwritten — only that item's stock and other details will update. Those protected items are listed in the <b>Manual Prices</b> tab.</p>
+      <button class="cta" type="button" id="btnUpdateStore" onclick="requestStoreUpdate()">🔄 Update Store Now</button>
+      <div class="note" id="updStatus">The update runs on the server — it usually completes within an hour. Keep this page open to see the result here.</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" type="button" id="tb-orders" onclick="switchTab('orders')">🧾 Orders</button>
+      <button class="tab-btn" type="button" id="tb-items" onclick="switchTab('items')">📦 Store Items</button>
+      <button class="tab-btn" type="button" id="tb-manual" onclick="switchTab('manual')">✏️ Manual Prices <span class="tab-badge" id="manualCount" style="display:none;">0</span></button>
+      <button class="tab-btn" type="button" id="tb-users" onclick="switchTab('users')">👥 Users</button>
+      <button class="tab-btn" type="button" id="tb-bonus" onclick="switchTab('bonus')">🎁 Bonus & Offers</button>
+    </div>
+
+    <div class="card tabpane" id="tabItems" style="display:none;">
+      <h3 style="margin-bottom:6px;">📦 Store Items</h3>
+      <p class="note" style="margin-top:0;">All products currently live in your store. Use <b>Set Manual Price</b> to fix any item's price yourself — it will then be protected from automatic updates and listed in the Manual Prices tab.</p>
+      <input id="itemSearch" type="text" placeholder="Search by name or code..." oninput="renderItems()">
+      <div id="itemsList" style="margin-top:12px;"><div class="empty">Items load ho rahe hain...</div></div>
+    </div>
+
+    <div class="card tabpane" id="tabManual" style="display:none;">
+      <h3 style="margin-bottom:6px;">✏️ Manual Prices (Protected)</h3>
+      <p class="note" style="margin-top:0;">These items' prices were changed manually by you. <b>Update Store</b> will never change their price (only stock and other details). Press <b>Update with Source</b> on any item to restore its automatic source price — it will move back to the main Store Items list.</p>
+      <div id="manualList"><div class="empty">Loading...</div></div>
+    </div>
+
+    <div class="card tabpane" id="tabUsers" style="display:none;">
+      <h3 style="margin-bottom:6px;">👥 Registered Users</h3>
+      <p class="note" style="margin-top:0;">Tap any user to see their complete record — all orders, bonus balance and wishlist — so you can keep an eye on everyone. You can also delete a user's ID: they will no longer be able to log in or sign up with that number.</p>
+      <div id="usersList"><div class="empty">Loading...</div></div>
+    </div>
+
+    <div class="card tabpane" id="tabBonus" style="display:none;">
+      <h3 style="margin-bottom:12px;">🎁 Bonus, Offers & Notifications</h3>
+      <label for="bonusAllAmt">Extra bonus for ALL users (Rs.)</label>
+      <input id="bonusAllAmt" type="number" min="1" placeholder="Example: 50">
+      <button class="cta small" type="button" style="margin-top:10px;" onclick="giveBonusAll()">Give Bonus to All Users</button>
+      <div class="note" id="bonusAllResult"></div>
+      <div style="border-top:1px dashed #dde6e0; margin:18px 0;"></div>
+      <label for="offerText">Store Offer (banner shown on the store)</label>
+      <input id="offerText" type="text" placeholder="Example: Eid Sale — FREE delivery on all orders this week!">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+        <button class="cta small" type="button" onclick="saveOffer()">Publish Offer</button>
+        <button class="cta small gray" type="button" onclick="clearOffer()">Remove Offer</button>
+      </div>
+      <div style="border-top:1px dashed #dde6e0; margin:18px 0;"></div>
+      <label for="notifText">Notification to ALL users (popup on the store)</label>
+      <textarea id="notifText" rows="3" placeholder="Write the notification message..."></textarea>
+      <button class="cta small" type="button" style="margin-top:10px;" onclick="sendNotification()">Send Notification to All Users</button>
+    </div>
+
+    <div class="card tabpane" id="tabOrders">
       <h3 style="margin-bottom:12px;">🧾 Tamam Orders (naya sab se upar)</h3>
       <div id="adminOrders"><div class="empty">Orders load ho rahe hain...</div></div>
     </div>
@@ -199,6 +268,210 @@
   async function setStatus(id, s) {
     try { await dbUpdate('orders/' + id, { status: s }); toast('✅ Status update ho gaya: ' + s); loadAdmin(); }
     catch (e) { toast('❌ Status update nahi ho saka'); }
+  }
+
+
+  async function dbDelete(path) { var r = await fetch(dbUrl(path), { method: 'DELETE' }); if (!r.ok) throw new Error('DB delete fail'); return true; }
+  async function dbPush(path, val) { var r = await fetch(dbUrl(path), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(val) }); if (!r.ok) throw new Error('DB push fail'); var j = await r.json(); return j.name; }
+  function fmtDT(ts) { return ts ? new Date(ts).toLocaleString('en-GB') : '—'; }
+
+  // ================= TABS =================
+  var _itemsLoaded = false, _usersLoaded = false;
+  function switchTab(name) {
+    ['orders', 'items', 'manual', 'users', 'bonus'].forEach(function(t) {
+      var pane = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+      if (pane) pane.style.display = (t === name) ? 'block' : 'none';
+      var btn = document.getElementById('tb-' + t); if (btn) btn.classList.toggle('active', t === name);
+    });
+    if (name === 'items' || name === 'manual') loadStoreItems();
+    if (name === 'users') loadUsersTab();
+  }
+
+  // ================= UPDATE STORE (source sync request) =================
+  var _updPoll = null;
+  async function requestStoreUpdate() {
+    var btn = document.getElementById('btnUpdateStore'); var st = document.getElementById('updStatus');
+    btn.disabled = true; btn.textContent = '⏳ Update requested...';
+    try {
+      var id = await dbPush('sync_requests', { type: 'store_update', status: 'pending', ts: Date.now(), by: 'admin' });
+      st.innerHTML = '✅ <b>Update request sent.</b> The server will now match every product with the source. This page will show the result when it completes (usually within an hour).';
+      pollStoreUpdate(id);
+    } catch (e) { st.textContent = '❌ Request failed — check your internet and try again.'; btn.disabled = false; btn.textContent = '🔄 Update Store Now'; }
+  }
+  function pollStoreUpdate(id) {
+    if (_updPoll) clearInterval(_updPoll);
+    _updPoll = setInterval(async function() {
+      try {
+        var r = await dbRead('sync_requests/' + id);
+        if (r && r.status === 'done') {
+          clearInterval(_updPoll);
+          var btn = document.getElementById('btnUpdateStore'); btn.disabled = false; btn.textContent = '🔄 Update Store Now';
+          document.getElementById('updStatus').innerHTML = '✅ <b>Store update complete</b> (' + fmtDT(r.finished_ts) + ')<br>' + escapeHtml(r.summary || 'All products checked.');
+          loadStoreItems(true);
+        } else if (r && r.status === 'error') {
+          clearInterval(_updPoll);
+          var btn2 = document.getElementById('btnUpdateStore'); btn2.disabled = false; btn2.textContent = '🔄 Update Store Now';
+          document.getElementById('updStatus').textContent = '❌ Update failed: ' + (r.summary || 'unknown error') + ' — please try again.';
+        }
+      } catch (e) {}
+    }, 12000);
+  }
+
+  // ================= STORE ITEMS + MANUAL PRICES =================
+  var _products = null, _overrides = {};
+  async function loadStoreItems(force) {
+    if (_products && !force) { renderItems(); renderManual(); return; }
+    try {
+      var resp = await fetch('Saleonlie.html?v=' + Date.now(), { cache: 'no-store' });
+      var html = await resp.text();
+      var m = html.match(/var PRODUCTS = (\[.*?\]);/s);
+      _products = m ? JSON.parse(m[1]) : [];
+      _overrides = await dbRead('price_overrides') || {};
+      renderItems(); renderManual();
+    } catch (e) {
+      var el = document.getElementById('itemsList'); if (el) el.innerHTML = '<div class="empty">Items load nahi ho sakay — internet check karke dobara koshish karein.</div>';
+    }
+  }
+  function effPrice(p) { var o = _overrides[p.code]; return (o && typeof o.price === 'number') ? o.price : p.sale; }
+  function renderItems() {
+    var box = document.getElementById('itemsList'); if (!box || !_products) return;
+    var q = (document.getElementById('itemSearch').value || '').toLowerCase();
+    var list = _products.filter(function(p) { return !q || p.name.toLowerCase().indexOf(q) >= 0 || p.code.toLowerCase().indexOf(q) >= 0; });
+    updateManualBadge();
+    if (!list.length) { box.innerHTML = '<div class="empty">No items match your search.</div>'; return; }
+    box.innerHTML = list.map(function(p) {
+      var o = _overrides[p.code]; var manual = !!(o && typeof o.price === 'number');
+      var oos = (p.stock || '').toLowerCase().indexOf('out') >= 0;
+      return '<div class="irow">' + (p.images && p.images[0] ? '<img src="' + p.images[0] + '" alt="">' : '')
+        + '<div class="grow"><b>' + escapeHtml(p.name) + '</b><br><span style="color:#44524c;font-size:13.5px;">Code: ' + p.code + ' · ' + escapeHtml(p.cat) + '<br>Price: <b>PKR ' + Number(effPrice(p)).toLocaleString('en-US') + '</b>' + (manual ? ' (manual — store price was PKR ' + Number(p.sale).toLocaleString('en-US') + ')' : '') + '</span></div>'
+        + '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">' + (oos ? '<span class="badge-oos">Out of Stock</span>' : '<span class="badge-ok">In Stock</span>') + (manual ? '<span class="badge-manual">✏️ MANUAL PRICE</span>' : '') + '</div>'
+        + '<div style="flex-basis:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+        + (manual
+            ? '<span style="font-size:13.5px;color:#7a5b00;">This price is protected. Manage it in the Manual Prices tab.</span>'
+            : '<input class="mini-input" type="number" min="1" id="mp-' + p.code + '" placeholder="New price (Rs.)"><button class="cta small" type="button" onclick="setManualPrice(\'' + p.code + '\')">Set Manual Price</button>')
+        + '</div></div>';
+    }).join('');
+  }
+  async function setManualPrice(code) {
+    var inp = document.getElementById('mp-' + code);
+    var val = parseInt(inp && inp.value, 10);
+    if (!val || val < 1) { toast('Please enter a valid price.'); return; }
+    try { await dbWrite('price_overrides/' + code, { price: val, ts: Date.now(), by: 'admin' }); _overrides[code] = { price: val, ts: Date.now() }; toast('✅ Manual price set: PKR ' + val.toLocaleString('en-US') + ' — protected from updates.'); renderItems(); renderManual(); }
+    catch (e) { toast('❌ Price save nahi ho saka'); }
+  }
+  function updateManualBadge() {
+    var n = Object.keys(_overrides || {}).filter(function(c) { return _overrides[c] && typeof _overrides[c].price === 'number'; }).length;
+    var b = document.getElementById('manualCount'); if (b) { b.textContent = n; b.style.display = n ? 'inline-block' : 'none'; }
+  }
+  function renderManual() {
+    var box = document.getElementById('manualList'); if (!box || !_products) return;
+    updateManualBadge();
+    var codes = Object.keys(_overrides || {}).filter(function(c) { return _overrides[c] && typeof _overrides[c].price === 'number'; });
+    if (!codes.length) { box.innerHTML = '<div class="empty">No manual prices yet. Set one from the Store Items tab.</div>'; return; }
+    box.innerHTML = codes.map(function(code) {
+      var p = null; _products.forEach(function(x) { if (x.code === code) p = x; });
+      var name = p ? p.name : code; var img = (p && p.images && p.images[0]) || ''; var auto = p ? p.sale : null;
+      return '<div class="irow">' + (img ? '<img src="' + img + '" alt="">' : '')
+        + '<div class="grow"><b>' + escapeHtml(name) + '</b><br><span style="color:#44524c;font-size:13.5px;">Code: ' + code + '<br>Your manual price: <b>PKR ' + Number(_overrides[code].price).toLocaleString('en-US') + '</b>' + (auto !== null ? ' · Automatic (source) price in store file: PKR ' + Number(auto).toLocaleString('en-US') : '') + '</span></div>'
+        + '<button class="cta small" type="button" onclick="updateWithSource(\'' + code + '\')">Update with Source</button></div>';
+    }).join('');
+  }
+  async function updateWithSource(code) {
+    if (!confirm('Restore the automatic source price for this item? Your manual price protection will be removed and the item will return to the main list.')) return;
+    try {
+      await dbDelete('price_overrides/' + code);
+      delete _overrides[code];
+      await dbPush('sync_requests', { type: 'store_update', focus: code, status: 'pending', ts: Date.now(), by: 'admin-manual-tab' });
+      toast('✅ Manual price removed — source price will be applied in the next store update (requested now).');
+      renderItems(); renderManual();
+    } catch (e) { toast('❌ Ho nahi saka — dobara koshish karein'); }
+  }
+
+  // ================= USERS =================
+  async function loadUsersTab() {
+    var box = document.getElementById('usersList'); if (!box) return;
+    try {
+      var users = await dbRead('users') || {};
+      var orders = await dbRead('orders') || {};
+      var wishes = await dbRead('wishlists') || {};
+      var phones = Object.keys(users);
+      if (!phones.length) { box.innerHTML = '<div class="empty">No registered users yet.</div>'; return; }
+      window._userOrders = orders; window._userWishes = wishes;
+      box.innerHTML = phones.map(function(ph) {
+        var u = users[ph] || {};
+        var myOrders = Object.keys(orders).filter(function(k) { var o = orders[k]; return (o.account && o.account === ph) || (o.phone && o.phone === ph); });
+        var wcount = wishes[ph] ? Object.keys(wishes[ph]).length : 0;
+        return '<div class="urow" onclick="toggleUserDetail(\'' + ph + '\')"><b>' + escapeHtml(u.name || '—') + '</b> <span style="color:#66766e;">📱 ' + ph + '</span><br><span style="font-size:13.5px;color:#44524c;">⭐ Bonus: Rs. ' + (u.bonusBalance || 0) + ' · 🧾 Orders: ' + myOrders.length + ' · ❤️ Wishlist: ' + wcount + ' · Joined: ' + fmtDT(u.created) + '</span></div>'
+          + '<div class="udetail" id="ud-' + ph + '" style="display:none;"></div>';
+      }).join('');
+      window._usersCache = users;
+    } catch (e) { box.innerHTML = '<div class="empty">Users load nahi ho sakay — internet check karein.</div>'; }
+  }
+  function toggleUserDetail(ph) {
+    var d = document.getElementById('ud-' + ph); if (!d) return;
+    if (d.style.display === 'block') { d.style.display = 'none'; return; }
+    var u = (window._usersCache || {})[ph] || {};
+    var orders = window._userOrders || {}; var wishes = (window._userWishes || {})[ph] || {};
+    var myOrders = Object.keys(orders).map(function(k) { var o = orders[k]; o.id = k; return o; })
+      .filter(function(o) { return (o.account && o.account === ph) || (o.phone && o.phone === ph); })
+      .sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); });
+    var ordersHtml = myOrders.length ? myOrders.map(function(o) {
+      var items = (o.items && o.items.length) ? o.items : [{ product: o.product, code: o.code, qty: 1, price: o.price }];
+      var title = items[0].product + (items.length > 1 ? ' + ' + (items.length - 1) + ' more' : '');
+      var tot = (typeof o.total === 'number') ? 'PKR ' + o.total.toLocaleString('en-US') : escapeHtml(o.price || '');
+      return '<div style="padding:7px 0;border-bottom:1px dashed #dde6e0;"><b>' + escapeHtml(title) + '</b><br><span style="font-size:13.5px;color:#44524c;">' + tot + ' · Status: ' + escapeHtml(o.status || 'Pending') + ' · ' + fmtDT(o.ts) + (o.payment ? ' · ' + escapeHtml(o.payment) : '') + (o.trxId ? ' · Trx: ' + escapeHtml(o.trxId) : '') + '</span></div>';
+    }).join('') : '<div style="color:#66766e;font-size:14px;">No orders yet.</div>';
+    var wishKeys = Object.keys(wishes);
+    var wishHtml = wishKeys.length ? wishKeys.map(function(code) { var w = wishes[code] || {}; return '<div style="padding:5px 0;border-bottom:1px dashed #dde6e0;">❤️ <b>' + escapeHtml(w.product || code) + '</b> <span style="color:#44524c;font-size:13.5px;">(' + code + ')' + (typeof w.price === 'number' ? ' · PKR ' + w.price.toLocaleString('en-US') : '') + '</span></div>'; }).join('') : '<div style="color:#66766e;font-size:14px;">Wishlist is empty.</div>';
+    d.innerHTML = '<b>👤 ' + escapeHtml(u.name || '—') + '</b> · 📱 ' + ph + '<br><span style="font-size:14px;color:#44524c;">⭐ Bonus Balance: <b>Rs. ' + (u.bonusBalance || 0) + '</b> · Account created: ' + fmtDT(u.created) + '</span>'
+      + '<h4 style="margin:14px 0 4px;">🧾 All Orders (' + myOrders.length + ')</h4>' + ordersHtml
+      + '<h4 style="margin:14px 0 4px;">❤️ Wishlist (' + wishKeys.length + ')</h4>' + wishHtml
+      + '<div style="margin-top:16px;"><button class="cta small danger" type="button" onclick="deleteUser(\'' + ph + '\')">🗑️ Delete this User ID</button><div class="note">Deleting removes the account and wishlist, and blocks this number — the user will not be able to log in or sign up again with it. Past orders stay in the Orders record.</div></div>';
+    d.style.display = 'block';
+  }
+  async function deleteUser(ph) {
+    if (!confirm('Delete user ' + ph + ' permanently? They will NOT be able to log in or sign up with this number again.')) return;
+    if (!confirm('Are you absolutely sure? This cannot be undone.')) return;
+    try {
+      await dbDelete('users/' + ph);
+      try { await dbDelete('wishlists/' + ph); } catch (e) {}
+      await dbWrite('blocked/' + ph, { ts: Date.now(), by: 'admin' });
+      toast('✅ User ' + ph + ' deleted and blocked.');
+      loadUsersTab(); loadAdmin();
+    } catch (e) { toast('❌ Delete nahi ho saka — dobara koshish karein'); }
+  }
+
+  // ================= BONUS / OFFER / NOTIFICATION =================
+  async function giveBonusAll() {
+    var amt = parseInt(document.getElementById('bonusAllAmt').value, 10);
+    var res = document.getElementById('bonusAllResult');
+    if (!amt || amt < 1) { res.textContent = 'Please enter a valid bonus amount.'; return; }
+    res.textContent = 'Giving bonus...';
+    try {
+      var users = await dbRead('users') || {};
+      var phones = Object.keys(users); var done = 0;
+      for (var i = 0; i < phones.length; i++) {
+        var cur = (users[phones[i]] && typeof users[phones[i]].bonusBalance === 'number') ? users[phones[i]].bonusBalance : 0;
+        await dbUpdate('users/' + phones[i], { bonusBalance: cur + amt }); done++;
+      }
+      res.innerHTML = '✅ <b>Rs. ' + amt + ' bonus given to ' + done + ' user(s).</b> It will appear in their accounts on their next visit.';
+      loadAdmin();
+    } catch (e) { res.textContent = '❌ Bonus nahi diya ja saka — internet check karke dobara koshish karein.'; }
+  }
+  async function saveOffer() {
+    var t = document.getElementById('offerText').value.trim();
+    try { await dbUpdate('settings', { offer: t }); toast(t ? '✅ Offer published on the store.' : 'Offer cleared.'); }
+    catch (e) { toast('❌ Offer save nahi ho saka'); }
+  }
+  async function clearOffer() {
+    document.getElementById('offerText').value = '';
+    try { await dbUpdate('settings', { offer: '' }); toast('✅ Offer removed from the store.'); } catch (e) { toast('❌ Ho nahi saka'); }
+  }
+  async function sendNotification() {
+    var t = document.getElementById('notifText').value.trim();
+    if (!t) { toast('Please write the notification first.'); return; }
+    try { await dbWrite('notifications/latest', { text: t, ts: Date.now() }); document.getElementById('notifText').value = ''; toast('✅ Notification sent — users will see it on their next visit.'); }
+    catch (e) { toast('❌ Notification send nahi ho saka'); }
   }
 
   adminInit();
