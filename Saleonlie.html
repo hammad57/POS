@@ -17,7 +17,9 @@
   @media (max-width: 720px) { .product { grid-template-columns: 1fr; } }
   .main-img { width: 100%; border-radius: 12px; border: 1px solid #e4e9e6; display: block; }
   .main-wrap { position: relative; }
-  .pno-badge { position: absolute; top: 12px; left: 12px; background: #ffb703; color: #1c1500; font-weight: 800; font-size: 19px; padding: 8px 16px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,.35); letter-spacing: .3px; }
+  .pno-badge { position: absolute; top: 12px; left: 12px; background: #ffb703; color: #1c1500; font-weight: 800; font-size: 17px; padding: 8px 14px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,.35); letter-spacing: .3px; }
+  .price-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 4px 0 2px; }
+  .cta.small { width: auto; display: inline-block; margin-top: 0; padding: 10px 24px; font-size: 16px; }
   .pic-label { text-align: center; font-weight: 700; font-size: 15px; color: #0b5136; background: #eef7f1; border: 1px solid #cfe6d7; border-radius: 8px; padding: 7px; margin-top: 8px; }
   .thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
   .thumbs img { width: 100%; border-radius: 8px; border: 2px solid #e4e9e6; display: block; }
@@ -68,7 +70,7 @@
       <div>
         <div class="main-wrap">
           <img class="main-img" id="mainImg" src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp" alt="2 Pcs Women's Stitched Cotton Jersey Printed Night Suit">
-          <div class="pno-badge">Product #1</div>
+          <div class="pno-badge">Code: MZ2098204428DK</div>
         </div>
         <div class="pic-label" id="picLabel">Picture #1</div>
         <div class="thumbs">
@@ -84,7 +86,7 @@
       </div>
       <div>
         <h2 class="pname">2 Pcs Women's Stitched Cotton Jersey Printed Night Suit</h2>
-        <div class="price">PKR 1,999</div>
+        <div class="price-row"><span class="price">PKR 1,999</span><button class="cta small" type="button" onclick="selectProduct('MZ2098204428DK', '2 Pcs Women\'s Stitched Cotton Jersey Printed Night Suit', 'PKR 1,999', ['Purple','Maroon','Green','Blue','Black','Grey'], ['Medium','Large','X-Large'])">Order Now</button></div>
         <span class="stock">In Stock</span>
 
         <div class="chips">
@@ -115,7 +117,7 @@
           <b>Return:</b> 7 din ke andar return allowed (ghalat/different/incomplete order par)
         </div>
 
-        <button class="cta" type="button" onclick="selectProduct(1, '2 Pcs Women\'s Stitched Cotton Jersey Printed Night Suit', 'PKR 1,999', ['Purple','Maroon','Green','Blue','Black','Grey'], ['Medium','Large','X-Large'])">Order Karein</button>
+        <button class="cta" type="button" onclick="selectProduct('MZ2098204428DK', '2 Pcs Women\'s Stitched Cotton Jersey Printed Night Suit', 'PKR 1,999', ['Purple','Maroon','Green','Blue','Black','Grey'], ['Medium','Large','X-Large'])">Order Karein</button>
       </div>
     </div>
   </div>
@@ -125,7 +127,8 @@
     <h3 class="section" style="margin-top:0">Order Form</h3>
     <p class="note" style="margin-bottom:8px">Apni maloomat bharain aur Order Now dabain — aap ka order WhatsApp ke zariye ham tak pohanch jayega.</p>
     <div class="order-summary">
-      <b>Product #<span id="ordNo">1</span>:</b> <span id="ordProduct">2 Pcs Women's Stitched Cotton Jersey Printed Night Suit</span><br>
+      <b>Product Code:</b> <span id="ordCode">MZ2098204428DK</span><br>
+      <b>Product:</b> <span id="ordProduct">2 Pcs Women's Stitched Cotton Jersey Printed Night Suit</span><br>
       <b>Price:</b> <span id="ordPrice">PKR 1,999</span> · Delivery charges: PKR 99<br>
       <b>Payment:</b> Cash on Delivery, ya Easypaisa — 0342-3944508 (Account Title: Malook Hussain)
     </div>
@@ -175,7 +178,7 @@
 
 <script>
   var WA_NUMBER = "923423944508"; // shop ka WhatsApp number (international format, baghair + ke)
-  var selected = { no: 1, name: "2 Pcs Women's Stitched Cotton Jersey Printed Night Suit", price: "PKR 1,999" };
+  var selected = { code: "MZ2098204428DK", name: "2 Pcs Women's Stitched Cotton Jersey Printed Night Suit", price: "PKR 1,999" };
 
   function showPic(src, label, el) {
     document.getElementById('mainImg').src = src;
@@ -194,9 +197,9 @@
     values.forEach(function(v) { var o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
   }
 
-  function selectProduct(no, name, price, colours, sizes) {
-    selected = { no: no, name: name, price: price };
-    document.getElementById('ordNo').textContent = no;
+  function selectProduct(code, name, price, colours, sizes) {
+    selected = { code: code, name: name, price: price };
+    document.getElementById('ordCode').textContent = code;
     document.getElementById('ordProduct').textContent = name;
     document.getElementById('ordPrice').textContent = price;
     fillSelect('colourField', 'fColour', colours);
@@ -214,7 +217,8 @@
     var size = document.getElementById('sizeField').style.display !== 'none' ? document.getElementById('fSize').value : '';
     if (!name || !phone || !address) { alert('Meharbani karke Naam, Rabta Number aur Delivery Address zaroor bharain.'); return false; }
     var msg = "Assalam-o-Alaikum! Mujhe Sale Online se order karna hai.\n\n"
-      + "Product #" + selected.no + ": " + selected.name + "\n"
+      + "Product Code: " + selected.code + "\n"
+      + "Product: " + selected.name + "\n"
       + "Price: " + selected.price + "\n"
       + "Delivery Charges: PKR 99\n"
       + (colour ? "Colour: " + colour + "\n" : "")
