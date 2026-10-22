@@ -675,7 +675,7 @@
       + (remarks ? "Remarks: " + remarks + "\n" : "");
     window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
     var note = document.getElementById('orderNote');
-    if (savedId) { note.innerHTML = '✅ <b>Order save ho gaya hai!</b> Is ka status dekhne ke liye <b>Meray Orders</b> page par jayein — agar order ke waqt aap login nahi thay to usi mobile number se login karein jo form mein likha tha.'; note.style.display = 'block'; }
+    if (savedId) { try { var myIds = JSON.parse(localStorage.getItem('saleonlie_my_orders') || '[]'); myIds.push(savedId); localStorage.setItem('saleonlie_my_orders', JSON.stringify(myIds.slice(-50))); } catch (e) {} note.innerHTML = '✅ <b>Order save ho gaya hai!</b> Is ka status isi device par <b>Meray Orders</b> page mein foran nazar aayega — chahe aap ne kisi bhee number se order kiya ho.'; note.style.display = 'block'; }
     return false;
   }
 
@@ -827,10 +827,12 @@
 
   // ================= MY ORDERS =================
   function statusClass(s) { return { 'Pending': 'st-pending', 'Confirmed': 'st-confirmed', 'Shipped': 'st-shipped', 'Delivered': 'st-delivered', 'Cancelled': 'st-cancelled' }[s] || 'st-pending'; }
+  function myOrderIds() { try { return JSON.parse(localStorage.getItem('saleonlie_my_orders') || '[]'); } catch (e) { return []; } }
   async function loadOrders() {
     var box = document.getElementById('ordersBox');
     if (!box) return;
-    if (!currentUser) {
+    var ids = myOrderIds();
+    if (!currentUser && !ids.length) {
       box.innerHTML = '<div class="empty">Apne orders aur un ka status dekhne ke liye pehle <b>Login</b> karein.<br><br><button class="cta small" type="button" onclick="openAuth()">Login / Signup</button></div>';
       return;
     }
@@ -838,10 +840,16 @@
     try {
       var all = await dbRead('orders') || {};
       var mine = Object.keys(all).map(function(k) { var o = all[k]; o.id = k; return o; })
-        .filter(function(o) { var me = currentUser.phone; return cleanPhone(o.phone || '') === me || (o.account && cleanPhone(o.account) === me); })
+        .filter(function(o) {
+          if (ids.indexOf(o.id) >= 0) return true;
+          if (!currentUser) return false;
+          var me = currentUser.phone;
+          return cleanPhone(o.phone || '') === me || (o.account && cleanPhone(o.account) === me);
+        })
         .sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); });
       if (!mine.length) { box.innerHTML = '<div class="empty">Abhi tak aap ka koi order nahi hai.<br>Pasandeeda product par <b>Order Now</b> dabakar pehla order karein!</div>'; return; }
-      box.innerHTML = mine.map(function(o) {
+      var head = !currentUser ? '<div class="empty" style="padding:12px 10px;">📌 Ye orders <b>is device</b> se kiye gaye hain. Doosre device par dekhne ke liye usi number se Login karein jis se order kiya tha.</div>' : '';
+      box.innerHTML = head + mine.map(function(o) {
         return '<div class="order-item"><div class="oi-top"><b>' + escapeHtml(o.product) + '</b><span class="st ' + statusClass(o.status) + '">' + escapeHtml(o.status || 'Pending') + '</span></div>'
           + '<div class="oi-meta">Code: ' + escapeHtml(o.code) + ' · ' + escapeHtml(o.price)
           + (o.colour ? ' · Colour: ' + escapeHtml(o.colour) : '') + (o.size ? ' · Size: ' + escapeHtml(o.size) : '')
