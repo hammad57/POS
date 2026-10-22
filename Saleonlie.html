@@ -3,198 +3,315 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sale Online — Women's Stitched Collection</title>
+<title>Sale Online — Women's Fashion Store</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f5; color: #1c2b26; }
-  header { background: linear-gradient(135deg, #0b5136, #12805c); color: #fff; padding: 26px 16px 20px; text-align: center; }
-  header h1 { font-size: 30px; letter-spacing: .5px; }
-  header p { opacity: .9; margin-top: 6px; font-size: 14px; }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 18px 14px 40px; }
-  .badge { display: inline-block; background: #ffb703; color: #402e00; font-weight: 700; font-size: 13px; padding: 5px 12px; border-radius: 20px; }
-  .card { background: #fff; border-radius: 16px; box-shadow: 0 4px 18px rgba(0,0,0,.08); padding: 20px; margin-top: 14px; }
-  .product { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
-  @media (max-width: 720px) { .product { grid-template-columns: 1fr; } }
-  .main-img { width: 100%; border-radius: 12px; border: 1px solid #e4e9e6; display: block; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f3f6f4; color: #1d2b25; }
+  header.site { background: #0b7a4b; color: #fff; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 10px rgba(0,0,0,.18); }
+  .hwrap { max-width: 1080px; margin: 0 auto; padding: 10px 14px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .brand { font-size: 22px; font-weight: 800; letter-spacing: .3px; }
+  nav.main { display: flex; gap: 6px; flex-wrap: wrap; }
+  .nav-btn { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.25); padding: 7px 13px; border-radius: 999px; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .nav-btn.active { background: #ffb703; color: #1c1500; border-color: #ffb703; font-weight: 700; }
+  #accountBox { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .mini-btn { background: #fff; color: #0b7a4b; border: none; padding: 7px 13px; border-radius: 999px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .uname { font-size: 14px; font-weight: 700; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 16px 14px 40px; }
+  .card { background: #fff; border-radius: 16px; box-shadow: 0 4px 18px rgba(20,40,30,.08); padding: 20px; margin-bottom: 18px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  .main-img { width: 100%; border-radius: 12px; border: 1px solid #e4e9e6; display: block; cursor: zoom-in; }
   .main-wrap { position: relative; }
   .pno-badge { position: absolute; bottom: 10px; right: 10px; background: #ffb703; color: #1c1500; font-weight: 700; font-size: 13px; padding: 5px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.35); letter-spacing: .2px; }
-  .main-img { cursor: zoom-in; }
-  #lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.96); z-index: 999; align-items: center; justify-content: center; overflow: hidden; touch-action: none; }
-  #lbImg { max-width: 100%; max-height: 92vh; user-select: none; -webkit-user-drag: none; }
-  .lb-cap { position: fixed; top: 14px; left: 16px; color: #fff; font-size: 15px; font-weight: 700; background: rgba(255,255,255,.14); padding: 6px 12px; border-radius: 8px; }
-  .lb-btn { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.35); width: 42px; height: 42px; border-radius: 50%; font-size: 20px; cursor: pointer; line-height: 1; }
-  .lb-close { position: fixed; top: 10px; right: 12px; }
-  .lb-zoombtns { position: fixed; bottom: 18px; right: 12px; display: flex; gap: 8px; }
-  .price-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 4px 0 2px; }
-  .cta.small { width: auto; display: inline-block; margin-top: 0; padding: 10px 24px; font-size: 16px; }
   .pic-label { text-align: center; font-weight: 700; font-size: 15px; color: #0b5136; background: #eef7f1; border: 1px solid #cfe6d7; border-radius: 8px; padding: 7px; margin-top: 8px; }
   .thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
   .thumbs img { width: 100%; border-radius: 8px; border: 2px solid #e4e9e6; display: block; }
   .thumbs figure { text-align: center; font-size: 12px; font-weight: 700; color: #44524c; cursor: pointer; }
   .thumbs figure.active img { border-color: #ffb703; box-shadow: 0 0 0 2px #ffb703; }
   .thumbs figcaption { margin-top: 3px; }
-  h2.pname { font-size: 22px; line-height: 1.3; margin: 8px 0 6px; }
+  .pname { font-size: 24px; line-height: 1.3; margin-bottom: 4px; }
+  .price-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 4px 0 2px; }
   .price { font-size: 30px; font-weight: 800; color: #0b7a4b; margin: 6px 0; }
-  .stock { display: inline-block; background: #e6f6ec; color: #0b7a4b; font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 8px; }
-  .chips { margin: 10px 0; }
-  .chip { display: inline-block; background: #eef3f1; border: 1px solid #d7e0db; border-radius: 16px; padding: 4px 11px; font-size: 13px; margin: 0 6px 6px 0; }
-  .chip b { color: #0b5136; }
-  table.details { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-  table.details td { padding: 7px 8px; border-bottom: 1px solid #eef1ef; }
-  table.details td:first-child { font-weight: 700; color: #0b5136; width: 42%; }
-  .infobox { background: #f7faf8; border: 1px solid #e2eae5; border-radius: 12px; padding: 12px 14px; font-size: 14px; margin-top: 12px; line-height: 1.6; }
-  .cta { display: block; text-align: center; background: #12805c; color: #fff; text-decoration: none; font-weight: 700; font-size: 17px; padding: 14px; border-radius: 12px; margin-top: 16px; border: none; cursor: pointer; width: 100%; }
-  .cta:hover { background: #0b5136; }
-  .note { font-size: 12px; color: #77817c; margin-top: 10px; line-height: 1.5; }
-  h3.section { margin: 26px 0 4px; font-size: 19px; color: #0b5136; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-top: 12px; }
-  .grid .item { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); padding: 10px; }
-  .grid .item img { width: 100%; border-radius: 8px; }
-  .grid .item .n { font-size: 13.5px; font-weight: 600; margin: 8px 0 4px; line-height: 1.35; }
-  .grid .item .p { color: #0b7a4b; font-weight: 800; }
-  .grid .item .d { font-size: 11.5px; color: #77817c; }
-  .grid .item button { margin-top: 8px; width: 100%; background: #12805c; color: #fff; border: none; border-radius: 8px; padding: 9px; font-weight: 700; cursor: pointer; }
-  form.order { margin-top: 6px; }
-  form.order label { display: block; font-size: 13.5px; font-weight: 700; color: #0b5136; margin: 12px 0 5px; }
+  .stock { display: inline-block; background: #e5f4ec; color: #0b7a4b; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .chip { background: #f0f4f1; border: 1px solid #dde6e0; border-radius: 10px; padding: 8px 11px; font-size: 13.5px; }
+  table.details { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14.5px; }
+  table.details td { padding: 8px 10px; border-bottom: 1px solid #edf1ee; vertical-align: top; }
+  table.details td:first-child { color: #55645d; width: 42%; font-weight: 600; }
+  .infobox { background: #eef7f1; border: 1px solid #cfe6d7; border-radius: 10px; padding: 12px 14px; font-size: 14.5px; margin-top: 14px; line-height: 1.55; }
+  .cta { display: block; width: 100%; background: #0b7a4b; color: #fff; border: none; padding: 14px; font-size: 17px; font-weight: 700; border-radius: 12px; cursor: pointer; margin-top: 14px; font-family: inherit; }
+  .cta:hover { background: #096a41; }
+  .cta.small { width: auto; display: inline-block; margin-top: 0; padding: 10px 24px; font-size: 16px; }
+  .order-summary { background: #f7faf8; border: 1px dashed #b9d2c2; border-radius: 10px; padding: 12px 14px; font-size: 15px; line-height: 1.6; margin-bottom: 12px; }
+  form.order label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 5px; }
   form.order input, form.order textarea, form.order select { width: 100%; padding: 11px 12px; border: 1px solid #cfd8d3; border-radius: 10px; font-size: 15px; font-family: inherit; background: #fff; }
-  form.order textarea { min-height: 74px; resize: vertical; }
-  .order-summary { background: #eef7f1; border: 1px solid #cfe6d7; border-radius: 10px; padding: 10px 12px; font-size: 14.5px; line-height: 1.55; }
-  footer { text-align: center; color: #77817c; font-size: 12.5px; padding: 18px 12px 30px; line-height: 1.6; }
+  form.order textarea { min-height: 64px; resize: vertical; }
+  .pay-hint { font-size: 14px; color: #44524c; background: #fff8e1; border: 1px solid #ffe082; border-radius: 10px; padding: 10px 12px; margin-top: 12px; line-height: 1.55; }
+  .note-ok { display: none; background: #e5f4ec; color: #0b5136; border: 1px solid #bfe3cd; border-radius: 10px; padding: 11px 13px; font-size: 14.5px; margin-top: 12px; line-height: 1.55; }
+  .sec-title { font-size: 21px; margin-bottom: 12px; }
+  .empty { text-align: center; color: #66766e; padding: 26px 10px; font-size: 15px; line-height: 1.6; }
+  .grid-products { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+  .gcard { border: 1px solid #e4e9e6; border-radius: 12px; overflow: hidden; background: #fff; }
+  .gcard img { width: 100%; display: block; }
+  .gcard .gbody { padding: 11px 12px; }
+  .gcard .gname { font-size: 14.5px; font-weight: 700; line-height: 1.35; min-height: 39px; }
+  .gcard .gcode { font-size: 12px; color: #7a8a81; margin-top: 2px; }
+  .gcard .gprice { color: #0b7a4b; font-weight: 800; margin: 6px 0; }
+  .gcard .gdate { font-size: 12px; color: #8a968f; }
+  .gcard .cta { padding: 10px; font-size: 15px; margin-top: 9px; }
+  footer.site { text-align: center; color: #77857e; font-size: 13px; padding: 10px 14px 26px; line-height: 1.7; }
+  #lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.96); z-index: 999; align-items: center; justify-content: center; overflow: hidden; touch-action: none; }
+  #lbImg { max-width: 100%; max-height: 92vh; user-select: none; -webkit-user-drag: none; }
+  .lb-cap { position: fixed; top: 14px; left: 16px; color: #fff; font-size: 15px; font-weight: 700; background: rgba(255,255,255,.14); padding: 6px 12px; border-radius: 8px; }
+  .lb-btn { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.35); width: 42px; height: 42px; border-radius: 50%; font-size: 20px; cursor: pointer; line-height: 1; }
+  .lb-close { position: fixed; top: 10px; right: 12px; }
+  .lb-zoombtns { position: fixed; bottom: 18px; right: 12px; display: flex; gap: 8px; }
+  .modal { display: none; position: fixed; inset: 0; background: rgba(10,25,18,.55); z-index: 200; align-items: flex-start; justify-content: center; padding: 26px 14px; overflow-y: auto; }
+  .modal-card { background: #fff; border-radius: 16px; max-width: 420px; width: 100%; padding: 22px; position: relative; box-shadow: 0 12px 40px rgba(0,0,0,.3); }
+  .modal-x { position: absolute; top: 10px; right: 12px; background: none; border: none; font-size: 19px; cursor: pointer; color: #66766e; }
+  .auth-tabs { display: flex; gap: 8px; margin-bottom: 8px; }
+  .auth-tabs button { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid #cfd8d3; background: #f0f4f1; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .auth-tabs button.active { background: #0b7a4b; color: #fff; border-color: #0b7a4b; }
+  .auth-form label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 5px; }
+  .auth-form input { width: 100%; padding: 11px 12px; border: 1px solid #cfd8d3; border-radius: 10px; font-size: 15px; font-family: inherit; }
+  .auth-err { display: none; color: #b3261e; background: #fdecea; border: 1px solid #f5c6c2; border-radius: 8px; padding: 9px 11px; font-size: 14px; margin-top: 12px; line-height: 1.5; }
+  .auth-note { font-size: 13px; color: #66766e; margin-top: 10px; line-height: 1.55; }
+  .order-item { border: 1px solid #e4e9e6; border-radius: 12px; padding: 14px; margin-bottom: 12px; background: #fff; }
+  .oi-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .oi-meta { color: #55645d; font-size: 13.5px; margin-top: 6px; line-height: 1.6; }
+  .st { font-size: 12.5px; font-weight: 800; padding: 4px 11px; border-radius: 999px; white-space: nowrap; }
+  .st-pending { background: #fff3cd; color: #7a5b00; }
+  .st-confirmed { background: #dbeafe; color: #1e40af; }
+  .st-shipped { background: #ede9fe; color: #5b21b6; }
+  .st-delivered { background: #dcfce7; color: #166534; }
+  .st-cancelled { background: #fee2e2; color: #991b1b; }
+  .help-q { font-weight: 800; margin: 14px 0 5px; font-size: 16px; }
+  .help-a { color: #44524c; line-height: 1.65; font-size: 15px; }
+  .wa-btn { display: inline-block; background: #25d366; color: #fff; text-decoration: none; font-weight: 700; padding: 11px 20px; border-radius: 999px; margin-top: 10px; }
 </style>
 </head>
 <body>
-<header>
-  <h1>Sale Online</h1>
-  <p>Women's Stitched Collection — roz ek nayi product</p>
+
+<header class="site">
+  <div class="hwrap">
+    <div class="brand">🛍️ Sale Online</div>
+    <nav class="main">
+      <button id="nav-home" class="nav-btn active" type="button" onclick="showView('home')">Home</button>
+      <button id="nav-orders" class="nav-btn" type="button" onclick="showView('orders')">Meray Orders</button>
+      <button id="nav-help" class="nav-btn" type="button" onclick="showView('help')">Help</button>
+      <button id="nav-about" class="nav-btn" type="button" onclick="showView('about')">About</button>
+    </nav>
+    <div id="accountBox"><button class="mini-btn" type="button" onclick="openAuth()">Login / Signup</button></div>
+  </div>
 </header>
+
+<div id="authModal" class="modal" onclick="if(event.target===this) closeAuth()">
+  <div class="modal-card">
+    <button class="modal-x" type="button" onclick="closeAuth()" aria-label="Band karein">✕</button>
+    <h3 style="margin-bottom:10px;">Apna Account</h3>
+    <div class="auth-tabs">
+      <button id="tab-login" type="button" class="active" onclick="switchAuth('login')">Login</button>
+      <button id="tab-signup" type="button" onclick="switchAuth('signup')">Signup</button>
+    </div>
+    <form id="form-login" class="auth-form" onsubmit="return doLogin(event)">
+      <label for="liPhone">Mobile Number</label>
+      <input id="liPhone" type="tel" placeholder="Masalan: 03XX-XXXXXXX" required>
+      <label for="liPass">Password</label>
+      <input id="liPass" type="password" placeholder="Apna password" required>
+      <div class="auth-err" id="loginErr"></div>
+      <button class="cta" type="submit">Login karein</button>
+      <p class="auth-note">Login ke baad page refresh ya band karke dobara kholne par aap khud-ba-khud login rahenge — bar bar login nahi karna padega.</p>
+    </form>
+    <form id="form-signup" class="auth-form" style="display:none;" onsubmit="return doSignup(event)">
+      <label for="suName">Aap ka Naam</label>
+      <input id="suName" type="text" placeholder="Masalan: Fatima Khan" required>
+      <label for="suPhone">Mobile Number</label>
+      <input id="suPhone" type="tel" placeholder="Masalan: 03XX-XXXXXXX" required>
+      <label for="suPass">Password banayein</label>
+      <input id="suPass" type="password" placeholder="Kam az kam 4 characters" required>
+      <div class="auth-err" id="signupErr"></div>
+      <button class="cta" type="submit">Account banayein</button>
+      <p class="auth-note">Mehfooz mashwara: apna bank/ATM wala password yahan istemal na karein — is shop ke liye alag asan password rakhein.</p>
+    </form>
+  </div>
+</div>
 
 <div class="wrap">
 
-  <!-- ======= AAJ KI PRODUCT (FEATURED) ======= -->
-  <span class="badge">Aaj ki Product — Thursday, 22 October 2026</span>
-  <div class="card">
-    <div class="product">
-      <div>
-        <div class="main-wrap">
-          <img class="main-img" id="mainImg" src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp" alt="2 Pcs Women's Stitched Cotton Jersey Printed Night Suit" onclick="openLB(this.src, document.getElementById('picLabel').textContent, null)">
-          <div class="pno-badge">Code: MZ2098204428DK</div>
+  <section id="view-home">
+    <div class="card">
+      <div class="grid2">
+        <div>
+          <div class="main-wrap">
+            <img class="main-img" id="mainImg" src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp" alt="2 Pcs Women's Stitched Cotton Jersey Printed Night Suit" onclick="openLB(this.src, document.getElementById('picLabel').textContent, null)">
+            <div class="pno-badge">Code: MZ2098204428DK</div>
+          </div>
+          <div class="pic-label" id="picLabel">Picture #1</div>
+          <div class="thumbs">
+            <figure class="active" onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp','Picture #1',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp" alt="Picture 1"><figcaption>1</figcaption></figure>
+            <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-2.webp','Picture #2',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-2.webp" alt="Picture 2"><figcaption>2</figcaption></figure>
+            <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-3.webp','Picture #3',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-3.webp" alt="Picture 3"><figcaption>3</figcaption></figure>
+            <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-4.webp','Picture #4',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-4.webp" alt="Picture 4"><figcaption>4</figcaption></figure>
+            <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-5.webp','Picture #5',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-5.webp" alt="Picture 5"><figcaption>5</figcaption></figure>
+            <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-6.webp','Picture #6',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-6.webp" alt="Picture 6"><figcaption>6</figcaption></figure>
+            <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-8.webp','Picture #7',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-8.webp" alt="Picture 7"><figcaption>7</figcaption></figure>
+            <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-7.webp','Size Chart',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-7.webp" alt="Size Chart"><figcaption>Size Chart</figcaption></figure>
+          </div>
         </div>
-        <div class="pic-label" id="picLabel">Picture #1</div>
-        <div class="thumbs">
-          <figure class="active" onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp','Picture #1',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp" alt="Picture 1"><figcaption>1</figcaption></figure>
-          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-2.webp','Picture #2',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-2.webp" alt="Picture 2"><figcaption>2</figcaption></figure>
-          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-3.webp','Picture #3',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-3.webp" alt="Picture 3"><figcaption>3</figcaption></figure>
-          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-4.webp','Picture #4',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-4.webp" alt="Picture 4"><figcaption>4</figcaption></figure>
-          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-5.webp','Picture #5',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-5.webp" alt="Picture 5"><figcaption>5</figcaption></figure>
-          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-6.webp','Picture #6',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-6.webp" alt="Picture 6"><figcaption>6</figcaption></figure>
-          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-8.webp','Picture #7',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-8.webp" alt="Picture 7"><figcaption>7</figcaption></figure>
-          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-7.webp','Size Chart',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-7.webp" alt="Size Chart"><figcaption>Size Chart</figcaption></figure>
+        <div>
+          <h2 class="pname">2 Pcs Women's Stitched Cotton Jersey Printed Night Suit</h2>
+          <div class="price-row"><span class="price">PKR 1,999</span><button class="cta small" type="button" onclick="selectProduct('MZ2098204428DK', '2 Pcs Women\'s Stitched Cotton Jersey Printed Night Suit', 'PKR 1,999', ['Purple','Maroon','Green','Blue','Black','Grey'], ['Medium','Large','X-Large'])">Order Now</button></div>
+          <span class="stock">In Stock</span>
+          <div class="chips">
+            <span class="chip"><b>Sizes:</b> Medium · Large · X-Large</span>
+            <span class="chip"><b>Colours:</b> Purple · Maroon · Green · Blue · Black · Grey</span>
+          </div>
+          <table class="details">
+            <tr><td>Fabric</td><td>Cotton Jersey</td></tr>
+            <tr><td>Pattern</td><td>Printed</td></tr>
+            <tr><td>Neck</td><td>Round Neck</td></tr>
+            <tr><td>Pieces</td><td>2 Pcs</td></tr>
+            <tr><td>Package Includes</td><td>1 x Sleep Shirt, 1 x Sleep Trouser</td></tr>
+            <tr><td>Shirt Length</td><td>27 Inches</td></tr>
+            <tr><td>Shirt Chest</td><td>21 Inches</td></tr>
+            <tr><td>Shirt Shoulder</td><td>15 Inches</td></tr>
+            <tr><td>Arm Length</td><td>11 Inches</td></tr>
+            <tr><td>Trouser Length</td><td>39 Inches</td></tr>
+            <tr><td>Trouser Waist</td><td>36 Inches</td></tr>
+            <tr><td>Trouser Hip</td><td>23 Inches</td></tr>
+          </table>
+          <div class="infobox">🚚 <b>Delivery:</b> 3–5 din mein · Charges: PKR 99<br>💵 <b>Cash on Delivery</b> available hai<br>↩️ Easy 7-day return (unused items par)</div>
+          <button class="cta" type="button" onclick="selectProduct('MZ2098204428DK', '2 Pcs Women\'s Stitched Cotton Jersey Printed Night Suit', 'PKR 1,999', ['Purple','Maroon','Green','Blue','Black','Grey'], ['Medium','Large','X-Large'])">Order Karein</button>
         </div>
-      </div>
-      <div>
-        <h2 class="pname">2 Pcs Women's Stitched Cotton Jersey Printed Night Suit</h2>
-        <div class="price-row"><span class="price">PKR 1,999</span><button class="cta small" type="button" onclick="selectProduct('MZ2098204428DK', '2 Pcs Women\'s Stitched Cotton Jersey Printed Night Suit', 'PKR 1,999', ['Purple','Maroon','Green','Blue','Black','Grey'], ['Medium','Large','X-Large'])">Order Now</button></div>
-        <span class="stock">In Stock</span>
-
-        <div class="chips">
-          <span class="chip"><b>Sizes:</b> Medium · Large · X-Large</span>
-        </div>
-        <div class="chips">
-          <span class="chip"><b>Colours:</b> Purple · Maroon · Green · Blue · Black · Grey</span>
-        </div>
-
-        <table class="details">
-          <tr><td>Fabric</td><td>Cotton Jersey</td></tr>
-          <tr><td>Pattern</td><td>Printed</td></tr>
-          <tr><td>Neck Type</td><td>Round Neck</td></tr>
-          <tr><td>Number of Pieces</td><td>2 Pcs</td></tr>
-          <tr><td>Package Includes</td><td>1 x Sleep Shirt, 1 x Sleep Trouser</td></tr>
-          <tr><td>Shirt Length</td><td>27 Inches</td></tr>
-          <tr><td>Shirt Chest</td><td>21 Inches</td></tr>
-          <tr><td>Shirt Shoulder</td><td>15 Inches</td></tr>
-          <tr><td>Arm Length</td><td>11 Inches</td></tr>
-          <tr><td>Trouser Length</td><td>39 Inches</td></tr>
-          <tr><td>Trouser Waist</td><td>36 Inches</td></tr>
-          <tr><td>Trouser Hip</td><td>23 Inches</td></tr>
-        </table>
-        <p class="note">Note: Manual measurement ki wajah se 1–3 cm ka farq ho sakta hai, aur lighting/monitor ki wajah se rang mein halka sa farq mumkin hai.</p>
-
-        <div class="infobox">
-          <b>Delivery:</b> 3–5 din · Delivery charges PKR 99 · <b>Cash on Delivery available</b><br>
-          <b>Return:</b> 7 din ke andar return allowed (ghalat/different/incomplete order par)
-        </div>
-
-        <button class="cta" type="button" onclick="selectProduct('MZ2098204428DK', '2 Pcs Women\'s Stitched Cotton Jersey Printed Night Suit', 'PKR 1,999', ['Purple','Maroon','Green','Blue','Black','Grey'], ['Medium','Large','X-Large'])">Order Karein</button>
       </div>
     </div>
-  </div>
 
-  <!-- ======= ORDER FORM ======= -->
-  <div class="card" id="order">
-    <h3 class="section" style="margin-top:0">Order Form</h3>
-    <p class="note" style="margin-bottom:8px">Apni maloomat bharain aur Order Now dabain — aap ka order WhatsApp ke zariye ham tak pohanch jayega.</p>
-    <div class="order-summary">
-      <b>Product Code:</b> <span id="ordCode">MZ2098204428DK</span><br>
-      <b>Product:</b> <span id="ordProduct">2 Pcs Women's Stitched Cotton Jersey Printed Night Suit</span><br>
-      <b>Price:</b> <span id="ordPrice">PKR 1,999</span> · Delivery charges: PKR 99<br>
-      <b>Payment:</b> Cash on Delivery, ya Easypaisa — 0342-3944508 (Account Title: Malook Hussain)
+    <div class="card" id="order">
+      <h3 style="margin-bottom:10px;">📝 Order Form</h3>
+      <div class="order-summary">
+        <b>Product Code:</b> <span id="ordCode">MZ2098204428DK</span><br>
+        <b>Product:</b> <span id="ordProduct">2 Pcs Women's Stitched Cotton Jersey Printed Night Suit</span><br>
+        <b>Price:</b> <span id="ordPrice">PKR 1,999</span> · <b>Delivery:</b> PKR 99
+      </div>
+      <form class="order" onsubmit="return placeOrder(event)">
+        <label for="fName">Aap ka Naam *</label>
+        <input id="fName" type="text" required placeholder="Masalan: Fatima Khan">
+        <label for="fPhone">Rabta / WhatsApp Number *</label>
+        <input id="fPhone" type="tel" required placeholder="Masalan: 03XX-XXXXXXX">
+        <label for="fAddress">Delivery Address *</label>
+        <textarea id="fAddress" required placeholder="Makan no, gali, area, sheher"></textarea>
+        <div id="colourField">
+          <label for="fColour">Colour chunein *</label>
+          <select id="fColour">
+            <option>Purple</option>
+            <option>Maroon</option>
+            <option>Green</option>
+            <option>Blue</option>
+            <option>Black</option>
+            <option>Grey</option>
+          </select>
+        </div>
+        <div id="sizeField">
+          <label for="fSize">Size chunein *</label>
+          <select id="fSize">
+            <option>Medium</option>
+            <option>Large</option>
+            <option>X-Large</option>
+          </select>
+        </div>
+        <label for="fRemarks">Remarks</label>
+        <textarea id="fRemarks" placeholder="Koi bhee extra baat jo aap batana chahein, yahan likhein"></textarea>
+        <p class="pay-hint">💵 <b>Payment:</b> Cash on Delivery, ya Easypaisa — 0342-3944508 (Account Title: Malook Hussain)<br>📌 Order ka status dekhne ke liye upar wala "Meray Orders" page kholein — order usi mobile number se save hota hai jo aap yahan likhte hain.</p>
+        <button class="cta" type="submit">Order Now — WhatsApp par bhejein</button>
+        <div class="note-ok" id="orderNote"></div>
+      </form>
     </div>
-    <form class="order" onsubmit="return placeOrder(event)">
-      <label for="fName">Aap ka Naam *</label>
-      <input id="fName" type="text" required placeholder="Masalan: Fatima Khan">
-      <label for="fPhone">Rabta / WhatsApp Number *</label>
-      <input id="fPhone" type="tel" required placeholder="Masalan: 03XX-XXXXXXX">
-      <label for="fAddress">Delivery Address *</label>
-      <textarea id="fAddress" required placeholder="Makan no, gali, area, sheher"></textarea>
-      <div id="colourField">
-        <label for="fColour">Colour chunein *</label>
-        <select id="fColour">
-          <option>Purple</option>
-          <option>Maroon</option>
-          <option>Green</option>
-          <option>Blue</option>
-          <option>Black</option>
-          <option>Grey</option>
-        </select>
-      </div>
-      <div id="sizeField">
-        <label for="fSize">Size chunein *</label>
-        <select id="fSize">
-          <option>Medium</option>
-          <option>Large</option>
-          <option>X-Large</option>
-        </select>
-      </div>
-      <label for="fRemarks">Remarks</label>
-      <textarea id="fRemarks" placeholder="Koi bhee extra baat jo aap batana chahein, yahan likhein"></textarea>
-      <button class="cta" type="submit">Order Now — WhatsApp par bhejein</button>
-    </form>
-  </div>
 
-  <!-- ======= PICHLI PRODUCTS ======= -->
-  <h3 class="section">Pichli Products</h3>
-  <p class="note">Roz ek nayi product yahan add hoti rahegi — ye is page ki pehli product hai.</p>
-  <div class="grid" id="pastGrid"></div>
+    <div class="card">
+      <h3 class="sec-title">Pichli Products</h3>
+      <div class="empty">Abhi koi pichli product nahi hai — nayi products roz yahan aati rahengi.</div>
+      <div class="grid-products" id="gridProducts"></div>
+    </div>
+  </section>
+
+  <section id="view-orders" style="display:none;">
+    <div class="card">
+      <h3 class="sec-title">🧾 Meray Orders</h3>
+      <div id="ordersBox"><div class="empty">Orders load ho rahe hain...</div></div>
+      <button class="cta small" type="button" onclick="loadOrders()">🔄 Refresh karein</button>
+    </div>
+  </section>
+
+  <section id="view-help" style="display:none;">
+    <div class="card">
+      <h3 class="sec-title">❓ Help — Aam Sawalat</h3>
+      <p class="help-q">Order kaise karein?</p>
+      <p class="help-a">Jo product pasand aaye, us ke saath wale <b>Order Now</b> button par click karein. Order Form mein apna naam, mobile number aur address likhein, colour aur size chunein, phir <b>Order Now</b> dabayein — aap ka order WhatsApp par bhej diya jayega aur yahan save bhee ho jayega.</p>
+      <p class="help-q">Mera order save kaise hota hai aur status kahan dikhega?</p>
+      <p class="help-a">Order usi mobile number ke saath save hota hai jo aap form mein likhte hain. Upar <b>Meray Orders</b> page par login karke apne tamam orders aur un ka status (Pending, Confirmed, Shipped, Delivered) dekh sakte hain.</p>
+      <p class="help-q">Payment kaise karni hai?</p>
+      <p class="help-a">Do tareeqay hain: <b>Cash on Delivery</b> — parcel milne par paisay dein; ya <b>Easypaisa</b> — 0342-3944508 (Account Title: Malook Hussain) par pehle bhej dein.</p>
+      <p class="help-q">Delivery kitne din mein hogi aur charges?</p>
+      <p class="help-a">Delivery aam tor par <b>3–5 din</b> mein ho jati hai. Delivery charges sirf <b>PKR 99</b> hain.</p>
+      <p class="help-q">Return ya exchange ho sakta hai?</p>
+      <p class="help-a">Ji, unused item ki <b>7 din</b> ke andar easy return ki sahulat hai. Size ya rang ka masla ho to WhatsApp par bata dein.</p>
+      <p class="help-q">Rabta kaise karein?</p>
+      <p class="help-a">Kisi bhee madad ke liye WhatsApp par message karein:<br><a class="wa-btn" href="https://wa.me/923423944508" target="_blank" rel="noopener">💬 WhatsApp par rabta karein</a></p>
+    </div>
+  </section>
+
+  <section id="view-about" style="display:none;">
+    <div class="card">
+      <h3 class="sec-title">ℹ️ About — Sale Online</h3>
+      <p class="help-a"><b>Sale Online</b> khawateen ke liye aik online store hai jahan quality stitched suits aur night suits munasib qeemat par milte hain. Har product ki mukammal detail, asli pictures, sizes aur colours page par wazeh diye jate hain taake aap itminan se order kar saken.</p>
+      <p class="help-q">Humari sahulatain</p>
+      <p class="help-a">🚚 Poore Pakistan mein delivery — sirf 3–5 din mein, charges PKR 99<br>💵 Cash on Delivery ki sahulat<br>↩️ 7 din easy return (unused items par)<br>🧾 Har order ka status online — Meray Orders page par</p>
+      <p class="help-q">Payment tareeqay</p>
+      <p class="help-a">Cash on Delivery, ya Easypaisa — 0342-3944508 (Account Title: Malook Hussain)</p>
+      <p class="help-q">Rabta</p>
+      <p class="help-a">Sawal ya madad ke liye WhatsApp par message karein:<br><a class="wa-btn" href="https://wa.me/923423944508" target="_blank" rel="noopener">💬 WhatsApp: 0342-3944508</a></p>
+    </div>
+  </section>
 
 </div>
 
-<footer>
-  Sale Online — Women's Stitched Collection<br>
-  Order WhatsApp ke zariye confirm hota hai · Cash on Delivery available
+<footer class="site">
+  © 2026 Sale Online — Quality women's fashion, poore Pakistan mein delivery ke saath.<br>
+  Rabta: WhatsApp 0342-3944508
 </footer>
 
-  <div id="lightbox" onclick="if(event.target===this) closeLB(false)">
-    <img id="lbImg" src="" alt="Full screen picture">
-    <div class="lb-cap" id="lbCap"></div>
-    <button class="lb-btn lb-close" type="button" onclick="closeLB(false)" aria-label="Band karein">✕</button>
-    <div class="lb-zoombtns">
-      <button class="lb-btn" type="button" onclick="zoomStep(1.3)" aria-label="Zoom in">+</button>
-      <button class="lb-btn" type="button" onclick="zoomStep(0.77)" aria-label="Zoom out">−</button>
-    </div>
+<div id="lightbox" onclick="if(event.target===this) closeLB(false)">
+  <img id="lbImg" src="" alt="Full screen picture">
+  <div class="lb-cap" id="lbCap"></div>
+  <button class="lb-btn lb-close" type="button" onclick="closeLB(false)" aria-label="Band karein">✕</button>
+  <div class="lb-zoombtns">
+    <button class="lb-btn" type="button" onclick="zoomStep(1.3)" aria-label="Zoom in">+</button>
+    <button class="lb-btn" type="button" onclick="zoomStep(0.77)" aria-label="Zoom out">−</button>
   </div>
+</div>
 
 <script>
   var WA_NUMBER = "923423944508"; // shop ka WhatsApp number (international format, baghair + ke)
+
+  // ================= FIREBASE SETUP =================
+  // Firebase Realtime Database ka URL yahan lagega (masalan: https://project-default-rtdb.firebaseio.com)
+  // Jab tak URL khaali hai, page demo/local mode mein chalta hai (data sirf isi browser mein save hota hai).
+  var DB_URL = "";
+  var DB_ROOT = "saleonlie_shop";
+
+  function dbUrl(path) { return DB_URL.replace(/\/+$/, '') + "/" + DB_ROOT + (path ? "/" + path : "") + ".json"; }
+  function localDb() { try { return JSON.parse(localStorage.getItem('saleonlie_local_db') || '{}'); } catch (e) { return {}; } }
+  function saveLocalDb(d) { localStorage.setItem('saleonlie_local_db', JSON.stringify(d)); }
+  function localGet(d, path) { var parts = path ? path.split('/') : []; var cur = d; for (var i = 0; i < parts.length; i++) { if (cur == null) return null; cur = cur[parts[i]]; } return cur === undefined ? null : cur; }
+  function localSet(d, path, val) { var parts = path.split('/'); var cur = d; for (var i = 0; i < parts.length - 1; i++) { if (typeof cur[parts[i]] !== 'object' || cur[parts[i]] === null) cur[parts[i]] = {}; cur = cur[parts[i]]; } cur[parts[parts.length - 1]] = val; }
+  async function dbRead(path) { if (!DB_URL) return localGet(localDb(), path); var r = await fetch(dbUrl(path)); if (!r.ok) throw new Error('DB read fail'); return await r.json(); }
+  async function dbWrite(path, val) { if (!DB_URL) { var d = localDb(); localSet(d, path, val); saveLocalDb(d); return val; } var r = await fetch(dbUrl(path), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(val) }); if (!r.ok) throw new Error('DB write fail'); return val; }
+  async function dbUpdate(path, val) { if (!DB_URL) { var d = localDb(); var cur = localGet(d, path) || {}; Object.keys(val).forEach(function(k) { cur[k] = val[k]; }); localSet(d, path, cur); saveLocalDb(d); return cur; } var r = await fetch(dbUrl(path), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(val) }); if (!r.ok) throw new Error('DB update fail'); return val; }
+  async function dbPush(path, val) { if (!DB_URL) { var d = localDb(); var key = 'local' + Date.now() + Math.floor(Math.random() * 1000); localSet(d, path + '/' + key, val); saveLocalDb(d); return key; } var r = await fetch(dbUrl(path), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(val) }); if (!r.ok) throw new Error('DB push fail'); var j = await r.json(); return j.name; }
+  async function sha256(str) { if (window.crypto && crypto.subtle) { var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return Array.from(new Uint8Array(buf)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join(''); } var h = 0; for (var i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) | 0; } return 'h' + h; }
+  function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  // ================= SHOP =================
   var selected = { code: "MZ2098204428DK", name: "2 Pcs Women's Stitched Cotton Jersey Printed Night Suit", price: "PKR 1,999" };
 
   function showPic(src, label, el) {
@@ -210,15 +327,9 @@
   var lbSrc = '', lbLabel = '', lbEl = null, lbOpen = false, lbPushed = false;
   var lbScale = 1, lbX = 0, lbY = 0;
 
-  function applyZoom() {
-    document.getElementById('lbImg').style.transform = 'translate(' + lbX + 'px,' + lbY + 'px) scale(' + lbScale + ')';
-  }
+  function applyZoom() { document.getElementById('lbImg').style.transform = 'translate(' + lbX + 'px,' + lbY + 'px) scale(' + lbScale + ')'; }
   function resetZoom() { lbScale = 1; lbX = 0; lbY = 0; applyZoom(); }
-  function zoomStep(f) {
-    lbScale = Math.min(4, Math.max(1, lbScale * f));
-    if (lbScale === 1) { lbX = 0; lbY = 0; }
-    applyZoom();
-  }
+  function zoomStep(f) { lbScale = Math.min(4, Math.max(1, lbScale * f)); if (lbScale === 1) { lbX = 0; lbY = 0; } applyZoom(); }
 
   function openLB(src, label, el) {
     lbSrc = src; lbLabel = label; lbEl = el;
@@ -246,17 +357,13 @@
 
   var lbImgEl = document.getElementById('lbImg');
   var lbPointers = new Map(); var lbPinchDist = 0;
-  lbImgEl.addEventListener('pointerdown', function(e) {
-    lbPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    lbImgEl.setPointerCapture(e.pointerId);
-  });
+  lbImgEl.addEventListener('pointerdown', function(e) { lbPointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); lbImgEl.setPointerCapture(e.pointerId); });
   lbImgEl.addEventListener('pointermove', function(e) {
     if (!lbPointers.has(e.pointerId)) return;
     var prev = lbPointers.get(e.pointerId);
     lbPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (lbPointers.size === 1 && lbScale > 1) {
-      lbX += e.clientX - prev.x; lbY += e.clientY - prev.y; applyZoom();
-    } else if (lbPointers.size === 2) {
+    if (lbPointers.size === 1 && lbScale > 1) { lbX += e.clientX - prev.x; lbY += e.clientY - prev.y; applyZoom(); }
+    else if (lbPointers.size === 2) {
       var pts = Array.from(lbPointers.values());
       var d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       if (lbPinchDist) { lbScale = Math.min(4, Math.max(1, lbScale * d / lbPinchDist)); applyZoom(); }
@@ -266,9 +373,7 @@
   function lbEndPointer(e) { lbPointers.delete(e.pointerId); if (lbPointers.size < 2) lbPinchDist = 0; }
   lbImgEl.addEventListener('pointerup', lbEndPointer);
   lbImgEl.addEventListener('pointercancel', lbEndPointer);
-  document.getElementById('lightbox').addEventListener('wheel', function(e) {
-    e.preventDefault(); zoomStep(e.deltaY < 0 ? 1.15 : 0.87);
-  }, { passive: false });
+  document.getElementById('lightbox').addEventListener('wheel', function(e) { e.preventDefault(); zoomStep(e.deltaY < 0 ? 1.15 : 0.87); }, { passive: false });
   lbImgEl.addEventListener('dblclick', function() { if (lbScale > 1) resetZoom(); else { lbScale = 2; applyZoom(); } });
 
   function fillSelect(fieldId, selectId, values) {
@@ -287,10 +392,11 @@
     document.getElementById('ordPrice').textContent = price;
     fillSelect('colourField', 'fColour', colours);
     fillSelect('sizeField', 'fSize', sizes);
+    showView('home');
     document.getElementById('order').scrollIntoView({ behavior: 'smooth' });
   }
 
-  function placeOrder(e) {
+  async function placeOrder(e) {
     e.preventDefault();
     var name = document.getElementById('fName').value.trim();
     var phone = document.getElementById('fPhone').value.trim();
@@ -299,6 +405,9 @@
     var colour = document.getElementById('colourField').style.display !== 'none' ? document.getElementById('fColour').value : '';
     var size = document.getElementById('sizeField').style.display !== 'none' ? document.getElementById('fSize').value : '';
     if (!name || !phone || !address) { alert('Meharbani karke Naam, Rabta Number aur Delivery Address zaroor bharain.'); return false; }
+    var order = { phone: phone, customer: name, address: address, code: selected.code, product: selected.name, price: selected.price, colour: colour, size: size, remarks: remarks, status: 'Pending', ts: Date.now() };
+    var savedId = null;
+    try { savedId = await dbPush('orders', order); } catch (err) { savedId = null; }
     var msg = "Assalam-o-Alaikum! Mujhe Sale Online se order karna hai.\n\n"
       + "Product Code: " + selected.code + "\n"
       + "Product: " + selected.name + "\n"
@@ -311,8 +420,134 @@
       + "Rabta Number: " + phone + "\n"
       + "Delivery Address: " + address + "\n"
       + (remarks ? "Remarks: " + remarks + "\n" : "");
-    window.location.href = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(msg);
+    window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
+    var note = document.getElementById('orderNote');
+    if (savedId) { note.innerHTML = '✅ <b>Order save ho gaya hai!</b> Is ka status dekhne ke liye upar <b>Meray Orders</b> page par jayein (login usi mobile number se karein jo form mein likha hai).'; note.style.display = 'block'; }
     return false;
+  }
+
+  // ================= VIEWS =================
+  var currentView = 'home';
+  function showView(v) {
+    currentView = v;
+    ['home', 'orders', 'help', 'about'].forEach(function(x) {
+      document.getElementById('view-' + x).style.display = (x === v ? 'block' : 'none');
+      document.getElementById('nav-' + x).classList.toggle('active', x === v);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (v === 'orders') loadOrders();
+  }
+
+  // ================= ACCOUNTS =================
+  var currentUser = null;
+
+  function setAccountUI() {
+    var box = document.getElementById('accountBox');
+    if (currentUser) { box.innerHTML = '<span class="uname">👤 ' + escapeHtml(currentUser.name) + '</span> <button class="mini-btn" type="button" onclick="logout()">Logout</button>'; }
+    else { box.innerHTML = '<button class="mini-btn" type="button" onclick="openAuth()">Login / Signup</button>'; }
+  }
+
+  function openAuth(mode) { document.getElementById('authModal').style.display = 'flex'; switchAuth(mode || 'login'); }
+  function closeAuth() { document.getElementById('authModal').style.display = 'none'; localStorage.setItem('saleonlie_seen', '1'); }
+  function switchAuth(mode) {
+    document.getElementById('form-login').style.display = (mode === 'login' ? 'block' : 'none');
+    document.getElementById('form-signup').style.display = (mode === 'signup' ? 'block' : 'none');
+    document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+    document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
+  }
+  function authError(id, msg) { var el = document.getElementById(id); el.textContent = msg; el.style.display = msg ? 'block' : 'none'; }
+  function cleanPhone(p) { return p.replace(/[^0-9]/g, ''); }
+
+  async function startSession(phone, name, passHash) {
+    var token = await sha256(phone + ':' + passHash);
+    localStorage.setItem('saleonlie_session', JSON.stringify({ phone: phone, name: name, token: token }));
+    currentUser = { phone: phone, name: name };
+    setAccountUI();
+    closeAuth();
+    if (currentView === 'orders') loadOrders();
+  }
+
+  async function doSignup(e) {
+    e.preventDefault();
+    var name = document.getElementById('suName').value.trim();
+    var phone = cleanPhone(document.getElementById('suPhone').value);
+    var pass = document.getElementById('suPass').value;
+    authError('signupErr', '');
+    if (name.length < 3) { authError('signupErr', 'Meharbani karke apna sahi naam likhein.'); return false; }
+    if (phone.length < 10 || phone.length > 13) { authError('signupErr', 'Mobile number sahi likhein (masalan 03XX-XXXXXXX).'); return false; }
+    if (pass.length < 4) { authError('signupErr', 'Password kam az kam 4 characters ka rakhein.'); return false; }
+    try {
+      var existing = await dbRead('users/' + phone);
+      if (existing) { authError('signupErr', 'Ye mobile number pehle se registered hai — Login wala hisa istemal karein.'); return false; }
+      var passHash = await sha256(phone + ':' + pass);
+      await dbWrite('users/' + phone, { name: name, pass: passHash, created: Date.now() });
+      await startSession(phone, name, passHash);
+    } catch (err) { authError('signupErr', 'Account nahi ban saka — internet check karke dobara koshish karein.'); }
+    return false;
+  }
+
+  async function doLogin(e) {
+    e.preventDefault();
+    var phone = cleanPhone(document.getElementById('liPhone').value);
+    var pass = document.getElementById('liPass').value;
+    authError('loginErr', '');
+    try {
+      var u = await dbRead('users/' + phone);
+      if (!u) { authError('loginErr', 'Is number par koi account nahi hai — pehle Signup karein.'); return false; }
+      if (u.pass !== await sha256(phone + ':' + pass)) { authError('loginErr', 'Password ghalat hai — dobara koshish karein.'); return false; }
+      await startSession(phone, u.name, u.pass);
+    } catch (err) { authError('loginErr', 'Login nahi ho saka — internet check karke dobara koshish karein.'); }
+    return false;
+  }
+
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem('saleonlie_session');
+    setAccountUI();
+    if (currentView === 'orders') loadOrders();
+  }
+
+  async function tryAutoLogin() {
+    var raw = localStorage.getItem('saleonlie_session');
+    if (!raw) { setAccountUI(); return; }
+    try {
+      var s = JSON.parse(raw);
+      var u = await dbRead('users/' + s.phone);
+      if (u && s.token === await sha256(s.phone + ':' + u.pass)) { currentUser = { phone: s.phone, name: u.name }; }
+      else { localStorage.removeItem('saleonlie_session'); }
+    } catch (e) { /* offline par session rehne dein */ }
+    setAccountUI();
+  }
+
+  // ================= MY ORDERS =================
+  function statusClass(s) { return { 'Pending': 'st-pending', 'Confirmed': 'st-confirmed', 'Shipped': 'st-shipped', 'Delivered': 'st-delivered', 'Cancelled': 'st-cancelled' }[s] || 'st-pending'; }
+  async function loadOrders() {
+    var box = document.getElementById('ordersBox');
+    if (!box) return;
+    if (!currentUser) {
+      box.innerHTML = '<div class="empty">Apne orders aur un ka status dekhne ke liye pehle <b>Login</b> karein.<br><br><button class="cta small" type="button" onclick="openAuth()">Login / Signup</button></div>';
+      return;
+    }
+    box.innerHTML = '<div class="empty">Orders load ho rahe hain...</div>';
+    try {
+      var all = await dbRead('orders') || {};
+      var mine = Object.keys(all).map(function(k) { var o = all[k]; o.id = k; return o; })
+        .filter(function(o) { return o.phone === currentUser.phone; })
+        .sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); });
+      if (!mine.length) { box.innerHTML = '<div class="empty">Abhi tak aap ka koi order nahi hai.<br>Pasandeeda product par <b>Order Now</b> dabakar pehla order karein!</div>'; return; }
+      box.innerHTML = mine.map(function(o) {
+        return '<div class="order-item"><div class="oi-top"><b>' + escapeHtml(o.product) + '</b><span class="st ' + statusClass(o.status) + '">' + escapeHtml(o.status || 'Pending') + '</span></div>'
+          + '<div class="oi-meta">Code: ' + escapeHtml(o.code) + ' · ' + escapeHtml(o.price)
+          + (o.colour ? ' · Colour: ' + escapeHtml(o.colour) : '') + (o.size ? ' · Size: ' + escapeHtml(o.size) : '')
+          + '<br>Order date: ' + new Date(o.ts).toLocaleString('en-GB') + '</div></div>';
+      }).join('');
+    } catch (e) { box.innerHTML = '<div class="empty">Orders load nahi ho sakay — internet check karke Refresh karein.</div>'; }
+  }
+
+  // ================= INIT =================
+  tryAutoLogin();
+  if (!localStorage.getItem('saleonlie_session') && !localStorage.getItem('saleonlie_seen')) {
+    setTimeout(function() { if (!currentUser) openAuth('signup'); }, 700);
   }
 </script>
 </body>

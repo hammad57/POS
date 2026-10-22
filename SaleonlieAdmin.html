@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sale Online — Admin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f3f6f4; color: #1d2b25; }
+  header.site { background: #0b5136; color: #fff; padding: 14px; }
+  .hwrap { max-width: 980px; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .brand { font-size: 20px; font-weight: 800; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 16px 14px 40px; }
+  .card { background: #fff; border-radius: 16px; box-shadow: 0 4px 18px rgba(20,40,30,.08); padding: 20px; margin-bottom: 18px; }
+  label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 5px; }
+  input { width: 100%; padding: 11px 12px; border: 1px solid #cfd8d3; border-radius: 10px; font-size: 15px; font-family: inherit; }
+  .cta { display: block; width: 100%; background: #0b7a4b; color: #fff; border: none; padding: 13px; font-size: 16px; font-weight: 700; border-radius: 12px; cursor: pointer; margin-top: 16px; font-family: inherit; }
+  .cta.small { width: auto; display: inline-block; padding: 9px 18px; font-size: 14.5px; margin-top: 0; }
+  .cta.gray { background: #e8eeeb; color: #33463c; }
+  .err { display: none; color: #b3261e; background: #fdecea; border: 1px solid #f5c6c2; border-radius: 8px; padding: 9px 11px; font-size: 14px; margin-top: 12px; line-height: 1.5; }
+  .note { font-size: 13.5px; color: #66766e; margin-top: 10px; line-height: 1.55; }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+  .stat { background: #eef7f1; border: 1px solid #cfe6d7; border-radius: 12px; padding: 10px 16px; font-size: 14px; }
+  .stat b { font-size: 19px; display: block; color: #0b5136; }
+  .ocard { border: 1px solid #e4e9e6; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .otop { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .ometa { color: #44524c; font-size: 14px; margin-top: 6px; line-height: 1.65; }
+  .strow { margin-top: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  select { padding: 9px 11px; border: 1px solid #cfd8d3; border-radius: 9px; font-size: 14.5px; font-family: inherit; background: #fff; }
+  .st { font-size: 12.5px; font-weight: 800; padding: 4px 11px; border-radius: 999px; white-space: nowrap; }
+  .st-pending { background: #fff3cd; color: #7a5b00; }
+  .st-confirmed { background: #dbeafe; color: #1e40af; }
+  .st-shipped { background: #ede9fe; color: #5b21b6; }
+  .st-delivered { background: #dcfce7; color: #166534; }
+  .st-cancelled { background: #fee2e2; color: #991b1b; }
+  #toast { display: none; position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #0b5136; color: #fff; padding: 11px 20px; border-radius: 999px; font-size: 14.5px; box-shadow: 0 6px 20px rgba(0,0,0,.3); z-index: 50; }
+  .empty { text-align: center; color: #66766e; padding: 24px 10px; font-size: 15px; }
+  .demo-banner { background: #fff8e1; border: 1px solid #ffe082; color: #6d5410; border-radius: 10px; padding: 10px 13px; font-size: 14px; margin-bottom: 14px; line-height: 1.55; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="hwrap">
+    <div class="brand">🛠️ Sale Online — Admin Panel</div>
+    <span style="margin-left:auto; font-size:13.5px;">Sirf owner ke liye</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="demoBanner" class="demo-banner" style="display:none;">⚠️ <b>Demo mode:</b> Firebase abhi connect nahi hai — orders sirf isi browser ke nazar aayenge. Asli data ke liye Firebase connect karna baqi hai.</div>
+
+  <div class="card" id="gateCard">
+    <h3 id="gateTitle">Admin Login</h3>
+    <div id="gateSetup" style="display:none;">
+      <p class="note">Pehli dafa admin password set karein. Yehi password aayenda admin page kholne ke liye lagega — yaad rakh lein.</p>
+      <form onsubmit="return adminSetup(event)">
+        <label for="apNew">Naya Admin Password</label>
+        <input id="apNew" type="password" placeholder="Kam az kam 6 characters" required>
+        <label for="apNew2">Password dobara likhein</label>
+        <input id="apNew2" type="password" placeholder="Wohi password dobara" required>
+        <div class="err" id="gateErr1"></div>
+        <button class="cta" type="submit">Password set karke dakhil hon</button>
+      </form>
+    </div>
+    <div id="gateLogin" style="display:none;">
+      <form onsubmit="return adminLogin(event)">
+        <label for="apPass">Admin Password</label>
+        <input id="apPass" type="password" placeholder="Apna admin password" required>
+        <div class="err" id="gateErr2"></div>
+        <button class="cta" type="submit">Login karein</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="panel" style="display:none;">
+    <div class="card">
+      <div class="stats">
+        <div class="stat"><b id="statOrders">–</b>Kul Orders</div>
+        <div class="stat"><b id="statPending">–</b>Pending</div>
+        <div class="stat"><b id="statUsers">–</b>Registered Users</div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+        <button class="cta small" type="button" onclick="loadAdmin()">🔄 Refresh</button>
+        <button class="cta small gray" type="button" onclick="adminLogout()">Logout</button>
+        <a class="cta small gray" style="text-decoration:none;" href="Saleonlie.html">🛍️ Shop page kholein</a>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:12px;">🧾 Tamam Orders (naya sab se upar)</h3>
+      <div id="adminOrders"><div class="empty">Orders load ho rahe hain...</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ================= FIREBASE SETUP (shop page wali hi setting) =================
+  var DB_URL = "";
+  var DB_ROOT = "saleonlie_shop";
+
+  function dbUrl(path) { return DB_URL.replace(/\/+$/, '') + "/" + DB_ROOT + (path ? "/" + path : "") + ".json"; }
+  function localDb() { try { return JSON.parse(localStorage.getItem('saleonlie_local_db') || '{}'); } catch (e) { return {}; } }
+  function saveLocalDb(d) { localStorage.setItem('saleonlie_local_db', JSON.stringify(d)); }
+  function localGet(d, path) { var parts = path ? path.split('/') : []; var cur = d; for (var i = 0; i < parts.length; i++) { if (cur == null) return null; cur = cur[parts[i]]; } return cur === undefined ? null : cur; }
+  function localSet(d, path, val) { var parts = path.split('/'); var cur = d; for (var i = 0; i < parts.length - 1; i++) { if (typeof cur[parts[i]] !== 'object' || cur[parts[i]] === null) cur[parts[i]] = {}; cur = cur[parts[i]]; } cur[parts[parts.length - 1]] = val; }
+  async function dbRead(path) { if (!DB_URL) return localGet(localDb(), path); var r = await fetch(dbUrl(path)); if (!r.ok) throw new Error('DB read fail'); return await r.json(); }
+  async function dbWrite(path, val) { if (!DB_URL) { var d = localDb(); localSet(d, path, val); saveLocalDb(d); return val; } var r = await fetch(dbUrl(path), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(val) }); if (!r.ok) throw new Error('DB write fail'); return val; }
+  async function dbUpdate(path, val) { if (!DB_URL) { var d = localDb(); var cur = localGet(d, path) || {}; Object.keys(val).forEach(function(k) { cur[k] = val[k]; }); localSet(d, path, cur); saveLocalDb(d); return cur; } var r = await fetch(dbUrl(path), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(val) }); if (!r.ok) throw new Error('DB update fail'); return val; }
+  async function sha256(str) { if (window.crypto && crypto.subtle) { var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return Array.from(new Uint8Array(buf)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join(''); } var h = 0; for (var i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) | 0; } return 'h' + h; }
+  function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function toast(msg) { var t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; setTimeout(function() { t.style.display = 'none'; }, 2600); }
+  function gateErr(id, msg) { var el = document.getElementById(id); el.textContent = msg; el.style.display = msg ? 'block' : 'none'; }
+
+  // ================= ADMIN GATE =================
+  async function adminInit() {
+    if (!DB_URL) document.getElementById('demoBanner').style.display = 'block';
+    if (sessionStorage.getItem('saleonlie_admin') === '1') { enterAdmin(); return; }
+    try {
+      var a = await dbRead('admin');
+      if (!a || !a.pass) { document.getElementById('gateSetup').style.display = 'block'; document.getElementById('gateTitle').textContent = 'Admin Password Set karein'; }
+      else { document.getElementById('gateLogin').style.display = 'block'; }
+    } catch (e) { document.getElementById('gateLogin').style.display = 'block'; }
+  }
+
+  async function adminSetup(e) {
+    e.preventDefault();
+    var p1 = document.getElementById('apNew').value;
+    var p2 = document.getElementById('apNew2').value;
+    gateErr('gateErr1', '');
+    if (p1.length < 6) { gateErr('gateErr1', 'Password kam az kam 6 characters ka rakhein.'); return false; }
+    if (p1 !== p2) { gateErr('gateErr1', 'Dono password aik jaisay nahi hain.'); return false; }
+    try {
+      await dbWrite('admin', { pass: await sha256('admin:' + p1), set: Date.now() });
+      sessionStorage.setItem('saleonlie_admin', '1');
+      enterAdmin();
+    } catch (err) { gateErr('gateErr1', 'Password save nahi ho saka — internet check karein.'); }
+    return false;
+  }
+
+  async function adminLogin(e) {
+    e.preventDefault();
+    var p = document.getElementById('apPass').value;
+    gateErr('gateErr2', '');
+    try {
+      var a = await dbRead('admin');
+      if (a && a.pass === await sha256('admin:' + p)) { sessionStorage.setItem('saleonlie_admin', '1'); enterAdmin(); }
+      else { gateErr('gateErr2', 'Password ghalat hai.'); }
+    } catch (err) { gateErr('gateErr2', 'Login nahi ho saka — internet check karein.'); }
+    return false;
+  }
+
+  function adminLogout() { sessionStorage.removeItem('saleonlie_admin'); location.reload(); }
+  function enterAdmin() { document.getElementById('gateCard').style.display = 'none'; document.getElementById('panel').style.display = 'block'; loadAdmin(); }
+
+  // ================= ORDERS =================
+  function statusClass(s) { return { 'Pending': 'st-pending', 'Confirmed': 'st-confirmed', 'Shipped': 'st-shipped', 'Delivered': 'st-delivered', 'Cancelled': 'st-cancelled' }[s] || 'st-pending'; }
+  var STATUSES = ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'];
+
+  async function loadAdmin() {
+    var box = document.getElementById('adminOrders');
+    box.innerHTML = '<div class="empty">Orders load ho rahe hain...</div>';
+    try {
+      var all = await dbRead('orders') || {};
+      var users = await dbRead('users') || {};
+      var list = Object.keys(all).map(function(k) { var o = all[k]; o.id = k; return o; }).sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); });
+      document.getElementById('statOrders').textContent = list.length;
+      document.getElementById('statPending').textContent = list.filter(function(o) { return (o.status || 'Pending') === 'Pending'; }).length;
+      document.getElementById('statUsers').textContent = Object.keys(users).length;
+      if (!list.length) { box.innerHTML = '<div class="empty">Abhi koi order nahi aaya.</div>'; return; }
+      box.innerHTML = list.map(function(o) {
+        var opts = STATUSES.map(function(s) { return '<option value="' + s + '"' + (s === (o.status || 'Pending') ? ' selected' : '') + '>' + s + '</option>'; }).join('');
+        return '<div class="ocard"><div class="otop"><b>' + escapeHtml(o.product) + '</b><span class="st ' + statusClass(o.status) + '">' + escapeHtml(o.status || 'Pending') + '</span></div>'
+          + '<div class="ometa">Code: <b>' + escapeHtml(o.code) + '</b> · ' + escapeHtml(o.price)
+          + (o.colour ? ' · Colour: ' + escapeHtml(o.colour) : '') + (o.size ? ' · Size: ' + escapeHtml(o.size) : '')
+          + '<br>👤 ' + escapeHtml(o.customer) + ' · 📱 ' + escapeHtml(o.phone)
+          + '<br>🏠 ' + escapeHtml(o.address)
+          + (o.remarks ? '<br>📝 Remarks: ' + escapeHtml(o.remarks) : '')
+          + '<br>🕐 ' + new Date(o.ts).toLocaleString('en-GB') + '</div>'
+          + '<div class="strow"><label style="margin:0;">Status badlein:</label><select onchange="setStatus(\'' + o.id + '\', this.value)">' + opts + '</select></div></div>';
+      }).join('');
+    } catch (e) { box.innerHTML = '<div class="empty">Orders load nahi ho sakay — internet check karke Refresh karein.</div>'; }
+  }
+
+  async function setStatus(id, s) {
+    try { await dbUpdate('orders/' + id, { status: s }); toast('✅ Status update ho gaya: ' + s); loadAdmin(); }
+    catch (e) { toast('❌ Status update nahi ho saka'); }
+  }
+
+  adminInit();
+</script>
+</body>
+</html>
