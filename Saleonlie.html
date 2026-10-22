@@ -88,12 +88,38 @@
   .help-q { font-weight: 800; margin: 14px 0 5px; font-size: 16px; }
   .help-a { color: #44524c; line-height: 1.65; font-size: 15px; }
   .wa-btn { display: inline-block; background: #25d366; color: #fff; text-decoration: none; font-weight: 700; padding: 11px 20px; border-radius: 999px; margin-top: 10px; }
+  .hambtn { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3); color: #fff; font-size: 19px; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; line-height: 1; flex: none; }
+  .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(10,25,18,.5); z-index: 90; }
+  .drawer-overlay.show { display: block; }
+  .drawer { position: fixed; top: 0; left: 0; width: 272px; max-width: 84vw; height: 100%; background: #fff; z-index: 95; transform: translateX(-105%); transition: transform .25s ease; box-shadow: 4px 0 24px rgba(0,0,0,.25); padding: 14px; overflow-y: auto; }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head { display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 800; color: #0b5136; margin-bottom: 12px; }
+  .drawer-x { background: none; border: none; font-size: 18px; cursor: pointer; color: #66766e; }
+  .d-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 12px 10px; font-size: 16px; color: #1d2b25; cursor: pointer; border-radius: 10px; text-decoration: none; font-family: inherit; }
+  .d-item:hover { background: #eef7f1; }
+  .d-sep { height: 1px; background: #e4e9e6; margin: 8px 0; }
+  .d-user { padding: 10px; font-weight: 700; color: #0b5136; }
+  .bottombar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid #dde6e0; display: flex; z-index: 80; box-shadow: 0 -3px 14px rgba(20,40,30,.08); }
+  .bb-item { flex: 1; background: none; border: none; padding: 8px 2px 9px; font-size: 11.5px; color: #55645d; cursor: pointer; text-decoration: none; text-align: center; font-family: inherit; }
+  .bb-item span { display: block; font-size: 19px; line-height: 1.25; }
+  .bb-item.active { color: #0b7a4b; font-weight: 800; }
+  .bb-order { color: #0b7a4b; font-weight: 800; }
+  body { padding-bottom: 62px; }
+  .pic-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(0,0,0,.08); background: rgba(255,255,255,.88); font-size: 22px; cursor: pointer; z-index: 3; line-height: 1; color: #0b5136; }
+  .pic-arrow.left { left: 8px; }
+  .pic-arrow.right { right: 8px; }
+  .adv-pill { display: inline-block; background: #fff3cd; border: 1px solid #ffe082; color: #7a5b00; border-radius: 999px; padding: 6px 13px; font-size: 13.5px; margin-top: 8px; }
+  .adv-box { background: #fff8e1; border: 1px solid #ffe082; border-radius: 12px; padding: 14px; margin-top: 16px; }
+  .adv-box p { font-size: 14.5px; color: #5d4a00; line-height: 1.6; margin-top: 6px; }
+  .cta.adv { background: #e8a100; }
+  .cta.adv:hover { background: #cf8f00; }
 </style>
 </head>
 <body>
 
 <header class="site">
   <div class="hwrap">
+    <button class="hambtn" type="button" onclick="openDrawer()" aria-label="Menu">☰</button>
     <div class="brand">🛍️ Sale Online</div>
     <nav class="main">
       <button id="nav-home" class="nav-btn active" type="button" onclick="showView('home')">Home</button>
@@ -104,6 +130,20 @@
     <div id="accountBox"><button class="mini-btn" type="button" onclick="openAuth()">Login / Signup</button></div>
   </div>
 </header>
+
+<div id="drawerOverlay" class="drawer-overlay" onclick="closeDrawer()"></div>
+<aside id="drawer" class="drawer">
+  <div class="drawer-head"><span>🛍️ Sale Online</span><button class="drawer-x" type="button" onclick="closeDrawer()" aria-label="Band karein">✕</button></div>
+  <button class="d-item" type="button" onclick="drawerGo('home')">🏠 Home</button>
+  <button class="d-item" type="button" onclick="drawerGo('orders')">🧾 Meray Orders</button>
+  <button class="d-item" type="button" onclick="drawerGo('help')">❓ Help</button>
+  <button class="d-item" type="button" onclick="drawerGo('about')">ℹ️ About</button>
+  <div class="d-sep"></div>
+  <a class="d-item" href="https://wa.me/923423944508" target="_blank" rel="noopener">💬 WhatsApp par rabta karein</a>
+  <a class="d-item" href="SaleonlieAdmin.html">🛠️ Admin (Owner ke liye)</a>
+  <div class="d-sep"></div>
+  <div id="drawerAccount"></div>
+</aside>
 
 <div id="authModal" class="modal" onclick="if(event.target===this) closeAuth()">
   <div class="modal-card">
@@ -143,8 +183,10 @@
       <div class="grid2">
         <div>
           <div class="main-wrap">
-            <img class="main-img" id="mainImg" src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp" alt="2 Pcs Women's Stitched Cotton Jersey Printed Night Suit" onclick="openLB(this.src, document.getElementById('picLabel').textContent, null)">
+            <img class="main-img" id="mainImg" src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp" alt="2 Pcs Women's Stitched Cotton Jersey Printed Night Suit" onclick="mainImgClick(this)">
             <div class="pno-badge">Code: MZ2098204428DK</div>
+            <button class="pic-arrow left" type="button" onclick="goPic(picIndex-1)" aria-label="Pichli picture">‹</button>
+            <button class="pic-arrow right" type="button" onclick="goPic(picIndex+1)" aria-label="Agli picture">›</button>
           </div>
           <div class="pic-label" id="picLabel">Picture #1</div>
           <div class="thumbs">
@@ -161,6 +203,7 @@
         <div>
           <h2 class="pname">2 Pcs Women's Stitched Cotton Jersey Printed Night Suit</h2>
           <div class="price-row"><span class="price">PKR 1,999</span><button class="cta small" type="button" onclick="selectProduct('MZ2098204428DK', '2 Pcs Women\'s Stitched Cotton Jersey Printed Night Suit', 'PKR 1,999', ['Purple','Maroon','Green','Blue','Black','Grey'], ['Medium','Large','X-Large'])">Order Now</button></div>
+          <div class="adv-pill">💳 Advance payment par <b>Rs. 110 OFF</b> — sirf PKR 1,889</div>
           <span class="stock">In Stock</span>
           <div class="chips">
             <span class="chip"><b>Sizes:</b> Medium · Large · X-Large</span>
@@ -225,6 +268,11 @@
         <button class="cta" type="submit">Order Now — WhatsApp par bhejein</button>
         <div class="note-ok" id="orderNote"></div>
       </form>
+      <div class="adv-box">
+        <b>💳 Advance Payment — Rs. 110 Discount</b>
+        <p>Cash on Delivery ki bajaye advance payment karna chahein to WhatsApp par rabta karein — product ki mukammal tafseel khud message mein chali jayegi aur aap ko <b>Rs. 110 ka discount</b> bhee milega.</p>
+        <button class="cta adv" type="button" onclick="advancePay()">WhatsApp par Advance Payment ki baat karein</button>
+      </div>
     </div>
 
     <div class="card">
@@ -251,6 +299,8 @@
       <p class="help-a">Order usi mobile number ke saath save hota hai jo aap form mein likhte hain. Upar <b>Meray Orders</b> page par login karke apne tamam orders aur un ka status (Pending, Confirmed, Shipped, Delivered) dekh sakte hain.</p>
       <p class="help-q">Payment kaise karni hai?</p>
       <p class="help-a">Do tareeqay hain: <b>Cash on Delivery</b> — parcel milne par paisay dein; ya <b>Easypaisa</b> — 0342-3944508 (Account Title: Malook Hussain) par pehle bhej dein.</p>
+      <p class="help-q">Advance payment par discount milta hai?</p>
+      <p class="help-a">Ji haan! Cash on Delivery ki bajaye <b>advance payment</b> (Easypaisa) karne par <b>Rs. 110 discount</b> milta hai. Order Form ke neeche wale Advance Payment button se WhatsApp par rabta karein — product ki tafseel khud message mein chali jayegi.</p>
       <p class="help-q">Delivery kitne din mein hogi aur charges?</p>
       <p class="help-a">Delivery aam tor par <b>3–5 din</b> mein ho jati hai. Delivery charges sirf <b>PKR 99</b> hain.</p>
       <p class="help-q">Return ya exchange ho sakta hai?</p>
@@ -280,6 +330,14 @@
   Rabta: WhatsApp 0342-3944508
 </footer>
 
+<nav class="bottombar">
+  <button class="bb-item active" id="bb-home" type="button" onclick="showView('home')"><span>🏠</span>Home</button>
+  <button class="bb-item" id="bb-orders" type="button" onclick="showView('orders')"><span>🧾</span>Orders</button>
+  <button class="bb-item bb-order" type="button" onclick="bottomOrder()"><span>🛒</span>Order Now</button>
+  <button class="bb-item" id="bb-help" type="button" onclick="showView('help')"><span>❓</span>Help</button>
+  <a class="bb-item" href="https://wa.me/923423944508" target="_blank" rel="noopener"><span>💬</span>WhatsApp</a>
+</nav>
+
 <div id="lightbox" onclick="if(event.target===this) closeLB(false)">
   <img id="lbImg" src="" alt="Full screen picture">
   <div class="lb-cap" id="lbCap"></div>
@@ -296,7 +354,7 @@
   // ================= FIREBASE SETUP =================
   // Firebase Realtime Database ka URL yahan lagega (masalan: https://project-default-rtdb.firebaseio.com)
   // Jab tak URL khaali hai, page demo/local mode mein chalta hai (data sirf isi browser mein save hota hai).
-  var DB_URL = "";
+  var DB_URL = "https://earn-platform-76c26-default-rtdb.firebaseio.com";
   var DB_ROOT = "saleonlie_shop";
 
   function dbUrl(path) { return DB_URL.replace(/\/+$/, '') + "/" + DB_ROOT + (path ? "/" + path : "") + ".json"; }
@@ -312,7 +370,7 @@
   function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
   // ================= SHOP =================
-  var selected = { code: "MZ2098204428DK", name: "2 Pcs Women's Stitched Cotton Jersey Printed Night Suit", price: "PKR 1,999" };
+  var selected = { code: "MZ2098204428DK", name: "2 Pcs Women's Stitched Cotton Jersey Printed Night Suit", price: "PKR 1,999", colours: ['Purple','Maroon','Green','Blue','Black','Grey'], sizes: ['Medium','Large','X-Large'] };
 
   function showPic(src, label, el) {
     document.getElementById('mainImg').src = src;
@@ -347,7 +405,7 @@
     lbOpen = false;
     document.getElementById('lightbox').style.display = 'none';
     document.body.style.overflow = '';
-    if (lbEl) showPic(lbSrc, lbLabel, lbEl);
+    if (lbEl) { showPic(lbSrc, lbLabel, lbEl); var figsIx = picList(); var ix = figsIx.indexOf(lbEl); if (ix >= 0) picIndex = ix; }
     if (!fromPop && lbPushed) { lbPushed = false; history.back(); }
     if (fromPop) lbPushed = false;
   }
@@ -386,7 +444,7 @@
   }
 
   function selectProduct(code, name, price, colours, sizes) {
-    selected = { code: code, name: name, price: price };
+    selected = { code: code, name: name, price: price, colours: colours || [], sizes: sizes || [] };
     document.getElementById('ordCode').textContent = code;
     document.getElementById('ordProduct').textContent = name;
     document.getElementById('ordPrice').textContent = price;
@@ -426,6 +484,46 @@
     return false;
   }
 
+  // ================= SIDE MENU (DRAWER) =================
+  function openDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('show'); }
+  function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('show'); }
+  function drawerGo(v) { closeDrawer(); showView(v); }
+
+  // ================= PICTURE SWIPE =================
+  var picIndex = 0; var picSuppress = false;
+  function picList() { return Array.prototype.slice.call(document.querySelectorAll('.thumbs figure')); }
+  function picLabelOf(fig) { var cap = fig.querySelector('figcaption').textContent.trim(); return cap === 'Size Chart' ? 'Size Chart' : 'Picture #' + cap; }
+  function goPic(i) { var figs = picList(); if (!figs.length) return; picIndex = ((i % figs.length) + figs.length) % figs.length; var fig = figs[picIndex]; showPic(fig.querySelector('img').src, picLabelOf(fig), fig); }
+  function mainImgClick(img) { if (picSuppress) { picSuppress = false; return; } openLB(img.src, document.getElementById('picLabel').textContent, null); }
+  var swipeX = null;
+  var mainImgSwipe = document.getElementById('mainImg');
+  mainImgSwipe.addEventListener('pointerdown', function(e) { swipeX = e.clientX; });
+  mainImgSwipe.addEventListener('pointerup', function(e) {
+    if (swipeX === null) return;
+    var dx = e.clientX - swipeX; swipeX = null;
+    if (Math.abs(dx) > 45) { picSuppress = true; setTimeout(function() { picSuppress = false; }, 400); goPic(picIndex + (dx < 0 ? 1 : -1)); }
+  });
+
+  // ================= BOTTOM BAR + ADVANCE PAYMENT =================
+  function bottomOrder() { selectProduct(selected.code, selected.name, selected.price, selected.colours || [], selected.sizes || []); }
+  function priceNum() { return parseInt(String(selected.price).replace(/[^0-9]/g, ''), 10) || 0; }
+  function fmtPKR(n) { return 'PKR ' + n.toLocaleString('en-US'); }
+  function advancePay() {
+    var colour = document.getElementById('colourField').style.display !== 'none' ? document.getElementById('fColour').value : '';
+    var size = document.getElementById('sizeField').style.display !== 'none' ? document.getElementById('fSize').value : '';
+    var p = priceNum(); var d = p - 110;
+    var msg = "Assalam-o-Alaikum! Main Cash on Delivery ki bajaye ADVANCE PAYMENT karke order karna chahta/chahti hoon — Rs.110 discount ke liye.\n\n"
+      + "Product Code: " + selected.code + "\n"
+      + "Product: " + selected.name + "\n"
+      + "Price: " + selected.price + "\n"
+      + "Advance Payment Price (Rs.110 discount ke baad): " + fmtPKR(d) + "\n"
+      + "Delivery Charges: PKR 99\n"
+      + (colour ? "Colour: " + colour + "\n" : "")
+      + (size ? "Size: " + size + "\n" : "")
+      + "\nMeharbani karke Easypaisa ki tafseel bhej dein aur mera order confirm kar dein. Shukriya!";
+    window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
+  }
+
   // ================= VIEWS =================
   var currentView = 'home';
   function showView(v) {
@@ -434,6 +532,7 @@
       document.getElementById('view-' + x).style.display = (x === v ? 'block' : 'none');
       document.getElementById('nav-' + x).classList.toggle('active', x === v);
     });
+    ['home', 'orders', 'help'].forEach(function(x) { var b = document.getElementById('bb-' + x); if (b) b.classList.toggle('active', x === v); });
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (v === 'orders') loadOrders();
   }
@@ -445,6 +544,11 @@
     var box = document.getElementById('accountBox');
     if (currentUser) { box.innerHTML = '<span class="uname">👤 ' + escapeHtml(currentUser.name) + '</span> <button class="mini-btn" type="button" onclick="logout()">Logout</button>'; }
     else { box.innerHTML = '<button class="mini-btn" type="button" onclick="openAuth()">Login / Signup</button>'; }
+    var da = document.getElementById('drawerAccount');
+    if (da) {
+      if (currentUser) { da.innerHTML = '<div class="d-user">👤 ' + escapeHtml(currentUser.name) + '</div><button class="d-item" type="button" onclick="closeDrawer(); logout();">🚪 Logout</button>'; }
+      else { da.innerHTML = '<button class="d-item" type="button" onclick="closeDrawer(); openAuth();">🔐 Login / Signup</button>'; }
+    }
   }
 
   function openAuth(mode) { document.getElementById('authModal').style.display = 'flex'; switchAuth(mode || 'login'); }
