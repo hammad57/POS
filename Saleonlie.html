@@ -128,6 +128,11 @@
   .cat-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
   .cat-chip { border: 1px solid #0a7d3b; background: #fff; color: #0a7d3b; border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: 13px; cursor: pointer; }
   .cat-chip.active { background: #0a7d3b; color: #fff; }
+
+  .notice-banner { background: #fff3cd; color: #6d5410; border-bottom: 1px solid #ffe082; padding: 10px 14px; text-align: center; font-size: 14.5px; font-weight: 600; }
+  .closed-banner { background: #b3261e; color: #fff; padding: 11px 14px; text-align: center; font-size: 15px; font-weight: 700; }
+  .stock.oos { color: #b3261e; font-weight: 800; }
+  .cta[disabled] { background: #9db8ab !important; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -308,13 +313,13 @@
         <label for="fRemarks">Remarks</label>
         <textarea id="fRemarks" placeholder="Koi bhee extra baat jo aap batana chahein, yahan likhein"></textarea>
         <p class="pay-hint">💵 <b>Payment:</b> Cash on Delivery, ya Easypaisa — 0342-3944508 (Account Title: Malook Hussain)<br>📌 Order ka status dekhne ke liye upar wala "Meray Orders" page kholein — order usi mobile number se save hota hai jo aap yahan likhte hain.</p>
-        <button class="cta" type="submit">Order Now — WhatsApp par bhejein</button>
+        <button class="cta" type="submit" id="orderSubmitBtn">Order Now — WhatsApp par bhejein</button>
         <div class="note-ok" id="orderNote"></div>
       </form>
       <div class="adv-box">
         <b>💳 Advance Payment — Rs. 110 Discount</b>
         <p>Cash on Delivery ki bajaye advance payment karna chahein to WhatsApp par rabta karein — product ki mukammal tafseel khud message mein chali jayegi aur aap ko <b>Rs. 110 ka discount</b> bhee milega.</p>
-        <button class="cta adv" type="button" onclick="advancePay()">WhatsApp par Advance Payment ki baat karein</button>
+        <button class="cta adv" type="button" id="advPayBtn" onclick="advancePay()">WhatsApp par Advance Payment ki baat karein</button>
       </div>
     </div>
 
@@ -575,6 +580,12 @@
     document.getElementById('dPrice').textContent = fmtPKR(p.sale);
     document.getElementById('dAdv').innerHTML = '💳 Advance payment par <b>Rs. 110 OFF</b> — sirf ' + fmtPKR(p.sale - 110);
     document.getElementById('dStock').textContent = p.stock || 'In Stock';
+    var isOOS = (p.stock || '').toLowerCase().indexOf('out') >= 0;
+    document.getElementById('dStock').classList.toggle('oos', isOOS);
+    window.CUR_OOS = isOOS;
+    var osb = document.getElementById('orderSubmitBtn');
+    if (osb) { osb.disabled = isOOS; osb.textContent = isOOS ? '❌ Out of Stock — abhi order nahi ho sakta' : 'Order Now — WhatsApp par bhejein'; }
+    var apb = document.getElementById('advPayBtn'); if (apb) apb.style.display = isOOS ? 'none' : '';
     var chips = '';
     if (p.sizes && p.sizes.length) chips += '<span class="chip"><b>Sizes:</b> ' + escapeHtml(p.sizes.join(' · ')) + '</span>';
     if (p.colours && p.colours.length) chips += '<span class="chip"><b>Colours:</b> ' + escapeHtml(p.colours.join(' · ')) + '</span>';
@@ -637,6 +648,8 @@
 
   async function placeOrder(e) {
     e.preventDefault();
+    if (window.SHOP_CLOSED) { alert('Shop abhi band hai — filhal order nahi liya ja raha. Meharbani karke baad mein koshish karein.'); return false; }
+    if (window.CUR_OOS) { alert('Ye product abhi Out of Stock hai — order nahi ho sakta.'); return false; }
     var name = document.getElementById('fName').value.trim();
     var phone = document.getElementById('fPhone').value.trim();
     var address = document.getElementById('fAddress').value.trim();
@@ -860,10 +873,48 @@
   }
   function openCategory(cat) { showView('products'); filterProducts(cat); }
 
+
+  // ================= SHOP PANEL CONTROLS =================
+  function showShopBanner(text, closed) {
+    var h = document.querySelector('header.site'); if (!h || document.getElementById('shopBanner')) return;
+    var d = document.createElement('div');
+    d.id = 'shopBanner'; d.className = closed ? 'closed-banner' : 'notice-banner'; d.textContent = text;
+    h.parentNode.insertBefore(d, h.nextSibling);
+  }
+  async function applyPanelControls() {
+    try {
+      var s = await dbRead('settings');
+      if (s) {
+        if (s.shop_open === false) { window.SHOP_CLOSED = true; showShopBanner('⛔ Shop abhi band hai — filhal orders nahi liye ja rahe. Thodi dair baad dobara koshish karein.', true); }
+        else if (s.announcement) { showShopBanner('📢 ' + s.announcement, false); }
+      }
+      var ov = await dbRead('overrides');
+      if (ov) {
+        Object.keys(ov).forEach(function(code) {
+          var o = ov[code] || {};
+          var p = null;
+          PRODUCTS.forEach(function(x) { if (x.code === code) p = x; });
+          if (o.oos && p) p.stock = 'Out of Stock';
+          if (o.hidden) {
+            PRODUCTS = PRODUCTS.filter(function(x) { return x.code !== code; });
+            ['gridProducts', 'gridAll'].forEach(function(gid) {
+              var g = document.getElementById(gid); if (!g) return;
+              Array.prototype.slice.call(g.children).forEach(function(card) { if (card.innerHTML.indexOf("'" + code + "'") >= 0) card.remove(); });
+            });
+          }
+        });
+        var still = false;
+        PRODUCTS.forEach(function(x) { if (x.code === selected.code) still = true; });
+        if (!still && PRODUCTS.length) applySelection(PRODUCTS[0]);
+      }
+    } catch (e) {}
+  }
+
   // ================= INIT =================
   buildChips();
   filterProducts('');
   tryAutoLogin();
+  applyPanelControls();
   if (!localStorage.getItem('saleonlie_session') && !localStorage.getItem('saleonlie_seen')) {
     setTimeout(function() { if (!currentUser && !localStorage.getItem('saleonlie_session')) openAuth('signup'); }, 700);
   }
