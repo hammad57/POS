@@ -17,7 +17,14 @@
   @media (max-width: 720px) { .product { grid-template-columns: 1fr; } }
   .main-img { width: 100%; border-radius: 12px; border: 1px solid #e4e9e6; display: block; }
   .main-wrap { position: relative; }
-  .pno-badge { position: absolute; top: 12px; left: 12px; background: #ffb703; color: #1c1500; font-weight: 800; font-size: 17px; padding: 8px 14px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,.35); letter-spacing: .3px; }
+  .pno-badge { position: absolute; bottom: 10px; right: 10px; background: #ffb703; color: #1c1500; font-weight: 700; font-size: 13px; padding: 5px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.35); letter-spacing: .2px; }
+  .main-img { cursor: zoom-in; }
+  #lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.96); z-index: 999; align-items: center; justify-content: center; overflow: hidden; touch-action: none; }
+  #lbImg { max-width: 100%; max-height: 92vh; user-select: none; -webkit-user-drag: none; }
+  .lb-cap { position: fixed; top: 14px; left: 16px; color: #fff; font-size: 15px; font-weight: 700; background: rgba(255,255,255,.14); padding: 6px 12px; border-radius: 8px; }
+  .lb-btn { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.35); width: 42px; height: 42px; border-radius: 50%; font-size: 20px; cursor: pointer; line-height: 1; }
+  .lb-close { position: fixed; top: 10px; right: 12px; }
+  .lb-zoombtns { position: fixed; bottom: 18px; right: 12px; display: flex; gap: 8px; }
   .price-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 4px 0 2px; }
   .cta.small { width: auto; display: inline-block; margin-top: 0; padding: 10px 24px; font-size: 16px; }
   .pic-label { text-align: center; font-weight: 700; font-size: 15px; color: #0b5136; background: #eef7f1; border: 1px solid #cfe6d7; border-radius: 8px; padding: 7px; margin-top: 8px; }
@@ -69,19 +76,19 @@
     <div class="product">
       <div>
         <div class="main-wrap">
-          <img class="main-img" id="mainImg" src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp" alt="2 Pcs Women's Stitched Cotton Jersey Printed Night Suit">
+          <img class="main-img" id="mainImg" src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp" alt="2 Pcs Women's Stitched Cotton Jersey Printed Night Suit" onclick="openLB(this.src, document.getElementById('picLabel').textContent, null)">
           <div class="pno-badge">Code: MZ2098204428DK</div>
         </div>
         <div class="pic-label" id="picLabel">Picture #1</div>
         <div class="thumbs">
-          <figure class="active" onclick="showPic('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp','Picture #1',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp" alt="Picture 1"><figcaption>1</figcaption></figure>
-          <figure onclick="showPic('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-2.webp','Picture #2',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-2.webp" alt="Picture 2"><figcaption>2</figcaption></figure>
-          <figure onclick="showPic('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-3.webp','Picture #3',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-3.webp" alt="Picture 3"><figcaption>3</figcaption></figure>
-          <figure onclick="showPic('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-4.webp','Picture #4',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-4.webp" alt="Picture 4"><figcaption>4</figcaption></figure>
-          <figure onclick="showPic('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-5.webp','Picture #5',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-5.webp" alt="Picture 5"><figcaption>5</figcaption></figure>
-          <figure onclick="showPic('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-6.webp','Picture #6',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-6.webp" alt="Picture 6"><figcaption>6</figcaption></figure>
-          <figure onclick="showPic('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-8.webp','Picture #7',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-8.webp" alt="Picture 7"><figcaption>7</figcaption></figure>
-          <figure onclick="showPic('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-7.webp','Size Chart',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-7.webp" alt="Size Chart"><figcaption>Size Chart</figcaption></figure>
+          <figure class="active" onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp','Picture #1',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-1.webp" alt="Picture 1"><figcaption>1</figcaption></figure>
+          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-2.webp','Picture #2',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-2.webp" alt="Picture 2"><figcaption>2</figcaption></figure>
+          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-3.webp','Picture #3',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-3.webp" alt="Picture 3"><figcaption>3</figcaption></figure>
+          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-4.webp','Picture #4',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-4.webp" alt="Picture 4"><figcaption>4</figcaption></figure>
+          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-5.webp','Picture #5',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-5.webp" alt="Picture 5"><figcaption>5</figcaption></figure>
+          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-6.webp','Picture #6',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-6.webp" alt="Picture 6"><figcaption>6</figcaption></figure>
+          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-8.webp','Picture #7',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-8.webp" alt="Picture 7"><figcaption>7</figcaption></figure>
+          <figure onclick="openLB('https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-7.webp','Size Chart',this)"><img src="https://static.markaz.app/pakistan/products/2098-14-MZ2098204428DK-773734001-product-7.webp" alt="Size Chart"><figcaption>Size Chart</figcaption></figure>
         </div>
       </div>
       <div>
@@ -176,6 +183,16 @@
   Order WhatsApp ke zariye confirm hota hai · Cash on Delivery available
 </footer>
 
+  <div id="lightbox" onclick="if(event.target===this) closeLB(false)">
+    <img id="lbImg" src="" alt="Full screen picture">
+    <div class="lb-cap" id="lbCap"></div>
+    <button class="lb-btn lb-close" type="button" onclick="closeLB(false)" aria-label="Band karein">✕</button>
+    <div class="lb-zoombtns">
+      <button class="lb-btn" type="button" onclick="zoomStep(1.3)" aria-label="Zoom in">+</button>
+      <button class="lb-btn" type="button" onclick="zoomStep(0.77)" aria-label="Zoom out">−</button>
+    </div>
+  </div>
+
 <script>
   var WA_NUMBER = "923423944508"; // shop ka WhatsApp number (international format, baghair + ke)
   var selected = { code: "MZ2098204428DK", name: "2 Pcs Women's Stitched Cotton Jersey Printed Night Suit", price: "PKR 1,999" };
@@ -183,10 +200,76 @@
   function showPic(src, label, el) {
     document.getElementById('mainImg').src = src;
     document.getElementById('picLabel').textContent = label;
-    var figs = el.parentElement.querySelectorAll('figure');
-    figs.forEach(function(f) { f.classList.remove('active'); });
-    el.classList.add('active');
+    if (el) {
+      var figs = el.parentElement.querySelectorAll('figure');
+      figs.forEach(function(f) { f.classList.remove('active'); });
+      el.classList.add('active');
+    }
   }
+
+  var lbSrc = '', lbLabel = '', lbEl = null, lbOpen = false, lbPushed = false;
+  var lbScale = 1, lbX = 0, lbY = 0;
+
+  function applyZoom() {
+    document.getElementById('lbImg').style.transform = 'translate(' + lbX + 'px,' + lbY + 'px) scale(' + lbScale + ')';
+  }
+  function resetZoom() { lbScale = 1; lbX = 0; lbY = 0; applyZoom(); }
+  function zoomStep(f) {
+    lbScale = Math.min(4, Math.max(1, lbScale * f));
+    if (lbScale === 1) { lbX = 0; lbY = 0; }
+    applyZoom();
+  }
+
+  function openLB(src, label, el) {
+    lbSrc = src; lbLabel = label; lbEl = el;
+    document.getElementById('lbImg').src = src;
+    document.getElementById('lbCap').textContent = label;
+    resetZoom();
+    document.getElementById('lightbox').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    lbOpen = true;
+    if (!lbPushed) { history.pushState({ lb: 1 }, ''); lbPushed = true; }
+  }
+
+  function closeLB(fromPop) {
+    if (!lbOpen) return;
+    lbOpen = false;
+    document.getElementById('lightbox').style.display = 'none';
+    document.body.style.overflow = '';
+    if (lbEl) showPic(lbSrc, lbLabel, lbEl);
+    if (!fromPop && lbPushed) { lbPushed = false; history.back(); }
+    if (fromPop) lbPushed = false;
+  }
+
+  window.addEventListener('popstate', function() { if (lbOpen) closeLB(true); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLB(false); });
+
+  var lbImgEl = document.getElementById('lbImg');
+  var lbPointers = new Map(); var lbPinchDist = 0;
+  lbImgEl.addEventListener('pointerdown', function(e) {
+    lbPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    lbImgEl.setPointerCapture(e.pointerId);
+  });
+  lbImgEl.addEventListener('pointermove', function(e) {
+    if (!lbPointers.has(e.pointerId)) return;
+    var prev = lbPointers.get(e.pointerId);
+    lbPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (lbPointers.size === 1 && lbScale > 1) {
+      lbX += e.clientX - prev.x; lbY += e.clientY - prev.y; applyZoom();
+    } else if (lbPointers.size === 2) {
+      var pts = Array.from(lbPointers.values());
+      var d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if (lbPinchDist) { lbScale = Math.min(4, Math.max(1, lbScale * d / lbPinchDist)); applyZoom(); }
+      lbPinchDist = d;
+    }
+  });
+  function lbEndPointer(e) { lbPointers.delete(e.pointerId); if (lbPointers.size < 2) lbPinchDist = 0; }
+  lbImgEl.addEventListener('pointerup', lbEndPointer);
+  lbImgEl.addEventListener('pointercancel', lbEndPointer);
+  document.getElementById('lightbox').addEventListener('wheel', function(e) {
+    e.preventDefault(); zoomStep(e.deltaY < 0 ? 1.15 : 0.87);
+  }, { passive: false });
+  lbImgEl.addEventListener('dblclick', function() { if (lbScale > 1) resetZoom(); else { lbScale = 2; applyZoom(); } });
 
   function fillSelect(fieldId, selectId, values) {
     var field = document.getElementById(fieldId);
