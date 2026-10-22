@@ -166,20 +166,20 @@
     </div>
     <form id="form-login" class="auth-form" onsubmit="return doLogin(event)">
       <label for="liPhone">Mobile Number</label>
-      <input id="liPhone" type="tel" placeholder="Masalan: 03XX-XXXXXXX" required>
+      <input id="liPhone" type="tel" name="phone" autocomplete="tel" inputmode="numeric" placeholder="Masalan: 03XX-XXXXXXX" required>
       <label for="liPass">Password</label>
-      <input id="liPass" type="password" placeholder="Apna password" required>
+      <input id="liPass" type="password" name="password" autocomplete="current-password" placeholder="Apna password" required>
       <div class="auth-err" id="loginErr"></div>
       <button class="cta" type="submit">Login karein</button>
       <p class="auth-note">Login ke baad page refresh ya band karke dobara kholne par aap khud-ba-khud login rahenge — bar bar login nahi karna padega.</p>
     </form>
     <form id="form-signup" class="auth-form" style="display:none;" onsubmit="return doSignup(event)">
       <label for="suName">Aap ka Naam</label>
-      <input id="suName" type="text" placeholder="Masalan: Fatima Khan" required>
+      <input id="suName" type="text" name="name" autocomplete="name" placeholder="Masalan: Fatima Khan" required>
       <label for="suPhone">Mobile Number</label>
-      <input id="suPhone" type="tel" placeholder="Masalan: 03XX-XXXXXXX" required>
+      <input id="suPhone" type="tel" name="phone" autocomplete="tel" inputmode="numeric" placeholder="Masalan: 03XX-XXXXXXX" required>
       <label for="suPass">Password banayein</label>
-      <input id="suPass" type="password" placeholder="Kam az kam 4 characters" required>
+      <input id="suPass" type="password" name="new-password" autocomplete="new-password" placeholder="Kam az kam 4 characters" required>
       <div class="auth-err" id="signupErr"></div>
       <button class="cta" type="submit">Account banayein</button>
       <p class="auth-note">Mehfooz mashwara: apna bank/ATM wala password yahan istemal na karein — is shop ke liye alag asan password rakhein.</p>
@@ -776,6 +776,7 @@
     var phone = cleanPhone(document.getElementById('liPhone').value);
     var pass = document.getElementById('liPass').value;
     authError('loginErr', '');
+    if (phone.length < 10 || phone.length > 13) { authError('loginErr', 'Mobile number sahi likhein — is khane mein sirf apna mobile number likhein (naam nahi).'); return false; }
     try {
       var u = await dbRead('users/' + phone);
       if (!u) { authError('loginErr', 'Is number par koi account nahi hai — pehle Signup karein.'); return false; }
@@ -864,7 +865,7 @@
   filterProducts('');
   tryAutoLogin();
   if (!localStorage.getItem('saleonlie_session') && !localStorage.getItem('saleonlie_seen')) {
-    setTimeout(function() { if (!currentUser) openAuth('signup'); }, 700);
+    setTimeout(function() { if (!currentUser && !localStorage.getItem('saleonlie_session')) openAuth('signup'); }, 700);
   }
 </script>
 </body>
