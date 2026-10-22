@@ -1542,7 +1542,11 @@
     } catch (e) {}
     try {
       var st = await dbRead('settings');
-      if (st && st.offer) showShopBanner('🎁 ' + st.offer, false);
+      if (st && st.offer && !window.SHOP_CLOSED) {
+        var b = document.getElementById('shopBanner');
+        if (b) { b.textContent = '🎁 ' + st.offer; b.className = 'notice-banner'; }
+        else showShopBanner('🎁 ' + st.offer, false);
+      }
     } catch (e) {}
     try {
       var n = await dbRead('notifications/latest');
