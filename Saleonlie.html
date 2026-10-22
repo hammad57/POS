@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sale Online — Roz Ek Nayi Product | Women's Stitched (Markaz)</title>
+<title>Sale Online — Women's Stitched Collection</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f5; color: #1c2b26; }
@@ -29,7 +29,7 @@
   table.details td { padding: 7px 8px; border-bottom: 1px solid #eef1ef; }
   table.details td:first-child { font-weight: 700; color: #0b5136; width: 42%; }
   .infobox { background: #f7faf8; border: 1px solid #e2eae5; border-radius: 12px; padding: 12px 14px; font-size: 14px; margin-top: 12px; line-height: 1.6; }
-  .cta { display: block; text-align: center; background: #12805c; color: #fff; text-decoration: none; font-weight: 700; font-size: 17px; padding: 14px; border-radius: 12px; margin-top: 16px; }
+  .cta { display: block; text-align: center; background: #12805c; color: #fff; text-decoration: none; font-weight: 700; font-size: 17px; padding: 14px; border-radius: 12px; margin-top: 16px; border: none; cursor: pointer; width: 100%; }
   .cta:hover { background: #0b5136; }
   .note { font-size: 12px; color: #77817c; margin-top: 10px; line-height: 1.5; }
   h3.section { margin: 26px 0 4px; font-size: 19px; color: #0b5136; }
@@ -39,13 +39,19 @@
   .grid .item .n { font-size: 13.5px; font-weight: 600; margin: 8px 0 4px; line-height: 1.35; }
   .grid .item .p { color: #0b7a4b; font-weight: 800; }
   .grid .item .d { font-size: 11.5px; color: #77817c; }
+  .grid .item button { margin-top: 8px; width: 100%; background: #12805c; color: #fff; border: none; border-radius: 8px; padding: 9px; font-weight: 700; cursor: pointer; }
+  form.order { margin-top: 6px; }
+  form.order label { display: block; font-size: 13.5px; font-weight: 700; color: #0b5136; margin: 12px 0 5px; }
+  form.order input, form.order textarea { width: 100%; padding: 11px 12px; border: 1px solid #cfd8d3; border-radius: 10px; font-size: 15px; font-family: inherit; }
+  form.order textarea { min-height: 74px; resize: vertical; }
+  .order-summary { background: #eef7f1; border: 1px solid #cfe6d7; border-radius: 10px; padding: 10px 12px; font-size: 14.5px; line-height: 1.55; }
   footer { text-align: center; color: #77817c; font-size: 12.5px; padding: 18px 12px 30px; line-height: 1.6; }
 </style>
 </head>
 <body>
 <header>
   <h1>Sale Online</h1>
-  <p>Roz ek nayi product — Markaz Women's Stitched collection se</p>
+  <p>Women's Stitched Collection — roz ek nayi product</p>
 </header>
 
 <div class="wrap">
@@ -68,8 +74,8 @@
       </div>
       <div>
         <h2 class="pname">2 Pcs Women's Stitched Cotton Jersey Printed Night Suit</h2>
-        <div class="price">PKR 1,549</div>
-        <span class="stock">In Stock — 144 available</span>
+        <div class="price">PKR 1,999</div>
+        <span class="stock">In Stock</span>
 
         <div class="chips">
           <span class="chip"><b>Sizes:</b> Medium · Large · X-Large</span>
@@ -91,19 +97,39 @@
           <tr><td>Trouser Length</td><td>39 Inches</td></tr>
           <tr><td>Trouser Waist</td><td>36 Inches</td></tr>
           <tr><td>Trouser Hip</td><td>23 Inches</td></tr>
-          <tr><td>Product Code</td><td>MZ2098204428DK</td></tr>
         </table>
         <p class="note">Note: Manual measurement ki wajah se 1–3 cm ka farq ho sakta hai, aur lighting/monitor ki wajah se rang mein halka sa farq mumkin hai.</p>
 
         <div class="infobox">
-          <b>Seller:</b> DreamyDotspk (Karachi) — Verified Markaz Seller · Rating 4.2 · 694 Followers<br>
-          <b>Delivery:</b> 3–5 days · Charges PKR 99 · <b>Cash on Delivery available</b><br>
+          <b>Delivery:</b> 3–5 din · Delivery charges PKR 99 · <b>Cash on Delivery available</b><br>
           <b>Return:</b> 7 din ke andar return allowed (ghalat/different/incomplete order par)
         </div>
 
-        <a class="cta" href="https://www.markaz.app/shop/product/2-pcs-womens-stitched-cotton-jersey-printed-night-suit/773734" target="_blank" rel="noopener">Markaz par dekhein — Order karein</a>
+        <button class="cta" type="button" onclick="selectProduct('2 Pcs Women\'s Stitched Cotton Jersey Printed Night Suit', 'PKR 1,999')">Order Karein</button>
       </div>
     </div>
+  </div>
+
+  <!-- ======= ORDER FORM ======= -->
+  <div class="card" id="order">
+    <h3 class="section" style="margin-top:0">Order Form</h3>
+    <p class="note" style="margin-bottom:8px">Apni maloomat bharain aur Order Now dabain — aap ka order WhatsApp ke zariye ham tak pohanch jayega.</p>
+    <div class="order-summary">
+      <b>Product:</b> <span id="ordProduct">2 Pcs Women's Stitched Cotton Jersey Printed Night Suit</span><br>
+      <b>Price:</b> <span id="ordPrice">PKR 1,999</span> · Delivery charges: PKR 99<br>
+      <b>Payment:</b> Cash on Delivery, ya Easypaisa — 0342-3944508 (Account Title: Malook Hussain)
+    </div>
+    <form class="order" onsubmit="return placeOrder(event)">
+      <label for="fName">Aap ka Naam *</label>
+      <input id="fName" type="text" required placeholder="Masalan: Fatima Khan">
+      <label for="fPhone">Rabta / WhatsApp Number *</label>
+      <input id="fPhone" type="tel" required placeholder="Masalan: 03XX-XXXXXXX">
+      <label for="fAddress">Delivery Address *</label>
+      <textarea id="fAddress" required placeholder="Makan no, gali, area, sheher"></textarea>
+      <label for="fRemarks">Remarks (ikhtiyari)</label>
+      <textarea id="fRemarks" placeholder="Size, rang, ya koi khaas baat — masalan: Size Large, rang Purple"></textarea>
+      <button class="cta" type="submit">Order Now — WhatsApp par bhejein</button>
+    </form>
   </div>
 
   <!-- ======= PICHLI PRODUCTS ======= -->
@@ -114,8 +140,39 @@
 </div>
 
 <footer>
-  Source: Markaz app — Women's Stitched category. Tamam prices aur details Markaz listing ke mutabiq hain aur wahan tabdeel ho sakti hain.<br>
-  Sale Online — daily product page
+  Sale Online — Women's Stitched Collection<br>
+  Order WhatsApp ke zariye confirm hota hai · Cash on Delivery available
 </footer>
+
+<script>
+  var WA_NUMBER = "923423944508"; // shop ka WhatsApp number (international format, baghair + ke)
+  var selected = { name: "2 Pcs Women's Stitched Cotton Jersey Printed Night Suit", price: "PKR 1,999" };
+
+  function selectProduct(name, price) {
+    selected = { name: name, price: price };
+    document.getElementById('ordProduct').textContent = name;
+    document.getElementById('ordPrice').textContent = price;
+    document.getElementById('order').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function placeOrder(e) {
+    e.preventDefault();
+    var name = document.getElementById('fName').value.trim();
+    var phone = document.getElementById('fPhone').value.trim();
+    var address = document.getElementById('fAddress').value.trim();
+    var remarks = document.getElementById('fRemarks').value.trim();
+    if (!name || !phone || !address) { alert('Meharbani karke Naam, Rabta Number aur Delivery Address zaroor bharain.'); return false; }
+    var msg = "Assalam-o-Alaikum! Mujhe Sale Online se order karna hai.\n\n"
+      + "Product: " + selected.name + "\n"
+      + "Price: " + selected.price + "\n"
+      + "Delivery Charges: PKR 99\n\n"
+      + "Naam: " + name + "\n"
+      + "Rabta Number: " + phone + "\n"
+      + "Delivery Address: " + address + "\n"
+      + (remarks ? "Remarks: " + remarks + "\n" : "");
+    window.location.href = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(msg);
+    return false;
+  }
+</script>
 </body>
 </html>
