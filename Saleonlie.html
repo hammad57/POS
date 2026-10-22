@@ -929,7 +929,7 @@
     if (savedId) {
       try { var myIds = JSON.parse(localStorage.getItem('saleonlie_my_orders') || '[]'); myIds.push(savedId); localStorage.setItem('saleonlie_my_orders', JSON.stringify(myIds.slice(-50))); } catch (err2) {}
       try { localStorage.setItem('saleonlie_last_phone', phone); } catch (err3) {}
-      if (totals.redeemed) { await setBonusForPhone(phone, Math.max(0, bonusForPhone(phone) - totals.redeemed)); }
+      if (totals.redeemed) { var bPhone = currentUser ? currentUser.phone : phone; await setBonusForPhone(bPhone, Math.max(0, bonusForPhone(bPhone) - totals.redeemed)); }
       redeemApplied = false; bonusRedeemed = 0;
       saveCart([]); updateCartBadge();
       var note = document.getElementById('cartNote');
@@ -1019,12 +1019,14 @@
   }
   function authError(id, msg) { var el = document.getElementById(id); el.textContent = msg; el.style.display = msg ? 'block' : 'none'; }
   function cleanPhone(p) { return p.replace(/[^0-9]/g, ''); }
+  function normPhone(p) { var d = cleanPhone(p || ''); if (d.length === 12 && d.indexOf('92') === 0) d = '0' + d.slice(2); else if (d.length === 10 && d.charAt(0) === '3') d = '0' + d; return d; }
 
   async function startSession(phone, name, passHash) {
     var token = await sha256(phone + ':' + passHash);
     localStorage.setItem('saleonlie_session', JSON.stringify({ phone: phone, name: name, token: token }));
     currentUser = { phone: phone, name: name };
     setAccountUI();
+    refreshBonus();
     prefillOrderForm();
     closeAuth();
     if (currentView === 'orders') loadOrders();
@@ -1082,7 +1084,7 @@
     try {
       var s = JSON.parse(raw);
       var u = await dbRead('users/' + s.phone);
-      if (u && s.token === await sha256(s.phone + ':' + u.pass)) { currentUser = { phone: s.phone, name: u.name }; prefillOrderForm(); }
+      if (u && s.token === await sha256(s.phone + ':' + u.pass)) { currentUser = { phone: s.phone, name: u.name }; prefillOrderForm(); refreshBonus(); }
       else { localStorage.removeItem('saleonlie_session'); }
     } catch (e) { /* offline par session rehne dein */ }
     setAccountUI();
@@ -1155,8 +1157,8 @@
         .filter(function(o) {
           if (ids.indexOf(o.id) >= 0) return true;
           if (!currentUser) return false;
-          var me = currentUser.phone;
-          return cleanPhone(o.phone || '') === me || (o.account && cleanPhone(o.account) === me);
+          var me = normPhone(currentUser.phone);
+          return normPhone(o.phone || '') === me || (o.account && normPhone(o.account) === me);
         })
         .sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); });
       if (!mine.length) { box.innerHTML = '<div class="empty">Abhi tak aap ka koi order nahi hai.<br>Pasandeeda product par <b>Add to Cart</b> dabakar pehla order karein!</div>'; return; }
@@ -1343,14 +1345,19 @@
   }
   async function setBonusForPhone(phone, amount) {
     try { localStorage.setItem(bonusPhoneKey(phone), String(amount)); } catch (e) {}
-    if (currentUser && phone === currentUser.phone) {
-      try { var u = await dbRead('users/' + phone); if (u) await dbUpdate('users/' + phone, { bonusBalance: amount }); } catch (e) {}
-    }
+    try { var u2 = await dbRead('users/' + phone); if (u2) await dbUpdate('users/' + phone, { bonusBalance: amount }); } catch (e) {}
     updateHomeBonus();
   }
   async function refreshBonus() {
     if (!currentUser) return;
-    try { var u = await dbRead('users/' + currentUser.phone); if (u && typeof u.bonusBalance === 'number') { try { localStorage.setItem(bonusPhoneKey(currentUser.phone), String(u.bonusBalance)); } catch (e) {} updateHomeBonus(); } } catch (e) {}
+    try {
+      var u = await dbRead('users/' + currentUser.phone); if (!u) return;
+      var local = bonusForPhone(currentUser.phone);
+      var db = (typeof u.bonusBalance === 'number') ? u.bonusBalance : 0;
+      if (local > db) { try { await dbUpdate('users/' + currentUser.phone, { bonusBalance: local }); } catch (e) {} }
+      else if (db !== local) { try { localStorage.setItem(bonusPhoneKey(currentUser.phone), String(db)); } catch (e) {} }
+      updateHomeBonus();
+    } catch (e) {}
   }
   function updateHomeBonus() {
     var bal = getBonusLocal();
