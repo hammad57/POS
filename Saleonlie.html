@@ -651,13 +651,14 @@
     if (window.SHOP_CLOSED) { alert('Shop abhi band hai — filhal order nahi liya ja raha. Meharbani karke baad mein koshish karein.'); return false; }
     if (window.CUR_OOS) { alert('Ye product abhi Out of Stock hai — order nahi ho sakta.'); return false; }
     var name = document.getElementById('fName').value.trim();
-    var phone = document.getElementById('fPhone').value.trim();
+    var phone = cleanPhone(document.getElementById('fPhone').value);
     var address = document.getElementById('fAddress').value.trim();
     var remarks = document.getElementById('fRemarks').value.trim();
     var colour = document.getElementById('colourField').style.display !== 'none' ? document.getElementById('fColour').value : '';
     var size = document.getElementById('sizeField').style.display !== 'none' ? document.getElementById('fSize').value : '';
     if (!name || !phone || !address) { alert('Meharbani karke Naam, Rabta Number aur Delivery Address zaroor bharain.'); return false; }
-    var order = { phone: phone, customer: name, address: address, code: selected.code, product: selected.name, price: selected.price, colour: colour, size: size, remarks: remarks, status: 'Pending', ts: Date.now() };
+    if (phone.length < 10 || phone.length > 13) { alert('Rabta Number sahi likhein (masalan 03XX-XXXXXXX).'); return false; }
+    var order = { phone: phone, account: (currentUser ? currentUser.phone : ''), customer: name, address: address, code: selected.code, product: selected.name, price: selected.price, colour: colour, size: size, remarks: remarks, status: 'Pending', ts: Date.now() };
     var savedId = null;
     try { savedId = await dbPush('orders', order); } catch (err) { savedId = null; }
     var msg = "Assalam-o-Alaikum! Mujhe Sale Online se order karna hai.\n\n"
@@ -674,7 +675,7 @@
       + (remarks ? "Remarks: " + remarks + "\n" : "");
     window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
     var note = document.getElementById('orderNote');
-    if (savedId) { note.innerHTML = '✅ <b>Order save ho gaya hai!</b> Is ka status dekhne ke liye upar <b>Meray Orders</b> page par jayein (login usi mobile number se karein jo form mein likha hai).'; note.style.display = 'block'; }
+    if (savedId) { note.innerHTML = '✅ <b>Order save ho gaya hai!</b> Is ka status dekhne ke liye <b>Meray Orders</b> page par jayein — agar order ke waqt aap login nahi thay to usi mobile number se login karein jo form mein likha tha.'; note.style.display = 'block'; }
     return false;
   }
 
@@ -761,6 +762,7 @@
     localStorage.setItem('saleonlie_session', JSON.stringify({ phone: phone, name: name, token: token }));
     currentUser = { phone: phone, name: name };
     setAccountUI();
+    prefillOrderForm();
     closeAuth();
     if (currentView === 'orders') loadOrders();
   }
@@ -799,6 +801,11 @@
     return false;
   }
 
+  function prefillOrderForm() {
+    if (!currentUser) return;
+    var n = document.getElementById('fName'); if (n && !n.value) n.value = currentUser.name || '';
+    var p = document.getElementById('fPhone'); if (p && !p.value) p.value = currentUser.phone || '';
+  }
   function logout() {
     currentUser = null;
     localStorage.removeItem('saleonlie_session');
@@ -812,7 +819,7 @@
     try {
       var s = JSON.parse(raw);
       var u = await dbRead('users/' + s.phone);
-      if (u && s.token === await sha256(s.phone + ':' + u.pass)) { currentUser = { phone: s.phone, name: u.name }; }
+      if (u && s.token === await sha256(s.phone + ':' + u.pass)) { currentUser = { phone: s.phone, name: u.name }; prefillOrderForm(); }
       else { localStorage.removeItem('saleonlie_session'); }
     } catch (e) { /* offline par session rehne dein */ }
     setAccountUI();
@@ -831,7 +838,7 @@
     try {
       var all = await dbRead('orders') || {};
       var mine = Object.keys(all).map(function(k) { var o = all[k]; o.id = k; return o; })
-        .filter(function(o) { return o.phone === currentUser.phone; })
+        .filter(function(o) { var me = currentUser.phone; return cleanPhone(o.phone || '') === me || (o.account && cleanPhone(o.account) === me); })
         .sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); });
       if (!mine.length) { box.innerHTML = '<div class="empty">Abhi tak aap ka koi order nahi hai.<br>Pasandeeda product par <b>Order Now</b> dabakar pehla order karein!</div>'; return; }
       box.innerHTML = mine.map(function(o) {
