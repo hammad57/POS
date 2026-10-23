@@ -110,6 +110,16 @@
       <div class="note" id="updStatus">The update runs on the server — it usually completes within an hour. Keep this page open to see the result here.</div>
     </div>
 
+    <div class="card" style="display:flex; align-items:center; gap:16px;">
+      <div style="font-size:40px;">👥</div>
+      <div>
+        <div style="font-size:15px; color:#5a6e63; font-weight:700;">SHOP VISITORS (UNIQUE)</div>
+        <div style="font-size:34px; font-weight:800; color:#0b5136; line-height:1.1;" id="visitorCount">…</div>
+        <div class="note" style="margin:0;">Har user sirf <b>aik dafa</b> count hota hai — bar bar aane par dobara count nahi hota.</div>
+      </div>
+      <button class="cta small gray" type="button" style="margin-left:auto;" onclick="loadVisitors()">🔄</button>
+    </div>
+
     <div class="tabs">
       <button class="tab-btn active" type="button" id="tb-orders" onclick="switchTab('orders')">🧾 Orders</button>
       <button class="tab-btn" type="button" id="tb-items" onclick="switchTab('items')">📦 Store Items</button>
@@ -228,7 +238,16 @@
   function statusClass(s) { return { 'Pending': 'st-pending', 'Confirmed': 'st-confirmed', 'Shipped': 'st-shipped', 'Delivered': 'st-delivered', 'Cancelled': 'st-cancelled' }[s] || 'st-pending'; }
   var STATUSES = ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'];
 
+  async function loadVisitors() {
+    try {
+      var t = await dbRead('visits/total');
+      if (typeof t !== 'number') { var us = await dbRead('visits/users') || {}; t = Object.keys(us).length; }
+      var el = document.getElementById('visitorCount'); if (el) el.textContent = t;
+    } catch (e) { var el2 = document.getElementById('visitorCount'); if (el2) el2.textContent = '—'; }
+  }
+
   async function loadAdmin() {
+    loadVisitors();
     var box = document.getElementById('adminOrders');
     box.innerHTML = '<div class="empty">Orders load ho rahe hain...</div>';
     try {
