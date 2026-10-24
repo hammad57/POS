@@ -907,7 +907,6 @@
     if (fromPop) lbPushed = false;
   }
 
-  window.addEventListener('popstate', function() { if (lbOpen) { closeLB(true); return; } if (expectLbPop) { expectLbPop = false; return; } onDetailPop(); });
   document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLB(false); });
 
   var lbImgEl = document.getElementById('lbImg');
@@ -979,13 +978,16 @@
     picIndex = 0;
     document.getElementById('dName').textContent = p.name;
     document.getElementById('dPrice').textContent = fmtPKR(p.sale);
-    document.getElementById('dAdv').innerHTML = '💳 <b>Rs. 110 OFF</b> on advance payment — only ' + fmtPKR(p.sale - 110);
+    document.getElementById('dAdv').innerHTML = '💳 <b>Rs. 110 OFF</b> on advance payment — only ' + fmtPKR(Math.max(0, p.sale - 110));
     document.getElementById('dStock').textContent = p.stock || 'In Stock';
     var isOOS = (p.stock || '').toLowerCase().indexOf('out') >= 0;
     document.getElementById('dStock').classList.toggle('oos', isOOS);
     window.CUR_OOS = isOOS;
     var osb = document.getElementById('placeCartBtn');
-    if (osb) { osb.disabled = isOOS; }
+    if (osb) { osb.disabled = false; }   // never touch cart checkout here
+    document.querySelectorAll('#view-detail button.cta').forEach(function(b) {
+      if (b.textContent.indexOf('Add to Cart') >= 0) b.disabled = isOOS;
+    });
     var apb = document.getElementById('advPayBtn'); if (apb) apb.style.display = isOOS ? 'none' : '';
     var chips = '';
     if (p.sizes && p.sizes.length) chips += '<span class="chip"><b>Sizes:</b> ' + escapeHtml(p.sizes.join(' · ')) + '</span>';
@@ -1079,7 +1081,7 @@
     if (savedId) {
       try { var myIds = JSON.parse(localStorage.getItem('saleonlie_my_orders') || '[]'); myIds.push(savedId); localStorage.setItem('saleonlie_my_orders', JSON.stringify(myIds.slice(-50))); } catch (err2) {}
       try { localStorage.setItem('saleonlie_last_phone', phone); } catch (err3) {}
-      if (totals.redeemed) { var bPhone = currentUser ? currentUser.phone : phone; await setBonusForPhone(bPhone, Math.max(0, bonusForPhone(bPhone) - totals.redeemed)); }
+      if (totals.redeemed) { var bPhone = currentUser ? currentUser.phone : phone; await adjustBonusForPhone(bPhone, -totals.redeemed); }
       redeemApplied = false; bonusRedeemed = 0;
       saveCart([]); updateCartBadge();
       var note = document.getElementById('cartNote');
@@ -1116,7 +1118,7 @@
   function advancePay() {
     var colour = document.getElementById('colourField').style.display !== 'none' ? document.getElementById('fColour').value : '';
     var size = document.getElementById('sizeField').style.display !== 'none' ? document.getElementById('fSize').value : '';
-    var p = priceNum(); var d = p - 110;
+    var p = priceNum(); var d = Math.max(0, p - 110);
     var msg = "Hello! I would like to place this order with ADVANCE PAYMENT instead of Cash on Delivery — for the Rs. 110 discount.\n\n"
       + "Product Code: " + selected.code + "\n"
       + "Product: " + selected.name + "\n"
@@ -1297,7 +1299,7 @@
       var reviews = o.reviews || {}; reviews[idx] = { stars: stars, text: text, ts: Date.now(), code: code };
       await dbUpdate('orders/' + orderId, { reviews: reviews });
       var phone = o.account || o.phone;
-      await setBonusForPhone(phone, bonusForPhone(phone) + BONUS_PER_REVIEW);
+      await adjustBonusForPhone(phone, BONUS_PER_REVIEW);
       updateHomeBonus();
       showBonusCelebration(BONUS_PER_REVIEW);
       loadOrders();
@@ -1497,7 +1499,9 @@
     prefillOrderForm(); cartPayChange(); updateCartBadge();
   }
   // ----- Bonus balance (per phone, local + Firebase when logged in) -----
-  function bonusPhoneKey(phone) { return 'saleonlie_bonus_' + (phone || 'guest'); }
+  function bonusPhoneKey(phone) {
+    return 'saleonlie_bonus_' + (normPhone(phone) || 'guest');
+  }
   function bonusForPhone(phone) { try { return parseInt(localStorage.getItem(bonusPhoneKey(phone)) || '0', 10) || 0; } catch (e) { return 0; } }
   function getBonusLocal() {
     if (currentUser) return bonusForPhone(currentUser.phone);
@@ -1508,6 +1512,19 @@
     try { localStorage.setItem(bonusPhoneKey(phone), String(amount)); } catch (e) {}
     try { var u2 = await dbRead('users/' + phone); if (u2) await dbUpdate('users/' + phone, { bonusBalance: amount }); } catch (e) {}
     updateHomeBonus();
+  }
+  async function adjustBonusForPhone(phone, delta) {
+    if (!phone) return 0;
+    var local = bonusForPhone(phone);
+    var db = 0;
+    try {
+      var u = await dbRead('users/' + phone);
+      if (u && typeof u.bonusBalance === 'number') db = u.bonusBalance;
+    } catch (e) {}
+    var current = Math.max(local, db);
+    var next = Math.max(0, current + delta);
+    await setBonusForPhone(phone, next);
+    return next;
   }
   async function refreshBonus() {
     if (!currentUser) return;
@@ -1532,16 +1549,26 @@
   // ----- Mobile back button: one step back, page does not close -----
   try { history.replaceState({ view: 'home' }, ''); } catch (e) {}
   window.addEventListener('popstate', function(ev) {
-    var lb = document.getElementById('lightbox');
-    if (lb && lb.style.display === 'flex') { closeLB(true); try { history.pushState({ view: currentView, code: currentDetailCode }, ''); } catch (e2) {} return; }
+    if (lbOpen) { closeLB(true); return; }        // close lightbox, do NOT pushState
+    if (expectLbPop) { expectLbPop = false; return; }
+
     var dr = document.getElementById('drawer');
-    if (dr && dr.classList.contains('open')) { closeDrawer(); try { history.pushState({ view: currentView, code: currentDetailCode }, ''); } catch (e3) {} return; }
+    if (dr && dr.classList.contains('open')) {
+      closeDrawer();
+      try { history.pushState({ view: currentView, code: currentDetailCode }, ''); } catch (e) {}
+      return;
+    }
     var am = document.getElementById('authModal');
-    if (am && am.style.display === 'flex') { closeAuth(); try { history.pushState({ view: currentView, code: currentDetailCode }, ''); } catch (e4) {} return; }
+    if (am && am.style.display === 'flex') {
+      closeAuth();
+      try { history.pushState({ view: currentView, code: currentDetailCode }, ''); } catch (e) {}
+      return;
+    }
+
     var s = ev.state;
     if (!s) {
       if (currentView !== 'home') { popNav = true; showView('home', true); popNav = false; }
-      try { history.pushState({ view: 'home' }, ''); viewStack = [{ view: 'home' }]; } catch (e5) {}
+      try { history.pushState({ view: 'home' }, ''); viewStack = [{ view: 'home' }]; } catch (e) {}
       return;
     }
     if (viewStack.length > 1) viewStack.pop();
@@ -1630,7 +1657,23 @@
   }
 
   // ================= STORE EXTRAS: price overrides, offer, notifications =================
-  async function dbDelete(path) { var r = await fetch(dbUrl(path), { method: 'DELETE' }); if (!r.ok) throw new Error('DB delete fail'); return true; }
+  async function dbDelete(path) {
+    if (!DB_URL) {
+      var d = localDb();
+      var parts = path.split('/');
+      var cur = d;
+      for (var i = 0; i < parts.length - 1; i++) {
+        if (typeof cur[parts[i]] !== 'object' || cur[parts[i]] === null) return true;
+        cur = cur[parts[i]];
+      }
+      delete cur[parts[parts.length - 1]];
+      saveLocalDb(d);
+      return true;
+    }
+    var r = await fetch(dbUrl(path), { method: 'DELETE' });
+    if (!r.ok) throw new Error('DB delete fail');
+    return true;
+  }
   async function applyStoreExtras() {
     try {
       var po = await dbRead('price_overrides');
