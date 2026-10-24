@@ -179,6 +179,12 @@
   .d-login { width: 100%; background: #0b7a4b; color: #fff; border: none; padding: 13px; border-radius: 11px; font-weight: 800; font-size: 15.5px; cursor: pointer; font-family: inherit; }
   #catTiles { display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden; padding: 6px 2px 14px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
   #catTiles .cat-tile { flex: 0 0 min(255px, 76vw); scroll-snap-align: start; margin: 0; }
+  /* ===== Categories: slow auto-scroll + 3D look + drag slide (2026-10-25) ===== */
+  #catTiles { scrollbar-width: none; perspective: 900px; }
+  #catTiles::-webkit-scrollbar { display: none; }
+  #catTiles .cat-tile { transform: perspective(900px) rotateY(-9deg); box-shadow: 5px 8px 18px rgba(20,83,45,.28), inset 0 1px 0 rgba(255,255,255,.7); transition: transform .25s ease, box-shadow .25s ease; }
+  #catTiles .cat-tile:hover { transform: perspective(900px) rotateY(0deg) translateZ(14px); box-shadow: 8px 14px 26px rgba(20,83,45,.35); }
+  #catTiles.dragging { cursor: grabbing; }
   .gcard { position: relative; }
   .wish-btn { position: absolute; top: 8px; right: 8px; width: 37px; height: 37px; border-radius: 50%; border: 1px solid #e4e9e6; background: rgba(255,255,255,.94); font-size: 17px; cursor: pointer; z-index: 3; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 7px rgba(0,0,0,.13); padding: 0; }
   .wish-btn.on { background: #ffe9ec; border-color: #ff9fb2; }
@@ -1785,6 +1791,71 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   if (!localStorage.getItem('saleonlie_session') && !localStorage.getItem('saleonlie_seen')) {
     setTimeout(function() { if (!currentUser && !localStorage.getItem('saleonlie_session')) openAuth('signup'); }, 700);
   }
+</script>
+<script>
+/* Categories auto-scroll: slow left-to-right + 3D + drag slide (2026-10-25) */
+(function () {
+  var strip = document.getElementById('catTiles');
+  if (!strip) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var originals = Array.prototype.slice.call(strip.children);
+  if (originals.length < 2) return;
+  originals.forEach(function (t) {
+    var c = t.cloneNode(true);
+    c.setAttribute('aria-hidden', 'true');
+    strip.appendChild(c);
+  });
+  var half = 0, paused = false, resumeTimer = null, dragging = false, startX = 0, startScroll = 0, moved = 0, suppressClick = false;
+  function measure() {
+    var firstClone = strip.children[originals.length];
+    half = firstClone ? firstClone.offsetLeft : (strip.scrollWidth / 2);
+    if (strip.scrollLeft < 1) strip.scrollLeft = half;
+  }
+  function pause(ms) {
+    paused = true;
+    strip.style.scrollSnapType = 'x mandatory';
+    if (resumeTimer) clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(function () { paused = false; strip.style.scrollSnapType = 'none'; }, ms || 3000);
+  }
+  strip.addEventListener('pointerdown', function (e) {
+    suppressClick = false;
+    pause(3000);
+    if (e.pointerType === 'mouse' && e.button === 0) {
+      dragging = true; moved = 0; startX = e.clientX; startScroll = strip.scrollLeft;
+      strip.style.scrollSnapType = 'none';
+      strip.classList.add('dragging');
+    }
+  });
+  strip.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    var dx = e.clientX - startX;
+    if (Math.abs(dx) > 3) moved = Math.abs(dx);
+    strip.scrollLeft = startScroll - dx;
+  });
+  function endDrag() {
+    if (dragging && moved > 6) suppressClick = true;
+    dragging = false;
+    strip.classList.remove('dragging');
+    pause(3000);
+  }
+  strip.addEventListener('pointerup', endDrag);
+  strip.addEventListener('pointercancel', endDrag);
+  strip.addEventListener('click', function (e) {
+    if (suppressClick) { suppressClick = false; e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  strip.addEventListener('wheel', function () { pause(2500); }, { passive: true });
+  function frame() {
+    if (!paused && half > 0 && strip.scrollWidth > strip.clientWidth + 10) {
+      strip.scrollLeft -= 0.45;
+      if (strip.scrollLeft <= 0) strip.scrollLeft = half;
+    }
+    requestAnimationFrame(frame);
+  }
+  if (document.readyState === 'complete') { measure(); strip.style.scrollSnapType = 'none'; }
+  else window.addEventListener('load', function () { measure(); strip.style.scrollSnapType = 'none'; });
+  window.addEventListener('resize', measure);
+  requestAnimationFrame(frame);
+})();
 </script>
 </body>
 </html>
