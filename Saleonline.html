@@ -1862,36 +1862,42 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   }
 </script>
 <script>
-/* Categories auto-scroll: slow left-to-right + 3D + drag slide (2026-10-25) */
+/* Categories auto-scroll: continuous slow left-to-right + manual slide + tap select (2026-10-25, improved) */
 (function () {
   var strip = document.getElementById('catTiles');
   if (!strip) return;
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   var originals = Array.prototype.slice.call(strip.children);
   if (originals.length < 2) return;
+  // Seamless loop: originals ke baad un ki copy lagao (clones bhi selectable hain).
   originals.forEach(function (t) {
     var c = t.cloneNode(true);
     c.setAttribute('aria-hidden', 'true');
     strip.appendChild(c);
   });
-  var half = 0, paused = false, resumeTimer = null, dragging = false, startX = 0, startScroll = 0, moved = 0, suppressClick = false;
+  var half = 0, paused = false, resumeTimer = null;
+  var dragging = false, startX = 0, startScroll = 0, moved = 0, suppressClick = false;
+  var SPEED = 18; // px per second — slow slow, har screen par aik jaisi raftaar
   function measure() {
     var firstClone = strip.children[originals.length];
     half = firstClone ? firstClone.offsetLeft : (strip.scrollWidth / 2);
     if (strip.scrollLeft < 1) strip.scrollLeft = half;
   }
-  function pause(ms) {
+  function pauseMotion(ms) {
     paused = true;
-    strip.style.scrollSnapType = 'x mandatory';
+    strip.style.scrollSnapType = 'x mandatory'; // manual swipe tile par settle ho
     if (resumeTimer) clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(function () { paused = false; strip.style.scrollSnapType = 'none'; }, ms || 3000);
+    resumeTimer = setTimeout(function () {
+      paused = false;
+      strip.style.scrollSnapType = 'none'; // auto-glide ke liye snap off
+    }, ms || 2500);
   }
   strip.addEventListener('pointerdown', function (e) {
     suppressClick = false;
-    pause(3000);
+    pauseMotion(2500);
     if (e.pointerType === 'mouse' && e.button === 0) {
       dragging = true; moved = 0; startX = e.clientX; startScroll = strip.scrollLeft;
-      strip.style.scrollSnapType = 'none';
+      try { strip.setPointerCapture(e.pointerId); } catch (err) {}
       strip.classList.add('dragging');
     }
   });
@@ -1902,26 +1908,37 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     strip.scrollLeft = startScroll - dx;
   });
   function endDrag() {
-    if (dragging && moved > 6) suppressClick = true;
+    if (dragging && moved > 6) suppressClick = true; // sirf drag ke baad wali click roko
     dragging = false;
     strip.classList.remove('dragging');
-    pause(3000);
+    pauseMotion(2500);
   }
   strip.addEventListener('pointerup', endDrag);
   strip.addEventListener('pointercancel', endDrag);
   strip.addEventListener('click', function (e) {
     if (suppressClick) { suppressClick = false; e.preventDefault(); e.stopPropagation(); }
   }, true);
-  strip.addEventListener('wheel', function () { pause(2500); }, { passive: true });
-  function frame() {
-    if (!paused && half > 0 && strip.scrollWidth > strip.clientWidth + 10) {
-      strip.scrollLeft -= 0.45;
-      if (strip.scrollLeft <= 0) strip.scrollLeft = half;
+  strip.addEventListener('wheel', function () { pauseMotion(2500); }, { passive: true });
+  strip.addEventListener('touchstart', function () { pauseMotion(2500); }, { passive: true });
+  var last = null;
+  function frame(now) {
+    if (last === null) last = now;
+    var dt = Math.min(100, now - last); // tab switch ke baad bara jump na ho
+    last = now;
+    if (!paused && !dragging && half > 0 && strip.scrollWidth > strip.clientWidth + 10) {
+      strip.scrollLeft -= (SPEED * dt) / 1000; // left-to-right drift
+      if (strip.scrollLeft <= 0) strip.scrollLeft = half; // seamless loop
     }
     requestAnimationFrame(frame);
   }
-  if (document.readyState === 'complete') { measure(); strip.style.scrollSnapType = 'none'; }
-  else window.addEventListener('load', function () { measure(); strip.style.scrollSnapType = 'none'; });
+  function init() {
+    measure();
+    strip.style.scrollSnapType = 'none'; // shuru mein hi glide smooth ho
+    setTimeout(measure, 500);
+    setTimeout(measure, 2000);
+  }
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
   window.addEventListener('resize', measure);
   requestAnimationFrame(frame);
 })();
@@ -2016,7 +2033,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     ".sl-trust-pill{background:#fff;border:1px solid #cfe6d7;border-radius:999px;padding:6px 13px;font-size:13px;font-weight:700;color:#0b5136;}",
     ".sl-testimonial{max-width:1080px;margin:14px auto;padding:16px;text-align:center;font-size:15.5px;line-height:1.6;background:#fff8e1;border:1px solid #ffe082;border-radius:14px;}",
     ".sl-filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid #dde6e0;border-radius:12px;padding:10px 12px;margin-bottom:14px;}",
-    ".sl-filter-bar select,.sl-filter-bar input[type=number]{padding:8px 10px;border:1px solid #cfd8d3;border-radius:9px;font-size:14px;font-family:inherit;}",
+    ".sl-filter-bar select,.sl-filter-bar input{padding:8px 10px;border:1px solid #cfd8d3;border-radius:9px;font-size:14px;font-family:inherit;}",
     ".sl-filter-bar label{font-size:13.5px;font-weight:700;}",
     ".sl-cart-progress{background:#eef7f1;border:1px solid #cfe6d7;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:14px;line-height:1.6;}",
     ".sl-progress-track{background:#dde6e0;border-radius:999px;height:10px;overflow:hidden;margin-top:8px;}",
@@ -2240,6 +2257,9 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     bar.id = "slFilterBar";
     bar.className = "sl-filter-bar";
     var html = "";
+    if (on(s.search)) {
+      html += '<label>🔍 Search:</label><input type="text" id="slSearch" placeholder="Name ya code se search karein..." style="flex:1;min-width:180px;">';
+    }
     if (on(s.sort_dropdown)) {
       html += '<label>Sort:</label><select id="slSort"><option value="featured">Featured</option><option value="newest">Newest</option><option value="low">Price: Low to High</option><option value="high">Price: High to Low</option><option value="name">Name A–Z</option></select>';
     }
@@ -2267,6 +2287,8 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
       var maxEl = document.getElementById("slMaxPrice");
       var max = maxEl && maxEl.value ? parseFloat(maxEl.value) : null;
       var onlyStock = document.getElementById("slInStock") ? document.getElementById("slInStock").checked : false;
+      var searchEl = document.getElementById("slSearch");
+      var q = searchEl ? (searchEl.value || "").trim().toLowerCase() : "";
       ["gridProducts", "gridAll"].forEach(function (gid) {
         var g = document.getElementById(gid);
         if (!g) return;
@@ -2293,6 +2315,12 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
           if (p) {
             if (max != null && (p.sale || 0) > max) show = false;
             if (onlyStock && String(p.stock || "").toLowerCase().indexOf("out") >= 0) show = false;
+            if (q) {
+              var hay = (String(p.name || "") + " " + String(p.code || "")).toLowerCase();
+              if (hay.indexOf(q) < 0) show = false;
+            }
+          } else if (q) {
+            if (card.textContent.toLowerCase().indexOf(q) < 0) show = false;
           }
           card.style.display = show ? "" : "none";
         });
@@ -2305,6 +2333,11 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     });
     var maxInput = document.getElementById("slMaxPrice");
     if (maxInput) maxInput.addEventListener("input", run);
+    var searchInput = document.getElementById("slSearch");
+    if (searchInput) {
+      searchInput.addEventListener("input", run);
+      searchInput.addEventListener("change", run);
+    }
     run();
   }
 
@@ -2371,9 +2404,21 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     } catch (e) {}
   }
 
+  /* Filters & Sort = base layer: har theme mein hamesha ON rehta hai.
+     Is ki settings tools/settings/filters se aati hain; master OFF ho to
+     filters nahi dikhte. Theme tools is ke oopar apply hote hain. */
+  var FILTER_DEFAULTS = { enabled: true, sort_dropdown: true, price_filter: true, instock_only: true, show_count: true, search: true };
   try {
+    get("tools/settings/filters").then(function (fs) {
+      fs = fs || {};
+      var merged = {};
+      Object.keys(FILTER_DEFAULTS).forEach(function (k) { merged[k] = (fs[k] === undefined ? FILTER_DEFAULTS[k] : fs[k]); });
+      if (merged.enabled !== false) { try { applyFilters(merged); } catch (e) {} }
+    }).catch(function () {
+      try { applyFilters(FILTER_DEFAULTS); } catch (e) {}
+    });
     get("tools/active").then(function (active) {
-      if (!active) return;
+      if (!active || active === "filters" || active === "insights") return;
       return get("tools/settings/" + active).then(function (s) {
         s = s || {};
         if (s.enabled === false) return;

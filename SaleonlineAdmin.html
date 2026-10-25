@@ -193,7 +193,7 @@
 
     <div class="card tabpane" id="tabTools" style="display:none;">
       <h3 style="margin-bottom:6px;">🧩 Tools (Add-ons)</h3>
-      <p class="note" style="margin-top:0;">One click mein apni shop ka design, layout aur theme badlein. Pehle tool <b>Install</b> karein, phir <b>Activate</b> karein — aik waqt mein aik tool active rehta hai. Active tool ke <b>Control Panel</b> se us ke tamam options on/off karein. Tabdeeli shop page refresh par nazar aayegi.</p>
+      <p class="note" style="margin-top:0;">One click mein apni shop ka design, layout aur theme badlein. Pehle tool <b>Install</b> karein, phir <b>Activate</b> karein — aik waqt mein aik tool active rehta hai. Active tool ke <b>Control Panel</b> se us ke tamam options on/off karein. Tabdeeli shop page refresh par nazar aayegi.<br><b>Note:</b> Smart Filters & Sort har theme mein <b>hamesha ON</b> rehta hai — koi bhi theme lagane par filters aur search kaam karte rahenge.</p>
       <div id="toolsGrid" style="margin-top:12px;"><div class="empty">Tools load ho rahe hain...</div></div>
       <div id="toolControl" style="margin-top:18px;"></div>
     </div>
@@ -713,11 +713,12 @@
       { key: "secure_note", label: "Secure checkout note", type: "toggle", def: true },
       { key: "testimonial", label: "Testimonial strip", type: "toggle", def: false },
       { key: "testimonial_text", label: "Testimonial text", type: "text", def: "⭐⭐⭐⭐⭐ “Best online shopping experience — fast delivery and genuine products!” — Happy Customer" } ] },
-    { id: "filters", icon: "🔍", name: "Smart Filters & Sort", tagline: "Sort, price filter aur stock filter ke saath behtar shopping.", features: ["Sort by price / date / name", "Max-price filter", "In-stock only filter", "Product count display"], options: [
+    { id: "filters", icon: "🔍", name: "Smart Filters & Sort", tagline: "Sort, price filter aur stock filter ke saath behtar shopping. Ye tool har theme mein hamesha ON rehta hai.", features: ["Sort by price / date / name", "Max-price filter", "In-stock only filter", "Product count display", "Search by name or code"], options: [
       { key: "sort_dropdown", label: "Sort dropdown", type: "toggle", def: true },
       { key: "price_filter", label: "Max-price filter", type: "toggle", def: true },
       { key: "instock_only", label: "In-stock only filter", type: "toggle", def: true },
-      { key: "show_count", label: "Show product count", type: "toggle", def: true } ] },
+      { key: "show_count", label: "Show product count", type: "toggle", def: true },
+      { key: "search", label: "Search by name or code", type: "toggle", def: true } ] },
     { id: "cartbooster", icon: "🛒", name: "Cart Booster", tagline: "Free-delivery progress, bonus reminder aur quick checkout.", features: ["Free-delivery progress bar", "Bonus balance reminder", "Quick checkout button"], options: [
       { key: "progress_bar", label: "Free-delivery progress bar", type: "toggle", def: true },
       { key: "threshold", label: "Free-delivery threshold (Rs.)", type: "number", def: 5999 },
@@ -747,6 +748,7 @@
         var isInstalled = !!installed[t.id];
         var badge = isActive ? '<span style="background:#0b7a4b;color:#fff;font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;">✅ ACTIVE</span>'
           : (isInstalled ? '<span style="background:#eef7f1;color:#0b5136;border:1px solid #cfe6d7;font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;">Installed</span>' : "");
+        if (t.id === "filters") badge += ' <span style="background:#fff3cd;color:#7a5b00;border:1px solid #ffe082;font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;">📌 Hamesha ON (har theme mein)</span>';
         var btns = isActive
           ? '<button class="cta small" type="button" onclick="openControlPanel(\'' + t.id + '\')">🎛️ Control Panel</button> <button class="cta small gray" type="button" onclick="deactivateTool()">⏸️ Deactivate</button>'
           : (isInstalled
@@ -801,6 +803,7 @@
         rows += '<label>' + escapeHtml(op.label) + "</label>" + input;
       });
       var activeNote = (window._toolsActive === id) ? "" : '<div class="note">Note: ye tool abhi active nahi hai — settings save ho jayengi, lekin shop par tabdeeli Activate karne ke baad nazar aayegi.</div>';
+      if (id === "filters") activeNote = '<div class="note">Note: ye tool har theme mein hamesha ON rehta hai — is ki settings har theme par apply hongi. Master OFF karne par filters aur search chhup jayenge.</div>';
       box.innerHTML = '<div class="card" style="margin-bottom:0;"><h3 style="margin-bottom:6px;">🎛️ Control Panel — ' + escapeHtml(t.name) + '</h3>' + activeNote + rows
         + '<button class="cta small" type="button" style="margin-top:12px;" onclick="saveToolSettings(\'' + id + '\')">💾 Save Settings</button>'
         + ' <button class="cta small gray" type="button" onclick="deactivateTool()">⏸️ Deactivate</button></div>';
