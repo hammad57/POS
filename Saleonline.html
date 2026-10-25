@@ -540,7 +540,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
           <br><span class="stock" id="dStock">In Stock</span>
           <div class="chips" id="dChips"></div>
           <table class="details" id="dDetails"></table>
-          <div class="infobox">🚚 <b>Delivery:</b> 3–5 working days · Charges: PKR 99 per order (FREE on Rs. 5,999+)<br>💵 <b>Cash on Delivery</b> available<br>↩️ Easy 7-day return (on unused items)</div>
+          <div class="infobox">🚚 <b>Delivery:</b> 3–5 working days · Charges: PKR 99 per order (FREE on Rs. 5,999+ and on Cash on Delivery)<br>💵 <b>Cash on Delivery</b> available<br>↩️ Easy 7-day return (on unused items)</div>
           <button class="cta" type="button" onclick="addToCartCurrent()">🛒 Add to Cart</button>
         </div>
       </div>
@@ -551,7 +551,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
       <div class="order-summary">
         <b>Product Code:</b> <span id="ordCode">MZ2199200480BICN</span><br>
         <b>Product:</b> <span id="ordProduct">3 Pcs Women&#x27;s Stitched Shamoz Silk Hand Work Lehenga Choli</span><br>
-        <b>Price:</b> <span id="ordPrice">PKR 3,470</span> · <b>Delivery:</b> PKR 99 per order (FREE on Rs. 5,999 or more)
+        <b>Price:</b> <span id="ordPrice">PKR 3,470</span> · <b>Delivery:</b> PKR 99 per order (FREE on Rs. 5,999 or more, and FREE on Cash on Delivery)
       </div>
       <div id="colourField">
         <label for="fColour">Select Colour *</label>
@@ -662,7 +662,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
       <h3 class="sec-title">ℹ️ About — Sale Online</h3>
       <p class="help-a"><b>Sale Online</b> is an online store offering quality stitched suits and fashion items at fair prices. Every product page shows complete details, real pictures, sizes and colours clearly, so you can order with full confidence.</p>
       <p class="help-q">Our Services</p>
-      <p class="help-a">🚚 Delivery all over Pakistan — in just 3–5 working days, charges PKR 99 per order (FREE on Rs. 5,999+)<br>💵 Cash on Delivery available<br>↩️ 7-day easy return (on unused items)<br>🧾 Live order status online — on the My Orders page</p>
+      <p class="help-a">🚚 Delivery all over Pakistan — in just 3–5 working days, charges PKR 99 per order (FREE on Rs. 5,999+ and on Cash on Delivery)<br>💵 Cash on Delivery available<br>↩️ 7-day easy return (on unused items)<br>🧾 Live order status online — on the My Orders page</p>
       <p class="help-q">Payment Methods</p>
       <p class="help-a">Cash on Delivery, or Easypaisa — 0342-3944508 (Account Title: Malook Hussain)</p>
       <p class="help-q">Contact</p>
@@ -1138,6 +1138,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
           : '💵 Total payable on delivery: <b>' + fmtPKR(t.total) + '</b>';
       }
     }
+    if (loadCart().length) { renderCartSummary(cartTotals()); }
   }
   async function placeCartOrder(e) {
     e.preventDefault();
@@ -1548,10 +1549,14 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     addToCart(selected.code, colour, size, q);
   }
   var redeemApplied = false; var bonusRedeemed = 0;
+  function isCODSelected() {
+    var pay = document.querySelector('input[name="payMethod"]:checked');
+    return !pay || pay.value === 'COD';
+  }
   function cartTotals() {
     var cart = loadCart();
     var subtotal = cart.reduce(function(s, it) { return s + priceToNum(it.price) * (it.qty || 1); }, 0);
-    var delivery = cart.length ? (subtotal >= FREE_DELIVERY_MIN ? 0 : DELIVERY_FEE) : 0;
+    var delivery = cart.length ? (isCODSelected() ? 0 : (subtotal >= FREE_DELIVERY_MIN ? 0 : DELIVERY_FEE)) : 0;
     var redeemed = redeemApplied ? Math.min(bonusRedeemed, subtotal + delivery) : 0;
     return { subtotal: subtotal, delivery: delivery, redeemed: redeemed, total: Math.max(0, subtotal + delivery - redeemed) };
   }
@@ -1562,6 +1567,17 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     if (!redeemApplied) { if (!bonus) { alert('Your bonus balance is Rs. 0. Review a delivered order — every review earns you Rs. 11 bonus.'); return; } redeemApplied = true; bonusRedeemed = bonus; }
     else { redeemApplied = false; bonusRedeemed = 0; }
     renderCart();
+  }
+  function renderCartSummary(totals) {
+    var cod = isCODSelected();
+    var delNote = totals.delivery === 0 ? (cod ? ' (no delivery charges on Cash on Delivery)' : ' (only Rs. 99 per order)') : ' (only Rs. 99 per order)';
+    document.getElementById('cartSummary').innerHTML = '<div class="order-summary"><b>Subtotal:</b> ' + fmtPKR(totals.subtotal) + '<br><b>Delivery Charges:</b> ' + (totals.delivery === 0 ? 'FREE 🎉' : fmtPKR(totals.delivery)) + delNote + '<br>' + (totals.redeemed ? '<b>Bonus Redeemed:</b> -' + fmtPKR(totals.redeemed) + '<br>' : '') + '<b style="font-size:18px;">Total: ' + fmtPKR(totals.total) + '</b></div>';
+    var fh = document.getElementById('freeHint');
+    if (cod) { fh.className = 'free-hint ok'; fh.innerHTML = '🎉 <b>FREE Home Delivery!</b> No delivery charges on Cash on Delivery.'; fh.style.display = 'block'; }
+    else if (totals.subtotal >= FREE_DELIVERY_MIN) { fh.className = 'free-hint ok'; fh.innerHTML = '🎉 <b>FREE Home Delivery!</b> You saved Rs. 99 in delivery charges.'; fh.style.display = 'block'; }
+    else { var rem = FREE_DELIVERY_MIN - totals.subtotal; fh.className = 'free-hint'; fh.innerHTML = '💡 Shop for just <b>Rs. ' + rem.toLocaleString('en-US') + ' more</b> to get <b>FREE home delivery</b> — and <b>Save Rs. 99</b>! (Delivery charges are Rs. 99)'; fh.style.display = 'block'; }
+    var sl = document.getElementById('savedLine');
+    if (totals.redeemed) { sl.textContent = '🎉 You have saved Rs. ' + totals.redeemed + '! (Bonus balance se)'; sl.style.display = 'block'; } else sl.style.display = 'none';
   }
   function renderCart() {
     var box = document.getElementById('cartBox'); if (!box) return;
@@ -1580,16 +1596,12 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
         + '<div style="margin-top:8px;display:flex;gap:6px;align-items:center;"><button class="qty-btn" type="button" onclick="changeQty(' + i + ',-1)">−</button><span>' + (it.qty || 1) + '</span><button class="qty-btn" type="button" onclick="changeQty(' + i + ',1)">+</button><button type="button" onclick="removeCartItem(' + i + ')" style="margin-left:8px;background:none;border:none;color:#b3261e;cursor:pointer;font-weight:700;">🗑️ Remove</button></div></div></div>';
     }).join('');
     var totals = cartTotals();
-    document.getElementById('cartSummary').innerHTML = '<div class="order-summary"><b>Subtotal:</b> ' + fmtPKR(totals.subtotal) + '<br><b>Delivery Charges:</b> ' + (totals.delivery === 0 ? 'FREE 🎉' : fmtPKR(totals.delivery)) + ' (only Rs. 99 per order)<br>' + (totals.redeemed ? '<b>Bonus Redeemed:</b> -' + fmtPKR(totals.redeemed) + '<br>' : '') + '<b style="font-size:18px;">Total: ' + fmtPKR(totals.total) + '</b></div>';
-    var fh = document.getElementById('freeHint');
-    if (totals.subtotal >= FREE_DELIVERY_MIN) { fh.className = 'free-hint ok'; fh.innerHTML = '🎉 <b>FREE Home Delivery!</b> You saved Rs. 99 in delivery charges.'; fh.style.display = 'block'; }
-    else { var rem = FREE_DELIVERY_MIN - totals.subtotal; fh.className = 'free-hint'; fh.innerHTML = '💡 Shop for just <b>Rs. ' + rem.toLocaleString('en-US') + ' more</b> to get <b>FREE home delivery</b> — and <b>Save Rs. 99</b>! (Delivery charges are Rs. 99)'; fh.style.display = 'block'; }
+    renderCartSummary(totals);
     var bb = document.getElementById('bonusBox');
     var bonus = getBonusLocal();
     bb.innerHTML = '⭐ <b>Bonus Balance: Rs. ' + bonus + '</b> &nbsp; <button class="cta small" type="button" onclick="toggleRedeem()">' + (redeemApplied ? 'Remove Redeem' : '🎁 Redeem Bonus') + '</button>';
     bb.style.display = 'block';
-    var sl = document.getElementById('savedLine');
-    if (totals.redeemed) { sl.textContent = '🎉 You have saved Rs. ' + totals.redeemed + '! (Bonus balance se)'; sl.style.display = 'block'; } else sl.style.display = 'none';
+
     prefillOrderForm(); cartPayChange(); updateCartBadge();
   }
   // ----- Bonus balance (per phone, local + Firebase when logged in) -----
