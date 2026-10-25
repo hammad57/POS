@@ -123,6 +123,11 @@
       <button class="cta small danger" type="button" onclick="resetVisitors()">Reset</button>
     </div>
 
+    <div class="card" id="insightsCard" style="display:none;">
+      <h3 style="margin-bottom:8px;">📊 Insights Dashboard</h3>
+      <div id="insightsBody"><div class="empty">Loading insights...</div></div>
+    </div>
+
     <div class="tabs">
       <button class="tab-btn active" type="button" id="tb-orders" onclick="switchTab('orders')">🧾 Orders</button>
       <button class="tab-btn" type="button" id="tb-items" onclick="switchTab('items')">📦 Store Items</button>
@@ -130,6 +135,7 @@
       <button class="tab-btn" type="button" id="tb-users" onclick="switchTab('users')">👥 Users</button>
       <button class="tab-btn" type="button" id="tb-bonus" onclick="switchTab('bonus')">🎁 Bonus & Offers</button>
       <button class="tab-btn" type="button" id="tb-import" onclick="switchTab('import')">🔄 Import / Export</button>
+      <button class="tab-btn" type="button" id="tb-tools" onclick="switchTab('tools')">🧩 Tools</button>
     </div>
 
     <div class="card tabpane" id="tabItems" style="display:none;">
@@ -183,6 +189,13 @@
       <div id="importPreview" style="margin-top:12px;"></div>
       <button class="cta small" type="button" id="btnConfirmImport" style="display:none; margin-top:10px;" onclick="confirmImport()">✅ Import Confirm karein</button>
       <div class="note" id="importStatus"></div>
+    </div>
+
+    <div class="card tabpane" id="tabTools" style="display:none;">
+      <h3 style="margin-bottom:6px;">🧩 Tools (Add-ons)</h3>
+      <p class="note" style="margin-top:0;">One click mein apni shop ka design, layout aur theme badlein. Pehle tool <b>Install</b> karein, phir <b>Activate</b> karein — aik waqt mein aik tool active rehta hai. Active tool ke <b>Control Panel</b> se us ke tamam options on/off karein. Tabdeeli shop page refresh par nazar aayegi.</p>
+      <div id="toolsGrid" style="margin-top:12px;"><div class="empty">Tools load ho rahe hain...</div></div>
+      <div id="toolControl" style="margin-top:18px;"></div>
     </div>
 
     <div class="card tabpane" id="tabOrders">
@@ -273,6 +286,7 @@
 
   async function loadAdmin() {
     loadVisitors();
+    loadInsights();
     var box = document.getElementById('adminOrders');
     box.innerHTML = '<div class="empty">Orders load ho rahe hain...</div>';
     try {
@@ -329,13 +343,14 @@
   // ================= TABS =================
   var _itemsLoaded = false, _usersLoaded = false;
   function switchTab(name) {
-    ['orders', 'items', 'manual', 'users', 'bonus', 'import'].forEach(function(t) {
+    ['orders', 'items', 'manual', 'users', 'bonus', 'import', 'tools'].forEach(function(t) {
       var pane = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
       if (pane) pane.style.display = (t === name) ? 'block' : 'none';
       var btn = document.getElementById('tb-' + t); if (btn) btn.classList.toggle('active', t === name);
     });
     if (name === 'items' || name === 'manual' || name === 'import') loadStoreItems();
     if (name === 'users') loadUsersTab();
+    if (name === 'tools') loadToolsTab();
   }
 
   // ================= UPDATE STORE (source sync request) =================
@@ -650,6 +665,206 @@
         }
       } catch (e) {}
     }, 12000);
+  }
+
+  // ================= TOOLS (ADD-ONS) =================
+  var SL_TOOLS = [
+    { id: "festival", icon: "🎉", name: "Festival Theme", tagline: "Eid, Diwali aur seasonal celebrations ke liye festive look.", features: ["Festive gold-maroon theme", "Animated celebration banner", "Confetti on page load", "Festival badges on products"], options: [
+      { key: "banner", label: "Festival banner", type: "toggle", def: true },
+      { key: "banner_text", label: "Banner text", type: "text", def: "🌙 Eid Mubarak — Special Festival Offers Live!" },
+      { key: "confetti", label: "Confetti celebration", type: "toggle", def: true },
+      { key: "card_badges", label: "Festival badges on products", type: "toggle", def: true },
+      { key: "gold_theme", label: "Gold-maroon theme colours", type: "toggle", def: true } ] },
+    { id: "flashsale", icon: "⚡", name: "Flash Sale Mode", tagline: "Limited-time sale: countdown, sale badges aur urgency.", features: ["Live countdown timer bar", "SALE badges on products", "Urgency messages", "Red sale theme"], options: [
+      { key: "countdown_bar", label: "Countdown timer bar", type: "toggle", def: true },
+      { key: "countdown_hours", label: "Sale duration (hours)", type: "number", def: 24 },
+      { key: "sale_badges", label: "SALE badges on products", type: "toggle", def: true },
+      { key: "urgency_text", label: "Urgency messages", type: "toggle", def: true },
+      { key: "red_theme", label: "Red sale theme colours", type: "toggle", def: true } ] },
+    { id: "darkmode", icon: "🌙", name: "Dark Mode Pro", tagline: "Poori shop ka premium dark theme.", features: ["Dark background & cards", "Eye-friendly night look", "Optional gold accents", "Auto night mode (7pm–7am)"], options: [
+      { key: "dark_bg", label: "Dark page background", type: "toggle", def: true },
+      { key: "dark_cards", label: "Dark product cards", type: "toggle", def: true },
+      { key: "gold_accents", label: "Gold accents instead of green", type: "toggle", def: false },
+      { key: "auto_night", label: "Auto night mode only (7pm–7am)", type: "toggle", def: false } ] },
+    { id: "luxury", icon: "👑", name: "Luxury Gold Theme", tagline: "Black + gold premium boutique look.", features: ["Black & gold palette", "Elegant serif headings", "PREMIUM badges", "Spacious premium layout"], options: [
+      { key: "gold_accents", label: "Gold accents", type: "toggle", def: true },
+      { key: "serif_headings", label: "Serif headings", type: "toggle", def: true },
+      { key: "premium_badges", label: "PREMIUM badges on products", type: "toggle", def: true },
+      { key: "spacious_layout", label: "Spacious layout", type: "toggle", def: true } ] },
+    { id: "layout", icon: "🔲", name: "Layout Studio", tagline: "Grid, card style aur list view par poora control.", features: ["Grid columns control", "4 card styles", "List view mode", "Bigger product images", "Hide added-dates"], options: [
+      { key: "columns", label: "Grid columns", type: "select", def: "Auto", choices: ["Auto", "2", "3", "4"] },
+      { key: "card_style", label: "Card style", type: "select", def: "Default", choices: ["Default", "Rounded", "Shadow", "Minimal"] },
+      { key: "list_view", label: "List view (rows instead of grid)", type: "toggle", def: false },
+      { key: "big_images", label: "Bigger product images", type: "toggle", def: false },
+      { key: "hide_dates", label: "Hide product added-dates", type: "toggle", def: false } ] },
+    { id: "popups", icon: "💬", name: "Popup & Announcement Studio", tagline: "Welcome popup, top bar aur offer popups.", features: ["Welcome popup", "Top announcement bar", "Timed offer popup", "Custom messages"], options: [
+      { key: "welcome_popup", label: "Welcome popup", type: "toggle", def: true },
+      { key: "welcome_text", label: "Welcome popup text", type: "text", def: "👋 Welcome to Sale Online! Advance payment par Rs. 110 OFF." },
+      { key: "welcome_delay", label: "Welcome popup delay (seconds)", type: "number", def: 3 },
+      { key: "top_bar", label: "Top announcement bar", type: "toggle", def: true },
+      { key: "top_bar_text", label: "Top bar text", type: "text", def: "🚚 Cash on Delivery available all over Pakistan" },
+      { key: "offer_popup", label: "Offer popup (20s baad)", type: "toggle", def: false },
+      { key: "offer_text", label: "Offer popup text", type: "text", def: "🎁 Special Offer: Order today and get Rs. 110 OFF on advance payment!" } ] },
+    { id: "trust", icon: "🛡️", name: "Trust Booster", tagline: "Trust badges, secure notes aur testimonials.", features: ["Trust badges row", "Secure checkout note", "Customer testimonial strip"], options: [
+      { key: "badge_cod", label: "Cash on Delivery badge", type: "toggle", def: true },
+      { key: "badge_delivery", label: "Nationwide delivery badge", type: "toggle", def: true },
+      { key: "badge_returns", label: "Easy returns badge", type: "toggle", def: true },
+      { key: "badge_secure", label: "Secure payment badge", type: "toggle", def: true },
+      { key: "secure_note", label: "Secure checkout note", type: "toggle", def: true },
+      { key: "testimonial", label: "Testimonial strip", type: "toggle", def: false },
+      { key: "testimonial_text", label: "Testimonial text", type: "text", def: "⭐⭐⭐⭐⭐ “Best online shopping experience — fast delivery and genuine products!” — Happy Customer" } ] },
+    { id: "filters", icon: "🔍", name: "Smart Filters & Sort", tagline: "Sort, price filter aur stock filter ke saath behtar shopping.", features: ["Sort by price / date / name", "Max-price filter", "In-stock only filter", "Product count display"], options: [
+      { key: "sort_dropdown", label: "Sort dropdown", type: "toggle", def: true },
+      { key: "price_filter", label: "Max-price filter", type: "toggle", def: true },
+      { key: "instock_only", label: "In-stock only filter", type: "toggle", def: true },
+      { key: "show_count", label: "Show product count", type: "toggle", def: true } ] },
+    { id: "cartbooster", icon: "🛒", name: "Cart Booster", tagline: "Free-delivery progress, bonus reminder aur quick checkout.", features: ["Free-delivery progress bar", "Bonus balance reminder", "Quick checkout button"], options: [
+      { key: "progress_bar", label: "Free-delivery progress bar", type: "toggle", def: true },
+      { key: "threshold", label: "Free-delivery threshold (Rs.)", type: "number", def: 5999 },
+      { key: "bonus_reminder", label: "Bonus balance reminder", type: "toggle", def: true },
+      { key: "quick_checkout", label: "Quick checkout button", type: "toggle", def: true } ] },
+    { id: "insights", icon: "📊", name: "Admin Insights Dashboard", tagline: "Admin dashboard par sales, top products aur visitor stats. (Sirf admin panel mein nazar aata hai.)", features: ["Today's revenue", "Top selling products", "Visitor stats", "Orders today", "New users today"], options: [
+      { key: "show_revenue", label: "Today's revenue", type: "toggle", def: true },
+      { key: "show_top_products", label: "Top selling products", type: "toggle", def: true },
+      { key: "show_visitors", label: "Visitor stats", type: "toggle", def: true },
+      { key: "show_orders_today", label: "Orders today", type: "toggle", def: true },
+      { key: "show_new_users", label: "New users today", type: "toggle", def: true } ] }
+  ];
+  function toolDefaults(t) {
+    var o = { enabled: true };
+    t.options.forEach(function (op) { o[op.key] = op.def; });
+    return o;
+  }
+  function toolById(id) { for (var i = 0; i < SL_TOOLS.length; i++) if (SL_TOOLS[i].id === id) return SL_TOOLS[i]; return null; }
+  async function loadToolsTab() {
+    var box = document.getElementById("toolsGrid"); if (!box) return;
+    try {
+      var active = await dbRead("tools/active");
+      var installed = await dbRead("tools/installed") || {};
+      window._toolsActive = active || null;
+      box.innerHTML = SL_TOOLS.map(function (t) {
+        var isActive = active === t.id;
+        var isInstalled = !!installed[t.id];
+        var badge = isActive ? '<span style="background:#0b7a4b;color:#fff;font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;">✅ ACTIVE</span>'
+          : (isInstalled ? '<span style="background:#eef7f1;color:#0b5136;border:1px solid #cfe6d7;font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;">Installed</span>' : "");
+        var btns = isActive
+          ? '<button class="cta small" type="button" onclick="openControlPanel(\'' + t.id + '\')">🎛️ Control Panel</button> <button class="cta small gray" type="button" onclick="deactivateTool()">⏸️ Deactivate</button>'
+          : (isInstalled
+            ? '<button class="cta small" type="button" onclick="activateTool(\'' + t.id + '\')">⚡ Activate</button> <button class="cta small gray" type="button" onclick="openControlPanel(\'' + t.id + '\')">🎛️ Control Panel</button>'
+            : '<button class="cta small" type="button" onclick="installTool(\'' + t.id + '\')">⬇️ Install</button>');
+        return '<div class="irow"><div style="font-size:30px;">' + t.icon + '</div><div class="grow"><b>' + escapeHtml(t.name) + '</b> ' + badge + '<br><span style="color:#44524c;font-size:13.5px;">' + escapeHtml(t.tagline) + '<br>✦ ' + t.features.map(escapeHtml).join(" · ") + '</span></div><div style="flex-basis:100%;display:flex;gap:8px;flex-wrap:wrap;">' + btns + '</div></div>';
+      }).join("");
+    } catch (e) { box.innerHTML = '<div class="empty">Tools load nahi ho sakay — internet check karein.</div>'; }
+  }
+  async function installTool(id) {
+    var t = toolById(id); if (!t) return;
+    try {
+      await dbWrite("tools/installed/" + id, { ts: Date.now(), by: "admin" });
+      await dbWrite("tools/settings/" + id, toolDefaults(t));
+      toast("✅ " + t.name + " install ho gaya — ab Activate karein.");
+      loadToolsTab();
+    } catch (e) { toast("❌ Install nahi ho saka"); }
+  }
+  async function activateTool(id) {
+    var t = toolById(id); if (!t) return;
+    try {
+      var cur = await dbRead("tools/settings/" + id);
+      if (!cur) await dbWrite("tools/settings/" + id, toolDefaults(t));
+      await dbWrite("tools/active", id);
+      toast("⚡ " + t.name + " active ho gaya — shop refresh par nazar aayega.");
+      document.getElementById("toolControl").innerHTML = "";
+      loadToolsTab(); loadInsights();
+    } catch (e) { toast("❌ Activate nahi ho saka"); }
+  }
+  async function deactivateTool() {
+    try {
+      await dbDelete("tools/active");
+      toast("⏸️ Tool deactivate ho gaya — shop wapas normal theme par hai.");
+      document.getElementById("toolControl").innerHTML = "";
+      loadToolsTab(); loadInsights();
+    } catch (e) { toast("❌ Deactivate nahi ho saka"); }
+  }
+  async function openControlPanel(id) {
+    var t = toolById(id); if (!t) return;
+    var box = document.getElementById("toolControl");
+    try {
+      var s = await dbRead("tools/settings/" + id) || toolDefaults(t);
+      var rows = "";
+      rows += '<div style="display:flex;gap:10px;align-items:center;background:#eef7f1;border:1px solid #cfe6d7;border-radius:10px;padding:10px 12px;"><b>🔌 ' + escapeHtml(t.name) + ' — Poora nizam:</b><label style="margin:0;display:flex;gap:6px;align-items:center;"><input type="checkbox" id="tctl-enabled" ' + (s.enabled !== false ? "checked" : "") + '> ON / OFF</label></div>';
+      t.options.forEach(function (op) {
+        var val = (s[op.key] === undefined ? op.def : s[op.key]);
+        var input = "";
+        if (op.type === "toggle") input = '<label style="margin:0;display:flex;gap:6px;align-items:center;"><input type="checkbox" id="tctl-' + op.key + '" ' + (val ? "checked" : "") + '> ON / OFF</label>';
+        else if (op.type === "number") input = '<input type="number" id="tctl-' + op.key + '" value="' + val + '" style="max-width:200px;">';
+        else if (op.type === "select") input = '<select id="tctl-' + op.key + '" style="padding:10px;border:1px solid #cfd8d3;border-radius:10px;font-size:15px;">' + op.choices.map(function (c) { return '<option value="' + c + '"' + (c === val ? " selected" : "") + ">" + c + "</option>"; }).join("") + "</select>";
+        else input = '<input type="text" id="tctl-' + op.key + '" value="' + escapeHtml(val) + '">';
+        rows += '<label>' + escapeHtml(op.label) + "</label>" + input;
+      });
+      var activeNote = (window._toolsActive === id) ? "" : '<div class="note">Note: ye tool abhi active nahi hai — settings save ho jayengi, lekin shop par tabdeeli Activate karne ke baad nazar aayegi.</div>';
+      box.innerHTML = '<div class="card" style="margin-bottom:0;"><h3 style="margin-bottom:6px;">🎛️ Control Panel — ' + escapeHtml(t.name) + '</h3>' + activeNote + rows
+        + '<button class="cta small" type="button" style="margin-top:12px;" onclick="saveToolSettings(\'' + id + '\')">💾 Save Settings</button>'
+        + ' <button class="cta small gray" type="button" onclick="deactivateTool()">⏸️ Deactivate</button></div>';
+      box.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (e) { toast("❌ Control Panel load nahi ho saka"); }
+  }
+  async function saveToolSettings(id) {
+    var t = toolById(id); if (!t) return;
+    try {
+      var obj = { enabled: !!document.getElementById("tctl-enabled").checked };
+      t.options.forEach(function (op) {
+        var el = document.getElementById("tctl-" + op.key);
+        if (!el) return;
+        if (op.type === "toggle") obj[op.key] = el.checked;
+        else if (op.type === "number") { var n = parseFloat(el.value); obj[op.key] = isNaN(n) ? op.def : n; }
+        else obj[op.key] = el.value;
+      });
+      await dbWrite("tools/settings/" + id, obj);
+      toast("✅ Settings save ho gayin — shop refresh par apply hongi.");
+      loadToolsTab(); loadInsights();
+    } catch (e) { toast("❌ Settings save nahi ho sakin"); }
+  }
+  async function loadInsights() {
+    var card = document.getElementById("insightsCard"); if (!card) return;
+    try {
+      var active = await dbRead("tools/active");
+      if (active !== "insights") { card.style.display = "none"; return; }
+      var s = await dbRead("tools/settings/insights") || {};
+      if (s.enabled === false) { card.style.display = "none"; return; }
+      card.style.display = "block";
+      var body = document.getElementById("insightsBody");
+      var orders = await dbRead("orders") || {};
+      var users = await dbRead("users") || {};
+      var visits = await dbRead("visits") || {};
+      var today = new Date().toDateString();
+      var todayOrders = [];
+      var top = {};
+      Object.keys(orders).forEach(function (k) {
+        var o = orders[k] || {};
+        var items = (o.items && o.items.length) ? o.items : [{ product: o.product, code: o.code, qty: 1 }];
+        items.forEach(function (it) {
+          var key = it.code || it.product || "—";
+          if (!top[key]) top[key] = { name: it.product || key, qty: 0 };
+          top[key].qty += (it.qty || 1);
+        });
+        if (o.ts && new Date(o.ts).toDateString() === today) todayOrders.push(o);
+      });
+      function num(v) { var n = parseFloat(String(v == null ? "" : v).replace(/[^0-9.]/g, "")); return isNaN(n) ? 0 : n; }
+      var revenue = 0;
+      todayOrders.forEach(function (o) { revenue += (typeof o.total === "number" ? o.total : num(o.price)); });
+      var newUsers = Object.keys(users).filter(function (ph) { var u = users[ph] || {}; return u.created && new Date(u.created).toDateString() === today; }).length;
+      var vTotal = (typeof visits.total === "number") ? visits.total : Object.keys(visits.users || {}).length;
+      var topList = Object.keys(top).map(function (k) { return top[k]; }).sort(function (a, b) { return b.qty - a.qty; }).slice(0, 5);
+      var html = "";
+      if (s.show_orders_today !== false) html += '<div style="font-size:15px;margin:4px 0;">🧾 <b>Orders today:</b> ' + todayOrders.length + "</div>";
+      if (s.show_revenue !== false) html += '<div style="font-size:15px;margin:4px 0;">💰 <b>Revenue today:</b> Rs. ' + revenue.toLocaleString("en-US") + "</div>";
+      if (s.show_visitors !== false) html += '<div style="font-size:15px;margin:4px 0;">👥 <b>Total unique visitors:</b> ' + vTotal + "</div>";
+      if (s.show_new_users !== false) html += '<div style="font-size:15px;margin:4px 0;">🆕 <b>New users today:</b> ' + newUsers + "</div>";
+      if (s.show_top_products !== false) {
+        html += '<div style="font-size:15px;margin:10px 0 4px;"><b>🏆 Top selling products:</b></div>';
+        html += topList.length ? topList.map(function (p, i) { return '<div style="font-size:14px;padding:4px 0;border-bottom:1px dashed #dde6e0;">' + (i + 1) + ". " + escapeHtml(p.name) + " — <b>" + p.qty + " sold</b></div>"; }).join("") : '<div style="color:#66766e;font-size:14px;">Abhi koi sale record nahi.</div>';
+      }
+      body.innerHTML = html || '<div class="empty">Insights ke tamam widgets off hain — Control Panel se on karein.</div>';
+    } catch (e) { /* insights optional — dashboard ko kabhi mat roko */ }
   }
 
   adminInit();
