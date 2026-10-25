@@ -61,6 +61,19 @@
   .gcard .gprice { color: #0b7a4b; font-weight: 800; margin: 6px 0; }
   .gcard .gdate { font-size: 12px; color: #8a968f; }
   .gcard .cta { padding: 10px; font-size: 15px; margin-top: 9px; }
+  /* ===== Mobile: 3-column compact product grid (2026-10-25) ===== */
+  @media (max-width: 760px) {
+    .grid-products { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .gcard { border-radius: 10px; }
+    .gcard img { aspect-ratio: 1 / 1; object-fit: cover; }
+    .gcard .gbody { padding: 6px 7px 8px; }
+    .gcard .gname { font-size: 12px; line-height: 1.3; min-height: 0; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .gcard .gcode { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gcard .gprice { font-size: 13px; margin: 3px 0 2px; }
+    .gcard .gdate { font-size: 10px; }
+    .gcard .cta { padding: 7px 4px; font-size: 11.5px; margin-top: 6px; border-radius: 9px; }
+    .wish-btn { width: 28px; height: 28px; font-size: 13px; top: 5px; right: 5px; }
+  }
   footer.site { text-align: center; color: #77857e; font-size: 13px; padding: 10px 14px 26px; line-height: 1.7; }
   #lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.96); z-index: 999; align-items: center; justify-content: center; overflow: hidden; touch-action: none; }
   #lbImg { max-width: 100%; max-height: 92vh; user-select: none; -webkit-user-drag: none; }
