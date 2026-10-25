@@ -100,7 +100,7 @@
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
         <button class="cta small" type="button" onclick="loadAdmin()">🔄 Refresh</button>
         <button class="cta small gray" type="button" onclick="adminLogout()">Logout</button>
-        <a class="cta small gray" style="text-decoration:none;" href="Saleonlie.html">🛍️ Shop page kholein</a>
+        <a class="cta small gray" style="text-decoration:none;" href="Saleonline.html">🛍️ Shop page kholein</a>
       </div>
     </div>
     <div class="card">
@@ -341,7 +341,7 @@
   async function loadStoreItems(force) {
     if (_products && !force) { renderItems(); renderManual(); return; }
     try {
-      var resp = await fetch('Saleonlie.html?v=' + Date.now(), { cache: 'no-store' });
+      var resp = await fetch('Saleonline.html?v=' + Date.now(), { cache: 'no-store' });
       var html = await resp.text();
       var m = html.match(/var PRODUCTS = (\[.*?\]);/s);
       _products = m ? JSON.parse(m[1]) : [];
