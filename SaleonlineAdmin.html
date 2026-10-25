@@ -50,6 +50,8 @@
   .badge-manual { background: #fff3cd; color: #7a5b00; font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
   .badge-oos { background: #fee2e2; color: #991b1b; font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
   .badge-ok { background: #dcfce7; color: #166534; font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .badge-off { background: #e5e7eb; color: #374151; font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .badge-pend { background: #ffedd5; color: #9a3412; font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
   .mini-input { width: 130px; padding: 9px 10px; display: inline-block; }
   .urow { border: 1px solid #e4e9e6; border-radius: 12px; padding: 13px; margin-bottom: 10px; background: #fff; cursor: pointer; }
   .udetail { border: 1px solid #cfe6d7; background: #f6fbf8; border-radius: 12px; padding: 14px; margin: -4px 0 12px; }
@@ -140,7 +142,7 @@
 
     <div class="card tabpane" id="tabItems" style="display:none;">
       <h3 style="margin-bottom:6px;">📦 Store Items</h3>
-      <p class="note" style="margin-top:0;">All products currently live in your store. Use <b>Set Manual Price</b> to fix any item's price yourself — it will then be protected from automatic updates and listed in the Manual Prices tab.</p>
+      <p class="note" style="margin-top:0;">All products currently live in your store. Use <b>Set Manual Price</b> to fix any item's price yourself — it will then be protected from automatic updates and listed in the Manual Prices tab. Har item ko <b>Out of Stock</b> ya <b>Inactive</b> (shop se chhupana) bhi kar sakte hain — ye foran (shop refresh par) lagta hai. <b>Remove Product</b> page se permanent delete karta hai (hourly check par).</p>
       <input id="itemSearch" type="text" placeholder="Search by name or code..." oninput="renderItems()">
       <div id="itemsList" style="margin-top:12px;"><div class="empty">Items load ho rahe hain...</div></div>
     </div>
@@ -388,7 +390,7 @@
   }
 
   // ================= STORE ITEMS + MANUAL PRICES =================
-  var _products = null, _overrides = {};
+  var _products = null, _overrides = {}, _statusOv = {}, _pendingRem = {};
   async function loadStoreItems(force) {
     if (_products && !force) { renderItems(); renderManual(); return; }
     try {
@@ -397,6 +399,8 @@
       var m = html.match(/var PRODUCTS = (\[.*?\]);/s);
       _products = m ? JSON.parse(m[1]) : [];
       _overrides = await dbRead('price_overrides') || {};
+      _statusOv = await dbRead('overrides') || {};
+      try { var sr = await dbRead('sync_requests') || {}; _pendingRem = {}; Object.keys(sr).forEach(function (k) { var r = sr[k] || {}; if (r.type === 'product_remove' && r.status === 'pending') (r.codes || []).forEach(function (c) { _pendingRem[c] = true; }); }); } catch (e2) { _pendingRem = {}; }
       renderItems(); renderManual();
     } catch (e) {
       var el = document.getElementById('itemsList'); if (el) el.innerHTML = '<div class="empty">Items load nahi ho sakay — internet check karke dobara koshish karein.</div>';
@@ -411,15 +415,25 @@
     if (!list.length) { box.innerHTML = '<div class="empty">No items match your search.</div>'; return; }
     box.innerHTML = list.map(function(p) {
       var o = _overrides[p.code]; var manual = !!(o && typeof o.price === 'number');
-      var oos = (p.stock || '').toLowerCase().indexOf('out') >= 0;
+      var so = _statusOv[p.code] || {};
+      var pageOos = (p.stock || '').toLowerCase().indexOf('out') >= 0;
+      var oos = pageOos || !!so.oos;
+      var hid = !!so.hidden;
+      var pendRem = !!_pendingRem[p.code];
       return '<div class="irow">' + (p.images && p.images[0] ? '<img src="' + p.images[0] + '" alt="">' : '')
         + '<div class="grow"><b>' + escapeHtml(p.name) + '</b><br><span style="color:#44524c;font-size:13.5px;">Code: ' + p.code + ' · ' + escapeHtml(p.cat) + '<br>Price: <b>PKR ' + Number(effPrice(p)).toLocaleString('en-US') + '</b>' + (manual ? ' (manual — store price was PKR ' + Number(p.sale).toLocaleString('en-US') + ')' : '') + '</span></div>'
-        + '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">' + (oos ? '<span class="badge-oos">Out of Stock</span>' : '<span class="badge-ok">In Stock</span>') + (manual ? '<span class="badge-manual">✏️ MANUAL PRICE</span>' : '') + '</div>'
+        + '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">' + (oos ? '<span class="badge-oos">Out of Stock</span>' : '<span class="badge-ok">In Stock</span>') + (manual ? '<span class="badge-manual">✏️ MANUAL PRICE</span>' : '') + (hid ? '<span class="badge-off">INACTIVE</span>' : '') + (pendRem ? '<span class="badge-pend">REMOVAL PENDING</span>' : '') + '</div>'
         + '<div style="flex-basis:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
         + (manual
             ? '<span style="font-size:13.5px;color:#7a5b00;">This price is protected. Manage it in the Manual Prices tab.</span>'
             : '<input class="mini-input" type="number" min="1" id="mp-' + p.code + '" placeholder="New price (Rs.)"><button class="cta small" type="button" onclick="setManualPrice(\'' + p.code + '\')">Set Manual Price</button>')
-        + '</div></div>';
+                + (pendRem ? '<span style="font-size:13.5px;color:#9a3412;">Removal pending — hourly check par page se delete hoga.</span>'
+            : '<button class="cta small danger" type="button" onclick="requestRemove(\'' + p.code + '\')">Remove Product</button>')
+        + (hid ? '<button class="cta small gray" type="button" onclick="setHiddenFlag(\'' + p.code + '\',false)">Activate Product</button>'
+            : '<button class="cta small gray" type="button" onclick="setHiddenFlag(\'' + p.code + '\',true)">Make Inactive</button>')
+        + (so.oos ? '<button class="cta small gray" type="button" onclick="setStockFlag(\'' + p.code + '\',false)">Remove Out-of-Stock Mark</button>'
+            : (!pageOos ? '<button class="cta small gray" type="button" onclick="setStockFlag(\'' + p.code + '\',true)">Mark Out of Stock</button>' : ''))
++ '</div></div>';
     }).join('');
   }
   async function setManualPrice(code) {
@@ -428,6 +442,39 @@
     if (!val || val < 1) { toast('Please enter a valid price.'); return; }
     try { await dbWrite('price_overrides/' + code, { price: val, ts: Date.now(), by: 'admin' }); _overrides[code] = { price: val, ts: Date.now() }; toast('✅ Manual price set: PKR ' + val.toLocaleString('en-US') + ' — protected from updates.'); renderItems(); renderManual(); }
     catch (e) { toast('❌ Price save nahi ho saka'); }
+  }
+  async function setStockFlag(code, on) {
+    try {
+      var cur = Object.assign({}, _statusOv[code] || {});
+      if (on) cur.oos = true; else delete cur.oos;
+      if (Object.keys(cur).length) { await dbWrite('overrides/' + code, cur); _statusOv[code] = cur; }
+      else { await dbDelete('overrides/' + code); delete _statusOv[code]; }
+      toast(on ? '✅ Out of Stock mark lag gaya — shop refresh par nazar aayega.' : '✅ Out-of-Stock mark hata diya gaya.');
+      renderItems();
+    } catch (e) { toast('❌ Save nahi ho saka'); }
+  }
+  async function setHiddenFlag(code, on) {
+    try {
+      var cur = Object.assign({}, _statusOv[code] || {});
+      if (on) cur.hidden = true; else delete cur.hidden;
+      if (Object.keys(cur).length) { await dbWrite('overrides/' + code, cur); _statusOv[code] = cur; }
+      else { await dbDelete('overrides/' + code); delete _statusOv[code]; }
+      toast(on ? '✅ Product inactive kar diya gaya — shop se chhup jayega.' : '✅ Product dobara active kar diya gaya.');
+      renderItems();
+    } catch (e) { toast('❌ Save nahi ho saka'); }
+  }
+  async function requestRemove(code) {
+    var prod = null;
+    (_products || []).forEach(function (p) { if (p.code === code) prod = p; });
+    var label = prod ? ('"' + prod.name + '" (' + code + ')') : code;
+    if (!confirm(label + ' ko store se PERMANENT delete kar dein?\n\nYe product page se hat jayega (hourly check par). Wapas lane ke liye dobara Import karna hoga.')) return;
+    try {
+      var id = 'rm_' + Date.now() + Math.floor(Math.random() * 1000);
+      await dbWrite('sync_requests/' + id, { type: 'product_remove', codes: [code], status: 'pending', ts: Date.now(), by: 'admin' });
+      _pendingRem[code] = true;
+      toast('✅ Removal request bhej di gayi — hourly check par product page se delete ho jayega.');
+      renderItems();
+    } catch (e) { toast('❌ Request save nahi ho saki'); }
   }
   function updateManualBadge() {
     var n = Object.keys(_overrides || {}).filter(function(c) { return _overrides[c] && typeof _overrides[c].price === 'number'; }).length;
