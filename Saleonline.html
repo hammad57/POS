@@ -1876,7 +1876,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     strip.appendChild(c);
   });
   var half = 0, paused = false, resumeTimer = null;
-  var dragging = false, startX = 0, startScroll = 0, moved = 0, suppressClick = false;
+  var dragging = false, startX = 0, startScroll = 0, moved = 0, justDragged = false, lastDragEnd = 0;
   var SPEED = 18; // px per second — slow slow, har screen par aik jaisi raftaar
   function measure() {
     var firstClone = strip.children[originals.length];
@@ -1893,7 +1893,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     }, ms || 2500);
   }
   strip.addEventListener('pointerdown', function (e) {
-    suppressClick = false;
+    justDragged = false;
     pauseMotion(2500);
     if (e.pointerType === 'mouse' && e.button === 0) {
       dragging = true; moved = 0; startX = e.clientX; startScroll = strip.scrollLeft;
@@ -1908,7 +1908,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     strip.scrollLeft = startScroll - dx;
   });
   function endDrag() {
-    if (dragging && moved > 6) suppressClick = true; // sirf drag ke baad wali click roko
+    if (dragging && moved > 6) { justDragged = true; lastDragEnd = Date.now(); } // sirf drag ke foran baad wali click roko
     dragging = false;
     strip.classList.remove('dragging');
     pauseMotion(2500);
@@ -1916,13 +1916,14 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   strip.addEventListener('pointerup', endDrag);
   strip.addEventListener('pointercancel', endDrag);
   strip.addEventListener('click', function (e) {
-    if (suppressClick) { suppressClick = false; e.preventDefault(); e.stopPropagation(); }
+    if (justDragged && Date.now() - lastDragEnd < 600) { justDragged = false; e.preventDefault(); e.stopPropagation(); }
   }, true);
   strip.addEventListener('wheel', function () { pauseMotion(2500); }, { passive: true });
   strip.addEventListener('touchstart', function () { pauseMotion(2500); }, { passive: true });
-  var last = null;
+  var last = null, lastMeasureTry = 0;
   function frame(now) {
     if (last === null) last = now;
+    if (half <= 0 && now - lastMeasureTry > 1000) { lastMeasureTry = now; measure(); }
     var dt = Math.min(100, now - last); // tab switch ke baad bara jump na ho
     last = now;
     if (!paused && !dragging && half > 0 && strip.scrollWidth > strip.clientWidth + 10) {
