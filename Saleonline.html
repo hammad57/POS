@@ -1897,7 +1897,6 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     pauseMotion(2500);
     if (e.pointerType === 'mouse' && e.button === 0) {
       dragging = true; moved = 0; startX = e.clientX; startScroll = strip.scrollLeft;
-      try { strip.setPointerCapture(e.pointerId); } catch (err) {}
       strip.classList.add('dragging');
     }
   });
@@ -1908,13 +1907,14 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     strip.scrollLeft = startScroll - dx;
   });
   function endDrag() {
-    if (dragging && moved > 6) { justDragged = true; lastDragEnd = Date.now(); } // sirf drag ke foran baad wali click roko
+    if (!dragging) return;
+    if (moved > 6) { justDragged = true; lastDragEnd = Date.now(); } // sirf drag ke foran baad wali click roko
     dragging = false;
     strip.classList.remove('dragging');
     pauseMotion(2500);
   }
-  strip.addEventListener('pointerup', endDrag);
-  strip.addEventListener('pointercancel', endDrag);
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
   strip.addEventListener('click', function (e) {
     if (justDragged && Date.now() - lastDragEnd < 600) { justDragged = false; e.preventDefault(); e.stopPropagation(); }
   }, true);
