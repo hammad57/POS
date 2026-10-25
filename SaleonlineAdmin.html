@@ -120,6 +120,7 @@
         <div class="note" style="margin:0;">Har user sirf <b>aik dafa</b> count hota hai — bar bar aane par dobara count nahi hota.</div>
       </div>
       <button class="cta small gray" type="button" style="margin-left:auto;" onclick="loadVisitors()">🔄</button>
+      <button class="cta small danger" type="button" onclick="resetVisitors()">Reset</button>
     </div>
 
     <div class="tabs">
@@ -128,6 +129,7 @@
       <button class="tab-btn" type="button" id="tb-manual" onclick="switchTab('manual')">✏️ Manual Prices <span class="tab-badge" id="manualCount" style="display:none;">0</span></button>
       <button class="tab-btn" type="button" id="tb-users" onclick="switchTab('users')">👥 Users</button>
       <button class="tab-btn" type="button" id="tb-bonus" onclick="switchTab('bonus')">🎁 Bonus & Offers</button>
+      <button class="tab-btn" type="button" id="tb-import" onclick="switchTab('import')">🔄 Import / Export</button>
     </div>
 
     <div class="card tabpane" id="tabItems" style="display:none;">
@@ -166,6 +168,21 @@
       <label for="notifText">Notification to ALL users (popup on the store)</label>
       <textarea id="notifText" rows="3" placeholder="Write the notification message..."></textarea>
       <button class="cta small" type="button" style="margin-top:10px;" onclick="sendNotification()">Send Notification to All Users</button>
+    </div>
+
+    <div class="card tabpane" id="tabImport" style="display:none;">
+      <h3 style="margin-bottom:6px;">🔄 Import / Export Data</h3>
+      <p class="note" style="margin-top:0;">Products ka data <b>download</b> karke manually edit karein (price, details, ya naye products add karein), phir wohi file <b>upload</b> karke import karein.<br><b>Upsert only:</b> file mein mojood products update ya add honge — jo products file mein NA hon, woh <b>delete NAHI</b> honge, waisay hi rahenge.<br><b>Price:</b> file mein jo price hogi wohi effective price ban jayegi. Manual price wali items ki manual price mehfooz rehti hai, aur agar price badli to woh manual (protected) ho jayegi.<br>Import server par apply hoti hai (usually aik ghante ke andar) — status neeche nazar aayega.</p>
+      <h4 style="margin:12px 0 4px;">📥 Export</h4>
+      <button class="cta small" type="button" onclick="exportProducts()">⬇️ Download Products (JSON)</button>
+      <span class="note" id="exportStatus"></span>
+      <div style="border-top:1px dashed #dde6e0; margin:18px 0;"></div>
+      <h4 style="margin:12px 0 4px;">📤 Import</h4>
+      <label for="importFile">JSON file chunein (Export wali format)</label>
+      <input id="importFile" type="file" accept=".json,application/json" onchange="handleImportFile(event)">
+      <div id="importPreview" style="margin-top:12px;"></div>
+      <button class="cta small" type="button" id="btnConfirmImport" style="display:none; margin-top:10px;" onclick="confirmImport()">✅ Import Confirm karein</button>
+      <div class="note" id="importStatus"></div>
     </div>
 
     <div class="card tabpane" id="tabOrders">
@@ -248,6 +265,12 @@
     } catch (e) { var el2 = document.getElementById('visitorCount'); if (el2) el2.textContent = '—'; }
   }
 
+  async function resetVisitors() {
+    if (!confirm('Visitor counter reset kar dein? Total 0 ho jayega aur tamam visitor records clear ho jayenge.')) return;
+    try { await dbWrite('visits', { total: 0, users: {} }); toast('✅ Visitor counter reset ho gaya.'); loadVisitors(); }
+    catch (e) { toast('❌ Reset nahi ho saka'); }
+  }
+
   async function loadAdmin() {
     loadVisitors();
     var box = document.getElementById('adminOrders');
@@ -281,7 +304,8 @@
           + '<br>🏠 ' + escapeHtml(o.address)
           + (o.remarks ? '<br>📝 Remarks: ' + escapeHtml(o.remarks) : '')
           + '<br>🕐 ' + new Date(o.ts).toLocaleString('en-GB') + '</div>'
-          + '<div class="strow"><label style="margin:0;">Status badlein:</label><select onchange="setStatus(\'' + o.id + '\', this.value)">' + opts + '</select></div></div>';
+          + '<div class="strow"><label style="margin:0;">Status badlein:</label><select onchange="setStatus(\'' + o.id + '\', this.value)">' + opts + '</select></div>'
+          + '<div style="margin-top:8px;"><button class="cta small danger" type="button" onclick="deleteOrder(\'' + o.id + '\')">🗑️ Delete Order</button></div></div>';
       }).join('');
     } catch (e) { box.innerHTML = '<div class="empty">Orders load nahi ho sakay — internet check karke Refresh karein.</div>'; }
   }
@@ -289,6 +313,12 @@
   async function setStatus(id, s) {
     try { await dbUpdate('orders/' + id, { status: s }); toast('✅ Status update ho gaya: ' + s); loadAdmin(); }
     catch (e) { toast('❌ Status update nahi ho saka'); }
+  }
+
+  async function deleteOrder(id) {
+    if (!confirm('Ye order delete kar dein? Ye wapas nahi aayega.')) return;
+    try { await dbDelete('orders/' + id); toast('✅ Order delete ho gaya.'); loadAdmin(); }
+    catch (e) { toast('❌ Order delete nahi ho saka'); }
   }
 
 
@@ -299,12 +329,12 @@
   // ================= TABS =================
   var _itemsLoaded = false, _usersLoaded = false;
   function switchTab(name) {
-    ['orders', 'items', 'manual', 'users', 'bonus'].forEach(function(t) {
+    ['orders', 'items', 'manual', 'users', 'bonus', 'import'].forEach(function(t) {
       var pane = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
       if (pane) pane.style.display = (t === name) ? 'block' : 'none';
       var btn = document.getElementById('tb-' + t); if (btn) btn.classList.toggle('active', t === name);
     });
-    if (name === 'items' || name === 'manual') loadStoreItems();
+    if (name === 'items' || name === 'manual' || name === 'import') loadStoreItems();
     if (name === 'users') loadUsersTab();
   }
 
@@ -443,10 +473,12 @@
       return '<div style="padding:7px 0;border-bottom:1px dashed #dde6e0;"><b>' + escapeHtml(title) + '</b><br><span style="font-size:13.5px;color:#44524c;">' + tot + ' · Status: ' + escapeHtml(o.status || 'Pending') + ' · ' + fmtDT(o.ts) + (o.payment ? ' · ' + escapeHtml(o.payment) : '') + (o.trxId ? ' · Trx: ' + escapeHtml(o.trxId) : '') + '</span></div>';
     }).join('') : '<div style="color:#66766e;font-size:14px;">No orders yet.</div>';
     var wishKeys = Object.keys(wishes);
-    var wishHtml = wishKeys.length ? wishKeys.map(function(code) { var w = wishes[code] || {}; return '<div style="padding:5px 0;border-bottom:1px dashed #dde6e0;">❤️ <b>' + escapeHtml(w.product || code) + '</b> <span style="color:#44524c;font-size:13.5px;">(' + code + ')' + (typeof w.price === 'number' ? ' · PKR ' + w.price.toLocaleString('en-US') : '') + '</span></div>'; }).join('') : '<div style="color:#66766e;font-size:14px;">Wishlist is empty.</div>';
+    var wishHtml = wishKeys.length ? wishKeys.map(function(code) { var w = wishes[code] || {}; return '<div style="padding:5px 0;border-bottom:1px dashed #dde6e0;">❤️ <b>' + escapeHtml(w.product || code) + '</b> <span style="color:#44524c;font-size:13.5px;">(' + code + ')' + (typeof w.price === 'number' ? ' · PKR ' + w.price.toLocaleString('en-US') : '') + '</span> <button class="cta small danger" type="button" onclick="removeWish(\'' + ph + '\', \'' + code + '\')">❌</button></div>'; }).join('') : '<div style="color:#66766e;font-size:14px;">Wishlist is empty.</div>';
     d.innerHTML = '<b>👤 ' + escapeHtml(u.name || '—') + '</b> · 📱 ' + ph + '<br><span style="font-size:14px;color:#44524c;">⭐ Bonus Balance: <b>Rs. ' + (u.bonusBalance || 0) + '</b> · Account created: ' + fmtDT(u.created) + '</span>'
+      + '<div style="margin-top:12px;"><label style="margin:0 0 4px;">⭐ Bonus Balance set karein (Rs.)</label><div style="display:flex;gap:8px;flex-wrap:wrap;"><input type="number" min="0" id="bb-' + ph + '" value="' + (u.bonusBalance || 0) + '" style="max-width:180px;"><button class="cta small" type="button" onclick="setUserBonus(\'' + ph + '\')">Save Bonus</button></div></div>'
       + '<h4 style="margin:14px 0 4px;">🧾 All Orders (' + myOrders.length + ')</h4>' + ordersHtml
       + '<h4 style="margin:14px 0 4px;">❤️ Wishlist (' + wishKeys.length + ')</h4>' + wishHtml
+      + (wishKeys.length ? '<div style="margin-top:8px;"><button class="cta small gray" type="button" onclick="clearWishlist(\'' + ph + '\')">Wishlist Clear karein</button></div>' : '')
       + '<div style="margin-top:16px;"><button class="cta small danger" type="button" onclick="deleteUser(\'' + ph + '\')">🗑️ Delete this User ID</button><div class="note">Deleting removes the account and wishlist, and blocks this number — the user will not be able to log in or sign up again with it. Past orders stay in the Orders record.</div></div>';
     d.style.display = 'block';
   }
@@ -460,6 +492,24 @@
       toast('✅ User ' + ph + ' deleted and blocked.');
       loadUsersTab(); loadAdmin();
     } catch (e) { toast('❌ Delete nahi ho saka — dobara koshish karein'); }
+  }
+
+  async function setUserBonus(ph) {
+    var inp = document.getElementById('bb-' + ph);
+    var val = parseInt(inp && inp.value, 10);
+    if (isNaN(val) || val < 0) { toast('Valid bonus amount likhein.'); return; }
+    try { await dbUpdate('users/' + ph, { bonusBalance: val }); toast('✅ Bonus balance set: Rs. ' + val); loadUsersTab(); toggleUserDetail(ph); }
+    catch (e) { toast('❌ Bonus save nahi ho saka'); }
+  }
+  async function removeWish(ph, code) {
+    if (!confirm('Wishlist se ye item hata dein?')) return;
+    try { await dbDelete('wishlists/' + ph + '/' + code); toast('✅ Wishlist se hata diya.'); loadUsersTab(); toggleUserDetail(ph); }
+    catch (e) { toast('❌ Ho nahi saka'); }
+  }
+  async function clearWishlist(ph) {
+    if (!confirm('Is user ki poori wishlist clear kar dein?')) return;
+    try { await dbDelete('wishlists/' + ph); toast('✅ Wishlist clear ho gayi.'); loadUsersTab(); toggleUserDetail(ph); }
+    catch (e) { toast('❌ Ho nahi saka'); }
   }
 
   // ================= BONUS / OFFER / NOTIFICATION =================
@@ -493,6 +543,113 @@
     if (!t) { toast('Please write the notification first.'); return; }
     try { await dbWrite('notifications/latest', { text: t, ts: Date.now() }); document.getElementById('notifText').value = ''; toast('✅ Notification sent — users will see it on their next visit.'); }
     catch (e) { toast('❌ Notification send nahi ho saka'); }
+  }
+
+  // ================= IMPORT / EXPORT =================
+  function downloadJson(filename, obj) {
+    var blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+  }
+  async function exportProducts() {
+    try {
+      if (!_products) await loadStoreItems(true);
+      var rows = (_products || []).map(function(p) {
+        var o = _overrides[p.code];
+        var manual = !!(o && typeof o.price === 'number');
+        return {
+          product_code: p.code, name: p.name, category: p.cat,
+          price: manual ? o.price : p.sale, manual_price: manual,
+          store_price: p.sale, images: p.images || [],
+          colours: p.colours || [], sizes: p.sizes || [],
+          fabric: p.fabric || '', pattern: p.pattern || '',
+          neck: p.neck || '', pieces: p.pieces || '',
+          package_includes: p.pkg || '', measurements: p.meas || '',
+          size_chart_image_index: (p.sci === undefined ? null : p.sci),
+          stock: p.stock || 'In Stock'
+        };
+      });
+      var d = new Date();
+      var stamp = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+      downloadJson('saleonline-products-export-' + stamp + '.json', rows);
+      document.getElementById('exportStatus').textContent = '✅ ' + rows.length + ' products download ho gaye.';
+    } catch (e) { toast('❌ Export nahi ho saka'); }
+  }
+  var _importRows = null;
+  var IMP_FIELDS = [['name', 'name'], ['category', 'cat'], ['images', 'images'], ['colours', 'colours'], ['sizes', 'sizes'], ['fabric', 'fabric'], ['pattern', 'pattern'], ['neck', 'neck'], ['pieces', 'pieces'], ['package_includes', 'pkg'], ['measurements', 'meas'], ['size_chart_image_index', 'sci'], ['stock', 'stock']];
+  function handleImportFile(ev) {
+    var f = ev.target.files && ev.target.files[0];
+    var prev = document.getElementById('importPreview');
+    var btn = document.getElementById('btnConfirmImport');
+    _importRows = null; btn.style.display = 'none';
+    if (!f) { prev.innerHTML = ''; return; }
+    var rd = new FileReader();
+    rd.onload = function() {
+      try {
+        var data = JSON.parse(rd.result);
+        var rows = Array.isArray(data) ? data : (data.products || data.items || null);
+        if (!rows || !rows.length) { prev.innerHTML = '<div class="empty">File mein koi product rows nahi mili.</div>'; return; }
+        if (!_products) { prev.innerHTML = '<div class="empty">Pehle Store Items load hone dein, phir dobara file chunein.</div>'; return; }
+        var byCode = {}; _products.forEach(function(p) { byCode[p.code] = p; });
+        var nNew = 0, nUpd = 0, nSame = 0, nBad = 0;
+        var html = rows.map(function(r) {
+          if (!r || !r.product_code) { nBad++; return ''; }
+          var cur = byCode[r.product_code];
+          if (!cur) {
+            var okNew = !!(r.name && r.category && r.price != null);
+            if (!okNew) { nBad++; return '<div style="padding:5px 0;">❌ ' + escapeHtml(r.product_code) + ' — naya product: name, category aur price zaroori hai.</div>'; }
+            nNew++;
+            return '<div style="padding:5px 0;">🆕 <b>' + escapeHtml(r.name) + '</b> (' + escapeHtml(r.product_code) + ') — PKR ' + Number(r.price).toLocaleString('en-US') + ' — NAYA</div>';
+          }
+          var diffs = [];
+          if (r.price != null && Number(r.price) !== effPrice(cur)) diffs.push('price ' + Number(effPrice(cur)).toLocaleString('en-US') + ' → ' + Number(r.price).toLocaleString('en-US'));
+          IMP_FIELDS.forEach(function(pair) {
+            if (r[pair[0]] != null && JSON.stringify(r[pair[0]]) !== JSON.stringify(cur[pair[1]] == null ? '' : cur[pair[1]])) {
+              if (!(typeof r[pair[0]] === 'string' && r[pair[0]] === '' && (cur[pair[1]] == null || cur[pair[1]] === ''))) diffs.push(pair[0]);
+            }
+          });
+          if (diffs.length) { nUpd++; return '<div style="padding:5px 0;">✏️ <b>' + escapeHtml(cur.name) + '</b> (' + cur.code + ') — ' + escapeHtml(diffs.join(', ')) + '</div>'; }
+          nSame++;
+          return '<div style="padding:5px 0;color:#66766e;">— ' + escapeHtml(cur.name) + ' (' + cur.code + ') — koi tabdeeli nahi</div>';
+        }).join('');
+        _importRows = rows;
+        prev.innerHTML = '<div style="font-weight:700;margin-bottom:6px;">Preview: ' + nNew + ' naye · ' + nUpd + ' update · ' + nSame + ' same · ' + nBad + ' ghalat</div>' + html
+          + '<div class="note">Jo products is file mein nahi hain, woh <b>delete nahi</b> honge.</div>';
+        btn.style.display = (nNew + nUpd > 0) ? 'inline-block' : 'none';
+      } catch (e) { prev.innerHTML = '<div class="empty">File parhi nahi ja saki — sirf Export wali JSON format use karein.</div>'; }
+    };
+    rd.readAsText(f);
+  }
+  async function confirmImport() {
+    if (!_importRows || !_importRows.length) return;
+    if (!confirm(_importRows.length + ' rows import karein? Ye server par apply hogi (usually aik ghante ke andar). Jo products file mein nahi hain, woh delete nahi honge.')) return;
+    var st = document.getElementById('importStatus');
+    try {
+      var id = await dbPush('sync_requests', { type: 'product_import', status: 'pending', ts: Date.now(), by: 'admin' });
+      await dbWrite('imports/' + id, { products: _importRows, ts: Date.now(), by: 'admin' });
+      st.innerHTML = '✅ <b>Import request bhej di gayi.</b> Server isay apply karega (usually aik ghante ke andar). Ye page result aane par yahan dikhayega.';
+      pollImport(id);
+    } catch (e) { st.textContent = '❌ Import request nahi bheji ja saki — internet check karein.'; }
+  }
+  var _impPoll = null;
+  function pollImport(id) {
+    if (_impPoll) clearInterval(_impPoll);
+    _impPoll = setInterval(async function() {
+      try {
+        var r = await dbRead('sync_requests/' + id);
+        if (r && r.status === 'done') {
+          clearInterval(_impPoll);
+          document.getElementById('importStatus').innerHTML = '✅ <b>Import complete</b> (' + fmtDT(r.finished_ts) + ')<br>' + escapeHtml(r.summary || '');
+          loadStoreItems(true);
+        } else if (r && r.status === 'error') {
+          clearInterval(_impPoll);
+          document.getElementById('importStatus').textContent = '❌ Import fail: ' + (r.summary || 'unknown error');
+        }
+      } catch (e) {}
+    }, 12000);
   }
 
   adminInit();
