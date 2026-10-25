@@ -272,8 +272,12 @@
 
   async function loadVisitors() {
     try {
-      var t = await dbRead('visits/total');
-      if (typeof t !== 'number') { var us = await dbRead('visits/users') || {}; t = Object.keys(us).length; }
+      // Asal unique count = users node mein maujood alag devices/users ki tadaad.
+      // 'total' field aik saath aane wali visits mein peeche reh sakta hai (race),
+      // is liye card hamesha users count dikhata hai; total sirf fallback hai.
+      var us = await dbRead('visits/users') || {};
+      var t = Object.keys(us).length;
+      if (!t) { var tot = await dbRead('visits/total'); if (typeof tot === 'number') t = tot; }
       var el = document.getElementById('visitorCount'); if (el) el.textContent = t;
     } catch (e) { var el2 = document.getElementById('visitorCount'); if (el2) el2.textContent = '—'; }
   }
@@ -855,7 +859,7 @@
       var revenue = 0;
       todayOrders.forEach(function (o) { revenue += (typeof o.total === "number" ? o.total : num(o.price)); });
       var newUsers = Object.keys(users).filter(function (ph) { var u = users[ph] || {}; return u.created && new Date(u.created).toDateString() === today; }).length;
-      var vTotal = (typeof visits.total === "number") ? visits.total : Object.keys(visits.users || {}).length;
+      var vTotal = Object.keys(visits.users || {}).length || ((typeof visits.total === "number") ? visits.total : 0);
       var topList = Object.keys(top).map(function (k) { return top[k]; }).sort(function (a, b) { return b.qty - a.qty; }).slice(0, 5);
       var html = "";
       if (s.show_orders_today !== false) html += '<div style="font-size:15px;margin:4px 0;">🧾 <b>Orders today:</b> ' + todayOrders.length + "</div>";
