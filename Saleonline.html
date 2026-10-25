@@ -1932,14 +1932,14 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     }
     requestAnimationFrame(frame);
   }
-  function init() {
-    measure();
-    strip.style.scrollSnapType = 'none'; // shuru mein hi glide smooth ho
-    setTimeout(measure, 500);
-    setTimeout(measure, 2000);
-  }
-  if (document.readyState === 'complete') init();
-  else window.addEventListener('load', init);
+  // Foran measure + snap off — window 'load' ka intezar nahi: shop ki images
+  // late load hon to bhi motion shuru se chale (pehle load par atakne se
+  // stylesheet wali 'x mandatory' snap motion ko rok leti thi).
+  measure();
+  strip.style.scrollSnapType = 'none'; // shuru mein hi glide smooth ho
+  setTimeout(measure, 500);
+  setTimeout(measure, 2000);
+  window.addEventListener('load', measure);
   window.addEventListener('resize', measure);
   requestAnimationFrame(frame);
 })();
