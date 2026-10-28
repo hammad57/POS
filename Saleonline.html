@@ -2349,6 +2349,36 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
         PRODUCTS.forEach(function(x) { if (x.code === selected.code) still = true; });
         if (!still && PRODUCTS.length) applySelection(PRODUCTS[0]);
       }
+      // ---- Category enable/disable (admin Categories tab) ----
+      // Firebase: category_overrides/<category> = { hidden: true }.
+      // Hidden category ki tile (original + auto-scroll clones) aur us ke
+      // tamam items PRODUCTS + dono grids se hat jate hain; chips dobara
+      // banti hain taake hidden category chip me bhi na aaye.
+      try {
+        var cov = await dbRead('category_overrides');
+        if (cov) {
+          var hiddenCats = [];
+          Object.keys(cov).forEach(function(c) { if (cov[c] && cov[c].hidden) hiddenCats.push(c); });
+          if (hiddenCats.length) {
+            PRODUCTS = PRODUCTS.filter(function(x) { return hiddenCats.indexOf(x.cat) < 0; });
+            ['gridProducts', 'gridAll'].forEach(function(gid) {
+              var g = document.getElementById(gid); if (!g) return;
+              Array.prototype.slice.call(g.children).forEach(function(card) { var dc = card.getAttribute('data-cat'); if (dc && hiddenCats.indexOf(dc) >= 0) card.remove(); });
+            });
+            document.querySelectorAll('#catTiles .cat-tile').forEach(function(tile) {
+              var img = tile.querySelector('img'); var alt = img ? img.getAttribute('alt') : '';
+              if (alt && hiddenCats.indexOf(alt) >= 0) tile.remove();
+            });
+            var _activeChip = document.querySelector('#catChips .cat-chip.active');
+            var _curCat = _activeChip ? (_activeChip.getAttribute('data-cat') || '') : '';
+            if (typeof buildChips === 'function') buildChips();
+            if (typeof filterProducts === 'function') filterProducts(hiddenCats.indexOf(_curCat) >= 0 ? '' : _curCat);
+            var still2 = false;
+            PRODUCTS.forEach(function(x) { if (x.code === selected.code) still2 = true; });
+            if (!still2 && PRODUCTS.length) applySelection(PRODUCTS[0]);
+          }
+        }
+      } catch (e2) {}
     } catch (e) {}
   }
 
