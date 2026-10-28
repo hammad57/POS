@@ -143,6 +143,7 @@
       <button class="tab-btn" type="button" id="tb-users" onclick="switchTab('users')">👥 Users</button>
       <button class="tab-btn" type="button" id="tb-bonus" onclick="switchTab('bonus')">🎁 Bonus & Offers</button>
       <button class="tab-btn" type="button" id="tb-import" onclick="switchTab('import')">🔄 Import / Export</button>
+      <button class="tab-btn" type="button" id="tb-cats" onclick="switchTab('cats')">🗂️ Categories</button>
       <button class="tab-btn" type="button" id="tb-tools" onclick="switchTab('tools')">🧩 Tools</button>
     </div>
 
@@ -162,6 +163,12 @@
       <input id="manualSearch" type="text" placeholder="Naam ya item code likhein... (Search by name or code)" oninput="renderManual()">
       <div class="note" id="manualSearchCount" style="margin-top:6px;"></div>
       <div id="manualList"><div class="empty">Loading...</div></div>
+    </div>
+
+    <div class="card tabpane" id="tabCats" style="display:none;">
+      <h3 style="margin-bottom:6px;">🗂️ Categories — Enable / Disable</h3>
+      <p class="note" style="margin-top:0;">Kisi category ko <b>Disable</b> karein to wo category aur us ke tamam items shop se chhup jayenge (shop refresh par). <b>Enable</b> karein to wapas nazar aayenge. Product delete NAHI hota — sirf chhupta hai, aur Update Store us ki price/stock phir bhi check karta rahega.</p>
+      <div id="catsList"><div class="empty">Loading...</div></div>
     </div>
 
     <div class="card tabpane" id="tabUsers" style="display:none;">
@@ -360,12 +367,13 @@
   // ================= TABS =================
   var _itemsLoaded = false, _usersLoaded = false;
   function switchTab(name) {
-    ['orders', 'items', 'manual', 'users', 'bonus', 'import', 'tools'].forEach(function(t) {
+    ['orders', 'items', 'manual', 'users', 'bonus', 'import', 'cats', 'tools'].forEach(function(t) {
       var pane = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
       if (pane) pane.style.display = (t === name) ? 'block' : 'none';
       var btn = document.getElementById('tb-' + t); if (btn) btn.classList.toggle('active', t === name);
     });
     if (name === 'items' || name === 'manual' || name === 'import') loadStoreItems();
+    if (name === 'cats') loadCategoriesTab();
     if (name === 'users') loadUsersTab();
     if (name === 'tools') loadToolsTab();
   }
@@ -590,6 +598,49 @@
         + '<div class="grow"><b>' + escapeHtml(name) + '</b><br><span style="color:#44524c;font-size:13.5px;">Code: ' + code + '<br>Your manual price: <b>PKR ' + Number(_overrides[code].price).toLocaleString('en-US') + '</b>' + (auto !== null ? ' · Automatic (source) price in store file: PKR ' + Number(auto).toLocaleString('en-US') : '') + '</span></div>'
         + '<button class="cta small" type="button" onclick="updateWithSource(\'' + code + '\')">Update with Source</button></div>';
     }).join('');
+  }
+  // ================= CATEGORIES ENABLE / DISABLE =================
+  // Firebase node: category_overrides/<category> = { hidden: true }.
+  // Shop page (applyPanelControls) is node ko parh kar us category ki
+  // tile + tamam items (PRODUCTS + dono grids + chips) chhupa deta hai.
+  var _catOv = {}, _catList = [];
+  async function loadCategoriesTab() {
+    var box = document.getElementById('catsList'); if (box) box.innerHTML = '<div class="empty">Loading...</div>';
+    try { if (!_products) await loadStoreItems(true); } catch (e) {}
+    try { _catOv = await dbRead('category_overrides') || {}; } catch (e) { _catOv = {}; }
+    renderCategories();
+  }
+  function renderCategories() {
+    var box = document.getElementById('catsList'); if (!box) return;
+    if (!_products) { box.innerHTML = '<div class="empty">Items load nahi ho sakay.</div>'; return; }
+    var counts = {}; _catList = [];
+    _products.forEach(function(p) { var c = p.cat || 'Other'; if (!counts[c]) { counts[c] = 0; _catList.push(c); } counts[c]++; });
+    if (!_catList.length) { box.innerHTML = '<div class="empty">Koi category nahi mili.</div>'; return; }
+    box.innerHTML = _catList.map(function(c, i) {
+      var hid = !!(_catOv[c] && _catOv[c].hidden);
+      return '<div class="irow"><div class="grow"><b>' + escapeHtml(c) + '</b><br><span style="color:#44524c;font-size:13.5px;">' + counts[c] + ' products · ' + (hid ? 'HIDDEN (shop se chhupi hui)' : 'Visible') + '</span></div>'
+        + (hid ? '<span class="badge-off">HIDDEN</span><button class="cta small" type="button" onclick="toggleCategoryIdx(' + i + ')">✅ Enable Category</button>'
+               : '<span class="badge-ok">Visible</span><button class="cta small danger" type="button" onclick="toggleCategoryIdx(' + i + ')">🚫 Disable Category</button>')
+        + '</div>';
+    }).join('');
+  }
+  async function toggleCategoryIdx(i) {
+    var c = _catList[i]; if (!c) return;
+    var hid = !!(_catOv[c] && _catOv[c].hidden);
+    try {
+      if (hid) {
+        await dbDelete('category_overrides/' + encodeURIComponent(c));
+        delete _catOv[c];
+        toast('✅ Category wapas show ho gayi: ' + c);
+      } else {
+        var n = _products.filter(function(p) { return (p.cat || 'Other') === c; }).length;
+        if (!confirm('"' + c + '" category ko DISABLE kar dein?\n\nIs category aur is ke tamam items (' + n + ' products) shop se chhup jayenge. Product delete NAHI hoga — Enable karne par wapas aa jayega.')) return;
+        await dbWrite('category_overrides/' + encodeURIComponent(c), { hidden: true, ts: Date.now(), by: 'admin' });
+        _catOv[c] = { hidden: true };
+        toast('🚫 Category chhupa di gayi: ' + c + ' — shop refresh par nazar aayegi.');
+      }
+      renderCategories();
+    } catch (e) { toast('❌ Save nahi ho saka'); }
   }
   async function updateWithSource(code) {
     if (!confirm('Restore the automatic source price for this item? Your manual price protection will be removed and the item will return to the main list.')) return;
