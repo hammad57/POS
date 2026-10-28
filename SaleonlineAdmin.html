@@ -407,7 +407,13 @@
       bar.style.background = '#0b7a4b';
       label.textContent = phase === 'publishing' ? '📤 Shop publish ho rahi hai...' : '🔄 Products check ho rahe hain...';
       var done = (r.progress_done != null ? r.progress_done : 0); var total = (r.progress_total != null ? r.progress_total : 0);
-      detail.textContent = (total ? (done + ' / ' + total + ' products check ho gaye') : 'Products check ho rahe hain...') + (r.progress_current ? (' · Abhi: ' + r.progress_current) : '');
+      var dparts = [];
+      if (r.progress_category) dparts.push('Category: ' + r.progress_category);
+      if (r.progress_categories_total) dparts.push('(' + (r.progress_categories_done != null ? r.progress_categories_done : 0) + ' / ' + r.progress_categories_total + ' categories mukammal)');
+      if (r.progress_category_total) dparts.push('Is category: ' + (r.progress_category_done != null ? r.progress_category_done : 0) + ' / ' + r.progress_category_total);
+      dparts.push(total ? (done + ' / ' + total + ' products check ho gaye') : 'Products check ho rahe hain...');
+      if (r.progress_current) dparts.push('Abhi: ' + r.progress_current);
+      detail.textContent = dparts.join(' · ');
       var parts = [];
       if (r.progress_elapsed_secs != null) parts.push('Guzra waqt: ' + fmtSecs(r.progress_elapsed_secs));
       if (r.progress_remaining_secs != null) parts.push('Baaki waqt: ~' + fmtSecs(r.progress_remaining_secs));
@@ -423,6 +429,11 @@
       bar.style.background = '#b3261e';
       label.textContent = '❌ Update fail ho gaya';
       detail.textContent = r.summary || 'unknown error';
+      timeEl.textContent = '';
+    } else if (r.status === 'cancelled') {
+      bar.style.background = '#66766e';
+      label.textContent = '⏹️ Update rok di gayi';
+      detail.textContent = r.summary || 'Request rok di gayi.';
       timeEl.textContent = '';
     }
   }
@@ -452,6 +463,10 @@
           clearInterval(_updPoll);
           var btn2 = document.getElementById('btnUpdateStore'); btn2.disabled = false; btn2.textContent = '🔄 Update Store Now';
           document.getElementById('updStatus').textContent = '❌ Update failed: ' + (r.summary || 'unknown error') + ' — please try again.';
+        } else if (r.status === 'cancelled') {
+          clearInterval(_updPoll);
+          var btn3 = document.getElementById('btnUpdateStore'); btn3.disabled = false; btn3.textContent = '🔄 Update Store Now';
+          document.getElementById('updStatus').textContent = '⏹️ Update rok di gayi.';
         }
       } catch (e) {}
     }, 12000);
