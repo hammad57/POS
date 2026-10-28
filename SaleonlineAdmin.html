@@ -143,13 +143,18 @@
     <div class="card tabpane" id="tabItems" style="display:none;">
       <h3 style="margin-bottom:6px;">📦 Store Items</h3>
       <p class="note" style="margin-top:0;">All products currently live in your store. Use <b>Set Manual Price</b> to fix any item's price yourself — it will then be protected from automatic updates and listed in the Manual Prices tab. Har item ko <b>Out of Stock</b> ya <b>Inactive</b> (shop se chhupana) bhi kar sakte hain — ye foran (shop refresh par) lagta hai. <b>Remove Product</b> page se permanent delete karta hai (hourly check par).</p>
-      <input id="itemSearch" type="text" placeholder="Search by name or code..." oninput="renderItems()">
+      <label for="itemSearch" style="margin-top:6px;">🔍 Item search karein — naam ya item code likhein</label>
+      <input id="itemSearch" type="text" placeholder="Naam ya item code likhein... (Search by name or code)" oninput="renderItems()">
+      <div class="note" id="itemsCount" style="margin-top:6px;"></div>
       <div id="itemsList" style="margin-top:12px;"><div class="empty">Items load ho rahe hain...</div></div>
     </div>
 
     <div class="card tabpane" id="tabManual" style="display:none;">
       <h3 style="margin-bottom:6px;">✏️ Manual Prices (Protected)</h3>
       <p class="note" style="margin-top:0;">These items' prices were changed manually by you. <b>Update Store</b> will never change their price (only stock and other details). Press <b>Update with Source</b> on any item to restore its automatic source price — it will move back to the main Store Items list.</p>
+      <label for="manualSearch" style="margin-top:6px;">🔍 Item search karein — naam ya item code likhein</label>
+      <input id="manualSearch" type="text" placeholder="Naam ya item code likhein... (Search by name or code)" oninput="renderManual()">
+      <div class="note" id="manualSearchCount" style="margin-top:6px;"></div>
       <div id="manualList"><div class="empty">Loading...</div></div>
     </div>
 
@@ -409,9 +414,10 @@
   function effPrice(p) { var o = _overrides[p.code]; return (o && typeof o.price === 'number') ? o.price : p.sale; }
   function renderItems() {
     var box = document.getElementById('itemsList'); if (!box || !_products) return;
-    var q = (document.getElementById('itemSearch').value || '').toLowerCase();
-    var list = _products.filter(function(p) { return !q || p.name.toLowerCase().indexOf(q) >= 0 || p.code.toLowerCase().indexOf(q) >= 0; });
+    var q = (document.getElementById('itemSearch').value || '').trim().toLowerCase();
+    var list = _products.filter(function(p) { var nm = (p.name || '').toLowerCase(); var cd = (p.code || '').toLowerCase(); return !q || nm.indexOf(q) >= 0 || cd.indexOf(q) >= 0; });
     updateManualBadge();
+    var cnt = document.getElementById('itemsCount'); if (cnt) cnt.textContent = q ? (list.length + ' items mile (total ' + _products.length + ')') : ('Total items: ' + _products.length);
     if (!list.length) { box.innerHTML = '<div class="empty">No items match your search.</div>'; return; }
     box.innerHTML = list.map(function(p) {
       var o = _overrides[p.code]; var manual = !!(o && typeof o.price === 'number');
@@ -484,7 +490,10 @@
     var box = document.getElementById('manualList'); if (!box || !_products) return;
     updateManualBadge();
     var codes = Object.keys(_overrides || {}).filter(function(c) { return _overrides[c] && typeof _overrides[c].price === 'number'; });
-    if (!codes.length) { box.innerHTML = '<div class="empty">No manual prices yet. Set one from the Store Items tab.</div>'; return; }
+    var mel = document.getElementById('manualSearch'); var mq = (mel ? mel.value : '').trim().toLowerCase();
+    if (mq) { codes = codes.filter(function(code) { var p = null; _products.forEach(function(x) { if (x.code === code) p = x; }); var nm = (p && p.name ? p.name : '').toLowerCase(); return code.toLowerCase().indexOf(mq) >= 0 || nm.indexOf(mq) >= 0; }); }
+    var mcnt = document.getElementById('manualSearchCount'); if (mcnt) mcnt.textContent = mq ? (codes.length + ' manual-price items mile') : '';
+    if (!codes.length) { box.innerHTML = mq ? '<div class="empty">No manual-price items match your search.</div>' : '<div class="empty">No manual prices yet. Set one from the Store Items tab.</div>'; return; }
     box.innerHTML = codes.map(function(code) {
       var p = null; _products.forEach(function(x) { if (x.code === code) p = x; });
       var name = p ? p.name : code; var img = (p && p.images && p.images[0]) || ''; var auto = p ? p.sale : null;
