@@ -112,6 +112,12 @@
       <p class="note" style="margin-top:0;">Press the button to match <b>every product</b> in your store with the source app: prices, stock and details are checked, and anything changed there is updated here too — so you never face a loss or a customer complaint.<br><b>Protected:</b> any price you changed manually will <b>NOT</b> be overwritten — only that item's stock and other details will update. Those protected items are listed in the <b>Manual Prices</b> tab.</p>
       <button class="cta" type="button" id="btnUpdateStore" onclick="requestStoreUpdate()">🔄 Update Store Now</button>
       <div class="note" id="updStatus">The update runs on the server — it usually completes within an hour. Keep this page open to see the result here.</div>
+      <div id="updProgressWrap" style="display:none; margin-top:12px;">
+        <div style="display:flex; justify-content:space-between; font-size:13.5px; font-weight:700;"><span id="updProgressLabel">Update progress</span><span id="updProgressPct">0%</span></div>
+        <div style="background:#e8eeeb; border-radius:999px; height:16px; overflow:hidden; margin-top:6px;"><div id="updProgressBar" style="width:0%; height:100%; background:#0b7a4b;"></div></div>
+        <div class="note" id="updProgressDetail" style="margin-top:6px;"></div>
+        <div class="note" id="updProgressTime" style="margin-top:2px;"></div>
+      </div>
     </div>
 
     <div class="card" style="display:flex; align-items:center; gap:16px;">
@@ -271,7 +277,7 @@
   }
 
   function adminLogout() { sessionStorage.removeItem('saleonlie_admin'); location.reload(); }
-  function enterAdmin() { document.getElementById('gateCard').style.display = 'none'; document.getElementById('panel').style.display = 'block'; loadAdmin(); }
+  function enterAdmin() { document.getElementById('gateCard').style.display = 'none'; document.getElementById('panel').style.display = 'block'; loadAdmin(); resumeStoreUpdatePoll(); }
 
   // ================= ORDERS =================
   function statusClass(s) { return { 'Pending': 'st-pending', 'Confirmed': 'st-confirmed', 'Shipped': 'st-shipped', 'Delivered': 'st-delivered', 'Cancelled': 'st-cancelled' }[s] || 'st-pending'; }
@@ -365,13 +371,68 @@
   }
 
   // ================= UPDATE STORE (source sync request) =================
+  // Real progress: server (update_store.py) har 10 products ke baad
+  // sync_requests/<id> me progress_done / progress_total / progress_pct /
+  // progress_remaining_secs / progress_eta_total_secs likhta hai. Ye page
+  // har 12 sec me wohi node parh kar bar + baaki waqt update karta hai.
+  // Checking ka hissa 90% tak hai, aakhri 10% shop publish karne ka hai.
   var _updPoll = null;
+  function fmtSecs(s) {
+    if (s == null || isNaN(s) || s < 0) return '';
+    s = Math.round(s);
+    if (s < 60) return s + ' sec';
+    var m = Math.floor(s / 60); var sec = s % 60;
+    return sec ? (m + ' min ' + sec + ' sec') : (m + ' min');
+  }
+  function showUpdProgress(r) {
+    var wrap = document.getElementById('updProgressWrap'); if (!wrap) return;
+    wrap.style.display = 'block';
+    var bar = document.getElementById('updProgressBar');
+    var pctEl = document.getElementById('updProgressPct');
+    var label = document.getElementById('updProgressLabel');
+    var detail = document.getElementById('updProgressDetail');
+    var timeEl = document.getElementById('updProgressTime');
+    var pct = 0, phase = (r && r.progress_phase) || '';
+    if (r && typeof r.progress_pct === 'number') pct = r.progress_pct;
+    else if (r && r.progress_total && r.progress_done != null) pct = Math.round(r.progress_done / r.progress_total * 90);
+    if (r && r.status === 'done') pct = 100;
+    pct = Math.max(0, Math.min(100, pct));
+    bar.style.width = pct + '%'; pctEl.textContent = pct + '%';
+    if (!r || r.status === 'pending') {
+      bar.style.background = '#0b7a4b';
+      label.textContent = '⏳ Request queue me hai';
+      detail.textContent = 'Server ka hourly check shuru hone ka intezar hai. Processing shuru hote hi asli percent aur baaki waqt yahan chalne lagega.';
+      timeEl.textContent = 'Andaza waqt: processing shuru hone par nazar aayega.';
+    } else if (r.status === 'processing') {
+      bar.style.background = '#0b7a4b';
+      label.textContent = phase === 'publishing' ? '📤 Shop publish ho rahi hai...' : '🔄 Products check ho rahe hain...';
+      var done = (r.progress_done != null ? r.progress_done : 0); var total = (r.progress_total != null ? r.progress_total : 0);
+      detail.textContent = (total ? (done + ' / ' + total + ' products check ho gaye') : 'Products check ho rahe hain...') + (r.progress_current ? (' · Abhi: ' + r.progress_current) : '');
+      var parts = [];
+      if (r.progress_elapsed_secs != null) parts.push('Guzra waqt: ' + fmtSecs(r.progress_elapsed_secs));
+      if (r.progress_remaining_secs != null) parts.push('Baaki waqt: ~' + fmtSecs(r.progress_remaining_secs));
+      if (r.progress_eta_total_secs != null) parts.push('Kul andaza waqt: ~' + fmtSecs(r.progress_eta_total_secs));
+      timeEl.textContent = parts.length ? parts.join(' · ') : 'Baaki waqt ka andaza lagaya ja raha hai...';
+    } else if (r.status === 'done') {
+      bar.style.background = '#0b7a4b';
+      label.textContent = '✅ Update mukammal';
+      var took = (r.finished_ts && r.progress_started_ts) ? fmtSecs((r.finished_ts - r.progress_started_ts) / 1000) : '';
+      detail.textContent = r.summary || 'All products checked.';
+      timeEl.textContent = took ? ('Kul waqt laga: ' + took) : '';
+    } else if (r.status === 'error') {
+      bar.style.background = '#b3261e';
+      label.textContent = '❌ Update fail ho gaya';
+      detail.textContent = r.summary || 'unknown error';
+      timeEl.textContent = '';
+    }
+  }
   async function requestStoreUpdate() {
     var btn = document.getElementById('btnUpdateStore'); var st = document.getElementById('updStatus');
     btn.disabled = true; btn.textContent = '⏳ Update requested...';
     try {
       var id = await dbPush('sync_requests', { type: 'store_update', status: 'pending', ts: Date.now(), by: 'admin' });
       st.innerHTML = '✅ <b>Update request sent.</b> The server will now match every product with the source. This page will show the result when it completes (usually within an hour).';
+      showUpdProgress({ status: 'pending' });
       pollStoreUpdate(id);
     } catch (e) { st.textContent = '❌ Request failed — check your internet and try again.'; btn.disabled = false; btn.textContent = '🔄 Update Store Now'; }
   }
@@ -380,18 +441,31 @@
     _updPoll = setInterval(async function() {
       try {
         var r = await dbRead('sync_requests/' + id);
-        if (r && r.status === 'done') {
+        if (!r) return;
+        showUpdProgress(r);
+        if (r.status === 'done') {
           clearInterval(_updPoll);
           var btn = document.getElementById('btnUpdateStore'); btn.disabled = false; btn.textContent = '🔄 Update Store Now';
           document.getElementById('updStatus').innerHTML = '✅ <b>Store update complete</b> (' + fmtDT(r.finished_ts) + ')<br>' + escapeHtml(r.summary || 'All products checked.');
           loadStoreItems(true);
-        } else if (r && r.status === 'error') {
+        } else if (r.status === 'error') {
           clearInterval(_updPoll);
           var btn2 = document.getElementById('btnUpdateStore'); btn2.disabled = false; btn2.textContent = '🔄 Update Store Now';
           document.getElementById('updStatus').textContent = '❌ Update failed: ' + (r.summary || 'unknown error') + ' — please try again.';
         }
       } catch (e) {}
     }, 12000);
+  }
+  async function resumeStoreUpdatePoll() {
+    try {
+      var all = await dbRead('sync_requests') || {};
+      var latest = null; var latestId = null;
+      Object.keys(all).forEach(function(k) { var o = all[k] || {}; if (o.type === 'store_update' && (o.status === 'pending' || o.status === 'processing')) { if (!latest || (o.ts || 0) > (latest.ts || 0)) { latest = o; latestId = k; } } });
+      if (latest && latestId) {
+        var btn = document.getElementById('btnUpdateStore'); btn.disabled = true; btn.textContent = '⏳ Update chal raha hai...';
+        showUpdProgress(latest); pollStoreUpdate(latestId);
+      }
+    } catch (e) {}
   }
 
   // ================= STORE ITEMS + MANUAL PRICES =================
