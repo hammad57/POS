@@ -101,6 +101,9 @@
   .auth-form label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 5px; }
   .auth-form input { width: 100%; padding: 11px 12px; border: 1px solid #cfd8d3; border-radius: 10px; font-size: 15px; font-family: inherit; }
   .auth-err { display: none; color: #b3261e; background: #fdecea; border: 1px solid #f5c6c2; border-radius: 8px; padding: 9px 11px; font-size: 14px; margin-top: 12px; line-height: 1.5; }
+  .auth-spin { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: authSpin .8s linear infinite; vertical-align: -3px; margin-right: 8px; }
+  @keyframes authSpin { to { transform: rotate(360deg); } }
+  .auth-form .cta:disabled { opacity: .8; cursor: wait; }
   .auth-note { font-size: 13px; color: #66766e; margin-top: 10px; line-height: 1.55; }
   .order-item { border: 1px solid #e4e9e6; border-radius: 12px; padding: 14px; margin-bottom: 12px; background: #fff; }
   .oi-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
@@ -2743,6 +2746,19 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
   }
   function authError(id, msg) { var el = document.getElementById(id); el.textContent = msg; el.style.display = msg ? 'block' : 'none'; }
+  function setAuthLoading(formId, loading) {
+    var f = document.getElementById(formId); if (!f) return;
+    var b = f.querySelector('button[type="submit"]'); if (!b) return;
+    if (loading) {
+      if (b.disabled) return;
+      b.dataset.label = b.textContent;
+      b.disabled = true; f.dataset.busy = '1';
+      b.innerHTML = '<span class="auth-spin"></span>Please wait...';
+    } else {
+      b.disabled = false; f.dataset.busy = '';
+      b.textContent = b.dataset.label || b.textContent;
+    }
+  }
   function cleanPhone(p) { return p.replace(/[^0-9]/g, ''); }
   function normPhone(p) { var d = cleanPhone(p || ''); if (d.length === 12 && d.indexOf('92') === 0) d = '0' + d.slice(2); else if (d.length === 10 && d.charAt(0) === '3') d = '0' + d; return d; }
 
@@ -2761,6 +2777,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
 
   async function doSignup(e) {
     e.preventDefault();
+    var sf = document.getElementById('form-signup'); if (sf.dataset.busy === '1') return false;
     var name = document.getElementById('suName').value.trim();
     var phone = cleanPhone(document.getElementById('suPhone').value);
     var pass = document.getElementById('suPass').value;
@@ -2768,6 +2785,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     if (name.length < 3) { authError('signupErr', 'Please enter your correct name.'); return false; }
     if (phone.length < 10 || phone.length > 13) { authError('signupErr', 'Please enter a valid mobile number (example: 03XX-XXXXXXX).'); return false; }
     if (pass.length < 4) { authError('signupErr', 'Password kam az kam 4 characters ka rakhein.'); return false; }
+    setAuthLoading('form-signup', true);
     try {
       var blk = await dbRead('blocked/' + phone);
       if (blk) { authError('signupErr', 'This account has been blocked by the store admin. Please contact us on WhatsApp for help.'); return false; }
@@ -2775,25 +2793,35 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
       if (existing) { authError('signupErr', 'This mobile number is already registered — please use the Login form.'); return false; }
       var passHash = await sha256(phone + ':' + pass);
       await dbWrite('users/' + phone, { name: name, pass: passHash, created: Date.now() });
+      var sb = document.querySelector('#form-signup button[type="submit"]');
+      if (sb) { sb.innerHTML = '✓ Account created!'; }
+      await new Promise(function(res) { setTimeout(res, 700); });
       await startSession(phone, name, passHash);
     } catch (err) { authError('signupErr', 'Could not create your account — check your internet and try again.'); }
+    finally { setAuthLoading('form-signup', false); }
     return false;
   }
 
   async function doLogin(e) {
     e.preventDefault();
+    var lf = document.getElementById('form-login'); if (lf.dataset.busy === '1') return false;
     var phone = cleanPhone(document.getElementById('liPhone').value);
     var pass = document.getElementById('liPass').value;
     authError('loginErr', '');
     if (phone.length < 10 || phone.length > 13) { authError('loginErr', 'Please enter a valid mobile number — enter only your mobile number in this field (not your name).'); return false; }
+    setAuthLoading('form-login', true);
     try {
       var blk2 = await dbRead('blocked/' + phone);
       if (blk2) { authError('loginErr', 'This account has been blocked by the store admin. Please contact us on WhatsApp for help.'); return false; }
       var u = await dbRead('users/' + phone);
       if (!u) { authError('loginErr', 'No account exists for this number — please Sign up first.'); return false; }
       if (u.pass !== await sha256(phone + ':' + pass)) { authError('loginErr', 'Incorrect password — please try again.'); return false; }
+      var lb = document.querySelector('#form-login button[type="submit"]');
+      if (lb) { lb.innerHTML = '✓ Logged in!'; }
+      await new Promise(function(res) { setTimeout(res, 700); });
       await startSession(phone, u.name, u.pass);
     } catch (err) { authError('loginErr', 'Could not log in — check your internet and try again.'); }
+    finally { setAuthLoading('form-login', false); }
     return false;
   }
 
