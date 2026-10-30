@@ -152,6 +152,8 @@
       <p class="note" style="margin-top:0;">All products currently live in your store. Use <b>Set Manual Price</b> to fix any item's price yourself — it will then be protected from automatic updates and listed in the Manual Prices tab. Har item ko <b>Out of Stock</b> ya <b>Inactive</b> (shop se chhupana) bhi kar sakte hain — ye foran (shop refresh par) lagta hai. <b>Remove Product</b> page se permanent delete karta hai (hourly check par).</p>
       <label for="itemSearch" style="margin-top:6px;">🔍 Item search karein — naam ya item code likhein</label>
       <input id="itemSearch" type="text" placeholder="Naam ya item code likhein... (Search by name or code)" oninput="renderItems()">
+      <label for="itemCat" style="margin-top:8px;">🗂️ Category-wise dekhein — category chunein, us ke items aa jayenge</label>
+      <select id="itemCat" onchange="renderItems()"><option value="">All categories</option></select>
       <div class="note" id="itemsCount" style="margin-top:6px;"></div>
       <div id="itemsList" style="margin-top:12px;"><div class="empty">Items load ho rahe hain...</div></div>
     </div>
@@ -492,7 +494,7 @@
   }
 
   // ================= STORE ITEMS + MANUAL PRICES =================
-  var _products = null, _overrides = {}, _statusOv = {}, _pendingRem = {};
+  var _products = null, _overrides = {}, _statusOv = {}, _pendingRem = {}, _pendingCat = '';
   async function loadStoreItems(force) {
     if (_products && !force) { renderItems(); renderManual(); return; }
     try {
@@ -512,9 +514,11 @@
   function renderItems() {
     var box = document.getElementById('itemsList'); if (!box || !_products) return;
     var q = (document.getElementById('itemSearch').value || '').trim().toLowerCase();
-    var list = _products.filter(function(p) { var nm = (p.name || '').toLowerCase(); var cd = (p.code || '').toLowerCase(); return !q || nm.indexOf(q) >= 0 || cd.indexOf(q) >= 0; });
+    var sel = document.getElementById('itemCat'); var cat = _pendingCat || (sel ? sel.value : ''); _pendingCat = '';
+    fillItemCats(cat);
+    var list = _products.filter(function(p) { var nm = (p.name || '').toLowerCase(); var cd = (p.code || '').toLowerCase(); var okCat = !cat || (p.cat || 'Other') === cat; return okCat && (!q || nm.indexOf(q) >= 0 || cd.indexOf(q) >= 0); });
     updateManualBadge();
-    var cnt = document.getElementById('itemsCount'); if (cnt) cnt.textContent = q ? (list.length + ' items mile (total ' + _products.length + ')') : ('Total items: ' + _products.length);
+    var cnt = document.getElementById('itemsCount'); if (cnt) cnt.textContent = cat ? ('Category: ' + cat + ' — ' + list.length + ' items (total ' + _products.length + ')') : (q ? (list.length + ' items mile (total ' + _products.length + ')') : ('Total items: ' + _products.length));
     if (!list.length) { box.innerHTML = '<div class="empty">No items match your search.</div>'; return; }
     box.innerHTML = list.map(function(p) {
       var o = _overrides[p.code]; var manual = !!(o && typeof o.price === 'number');
@@ -528,7 +532,7 @@
         + '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">' + (oos ? '<span class="badge-oos">Out of Stock</span>' : '<span class="badge-ok">In Stock</span>') + (manual ? '<span class="badge-manual">✏️ MANUAL PRICE</span>' : '') + (hid ? '<span class="badge-off">INACTIVE</span>' : '') + (pendRem ? '<span class="badge-pend">REMOVAL PENDING</span>' : '') + '</div>'
         + '<div style="flex-basis:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
         + (manual
-            ? '<span style="font-size:13.5px;color:#7a5b00;">This price is protected. Manage it in the Manual Prices tab.</span>'
+            ? '<input class="mini-input" type="number" min="1" id="mp-' + p.code + '" value="' + Number(_overrides[p.code].price) + '"><button class="cta small" type="button" onclick="setManualPrice(\'' + p.code + '\')">Update Price</button><span style="font-size:13.5px;color:#7a5b00;">Manual price — Update with Source ke liye Manual Prices tab dekhein.</span>'
             : '<input class="mini-input" type="number" min="1" id="mp-' + p.code + '" placeholder="New price (Rs.)"><button class="cta small" type="button" onclick="setManualPrice(\'' + p.code + '\')">Set Manual Price</button>')
                 + (pendRem ? '<span style="font-size:13.5px;color:#9a3412;">Removal pending — hourly check par page se delete hoga.</span>'
             : '<button class="cta small danger" type="button" onclick="requestRemove(\'' + p.code + '\')">Remove Product</button>')
@@ -538,6 +542,21 @@
             : (!pageOos ? '<button class="cta small gray" type="button" onclick="setStockFlag(\'' + p.code + '\',true)">Mark Out of Stock</button>' : ''))
 + '</div></div>';
     }).join('');
+  }
+  function fillItemCats(cur) {
+    var sel = document.getElementById('itemCat'); if (!sel || !_products) return;
+    var counts = {}; var cats = [];
+    _products.forEach(function(p) { var c = p.cat || 'Other'; if (!counts[c]) { counts[c] = 0; cats.push(c); } counts[c]++; });
+    var html = '<option value="">All categories (' + _products.length + ')</option>' + cats.map(function(c) { return '<option value="' + escapeHtml(c) + '"' + (c === cur ? ' selected' : '') + '>' + escapeHtml(c) + ' (' + counts[c] + ')</option>'; }).join('');
+    if (sel.innerHTML !== html) sel.innerHTML = html;
+    if (cur) sel.value = cur;
+  }
+  function viewCategoryItems(i) {
+    var c = _catList[i]; if (!c) return;
+    var s = document.getElementById('itemSearch'); if (s) s.value = '';
+    _pendingCat = c;
+    switchTab('items');
+    renderItems();
   }
   async function setManualPrice(code) {
     var inp = document.getElementById('mp-' + code);
@@ -619,6 +638,7 @@
     box.innerHTML = _catList.map(function(c, i) {
       var hid = !!(_catOv[c] && _catOv[c].hidden);
       return '<div class="irow"><div class="grow"><b>' + escapeHtml(c) + '</b><br><span style="color:#44524c;font-size:13.5px;">' + counts[c] + ' products · ' + (hid ? 'HIDDEN (shop se chhupi hui)' : 'Visible') + '</span></div>'
+        + '<button class="cta small" type="button" onclick="viewCategoryItems(' + i + ')">👁️ View Items</button>'
         + (hid ? '<span class="badge-off">HIDDEN</span><button class="cta small" type="button" onclick="toggleCategoryIdx(' + i + ')">✅ Enable Category</button>'
                : '<span class="badge-ok">Visible</span><button class="cta small danger" type="button" onclick="toggleCategoryIdx(' + i + ')">🚫 Disable Category</button>')
         + '</div>';
