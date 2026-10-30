@@ -92,6 +92,8 @@
   .lb-btn { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.35); width: 42px; height: 42px; border-radius: 50%; font-size: 20px; cursor: pointer; line-height: 1; }
   .lb-close { position: fixed; top: 10px; right: 12px; }
   .lb-zoombtns { position: fixed; bottom: 18px; right: 12px; display: flex; gap: 8px; }
+  .lb-prev { position: fixed; left: 12px; top: 50%; transform: translateY(-50%); }
+  .lb-next { position: fixed; right: 12px; top: 50%; transform: translateY(-50%); }
   .modal { display: none; position: fixed; inset: 0; background: rgba(10,25,18,.55); z-index: 200; align-items: flex-start; justify-content: center; padding: 26px 14px; overflow-y: auto; }
   .modal-card { background: #fff; border-radius: 16px; max-width: 420px; width: 100%; padding: 22px; position: relative; box-shadow: 0 12px 40px rgba(0,0,0,.3); }
   .modal-x { position: absolute; top: 10px; right: 12px; background: none; border: none; font-size: 19px; cursor: pointer; color: #66766e; }
@@ -163,8 +165,6 @@
   .cta[disabled] { background: #9db8ab !important; cursor: not-allowed; }
 
   .bonus-pill { background:#ffdf00; color:#1c1500; border-radius:999px; padding:6px 12px; font-size:13px; font-weight:800; cursor:pointer; border:2px solid #e8a100; white-space:nowrap; }
-  .home-bonus { background:#fff8e1; border:2px solid #ffdf00; cursor:pointer; }
-  .home-bonus b { color:#0b5136; }
   .cart-item { display:flex; gap:12px; border:1px solid #e4e9e6; border-radius:12px; padding:12px; margin-bottom:10px; align-items:flex-start; }
   .cart-item img { width:72px; height:72px; object-fit:cover; border-radius:10px; }
   .qty-btn { width:32px; height:32px; border-radius:8px; border:1px solid #cfd8d3; background:#f0f4f1; font-size:18px; font-weight:800; cursor:pointer; }
@@ -314,7 +314,6 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
 <div class="wrap">
 
   <section id="view-home">
-    <div class="card home-bonus" onclick="showBonusInfo()"><span id="homeBonusText">⭐ Bonus Balance: Rs. 0 — tap to learn more</span><p style="font-size:13.5px;color:#66766e;margin-top:4px;">Earn bonus by reviewing your delivered orders — redeem it on your next order.</p></div>
     <div class="card">
       <h3 class="sec-title" style="margin-top:0">🛍️ Categories</h3>
       <!--CAT_TILES_START--><div id="catTiles">
@@ -2375,6 +2374,8 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     <button class="lb-btn" type="button" onclick="zoomStep(1.3)" aria-label="Zoom in">+</button>
     <button class="lb-btn" type="button" onclick="zoomStep(0.77)" aria-label="Zoom out">−</button>
   </div>
+  <button class="lb-btn lb-prev" type="button" onclick="lbGo(-1)" aria-label="Previous picture">‹</button>
+  <button class="lb-btn lb-next" type="button" onclick="lbGo(1)" aria-label="Next picture">›</button>
 </div>
 
 <script>
@@ -2438,6 +2439,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   }
 
   var lbSrc = '', lbLabel = '', lbEl = null, lbOpen = false, lbPushed = false;
+  var lbGallery = [], lbIdx = 0;
   var lbScale = 1, lbX = 0, lbY = 0;
   var expectLbPop = false;
 
@@ -2447,6 +2449,8 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
 
   function openLB(src, label, el) {
     lbSrc = src; lbLabel = label; lbEl = el;
+    lbIdx = 0;
+    for (var gi = 0; gi < lbGallery.length; gi++) { if (lbGallery[gi].src === src) { lbIdx = gi; break; } }
     document.getElementById('lbImg').src = src;
     document.getElementById('lbCap').textContent = label;
     resetZoom();
@@ -2454,6 +2458,18 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     document.body.style.overflow = 'hidden';
     lbOpen = true;
     if (!lbPushed) { history.pushState({ lb: 1 }, ''); lbPushed = true; }
+  }
+
+  function lbGo(dir) {
+    if (!lbOpen || lbGallery.length < 2) return;
+    lbIdx = (lbIdx + dir + lbGallery.length) % lbGallery.length;
+    var d = lbGallery[lbIdx];
+    lbSrc = d.src; lbLabel = d.label;
+    document.getElementById('lbImg').src = d.src;
+    document.getElementById('lbCap').textContent = d.label;
+    var figs = (typeof picList === 'function') ? picList() : [];
+    if (figs && figs[lbIdx]) lbEl = figs[lbIdx];
+    resetZoom();
   }
 
   function closeLB(fromPop) {
@@ -2466,7 +2482,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     if (fromPop) lbPushed = false;
   }
 
-  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLB(false); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLB(false); if (lbOpen && e.key === 'ArrowLeft') lbGo(-1); if (lbOpen && e.key === 'ArrowRight') lbGo(1); });
 
   var lbImgEl = document.getElementById('lbImg');
   var lbPointers = new Map(); var lbPinchDist = 0;
@@ -2488,6 +2504,16 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   lbImgEl.addEventListener('pointercancel', lbEndPointer);
   document.getElementById('lightbox').addEventListener('wheel', function(e) { e.preventDefault(); zoomStep(e.deltaY < 0 ? 1.15 : 0.87); }, { passive: false });
   lbImgEl.addEventListener('dblclick', function() { if (lbScale > 1) resetZoom(); else { lbScale = 2; applyZoom(); } });
+
+  // Fullscreen lightbox swipe: mobile par left/right swipe se agli/pichli picture (zoom par nahi).
+  var lbSwipeX = null, lbSwipeY = null;
+  lbImgEl.addEventListener('pointerdown', function(e) { if (lbOpen && lbPointers.size === 1) { lbSwipeX = e.clientX; lbSwipeY = e.clientY; } });
+  lbImgEl.addEventListener('pointerup', function(e) {
+    if (lbSwipeX === null || lbScale !== 1 || lbPointers.size !== 0) { lbSwipeX = null; lbSwipeY = null; return; }
+    var dx = e.clientX - lbSwipeX, dy = e.clientY - lbSwipeY; lbSwipeX = null; lbSwipeY = null;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.5) lbGo(dx < 0 ? 1 : -1);
+  });
+  lbImgEl.addEventListener('pointercancel', function() { lbSwipeX = null; lbSwipeY = null; });
 
   function fillSelect(fieldId, selectId, values) {
     var field = document.getElementById(fieldId);
@@ -2535,6 +2561,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
       th.appendChild(fg);
     });
     picIndex = 0;
+    lbGallery = disp;
     document.getElementById('dName').textContent = p.name;
     document.getElementById('dPrice').textContent = fmtPKR(p.sale);
     document.getElementById('dAdv').innerHTML = '💳 <b>Rs. 110 OFF</b> on advance payment — only ' + fmtPKR(Math.max(0, p.sale - 110));
@@ -2975,9 +3002,23 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   function filterProducts(cat) {
     var chips = document.querySelectorAll('#catChips .cat-chip');
     chips.forEach(function(ch) { var c = ch.getAttribute('data-cat') || ''; ch.classList.toggle('active', c === (cat || '')); });
-    var cards = document.querySelectorAll('#gridAll .gcard');
+    var grid = document.getElementById('gridAll');
     var shown = 0;
-    cards.forEach(function(card) { var ok = !cat || card.getAttribute('data-cat') === cat; card.style.display = ok ? '' : 'none'; if (ok) shown++; });
+    if (grid) {
+      var cards = Array.prototype.slice.call(grid.children);
+      if (cat) {
+        // Category-first order: us category ke items pehle, phir baqi random.
+        var same = [], rest = [];
+        cards.forEach(function(card) { if (card.getAttribute('data-cat') === cat) same.push(card); else rest.push(card); });
+        for (var i = rest.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = rest[i]; rest[i] = rest[j]; rest[j] = t; }
+        same.concat(rest).forEach(function(card) { card.style.display = ''; grid.appendChild(card); });
+        shown = same.length;
+      } else {
+        cards.forEach(function(card) { card.style.display = ''; });
+        shuffleGrid('gridAll');
+        shown = cards.length;
+      }
+    }
     var t = document.getElementById('prodCatTitle'); if (t) t.textContent = cat ? cat : 'All Products';
     var cnt = document.getElementById('prodCatCount'); if (cnt) cnt.textContent = shown;
   }
