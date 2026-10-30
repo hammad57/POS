@@ -3546,6 +3546,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   updateCartBadge(); updateHomeBonus();
   buildChips();
   filterProducts('');
+  try { var _dc = new URLSearchParams(location.search).get('code'); if (_dc && typeof productByCode === 'function' && productByCode(_dc)) { showProduct(_dc); } } catch (e) {}
   tryAutoLogin();
   setTimeout(trackVisit, 1500);
   shuffleGrid('gridProducts');
