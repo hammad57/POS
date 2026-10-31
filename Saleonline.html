@@ -223,6 +223,16 @@
   .wish-toggle-btn.on { background: #ffe9ec; }
   #notifPop { position: fixed; inset: 0; background: rgba(10,25,18,.55); z-index: 9998; display: flex; align-items: center; justify-content: center; padding: 18px; }
   .notif-card { background: #fff; border-radius: 18px; padding: 24px 22px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+
+/* SALE BANNER (2026-10-31, user: top banner like reference image) */
+.sale-banner{position:relative;overflow:hidden;border-radius:16px;padding:16px 12px 14px;text-align:center;color:#fff;background:linear-gradient(120deg,#ff1e56 0%,#ff4d6d 45%,#ff7a18 100%);box-shadow:0 6px 18px rgba(255,30,86,.35);margin-bottom:12px}
+.sale-banner .sale-top{font-size:15px;font-weight:700;letter-spacing:3px;text-transform:uppercase}
+.sale-banner .sale-big{font-size:clamp(52px,16vw,88px);font-weight:900;font-style:italic;line-height:1;letter-spacing:2px;text-shadow:0 3px 0 rgba(0,0,0,.15)}
+.sale-banner .sale-btn{margin-top:10px;border:0;border-radius:999px;background:#ffcf3f;color:#222;font-weight:800;font-size:15px;letter-spacing:1px;padding:10px 30px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.sale-banner .sale-deco{position:absolute;top:50%;transform:translateY(-50%);font-size:44px;opacity:.45}
+.sale-banner .sale-deco.left{left:10px}
+.sale-banner .sale-deco.right{right:10px}
+#gridProducts{scroll-margin-top:70px}
 </style>
 <!-- Meta Pixel Code -->
 <script>
@@ -314,6 +324,13 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
 <div class="wrap">
 
   <section id="view-home">
+      <div class="sale-banner">
+        <span class="sale-deco left">&#128717;</span>
+        <span class="sale-deco right">&#127873;</span>
+        <div class="sale-top">Shop online</div>
+        <div class="sale-big">SALE</div>
+        <button class="sale-btn" type="button" onclick="document.getElementById('gridProducts').scrollIntoView({behavior:'smooth'})">SHOP NOW</button>
+      </div>
     <div class="card">
       <h3 class="sec-title" style="margin-top:0">🛍️ Categories</h3>
       <!--CAT_TILES_START--><div id="catTiles">
