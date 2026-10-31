@@ -145,6 +145,7 @@
       <button class="tab-btn" type="button" id="tb-import" onclick="switchTab('import')">🔄 Import / Export</button>
       <button class="tab-btn" type="button" id="tb-cats" onclick="switchTab('cats')">🗂️ Categories</button>
       <button class="tab-btn" type="button" id="tb-tools" onclick="switchTab('tools')">🧩 Tools</button>
+      <button class="tab-btn" type="button" id="tb-visitors" onclick="switchTab('visitors')">👁️ Visitors</button>
     </div>
 
     <div class="card tabpane" id="tabItems" style="display:none;">
@@ -219,6 +220,26 @@
       <div id="toolsGrid" style="margin-top:12px;"><div class="empty">Tools load ho rahe hain...</div></div>
       <div id="toolControl" style="margin-top:18px;"></div>
     </div>
+      <div class="card tabpane" id="tabVisitors" style="display:none;">
+        <h3 style="margin-bottom:6px;">👁️ Visitors — Kaun aaya?</h3>
+        <p class="note" style="margin-top:0;">Har visit (login user ho ya baghair login ke guest) yahan record hota hai — sirf allowed detail: naam/number (sirf login users ka), device, browser, screen, waqt aur referrer. Guest ki koi identity, IP ya location nahi milti.</p>
+        <div class="stats">
+          <div class="stat"><b id="statVisTotal">–</b>Kul Visits (log)</div>
+          <div class="stat"><b id="statVisToday">–</b>Aaj</div>
+          <div class="stat"><b id="statVisGuests">–</b>Guests</div>
+          <div class="stat"><b id="statVisUsers">–</b>Login Users</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;">
+          <button class="cta small" type="button" onclick="loadVisitorsLog()">🔄 Refresh</button>
+          <button class="cta small gray" type="button" onclick="clearVisitorsLog()">🗑️ Purana log clear karein</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table id="visitorsTable" style="width:100%; border-collapse:collapse; font-size:13.5px;">
+            <thead><tr><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Waqt</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">User</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Device</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Browser / OS</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Screen</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Referrer</th></tr></thead>
+            <tbody id="visitorsBody"><tr><td colspan="6" class="note">Load ho raha hai…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
 
     <div class="card tabpane" id="tabOrders">
       <h3 style="margin-bottom:12px;">🧾 Tamam Orders (naya sab se upar)</h3>
@@ -369,7 +390,7 @@
   // ================= TABS =================
   var _itemsLoaded = false, _usersLoaded = false;
   function switchTab(name) {
-    ['orders', 'items', 'manual', 'users', 'bonus', 'import', 'cats', 'tools'].forEach(function(t) {
+    ['orders', 'items', 'manual', 'users', 'bonus', 'import', 'cats', 'tools', 'visitors'].forEach(function(t) {
       var pane = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
       if (pane) pane.style.display = (t === name) ? 'block' : 'none';
       var btn = document.getElementById('tb-' + t); if (btn) btn.classList.toggle('active', t === name);
@@ -377,7 +398,7 @@
     if (name === 'items' || name === 'manual' || name === 'import') loadStoreItems();
     if (name === 'cats') loadCategoriesTab();
     if (name === 'users') loadUsersTab();
-    if (name === 'tools') loadToolsTab();
+    if (name === 'tools') loadToolsTab();     if (name === 'visitors') loadVisitorsLog();
   }
 
   // ================= UPDATE STORE (source sync request) =================
@@ -1091,6 +1112,34 @@
   }
 
   adminInit();
+
+  // ================= VISITORS LOG (2026-10-31) =================
+  function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  async function loadVisitorsLog() {
+    var body = document.getElementById('visitorsBody');
+    try {
+      var logs = await dbRead('visitor_logs') || {};
+      var rows = Object.keys(logs).map(function(k) { return logs[k]; }).filter(function(r) { return r && r.ts; }).sort(function(a, b) { return b.ts - a.ts; });
+      var today = new Date().toDateString();
+      var todayN = rows.filter(function(r) { return new Date(r.ts).toDateString() === today; }).length;
+      var guests = rows.filter(function(r) { return r.kind === 'guest'; }).length;
+      var users = rows.filter(function(r) { return r.kind === 'user'; }).length;
+      var set = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+      set('statVisTotal', rows.length); set('statVisToday', todayN); set('statVisGuests', guests); set('statVisUsers', users);
+      var show = rows.slice(0, 200);
+      if (!show.length) { body.innerHTML = '<tr><td colspan="6" class="note">Abhi koi visit record nahi hai — naya visit hote hi yahan aayega.</td></tr>'; return; }
+      body.innerHTML = show.map(function(r) {
+        var who = r.kind === 'user' ? (escHtml(r.name || 'User') + '<br><span class="note">' + escHtml(r.phone || '') + '</span>') : '<b>Guest</b><br><span class="note">baghair login/signup</span>';
+        var when = new Date(r.ts).toLocaleString('en-GB');
+        return '<tr><td style="padding:6px; border-bottom:1px solid #eef2ef; white-space:nowrap;">' + when + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + who + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + escHtml(r.device || '') + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + escHtml(r.browser || '') + ' / ' + escHtml(r.os || '') + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + escHtml(r.screen || '') + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + escHtml(r.ref || '—') + '</td></tr>';
+      }).join('');
+    } catch (e) { body.innerHTML = '<tr><td colspan="6" class="note">Load nahi ho saka.</td></tr>'; }
+  }
+  async function clearVisitorsLog() {
+    if (!confirm('Visitor log ki tamam entries clear kar dein? Ye wapas nahi aayengi.')) return;
+    try { await fetch(dbUrl('visitor_logs'), { method: 'DELETE' }); toast('✅ Visitor log clear ho gaya.'); loadVisitorsLog(); }
+    catch (e) { toast('❌ Clear nahi ho saka'); }
+  }
 </script>
 </body>
 </html>
