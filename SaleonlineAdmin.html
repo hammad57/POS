@@ -235,8 +235,8 @@
         </div>
         <div style="overflow-x:auto;">
           <table id="visitorsTable" style="width:100%; border-collapse:collapse; font-size:13.5px;">
-            <thead><tr><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Waqt</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">User</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Device</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Browser / OS</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Screen</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Referrer</th></tr></thead>
-            <tbody id="visitorsBody"><tr><td colspan="6" class="note">Load ho raha hai…</td></tr></tbody>
+            <thead><tr><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Waqt</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">User</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">IP</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Device</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Browser / OS</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Screen</th><th style="text-align:left; padding:6px; border-bottom:2px solid #dde6e0;">Referrer</th></tr></thead>
+            <tbody id="visitorsBody"><tr><td colspan="7" class="note">Load ho raha hai…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1127,13 +1127,13 @@
       var set = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
       set('statVisTotal', rows.length); set('statVisToday', todayN); set('statVisGuests', guests); set('statVisUsers', users);
       var show = rows.slice(0, 200);
-      if (!show.length) { body.innerHTML = '<tr><td colspan="6" class="note">Abhi koi visit record nahi hai — naya visit hote hi yahan aayega.</td></tr>'; return; }
+      if (!show.length) { body.innerHTML = '<tr><td colspan="7" class="note">Abhi koi visit record nahi hai — naya visit hote hi yahan aayega.</td></tr>'; return; }
       body.innerHTML = show.map(function(r) {
         var who = r.kind === 'user' ? (escHtml(r.name || 'User') + '<br><span class="note">' + escHtml(r.phone || '') + '</span>') : '<b>Guest</b><br><span class="note">baghair login/signup</span>';
         var when = new Date(r.ts).toLocaleString('en-GB');
-        return '<tr><td style="padding:6px; border-bottom:1px solid #eef2ef; white-space:nowrap;">' + when + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + who + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + escHtml(r.device || '') + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + escHtml(r.browser || '') + ' / ' + escHtml(r.os || '') + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + escHtml(r.screen || '') + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + escHtml(r.ref || '—') + '</td></tr>';
+        return '<tr><td style="padding:6px; border-bottom:1px solid #eef2ef; white-space:nowrap;">' + when + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + who + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef; white-space:nowrap;">' + escHtml(r.ip || '—') + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + escHtml(r.device || '') + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + escHtml(r.browser || '') + ' / ' + escHtml(r.os || '') + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + escHtml(r.screen || '') + '</td><td style="padding:6px; border-bottom:1px solid #eef2ef;">' + escHtml(r.ref || '—') + '</td></tr>';
       }).join('');
-    } catch (e) { body.innerHTML = '<tr><td colspan="6" class="note">Load nahi ho saka.</td></tr>'; }
+    } catch (e) { body.innerHTML = '<tr><td colspan="7" class="note">Load nahi ho saka.</td></tr>'; }
   }
   async function clearVisitorsLog() {
     if (!confirm('Visitor log ki tamam entries clear kar dein? Ye wapas nahi aayengi.')) return;

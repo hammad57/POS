@@ -2717,7 +2717,23 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
       var ref = '';
       try { ref = document.referrer ? new URL(document.referrer).hostname : ''; } catch (e) {}
       var devId = localStorage.getItem('sl_device_id') || '';
-      await dbPush('visitor_logs', { ts: Date.now(), kind: kind, name: currentUser ? (currentUser.name || '') : '', phone: currentUser ? normPhone(currentUser.phone) : '', device: dev, browser: browser, os: os, screen: screen.width + 'x' + screen.height, lang: navigator.language || '', tz: (window.Intl && Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : '') || '', ref: ref, view: (typeof currentView !== 'undefined' ? currentView : 'home'), dev: devId });
+      var ip = sessionStorage.getItem('sl_visit_ip') || '';
+      if (!ip) {
+        var fetchIp = async function(url, asJson) {
+          try {
+            var ctl = new AbortController();
+            var to = setTimeout(function() { try { ctl.abort(); } catch (e) {} }, 4000);
+            var r = await fetch(url, { signal: ctl.signal });
+            clearTimeout(to);
+            if (asJson) { var j = await r.json(); return (j && j.ip) ? j.ip : ''; }
+            return (await r.text() || '').trim();
+          } catch (e) { return ''; }
+        };
+        ip = await fetchIp('https://api.ipify.org?format=json', true);
+        if (!ip) ip = await fetchIp('https://checkip.amazonaws.com/', false);
+        if (ip) { try { sessionStorage.setItem('sl_visit_ip', ip); } catch (e) {} }
+      }
+      await dbPush('visitor_logs', { ts: Date.now(), kind: kind, name: currentUser ? (currentUser.name || '') : '', phone: currentUser ? normPhone(currentUser.phone) : '', device: dev, browser: browser, os: os, screen: screen.width + 'x' + screen.height, lang: navigator.language || '', tz: (window.Intl && Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : '') || '', ref: ref, view: (typeof currentView !== 'undefined' ? currentView : 'home'), dev: devId, ip: ip });
       sessionStorage.setItem('sl_visit_logged', kind);
     } catch (e) { /* log fail ho jaye to page mutasir nahi hoga */ }
   }
