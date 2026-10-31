@@ -3481,7 +3481,15 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     var shown = 0;
     if (grid) {
       var cards = Array.prototype.slice.call(grid.children);
-      if (cat) {
+      if (cat === '__FLASHDEAL__') {
+        var dealMap = (window.SL_DEAL && window.SL_DEAL.map) || {};
+        cards.forEach(function (card) {
+          var m = card.innerHTML.match(/showProduct\('([A-Z0-9]+)'\)/);
+          var isDeal = !!(m && dealMap[m[1]]);
+          card.style.display = isDeal ? '' : 'none';
+          if (isDeal) { shown++; grid.appendChild(card); }
+        });
+      } else if (cat) {
         // Category-first order: us category ke items pehle, phir baqi random.
         var same = [], rest = [];
         cards.forEach(function(card) { if (card.getAttribute('data-cat') === cat) same.push(card); else rest.push(card); });
@@ -3494,7 +3502,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
         shown = cards.length;
       }
     }
-    var t = document.getElementById('prodCatTitle'); if (t) t.textContent = cat ? cat : 'All Products';
+    var t = document.getElementById('prodCatTitle'); if (t) t.textContent = cat === '__FLASHDEAL__' ? '\uD83D\uDD25 Flash Deal' : (cat ? cat : 'All Products');
     var cnt = document.getElementById('prodCatCount'); if (cnt) cnt.textContent = shown;
   }
   function openCategory(cat) { showView('products'); filterProducts(cat); }
@@ -4086,6 +4094,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     ".sl-old-price{color:#c62828;text-decoration:line-through;font-size:0.8em;}",
     ".sl-new-price{font-size:1.15em;font-weight:800;}",
     ".sl-flash-badge{display:inline-block;background:linear-gradient(90deg,#c62828,#ff5722);color:#fff;font-size:11px;font-weight:800;padding:2px 9px;border-radius:999px;margin:2px 0;}",
+    ".sl-deal-tile{border:2px solid #c62828 !important;background:#fff3f0 !important;}",
     ".sl-urgency{font-size:12.5px;color:#c62828;font-weight:700;margin-top:3px;}",
     ".sl-trust-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:10px 12px;background:#eef7f1;border-bottom:1px solid #dde6e0;}",
     ".sl-trust-pill{background:#fff;border:1px solid #cfe6d7;border-radius:999px;padding:6px 13px;font-size:13px;font-weight:700;color:#0b5136;}",
@@ -4482,6 +4491,59 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
       afterHeader(bar);
     }
     patchVisibleDealUI();
+    addDealTile(pct, map);
+    addDealAds(map);
+  }
+  /* Flash Deal category tile (Categories strip me sab se pehle) + chip
+     (Products view me): click par sirf deal items dikhte hain. */
+  function addDealTile(pct, map) {
+    try {
+      var strip = document.getElementById('catTiles');
+      if (strip && !document.getElementById('slDealTile')) {
+        var codes = Object.keys(map);
+        var first = null;
+        for (var i = 0; i < codes.length; i++) { first = productByCodeLocal(codes[i]); if (first) break; }
+        var img = first && first.images && first.images[0] ? first.images[0] : '';
+        var tile = document.createElement('div');
+        tile.className = 'cat-tile sl-deal-tile'; tile.id = 'slDealTile';
+        tile.setAttribute('onclick', "openCategory('__FLASHDEAL__')");
+        tile.innerHTML = '<img src="' + img + '" alt="Flash Deal"><div><div class="cat-name">\uD83D\uDD25 Flash Deal</div><div class="cat-count">' + codes.length + ' items \u2022 ' + pct + '% OFF</div><div class="cat-go">View Products \u2192</div></div>';
+        strip.insertBefore(tile, strip.firstChild);
+      }
+      var chips = document.getElementById('catChips');
+      if (chips && !document.getElementById('slDealChip')) {
+        var b = document.createElement('button');
+        b.className = 'cat-chip'; b.type = 'button'; b.id = 'slDealChip'; b.textContent = '\uD83D\uDD25 Flash Deal';
+        b.setAttribute('data-cat', '__FLASHDEAL__');
+        b.setAttribute('onclick', "filterProducts('__FLASHDEAL__')");
+        chips.appendChild(b);
+      }
+    } catch (e) {}
+  }
+  /* Home grid me deal items ke ad-style cards (Sponsored ads ki tarah). */
+  function addDealAds(map) {
+    try {
+      var g = document.getElementById('gridProducts'); if (!g) return;
+      var deals = (window.PRODUCTS || []).filter(function (p) { return map[p.code]; });
+      if (!deals.length) return;
+      var advertised = {};
+      Array.prototype.slice.call(g.querySelectorAll('.home-ad')).forEach(function (ad) {
+        var m = ad.innerHTML.match(/showProduct\('([A-Z0-9]+)'\)/);
+        if (m) advertised[m[1]] = true;
+      });
+      var picks = deals.filter(function (p) { return !advertised[p.code]; }).slice(0, 3);
+      function codeAt(idx) { var c = g.children[idx]; if (!c) return null; var m = c.innerHTML.match(/showProduct\('([A-Z0-9]+)'\)/); return m ? m[1] : null; }
+      picks.forEach(function (p, i) {
+        var total = g.children.length;
+        var pos = Math.max(6, Math.floor(total * i / picks.length));
+        while ((codeAt(pos) === p.code || codeAt(pos - 1) === p.code) && pos < g.children.length - 1) pos++;
+        var ad = document.createElement('div');
+        ad.className = 'gcard home-ad';
+        ad.setAttribute('data-cat', p.cat || '');
+        ad.innerHTML = '<span class="sl-flash-badge">\u26a1 Flash Deal</span><img loading="lazy" src="' + (p.images && p.images[0] ? p.images[0] : '') + '" alt="' + esc(p.name) + '" onclick="showProduct(\'' + p.code + '\')"><div class="gbody"><div class="gname" onclick="showProduct(\'' + p.code + '\')">' + esc(p.name) + '</div><div class="gcode">Code: ' + p.code + '</div><div class="gprice">' + window.dealPriceHtml(p) + '</div><button class="cta" type="button" onclick="showProduct(\'' + p.code + '\')">Shop Now \u2192</button></div>';
+        g.insertBefore(ad, g.children[pos] || null);
+      });
+    } catch (e) {}
   }
   /* Pehle se render hui cards/detail par deal lagao (dobara render ke
      baghair); us ke baad har naya render cardHTML/renderDetail se khud
