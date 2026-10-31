@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farm Admin — Green Land Poultry Farm</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐔</text></svg>">
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#052e22;color:#e7f5ee}
+a{color:#facc15}
+header{position:sticky;top:0;z-index:20;background:#032b1e;border-bottom:1px solid #14532d;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+header h1{margin:0;font-size:18px;color:#facc15}
+header .u{font-size:12px;color:#a7f3d0}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:#064e3b22;background:rgba(6,78,59,.35);border:1px solid #14532d;border-radius:16px;padding:16px;margin-bottom:16px}
+.card h2{margin:0 0 12px;color:#facc15;font-size:17px}
+.card h3{margin:14px 0 8px;color:#fde68a;font-size:14px}
+input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #14532d;background:#022c22;color:#fff;font-size:14px;margin:4px 0}
+textarea{min-height:70px}
+label{font-size:12px;color:#a7f3d0}
+button{cursor:pointer;border:0;border-radius:10px;padding:9px 14px;font-weight:700;font-size:13px}
+.btn{background:#facc15;color:#422006}
+.btn-green{background:#059669;color:#fff}
+.btn-red{background:#dc2626;color:#fff}
+.btn-gray{background:#334155;color:#fff}
+.btn-sm{padding:6px 10px;font-size:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:#022c22;border:1px solid #14532d;border-radius:12px;padding:12px;text-align:center}
+.stat b{display:block;font-size:22px;color:#facc15}
+.stat span{font-size:12px;color:#a7f3d0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border-bottom:1px solid #14532d;padding:8px 6px;text-align:left;vertical-align:top}
+th{color:#fde68a;font-size:12px}
+.muted{color:#94a3b8;font-size:12px}
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:800}
+.p-pending{background:#78350f;color:#fde68a}
+.p-approved{background:#14532d;color:#bbf7d0}
+.p-rejected{background:#7f1d1d;color:#fecaca}
+.p-blocked{background:#7f1d1d;color:#fecaca}
+.p-active{background:#14532d;color:#bbf7d0}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#facc15;color:#422006;padding:10px 18px;border-radius:99px;font-weight:700;font-size:13px;display:none;z-index:99;max-width:92vw;text-align:center}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal.open{display:flex}
+.modal .box{background:#052e22;border:1px solid #facc15;border-radius:16px;padding:18px;width:100%;max-width:480px;max-height:90vh;overflow:auto}
+nav.sec{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+nav.sec a{background:#064e3b;border:1px solid #14532d;color:#fde68a;text-decoration:none;padding:7px 12px;border-radius:99px;font-size:12px;font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <h1>🐔 Farm Admin <span style="font-size:12px;color:#a7f3d0">Green Land Poultry Farm</span></h1>
+  <div class="row">
+    <span class="u" id="hdrUser"></span>
+    <a href="farm.html" style="font-size:12px">Farm Dashboard kholein</a>
+    <button class="btn-gray btn-sm" id="btnLogout" style="display:none" onclick="doLogout()">Sign Out</button>
+  </div>
+</header>
+<div class="wrap">
+
+<!-- LOGIN -->
+<div class="card" id="loginView">
+  <h2>Admin Sign In</h2>
+  <p class="muted">Apne farm account se sign in karein (wohi email/password jo farm app me use hota hai).</p>
+  <label>Email</label>
+  <input id="loginEmail" type="email" placeholder="Email">
+  <label>Password</label>
+  <input id="loginPassword" type="password" placeholder="Password">
+  <div class="row" style="margin-top:8px">
+    <button class="btn" onclick="doLogin()">Sign In</button>
+  </div>
+  <p class="muted" id="loginErr" style="color:#fca5a5"></p>
+</div>
+
+<!-- CLAIM ADMIN -->
+<div class="card" id="claimView" style="display:none">
+  <h2>Admin Access Setup</h2>
+  <p>Abhi kisi bhi account ko admin access nahi mila. Pehli dafa apne account se ye access hasil karein — us ke baad sirf aap ka account ye admin page khol sakega.</p>
+  <p class="muted">Signed in: <b id="claimEmail" style="color:#fff"></b></p>
+  <div class="row">
+    <button class="btn" onclick="claimAdmin()">Claim Admin Access</button>
+    <button class="btn-gray" onclick="doLogout()">Sign Out</button>
+  </div>
+</div>
+
+<!-- NOT ADMIN -->
+<div class="card" id="notAdminView" style="display:none">
+  <h2>Access Nahi Hai</h2>
+  <p>Is account ko admin access nahi mila. Sirf admin account ye page khol sakta hai.</p>
+  <button class="btn-gray" onclick="doLogout()">Sign Out</button>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminView" style="display:none">
+  <nav class="sec">
+    <a href="#sec-stats">Stats</a>
+    <a href="#sec-purchase">Purchase Requests</a>
+    <a href="#sec-withdraw">Withdraw Requests</a>
+    <a href="#sec-users">Users</a>
+    <a href="#sec-dealers">Dealers</a>
+    <a href="#sec-rates">Rates</a>
+    <a href="#sec-ann">Announcements</a>
+    <a href="#sec-settings">Settings</a>
+  </nav>
+
+  <div class="card" id="sec-stats">
+    <h2>📊 Stats</h2>
+    <div class="grid">
+      <div class="stat"><b id="stUsers">0</b><span>Total Users</span></div>
+      <div class="stat"><b id="stHens">0</b><span>Total Hens</span></div>
+      <div class="stat"><b id="stEggs">0</b><span>Total Eggs (Available + Gift)</span></div>
+      <div class="stat"><b id="stPendP">0</b><span>Pending Purchases</span></div>
+      <div class="stat"><b id="stPendW">0</b><span>Pending Withdrawals</span></div>
+      <div class="stat"><b id="stExpense">0</b><span>Total Expense (PKR)</span></div>
+      <div class="stat"><b id="stWithdrawn">0</b><span>Total Withdrawal (PKR)</span></div>
+    </div>
+  </div>
+
+  <div class="card" id="sec-purchase">
+    <h2>🛒 Purchase Requests (Hen Kharidne Ki Darkhwastein)</h2>
+    <div class="row">
+      <button class="btn-sm btn-gray" onclick="setFilter('p','all')">Sab</button>
+      <button class="btn-sm btn-gray" onclick="setFilter('p','pending')">Pending</button>
+      <button class="btn-sm btn-gray" onclick="setFilter('p','approved')">Approved</button>
+      <button class="btn-sm btn-gray" onclick="setFilter('p','rejected')">Rejected</button>
+      <span class="muted" id="pCount"></span>
+    </div>
+    <div style="overflow:auto"><table>
+      <thead><tr><th>User</th><th>Hens / Plan</th><th>Amount</th><th>Trx / Holder</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody id="pBody"></tbody>
+    </table></div>
+    <p class="muted">Approve karne par: user ko hens ki batch mil jati hai, total hens + khud khareedi hui hens + total kharcha update hota hai, aur inviter ke referral hens bhi barh jate hain. Reject par sirf status badalta hai.</p>
+  </div>
+
+  <div class="card" id="sec-withdraw">
+    <h2>💸 Withdraw Requests (Egg Sale / Cashout)</h2>
+    <div class="row">
+      <button class="btn-sm btn-gray" onclick="setFilter('w','all')">Sab</button>
+      <button class="btn-sm btn-gray" onclick="setFilter('w','pending')">Pending</button>
+      <button class="btn-sm btn-gray" onclick="setFilter('w','approved')">Approved</button>
+      <button class="btn-sm btn-gray" onclick="setFilter('w','rejected')">Rejected</button>
+      <span class="muted" id="wCount"></span>
+    </div>
+    <div style="overflow:auto"><table>
+      <thead><tr><th>User</th><th>Dealer / Eggs</th><th>Amount</th><th>Payment (Type / Number / Holder)</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody id="wBody"></tbody>
+    </table></div>
+    <p class="muted">Note: eggs request submit hote hi user se kat jate hain. Approve par user ka total withdrawal barhta hai. Reject par eggs user ko wapas mil jate hain.</p>
+  </div>
+
+  <div class="card" id="sec-users">
+    <h2>👥 Users</h2>
+    <input id="userSearch" placeholder="Naam ya email se dhoondein..." oninput="renderUsers()">
+    <div style="overflow:auto"><table>
+      <thead><tr><th>User</th><th>Hens</th><th>Eggs (Available / Gift)</th><th>Kharcha / Withdrawal</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody id="uBody"></tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="sec-dealers">
+    <h2>🏪 Dealers (Egg Khareedne Wale)</h2>
+    <div style="overflow:auto"><table>
+      <thead><tr><th>Naam</th><th>Min – Max Eggs</th><th>Rate / Range</th><th>Action</th></tr></thead>
+      <tbody id="dBody"></tbody>
+    </table></div>
+    <h3>Naya Dealer / Edit</h3>
+    <input id="dlKey" type="hidden">
+    <label>Naam</label><input id="dlName" placeholder="Dealer ka naam">
+    <div class="row">
+      <div style="flex:1"><label>Min Eggs</label><input id="dlMin" type="number" value="1"></div>
+      <div style="flex:1"><label>Max Eggs</label><input id="dlMax" type="number" value="12"></div>
+    </div>
+    <div class="row">
+      <div style="flex:1"><label>Rate</label><input id="dlRate" type="number" step="0.01" value="0"></div>
+      <div style="flex:1"><label>Rate From</label><input id="dlRateFrom" type="number" step="0.01" value="50"></div>
+      <div style="flex:1"><label>Rate To</label><input id="dlRateTo" type="number" step="0.01" value="57"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn-green" onclick="saveDealer()">Save Dealer</button>
+      <button class="btn-gray" onclick="clearDealerForm()">Clear</button>
+    </div>
+  </div>
+
+  <div class="card" id="sec-rates">
+    <h2>🥚 Egg Rates</h2>
+    <p class="muted">Farm app me live egg price isi range ke andar ghoomta hai.</p>
+    <div class="row">
+      <div style="flex:1"><label>Egg Price (PKR)</label><input id="rtPrice" type="number" step="0.01"></div>
+      <div style="flex:1"><label>Price From</label><input id="rtFrom" type="number" step="0.01"></div>
+      <div style="flex:1"><label>Price To</label><input id="rtTo" type="number" step="0.01"></div>
+    </div>
+    <div class="row">
+      <div style="flex:1"><label>Hen Price (PKR)</label><input id="rtHen" type="number"></div>
+      <div style="flex:1"><label>Egg Per Hen (days)</label><input id="rtPerHen" type="number"></div>
+    </div>
+    <div class="row" style="margin-top:8px"><button class="btn-green" onclick="saveRates()">Save Rates</button></div>
+  </div>
+
+  <div class="card" id="sec-ann">
+    <h2>📢 Announcements</h2>
+    <div style="overflow:auto"><table>
+      <thead><tr><th>Title</th><th>Message</th><th>Date</th><th>Action</th></tr></thead>
+      <tbody id="aBody"></tbody>
+    </table></div>
+    <h3>Naya Announcement / Edit</h3>
+    <input id="anKey" type="hidden">
+    <label>Title</label><input id="anTitle" placeholder="Title">
+    <label>Message</label><textarea id="anMsg" placeholder="Message (Urdu/English)"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn-green" onclick="saveAnnouncement()">Save Announcement</button>
+      <button class="btn-gray" onclick="clearAnnForm()">Clear</button>
+    </div>
+  </div>
+
+  <div class="card" id="sec-settings">
+    <h2>⚙️ Settings</h2>
+    <h3>Daily Notice (rozana popup)</h3>
+    <label>Title</label><input id="stNoticeTitle">
+    <label>Message</label><textarea id="stNoticeMsg"></textarea>
+    <h3>WhatsApp Override</h3>
+    <p class="muted">Agar override active ho to farm app isi number par WhatsApp bhejta hai, warna din (hafta 7–20h) me 923423944508 aur baqi waqt 923485465097 use hota hai.</p>
+    <label>Override Number (khali chhorein to override khatam)</label><input id="stWaNum" placeholder="92...">
+    <label>Override Khatam Hone Ki Tareekh</label><input id="stWaExp" type="datetime-local">
+    <h3>Admin WhatsApp</h3>
+    <label>Admin WhatsApp Number</label><input id="stAdminWa" placeholder="92...">
+    <h3>Withdrawal Plans (tiers)</h3>
+    <p class="muted">Har tier: jab total withdrawal threshold tak pahonche to agle withdrawal ke liye itne hens (referral + khud) zaroori hain.</p>
+    <div id="plansBox"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn-gray btn-sm" onclick="addPlanRow()">+ Tier Add Karein</button>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn-green" onclick="saveSettings()">Save Settings</button></div>
+  </div>
+
+  <div class="card">
+    <h2>🐔 Hen Plans (sirf maloomat)</h2>
+    <p class="muted">Hen ki qeematein farm.html ke code me likhi hui hain, database me nahi — is liye is page se change nahi hotin:</p>
+    <table>
+      <thead><tr><th>Plan</th><th>Hens</th><th>Price / Hen</th></tr></thead>
+      <tbody>
+        <tr><td>Plan 1</td><td>1 – 5</td><td>499 PKR</td></tr>
+        <tr><td>Plan 2</td><td>6 – 10</td><td>450 PKR</td></tr>
+        <tr><td>Plan 3</td><td>11 – 50</td><td>399 PKR</td></tr>
+        <tr><td>Plan 4</td><td>50 se zyada</td><td>250 PKR</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">Agar ye qeematein bhi admin se editable chahiye to batayein — farm.html me chhoti tabdeeli karni hogi.</p>
+    <p class="muted">Note: ye page ka lock sirf page-level hai. Database ki asli security Firebase rules se hoti hai — jo bhi is page ka link janta ho wo page khol sakta hai, lekin admin access sirf claim kiye hue account ko milta hai.</p>
+  </div>
+</div>
+
+<!-- USER EDIT MODAL -->
+<div class="modal" id="userModal"><div class="box">
+  <h2 style="color:#facc15;margin-top:0">User Edit</h2>
+  <p class="muted" id="umWho"></p>
+  <input id="umUid" type="hidden">
+  <label>Available Eggs</label><input id="umAvail" type="number">
+  <label>Gift Eggs</label><input id="umGift" type="number">
+  <label>Total Hens</label><input id="umHens" type="number">
+  <label>Total Expense (PKR)</label><input id="umExp" type="number">
+  <label>Total Withdrawal (PKR)</label><input id="umWd" type="number">
+  <label>Status</label>
+  <select id="umStatus"><option value="active">active</option><option value="blocked">blocked</option></select>
+  <div class="row" style="margin-top:10px">
+    <button class="btn-green" onclick="saveUser()">Save</button>
+    <button class="btn-gray" onclick="closeModal('userModal')">Band Karein</button>
+  </div>
+</div></div>
+
+<!-- BATCHES MODAL -->
+<div class="modal" id="batchModal"><div class="box">
+  <h2 style="color:#facc15;margin-top:0">Hen Batches</h2>
+  <p class="muted" id="bmWho"></p>
+  <div id="bmBody"></div>
+  <div class="row" style="margin-top:10px"><button class="btn-gray" onclick="closeModal('batchModal')">Band Karein</button></div>
+</div></div>
+
+<div id="toast"></div>
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyCbJantLTt7-Ifp6fTaf8vHBu-8rLVrlLQ",
+    authDomain: "own-live-steam-web-default.firebaseapp.com",
+    databaseURL: "https://own-live-steam-web-default-rtdb.firebaseio.com/",
+    projectId: "own-live-steam-web-default",
+    storageBucket: "own-live-steam-web-default.appspot.com",
+    messagingSenderId: "xxxxxxxxxxx",
+    appId: "xxxxxxxxxxx"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+const $ = id => document.getElementById(id);
+const num = v => { const n = Number(v); return isNaN(n) ? 0 : n; };
+const int = v => { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const fmtDate = ts => ts ? new Date(ts).toLocaleString() : 'N/A';
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.style.display = 'block'; setTimeout(()=> t.style.display = 'none', 3500); }
+function closeModal(id){ $(id).classList.remove('open'); }
+function openModal(id){ $(id).classList.add('open'); }
+
+let currentUid = null, isAdmin = false;
+let users = {}, purchases = {}, withdraws = {}, dealers = {}, rates = {}, announcements = {}, settings = {};
+let filterP = 'pending', filterW = 'pending';
+
+async function doLogin(){
+  const email = $('loginEmail').value.trim(), pass = $('loginPassword').value;
+  $('loginErr').textContent = '';
+  try { await auth.signInWithEmailAndPassword(email, pass); }
+  catch(e){ $('loginErr').textContent = 'Sign in nahi hua: ' + (e.message || e.code); }
+}
+function doLogout(){ auth.signOut(); }
+
+auth.onAuthStateChanged(async user => {
+  $('loginView').style.display = 'none';
+  $('claimView').style.display = 'none';
+  $('notAdminView').style.display = 'none';
+  $('adminView').style.display = 'none';
+  $('btnLogout').style.display = 'none';
+  $('hdrUser').textContent = '';
+  if (!user){ $('loginView').style.display = 'block'; return; }
+  currentUid = user.uid;
+  $('hdrUser').textContent = user.email || '';
+  $('btnLogout').style.display = 'inline-block';
+  try {
+    const admSnap = await db.ref('admins/' + currentUid).once('value');
+    if (admSnap.val() === true){ isAdmin = true; $('adminView').style.display = 'block'; startListeners(); return; }
+    const allSnap = await db.ref('admins').once('value');
+    if (!allSnap.exists()){
+      $('claimEmail').textContent = user.email || '';
+      $('claimView').style.display = 'block';
+    } else {
+      $('notAdminView').style.display = 'block';
+    }
+  } catch(e){ $('loginErr').textContent = ''; alert('Admin check me error: ' + e.message); $('loginView').style.display = 'block'; }
+});
+async function claimAdmin(){
+  try {
+    await db.ref('admins/' + currentUid).set(true);
+    toast('Admin access mil gaya!');
+    location.reload();
+  } catch(e){ alert('Claim nahi hua: ' + e.message); }
+}
+
+function startListeners(){
+  db.ref('users').on('value', s => { users = s.val() || {}; renderStats(); renderUsers(); renderPurchases(); renderWithdraws(); });
+  db.ref('purchase_requests').on('value', s => { purchases = s.val() || {}; renderStats(); renderPurchases(); });
+  db.ref('withdraw_requests').on('value', s => { withdraws = s.val() || {}; renderStats(); renderWithdraws(); });
+  db.ref('dealers').on('value', s => { dealers = s.val() || {}; renderDealers(); });
+  db.ref('rates').on('value', s => { rates = s.val() || {}; renderRates(); });
+  db.ref('announcements').on('value', s => { announcements = s.val() || {}; renderAnnouncements(); });
+  db.ref('settings').on('value', s => { settings = s.val() || {}; renderSettings(); });
+}
+
+function renderStats(){
+  let hens = 0, eggs = 0, exp = 0, wd = 0;
+  Object.values(users).forEach(u => { hens += num(u.totalHens); eggs += num(u.availableEggs) + num(u.giftEggs); exp += num(u.totalExpense); wd += num(u.totalWithdrawal); });
+  $('stUsers').textContent = Object.keys(users).length;
+  $('stHens').textContent = hens;
+  $('stEggs').textContent = eggs;
+  $('stExpense').textContent = exp.toLocaleString();
+  $('stWithdrawn').textContent = wd.toLocaleString();
+  $('stPendP').textContent = Object.values(purchases).filter(p => p.status === 'pending').length;
+  $('stPendW').textContent = Object.values(withdraws).filter(w => w.status === 'pending').length;
+}
+function userLabel(uid){
+  const u = users[uid];
+  if (!u) return esc(uid || 'Unknown');
+  return esc(u.name || 'User') + '<br><span class="muted">' + esc(u.email || '') + '</span>';
+}
+function pill(status){
+  const s = (status || 'pending').toLowerCase();
+  const cls = s === 'approved' ? 'p-approved' : s === 'rejected' ? 'p-rejected' : 'p-pending';
+  return '<span class="pill ' + cls + '">' + esc(s) + '</span>';
+}
+function setFilter(kind, f){
+  if (kind === 'p') filterP = f; else filterW = f;
+  if (kind === 'p') renderPurchases(); else renderWithdraws();
+}
+function sortedEntries(obj){
+  return Object.entries(obj).sort((a, b) => num(b[1].timestamp) - num(a[1].timestamp));
+}
+function renderPurchases(){
+  const body = $('pBody'); body.innerHTML = '';
+  let count = 0;
+  sortedEntries(purchases).forEach(([key, p]) => {
+    if (filterP !== 'all' && (p.status || 'pending') !== filterP) return;
+    count++;
+    const tr = document.createElement('tr');
+    const actions = (p.status === 'pending')
+      ? '<button class="btn-green btn-sm" onclick="approvePurchase(\'' + key + '\')">Approve</button> <button class="btn-red btn-sm" onclick="rejectPurchase(\'' + key + '\')">Reject</button>'
+      : '<span class="muted">—</span>';
+    tr.innerHTML = '<td>' + userLabel(p.uid) + '</td><td><b>' + int(p.quantity) + ' Hens</b><br><span class="muted">' + esc(p.planName || '') + '</span></td><td>' + num(p.amount) + ' PKR' + (p.deductedEggs ? '<br><span class="muted">-' + int(p.deductedEggs) + ' eggs</span>' : '') + '</td><td>Trx: ' + esc(p.transactionId || 'N/A') + '<br><span class="muted">' + esc(p.accountHolderName || '') + '</span></td><td>' + fmtDate(p.timestamp) + '</td><td>' + pill(p.status) + '</td><td>' + actions + '</td>';
+    body.appendChild(tr);
+  });
+  $('pCount').textContent = count + ' requests';
+  if (!count) body.innerHTML = '<tr><td colspan="7" class="muted">Koi request nahi.</td></tr>';
+}
+function renderWithdraws(){
+  const body = $('wBody'); body.innerHTML = '';
+  let count = 0;
+  sortedEntries(withdraws).forEach(([key, w]) => {
+    if (filterW !== 'all' && (w.status || 'pending') !== filterW) return;
+    count++;
+    const tr = document.createElement('tr');
+    const actions = (w.status === 'pending')
+      ? '<button class="btn-green btn-sm" onclick="approveWithdraw(\'' + key + '\')">Approve</button> <button class="btn-red btn-sm" onclick="rejectWithdraw(\'' + key + '\')">Reject</button>'
+      : '<span class="muted">—</span>';
+    tr.innerHTML = '<td>' + userLabel(w.uid) + '</td><td><b>' + esc(w.dealerName || '') + '</b><br><span class="muted">' + int(w.eggsSold || w.eggsDeductedCount) + ' eggs</span></td><td>' + num(w.amount || w.totalPayout) + ' PKR</td><td>' + esc(w.bankName || w.accountType || '') + '<br>' + esc(w.accountNumber || '') + '<br><span class="muted">' + esc(w.accountHolderName || w.accountTitle || '') + '</span></td><td>' + fmtDate(w.timestamp) + '</td><td>' + pill(w.status) + '</td><td>' + actions + '</td>';
+    body.appendChild(tr);
+  });
+  $('wCount').textContent = count + ' requests';
+  if (!count) body.innerHTML = '<tr><td colspan="7" class="muted">Koi request nahi.</td></tr>';
+}
+async function approvePurchase(key){
+  const p = purchases[key];
+  if (!p || p.status !== 'pending') return alert('Ye request pehle hi process ho chuki hai.');
+  if (!confirm(int(p.quantity) + ' hens approve karein? User ko batch mil jayegi.')) return;
+  try {
+    const u = users[p.uid];
+    if (!u) return alert('User nahi mila.');
+    const batchKey = db.ref('users/' + p.uid + '/hen_batches').push().key;
+    const updates = {};
+    updates['totalHens'] = num(u.totalHens) + int(p.quantity);
+    updates['selfPurchasedHens'] = num(u.selfPurchasedHens) + int(p.quantity);
+    updates['totalExpense'] = num(u.totalExpense) + num(p.amount);
+    updates['hen_batches/' + batchKey] = { qty: int(p.quantity), boughtAt: firebase.database.ServerValue.TIMESTAMP, lastCollectedAt: firebase.database.ServerValue.TIMESTAMP };
+    await db.ref('users/' + p.uid).update(updates);
+    if (u.referredBy && u.referredBy !== 'none' && u.referredBy !== p.uid && users[u.referredBy]){
+      await db.ref('users/' + u.referredBy + '/referralHensPurchased').transaction(c => num(c) + int(p.quantity));
+    }
+    await db.ref('purchase_requests/' + key).update({ status: 'approved', approvedAt: firebase.database.ServerValue.TIMESTAMP });
+    toast('Purchase approve ho gaya.');
+  } catch(e){ alert('Error: ' + e.message); }
+}
+async function rejectPurchase(key){
+  const p = purchases[key];
+  if (!p || p.status !== 'pending') return alert('Ye request pehle hi process ho chuki hai.');
+  if (!confirm('Is purchase request ko reject karein?')) return;
+  try { await db.ref('purchase_requests/' + key).update({ status: 'rejected', rejectedAt: firebase.database.ServerValue.TIMESTAMP }); toast('Purchase reject ho gaya.'); }
+  catch(e){ alert('Error: ' + e.message); }
+}
+async function approveWithdraw(key){
+  const w = withdraws[key];
+  if (!w || w.status !== 'pending') return alert('Ye request pehle hi process ho chuki hai.');
+  if (!confirm(num(w.amount || w.totalPayout) + ' PKR withdrawal approve karein?')) return;
+  try {
+    const u = users[w.uid];
+    if (!u) return alert('User nahi mila.');
+    await db.ref('users/' + w.uid).update({ totalWithdrawal: num(u.totalWithdrawal) + num(w.amount || w.totalPayout) });
+    await db.ref('withdraw_requests/' + key).update({ status: 'approved', approvedAt: firebase.database.ServerValue.TIMESTAMP });
+    toast('Withdrawal approve ho gaya.');
+  } catch(e){ alert('Error: ' + e.message); }
+}
+async function rejectWithdraw(key){
+  const w = withdraws[key];
+  if (!w || w.status !== 'pending') return alert('Ye request pehle hi process ho chuki hai.');
+  const eggs = int(w.eggsSold || w.eggsDeductedCount);
+  if (!confirm('Is withdrawal ko reject karein? ' + eggs + ' eggs user ko wapas mil jayenge.')) return;
+  try {
+    await db.ref('users/' + w.uid + '/availableEggs').transaction(c => num(c) + eggs);
+    await db.ref('withdraw_requests/' + key).update({ status: 'rejected', rejectedAt: firebase.database.ServerValue.TIMESTAMP });
+    toast('Withdrawal reject ho gaya, eggs wapas kar diye.');
+  } catch(e){ alert('Error: ' + e.message); }
+}
+
+function renderUsers(){
+  const q = ($('userSearch').value || '').toLowerCase();
+  const body = $('uBody'); body.innerHTML = '';
+  let count = 0;
+  sortedEntries(users).forEach(([uid, u]) => {
+    const hay = ((u.name || '') + ' ' + (u.email || '')).toLowerCase();
+    if (q && !hay.includes(q)) return;
+    count++;
+    const st = (u.status || 'active');
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + esc(u.name || 'User') + '<br><span class="muted">' + esc(u.email || '') + '</span></td>'
+      + '<td>' + num(u.totalHens) + '<br><span class="muted">self: ' + num(u.selfPurchasedHens) + ' / ref: ' + num(u.referralHensPurchased) + '</span></td>'
+      + '<td>' + num(u.availableEggs) + ' / ' + num(u.giftEggs) + '</td>'
+      + '<td>' + num(u.totalExpense) + ' / ' + num(u.totalWithdrawal) + ' PKR</td>'
+      + '<td><span class="pill ' + (st === 'blocked' ? 'p-blocked' : 'p-active') + '">' + esc(st) + '</span></td>'
+      + '<td><button class="btn-sm btn-gray" onclick="openUserEdit(\'' + uid + '\')">Edit</button> <button class="btn-sm btn-gray" onclick="viewBatches(\'' + uid + '\')">Batches</button> '
+      + (st === 'blocked'
+        ? '<button class="btn-sm btn-green" onclick="toggleBlock(\'' + uid + '\',\'active\')">Unblock</button>'
+        : '<button class="btn-sm btn-red" onclick="toggleBlock(\'' + uid + '\',\'blocked\')">Block</button>') + '</td>';
+    body.appendChild(tr);
+  });
+  if (!count) body.innerHTML = '<tr><td colspan="6" class="muted">Koi user nahi mila.</td></tr>';
+}
+function openUserEdit(uid){
+  const u = users[uid]; if (!u) return;
+  $('umUid').value = uid;
+  $('umWho').textContent = (u.name || 'User') + ' — ' + (u.email || '');
+  $('umAvail').value = num(u.availableEggs);
+  $('umGift').value = num(u.giftEggs);
+  $('umHens').value = num(u.totalHens);
+  $('umExp').value = num(u.totalExpense);
+  $('umWd').value = num(u.totalWithdrawal);
+  $('umStatus').value = u.status || 'active';
+  openModal('userModal');
+}
+async function saveUser(){
+  const uid = $('umUid').value;
+  if (!confirm('Is user ka data save karein?')) return;
+  try {
+    await db.ref('users/' + uid).update({
+      availableEggs: num($('umAvail').value), giftEggs: num($('umGift').value),
+      totalHens: num($('umHens').value), totalExpense: num($('umExp').value),
+      totalWithdrawal: num($('umWd').value), status: $('umStatus').value
+    });
+    closeModal('userModal'); toast('User save ho gaya.');
+  } catch(e){ alert('Error: ' + e.message); }
+}
+async function toggleBlock(uid, status){
+  if (!confirm('User ka status "' + status + '" karein?')) return;
+  try { await db.ref('users/' + uid).update({ status: status }); toast('Status update ho gaya.'); }
+  catch(e){ alert('Error: ' + e.message); }
+}
+function viewBatches(uid){
+  const u = users[uid]; if (!u) return;
+  $('bmWho').textContent = (u.name || 'User') + ' — ' + (u.email || '');
+  const batches = u.hen_batches || {};
+  let html = '';
+  const keys = Object.keys(batches);
+  if (!keys.length) html = '<p class="muted">Koi batch nahi.</p>';
+  keys.forEach(bk => {
+    const b = batches[bk];
+    const daysLeft = Math.max(0, Math.ceil((120 * 86400000 - (Date.now() - num(b.boughtAt || b.lastCollectedAt))) / 86400000));
+    html += '<div class="row" style="justify-content:space-between;border-bottom:1px solid #14532d;padding:8px 0"><div><b>' + int(b.qty) + ' Hens</b><br><span class="muted">Bought: ' + fmtDate(b.boughtAt) + ' | Last collect: ' + fmtDate(b.lastCollectedAt) + ' | ~' + daysLeft + ' din baqi</span></div>'
+      + '<button class="btn-red btn-sm" onclick="deleteBatch(\'' + uid + '\',\'' + bk + '\',' + int(b.qty) + ')">Delete</button></div>';
+  });
+  $('bmBody').innerHTML = html;
+  openModal('batchModal');
+}
+async function deleteBatch(uid, bk, qty){
+  if (!confirm('Ye batch delete karein? Total hens se ' + qty + ' kam ho jayenge.')) return;
+  try {
+    await db.ref('users/' + uid + '/hen_batches/' + bk).remove();
+    await db.ref('users/' + uid + '/totalHens').transaction(c => Math.max(0, num(c) - qty));
+    closeModal('batchModal'); toast('Batch delete ho gaya.');
+  } catch(e){ alert('Error: ' + e.message); }
+}
+function renderDealers(){
+  const body = $('dBody'); body.innerHTML = '';
+  Object.entries(dealers).forEach(([key, d]) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td><b>' + esc(d.name || '') + '</b></td><td>' + int(d.minLimit) + ' – ' + int(d.maxLimit) + '</td><td>' + num(d.rate) + ' (range ' + num(d.rateFrom) + '–' + num(d.rateTo) + ')</td>'
+      + '<td><button class="btn-sm btn-gray" onclick="editDealer(\'' + key + '\')">Edit</button> <button class="btn-sm btn-red" onclick="deleteDealer(\'' + key + '\')">Delete</button></td>';
+    body.appendChild(tr);
+  });
+  if (!Object.keys(dealers).length) body.innerHTML = '<tr><td colspan="4" class="muted">Koi dealer nahi.</td></tr>';
+}
+function editDealer(key){
+  const d = dealers[key]; if (!d) return;
+  $('dlKey').value = key;
+  $('dlName').value = d.name || '';
+  $('dlMin').value = int(d.minLimit);
+  $('dlMax').value = int(d.maxLimit);
+  $('dlRate').value = num(d.rate);
+  $('dlRateFrom').value = num(d.rateFrom);
+  $('dlRateTo').value = num(d.rateTo);
+  document.getElementById('sec-dealers').scrollIntoView();
+}
+function clearDealerForm(){
+  $('dlKey').value = ''; $('dlName').value = ''; $('dlMin').value = 1; $('dlMax').value = 12; $('dlRate').value = 0; $('dlRateFrom').value = 50; $('dlRateTo').value = 57;
+}
+async function saveDealer(){
+  const key = $('dlKey').value;
+  const data = { name: $('dlName').value.trim(), minLimit: int($('dlMin').value), maxLimit: int($('dlMax').value), rate: num($('dlRate').value), rateFrom: num($('dlRateFrom').value), rateTo: num($('dlRateTo').value) };
+  if (!data.name) return alert('Dealer ka naam likhein.');
+  try {
+    if (key) await db.ref('dealers/' + key).update(data);
+    else await db.ref('dealers').push(data);
+    clearDealerForm(); toast('Dealer save ho gaya.');
+  } catch(e){ alert('Error: ' + e.message); }
+}
+async function deleteDealer(key){
+  if (!confirm('Ye dealer delete karein?')) return;
+  try { await db.ref('dealers/' + key).remove(); toast('Dealer delete ho gaya.'); }
+  catch(e){ alert('Error: ' + e.message); }
+}
+function renderRates(){
+  $('rtPrice').value = num(rates.eggPrice);
+  $('rtFrom').value = num(rates.eggPriceFrom);
+  $('rtTo').value = num(rates.eggPriceTo);
+  $('rtHen').value = num(rates.henPrice);
+  $('rtPerHen').value = num(rates.eggPerHen);
+}
+async function saveRates(){
+  try {
+    await db.ref('rates').update({ eggPrice: num($('rtPrice').value), eggPriceFrom: num($('rtFrom').value), eggPriceTo: num($('rtTo').value), henPrice: num($('rtHen').value), eggPerHen: num($('rtPerHen').value) });
+    toast('Rates save ho gaye.');
+  } catch(e){ alert('Error: ' + e.message); }
+}
+function renderAnnouncements(){
+  const body = $('aBody'); body.innerHTML = '';
+  sortedEntries(announcements).forEach(([key, a]) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td><b>' + esc(a.title || '') + '</b></td><td>' + esc(a.message || '').substring(0, 120) + '</td><td>' + fmtDate(a.timestamp) + '</td>'
+      + '<td><button class="btn-sm btn-gray" onclick="editAnnouncement(\'' + key + '\')">Edit</button> <button class="btn-sm btn-red" onclick="deleteAnnouncement(\'' + key + '\')">Delete</button></td>';
+    body.appendChild(tr);
+  });
+  if (!Object.keys(announcements).length) body.innerHTML = '<tr><td colspan="4" class="muted">Koi announcement nahi.</td></tr>';
+}
+function editAnnouncement(key){
+  const a = announcements[key]; if (!a) return;
+  $('anKey').value = key; $('anTitle').value = a.title || ''; $('anMsg').value = a.message || '';
+  document.getElementById('sec-ann').scrollIntoView();
+}
+function clearAnnForm(){ $('anKey').value = ''; $('anTitle').value = ''; $('anMsg').value = ''; }
+async function saveAnnouncement(){
+  const key = $('anKey').value;
+  const data = { title: $('anTitle').value.trim(), message: $('anMsg').value.trim(), timestamp: firebase.database.ServerValue.TIMESTAMP };
+  if (!data.title || !data.message) return alert('Title aur message dono likhein.');
+  try {
+    if (key) await db.ref('announcements/' + key).update(data);
+    else await db.ref('announcements').push(data);
+    clearAnnForm(); toast('Announcement save ho gaya.');
+  } catch(e){ alert('Error: ' + e.message); }
+}
+async function deleteAnnouncement(key){
+  if (!confirm('Ye announcement delete karein?')) return;
+  try { await db.ref('announcements/' + key).remove(); toast('Announcement delete ho gaya.'); }
+  catch(e){ alert('Error: ' + e.message); }
+}
+function renderSettings(){
+  const dn = settings.dailyNotice || {};
+  $('stNoticeTitle').value = dn.title || '';
+  $('stNoticeMsg').value = dn.message || '';
+  const wo = (settings.whatsappConfig && settings.whatsappConfig.manualOverride) || {};
+  $('stWaNum').value = wo.number || '';
+  if (wo.expireTime){
+    const d = new Date(num(wo.expireTime));
+    $('stWaExp').value = d.toISOString().slice(0, 16);
+  } else { $('stWaExp').value = ''; }
+  $('stAdminWa').value = settings.adminWhatsapp || '';
+  const plans = Array.isArray(settings.withdrawalPlans) ? settings.withdrawalPlans : [];
+  const box = $('plansBox'); box.innerHTML = '';
+  plans.forEach((pl, i) => {
+    const div = document.createElement('div');
+    div.className = 'row';
+    div.innerHTML = '<div style="flex:1"><label>Plan No</label><input class="plNum" type="number" value="' + int(pl.planNum) + '"></div>'
+      + '<div style="flex:1"><label>Threshold (total withdrawal)</label><input class="plThr" type="number" value="' + num(pl.threshold) + '"></div>'
+      + '<div style="flex:1"><label>Required Hens</label><input class="plReq" type="number" value="' + int(pl.required) + '"></div>'
+      + '<button class="btn-red btn-sm" onclick="this.parentElement.remove()">X</button>';
+    box.appendChild(div);
+  });
+}
+function addPlanRow(){
+  const div = document.createElement('div');
+  div.className = 'row';
+  div.innerHTML = '<div style="flex:1"><label>Plan No</label><input class="plNum" type="number" value="1"></div>'
+    + '<div style="flex:1"><label>Threshold (total withdrawal)</label><input class="plThr" type="number" value="0"></div>'
+    + '<div style="flex:1"><label>Required Hens</label><input class="plReq" type="number" value="1"></div>'
+    + '<button class="btn-red btn-sm" onclick="this.parentElement.remove()">X</button>';
+  $('plansBox').appendChild(div);
+}
+async function saveSettings(){
+  const plans = [];
+  document.querySelectorAll('#plansBox .row').forEach(row => {
+    const n = row.querySelector('.plNum'), t = row.querySelector('.plThr'), r = row.querySelector('.plReq');
+    if (n && t && r) plans.push({ planNum: int(n.value), threshold: num(t.value), required: int(r.value) });
+  });
+  plans.sort((a, b) => a.planNum - b.planNum);
+  const waNum = $('stWaNum').value.trim();
+  const waExp = $('stWaExp').value ? new Date($('stWaExp').value).getTime() : 0;
+  try {
+    await db.ref('settings/dailyNotice').update({ title: $('stNoticeTitle').value.trim(), message: $('stNoticeMsg').value.trim(), updatedAt: firebase.database.ServerValue.TIMESTAMP });
+    await db.ref('settings/whatsappConfig').update({ manualOverride: waNum ? { number: waNum, expireTime: waExp } : null });
+    await db.ref('settings').update({ adminWhatsapp: $('stAdminWa').value.trim(), withdrawalPlans: plans });
+    toast('Settings save ho gayi.');
+  } catch(e){ alert('Error: ' + e.message); }
+}
+</script>
+</body>
+</html>
