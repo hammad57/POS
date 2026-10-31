@@ -168,6 +168,10 @@
   .cart-item { display:flex; gap:12px; border:1px solid #e4e9e6; border-radius:12px; padding:12px; margin-bottom:10px; align-items:flex-start; }
   .cart-item img { width:72px; height:72px; object-fit:cover; border-radius:10px; }
   .qty-btn { width:32px; height:32px; border-radius:8px; border:1px solid #cfd8d3; background:#f0f4f1; font-size:18px; font-weight:800; cursor:pointer; }
+  .sel-box { border: 2px solid #ffb703; background: #fffbe6; border-radius: 14px; padding: 14px; margin: 12px 0; }
+  .sel-box .sel-head { font-weight: 800; font-size: 15.5px; margin-bottom: 10px; color: #7a5b00; }
+  .sel-box label { font-size: 16px; font-weight: 800; }
+  .sel-box select { width: 100%; padding: 13px 12px; font-size: 17px; border: 2px solid #cfd8d3; border-radius: 10px; margin-top: 4px; background: #fff; }
   .free-hint { font-size:13.5px; color:#5d4a00; background:#fff8e1; border:1px solid #ffe082; border-radius:10px; padding:10px 12px; margin:10px 0; line-height:1.6; }
   .free-hint.ok { background:#e5f4ec; border-color:#bfe3cd; color:#0b5136; }
   .saved-line { font-size:15px; font-weight:800; color:#0b7a4b; background:#e5f4ec; border-radius:10px; padding:10px 12px; margin:10px 0; display:none; }
@@ -1513,18 +1517,19 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
           <div class="chips" id="dChips"></div>
           <table class="details" id="dDetails"></table>
           <div class="infobox">🚚 <b>Delivery:</b> 3–5 working days · Charges: PKR 99 per order (FREE on Rs. 5,999+ and on Cash on Delivery)<br>💵 <b>Cash on Delivery</b> available<br>↩️ Easy 7-day return (on unused items)</div>
-          <button class="cta" type="button" onclick="addToCartCurrent()">🛒 Add to Cart</button>
         </div>
       </div>
     </div>
 
     <div class="card" id="order">
-      <h3 style="margin-bottom:10px;">🛒 Add to Cart</h3>
+      <h3 style="margin-bottom:10px;">🛒 Select Options & Order</h3>
       <div class="order-summary">
         <b>Product Code:</b> <span id="ordCode">MZ2199200480BICN</span><br>
         <b>Product:</b> <span id="ordProduct">3 Pcs Women&#x27;s Stitched Shamoz Silk Hand Work Lehenga Choli</span><br>
         <b>Price:</b> <span id="ordPrice">PKR 3,470</span> · <b>Delivery:</b> PKR 99 per order (FREE on Rs. 5,999 or more, and FREE on Cash on Delivery)
       </div>
+      <div class="sel-box" id="selBox">
+        <div class="sel-head">⚠️ Please select before ordering — Colour &amp; Size are required</div>
       <div id="colourField">
         <label for="fColour">Select Colour *</label>
         <select id="fColour"><option>Purple</option><option>Blue</option><option>Green</option><option>Black</option><option>Maroon</option></select>
@@ -1533,15 +1538,15 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
         <label for="fSize">Select Size *</label>
         <select id="fSize"><option>Standard Size</option></select>
       </div>
+      </div>
       <label for="fQty">Quantity</label>
       <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
         <button class="qty-btn" type="button" onclick="var q=document.getElementById('fQty'); q.value=Math.max(1,(parseInt(q.value)||1)-1);">−</button>
         <input id="fQty" type="number" min="1" value="1" style="width:70px;padding:10px;border:1px solid #cfd8d3;border-radius:10px;font-size:15px;text-align:center;">
         <button class="qty-btn" type="button" onclick="var q=document.getElementById('fQty'); q.value=(parseInt(q.value)||1)+1;">+</button>
       </div>
-      <button class="cta" type="button" onclick="addToCartCurrent()">🛒 Add to Cart</button>
-      <button class="cta" type="button" onclick="showView('cart')" style="background:#ffb703;color:#1c1500;">🛒 View Cart & Place Order</button>
-      <p class="pay-hint">💡 Add one or more items with <b>Add to Cart</b>, then go to the <b>Cart</b> to review all items, prices and delivery charges and place a single order. Delivery charges are only <b>Rs. 99</b> per order — and <b>FREE home delivery</b> on purchases of Rs. 5,999 or more.</p>
+      <button class="cta" type="button" onclick="addToCartAndOrder()">🛒 Add to Cart & Place Order</button>
+      <p class="pay-hint">💡 Tap <b>Add to Cart &amp; Place Order</b> — the item is added to your Cart and the Cart opens at once. Review your items, fill your details and place a single order. Delivery charges are only <b>Rs. 99</b> per order — and <b>FREE home delivery</b> on purchases of Rs. 5,999 or more.</p>
       <div class="adv-box">
         <b>💳 Advance Payment — Rs. 110 Discount</b>
         <p>If you prefer advance payment instead of Cash on Delivery, contact us on WhatsApp — the complete product details will be included in the message automatically and you will also get a <b>Rs. 110 discount</b>.</p>
@@ -2963,10 +2968,15 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   function fillSelect(fieldId, selectId, values) {
     var field = document.getElementById(fieldId);
     var sel = document.getElementById(selectId);
-    if (!values || values.length === 0) { field.style.display = 'none'; sel.innerHTML = ''; return; }
-    field.style.display = 'block';
-    sel.innerHTML = '';
-    values.forEach(function(v) { var o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
+    if (!values || values.length === 0) { field.style.display = 'none'; sel.innerHTML = ''; }
+    else {
+      field.style.display = 'block';
+      sel.innerHTML = '';
+      var ph = document.createElement('option'); ph.value = ''; ph.textContent = '— Please select —'; sel.appendChild(ph);
+      values.forEach(function(v) { var o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
+    }
+    var sb = document.getElementById('selBox');
+    if (sb) { var cf = document.getElementById('colourField'); var sf = document.getElementById('sizeField'); sb.style.display = (cf.style.display !== 'none' || sf.style.display !== 'none') ? '' : 'none'; }
   }
 
   function selectProduct(code, name, price, colours, sizes) {
@@ -3177,6 +3187,8 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     return '<span class="sl-old-price">' + fmtPKR(d.old) + '</span> <span class="sl-new-price">' + fmtPKR(d.now) + '</span>';
   }
   function advancePay() {
+    if (document.getElementById('colourField').style.display !== 'none' && !document.getElementById('fColour').value) { alert('Please select a Colour before ordering.'); document.getElementById('fColour').focus(); return; }
+    if (document.getElementById('sizeField').style.display !== 'none' && !document.getElementById('fSize').value) { alert('Please select a Size before ordering.'); document.getElementById('fSize').focus(); return; }
     var colour = document.getElementById('colourField').style.display !== 'none' ? document.getElementById('fColour').value : '';
     var size = document.getElementById('sizeField').style.display !== 'none' ? document.getElementById('fSize').value : '';
     var p = priceNum(); var d = Math.max(0, p - 110);
@@ -3584,9 +3596,9 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     var d = document.getElementById('drawerCartCount'); if (d) d.textContent = n ? '(' + n + ')' : '';
     var bb = document.getElementById('bb-cart'); if (bb) bb.classList.toggle('active', currentView === 'cart');
   }
-  function addToCart(code, colour, size, qty) {
-    var p = productByCode(code); if (!p) return;
-    if ((p.stock || '').toLowerCase().indexOf('out') >= 0) { alert('This product is currently Out of Stock.'); return; }
+  function addToCart(code, colour, size, qty, silent) {
+    var p = productByCode(code); if (!p) return false;
+    if ((p.stock || '').toLowerCase().indexOf('out') >= 0) { alert('This product is currently Out of Stock.'); return false; }
     var cart = loadCart();
     var col = colour || ''; var sz = size || ''; var q = qty || 1;
     var found = null;
@@ -3594,14 +3606,21 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     if (found) found.qty = (found.qty || 1) + q; else cart.push({ code: p.code, product: p.name, price: dealPrice(p), qty: q, colour: col, size: sz, img: (p.images && p.images[0]) ? p.images[0] : '' });
     saveCart(cart); updateCartBadge();
     var toastBox = document.getElementById('cartNote');
-    alert('✅ Added to cart!\n' + p.name + '\nOpen the Cart to place your order.');
+    if (!silent) alert('✅ Added to cart!\n' + p.name + '\nOpen the Cart to place your order.');
+    return true;
   }
-  function addToCartCurrent() {
-    var p = productByCode(selected.code); if (!p) return;
+  function addToCartCurrent(silent) {
+    var p = productByCode(selected.code); if (!p) return false;
     var colour = document.getElementById('colourField').style.display !== 'none' ? document.getElementById('fColour').value : '';
     var size = document.getElementById('sizeField').style.display !== 'none' ? document.getElementById('fSize').value : '';
+    if (document.getElementById('colourField').style.display !== 'none' && !colour) { alert('Please select a Colour before ordering.'); document.getElementById('fColour').focus(); return false; }
+    if (document.getElementById('sizeField').style.display !== 'none' && !size) { alert('Please select a Size before ordering.'); document.getElementById('fSize').focus(); return false; }
     var qEl = document.getElementById('fQty'); var q = qEl ? Math.max(1, parseInt(qEl.value, 10) || 1) : 1;
-    addToCart(selected.code, colour, size, q);
+    return addToCart(selected.code, colour, size, q, silent);
+  }
+  function addToCartAndOrder() {
+    if (!addToCartCurrent(true)) return;
+    showView('cart');
   }
   var redeemApplied = false; var bonusRedeemed = 0;
   function isCODSelected() {
