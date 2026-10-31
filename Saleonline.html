@@ -227,6 +227,8 @@
 /* SALE BANNER (2026-10-31, user: top banner like reference image) */
 .sale-banner{position:relative;overflow:hidden;border-radius:16px;padding:16px 12px 14px;text-align:center;color:#fff;background:linear-gradient(120deg,#ff1e56 0%,#ff4d6d 45%,#ff7a18 100%);box-shadow:0 6px 18px rgba(255,30,86,.35);margin-bottom:12px}
 body>.sale-banner{border-radius:0;margin-bottom:0;padding-top:120px}
+.banner-search{margin-top:12px;display:flex;justify-content:center}
+.banner-search input{width:100%;max-width:430px;background:#fff;color:#222;border:0;border-radius:999px;padding:11px 18px;font-size:15px;font-family:inherit;box-shadow:0 3px 10px rgba(0,0,0,.25);outline:none}
 .sale-banner .sale-top{font-size:15px;font-weight:700;letter-spacing:3px;text-transform:uppercase}
 .sale-banner .sale-big{font-size:clamp(52px,16vw,88px);font-weight:900;font-style:italic;line-height:1;letter-spacing:2px;text-shadow:0 3px 0 rgba(0,0,0,.15)}
 .sale-banner .sale-btn{margin-top:10px;border:0;border-radius:999px;background:#ffcf3f;color:#222;font-weight:800;font-size:15px;letter-spacing:1px;padding:10px 30px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.25)}
@@ -269,6 +271,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
         <div class="sale-top">Shop online</div>
         <div class="sale-big">SALE</div>
         <button class="sale-btn" type="button" onclick="document.getElementById('gridProducts').scrollIntoView({behavior:'smooth'})">SHOP NOW</button>
+        <div class="banner-search"><input id="bannerSearch" type="text" placeholder="🔍 Name ya code se search karein..." oninput="bannerSearch(this.value)"></div>
       </div>
 
 <header class="site">
@@ -378,8 +381,6 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     </div>
 
     <div class="card">
-      <h3 class="sec-title">🛍️ All Products</h3>
-      <p class="muted">Tap any product to see its complete details.</p>
       <div class="grid-products" id="gridProducts">
         <div class="gcard" data-cat="Cosmetics"><img src="https://static.markaz.app/pakistan/products/3389-241-MZ3389200066CEBY-777377001-product-1.webp" alt="Premium Care Barber Cape waterproof parachute fabric" onclick="showProduct('MZ3389200066CEBY')"><div class="gbody"><div class="gname" onclick="showProduct('MZ3389200066CEBY')">Premium Care Barber Cape waterproof parachute fabric</div><div class="gcode">Code: MZ3389200066CEBY</div><div class="gprice">PKR 1,095</div><div class="gdate">2026-10-31</div><button class="cta" type="button" onclick="addToCart('MZ3389200066CEBY')">🛒 Add to Cart</button></div></div>
         <div class="gcard" data-cat="Cosmetics"><img src="https://static.markaz.app/pakistan/products/3497-49-MZ3497200561FLCEAS-777371001-product-1.webp" alt="Pack of 3 Vintage T9 Professional Hair Styling Trimmer" onclick="showProduct('MZ3497200561FLCEAS')"><div class="gbody"><div class="gname" onclick="showProduct('MZ3497200561FLCEAS')">Pack of 3 Vintage T9 Professional Hair Styling Trimmer</div><div class="gcode">Code: MZ3497200561FLCEAS</div><div class="gprice">PKR 3,300</div><div class="gdate">2026-10-31</div><button class="cta" type="button" onclick="addToCart('MZ3497200561FLCEAS')">🛒 Add to Cart</button></div></div>
@@ -3009,6 +3010,18 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     if (v === 'cart') renderCart();
     if (v === 'wishlist') renderWishlist();
     updateCartBadge(); updateHomeBonus();
+  }
+
+  function bannerSearch(q) {
+    try { if (typeof currentView !== 'undefined' && currentView !== 'home' && currentView !== 'products') showView('products'); } catch (e) {}
+    var s = document.getElementById('slSearch');
+    if (s) { s.value = q; var ev; try { ev = new Event('input', { bubbles: true }); } catch (e2) { ev = document.createEvent('Event'); ev.initEvent('input', true, true); } s.dispatchEvent(ev); return; }
+    var qq = (q || '').trim().toLowerCase();
+    ['gridProducts', 'gridAll'].forEach(function(gid) {
+      var g = document.getElementById(gid); if (!g) return;
+      var cards = g.querySelectorAll('.gcard');
+      for (var i = 0; i < cards.length; i++) { var c = cards[i]; var t = (c.textContent || '').toLowerCase(); c.style.display = (!qq || t.indexOf(qq) >= 0) ? '' : 'none'; }
+    });
   }
 
   // ================= ACCOUNTS =================
