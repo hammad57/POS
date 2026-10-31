@@ -1535,7 +1535,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
         <b>Price:</b> <span id="ordPrice">PKR 3,470</span> · <b>Delivery:</b> PKR 99 per order (FREE on Rs. 5,999 or more, and FREE on Cash on Delivery)
       </div>
       <div class="sel-box" id="selBox">
-        <div class="sel-head">⚠️ Please select before ordering — Colour &amp; Size are required</div>
+        <div class="sel-head" id="selHead">⚠️ Please select before ordering — Colour &amp; Size are required</div>
       <div id="colourField">
         <label for="fColour">Select Colour *</label>
         <select id="fColour"><option>Purple</option><option>Blue</option><option>Green</option><option>Black</option><option>Maroon</option></select>
@@ -2982,7 +2982,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
       values.forEach(function(v) { var o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
     }
     var sb = document.getElementById('selBox');
-    if (sb) { var cf = document.getElementById('colourField'); var sf = document.getElementById('sizeField'); sb.style.display = (cf.style.display !== 'none' || sf.style.display !== 'none') ? '' : 'none'; }
+    if (sb) { var cf = document.getElementById('colourField'); var sf = document.getElementById('sizeField'); sb.style.display = (cf.style.display !== 'none' || sf.style.display !== 'none') ? '' : 'none'; var sh = document.getElementById('selHead'); if (sh) { var cVis = cf.style.display !== 'none'; var sVis = sf.style.display !== 'none'; sh.textContent = (cVis && sVis) ? '\u26a0\ufe0f Please select before ordering \u2014 Colour & Size are required' : cVis ? '\u26a0\ufe0f Please select before ordering \u2014 Colour is required' : '\u26a0\ufe0f Please select before ordering \u2014 Size is required'; } }
   }
 
   function selectProduct(code, name, price, colours, sizes) {
