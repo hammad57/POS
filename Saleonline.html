@@ -3844,7 +3844,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
           if (typeof price !== 'number') return;
           PRODUCTS.forEach(function(x) { if (x.code === code) x.sale = price; });
           document.querySelectorAll('.gcard').forEach(function(card) {
-            if (card.innerHTML.indexOf("'" + code + "'") >= 0) { var gp = card.querySelector('.gprice'); if (gp) gp.textContent = 'PKR ' + price.toLocaleString('en-US'); }
+            if (card.innerHTML.indexOf("'" + code + "'") >= 0) { var gp = card.querySelector('.gprice'); if (gp) { var _pp = productByCode(code); if (_pp && typeof dealInfo === 'function' && dealInfo(_pp)) gp.innerHTML = dealPriceHtml(_pp); else gp.textContent = 'PKR ' + price.toLocaleString('en-US'); } }
           });
         });
       }
