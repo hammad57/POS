@@ -2888,8 +2888,8 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     picIndex = 0;
     lbGallery = disp;
     document.getElementById('dName').textContent = p.name;
-    document.getElementById('dPrice').textContent = fmtPKR(p.sale);
-    document.getElementById('dAdv').innerHTML = '💳 <b>Rs. 110 OFF</b> on advance payment — only ' + fmtPKR(Math.max(0, p.sale - 110));
+    (function () { var dp = document.getElementById('dPrice'); var di = dealInfo(p); if (di) dp.innerHTML = dealPriceHtml(p) + ' <span class="sl-flash-badge">\u26a1 Flash Deal</span>'; else dp.textContent = fmtPKR(p.sale); })();
+    document.getElementById('dAdv').innerHTML = '💳 <b>Rs. 110 OFF</b> on advance payment — only ' + fmtPKR(Math.max(0, dealPrice(p) - 110));
     document.getElementById('dStock').textContent = p.stock || 'In Stock';
     var isOOS = (p.stock || '').toLowerCase().indexOf('out') >= 0;
     document.getElementById('dStock').classList.toggle('oos', isOOS);
@@ -2917,7 +2917,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     var img = (p.images && p.images[0]) ? p.images[0] : '';
     return '<img src="' + img + '" alt="' + escapeHtml(p.name) + '" onclick="showProduct(\'' + p.code + '\')">'
       + '<div class="gbody"><div class="gname" onclick="showProduct(\'' + p.code + '\')">' + escapeHtml(p.name) + '</div>'
-      + '<div class="gcode">Code: ' + p.code + '</div><div class="gprice">' + fmtPKR(p.sale) + '</div>'
+      + '<div class="gcode">Code: ' + p.code + '</div>' + (dealInfo(p) ? '<span class="sl-flash-badge">\u26a1 Flash Deal</span>' : '') + '<div class="gprice">' + dealPriceHtml(p) + '</div>'
       + '<div class="gdate">' + escapeHtml(p.date || '') + '</div>'
       + '<button class="cta" type="button" onclick="addToCart(\'' + p.code + '\')">🛒 Add to Cart</button></div>';
   }
@@ -2926,10 +2926,10 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     PRODUCTS.forEach(function(p) { if (p.code === exceptCode) return; var d = document.createElement('div'); d.className = 'gcard'; d.innerHTML = cardHTML(p); box.appendChild(d); });
   }
   function applySelection(p) {
-    selected = { code: p.code, name: p.name, price: fmtPKR(p.sale), colours: p.colours || [], sizes: p.sizes || [] };
+    selected = { code: p.code, name: p.name, price: fmtPKR(dealPrice(p)), colours: p.colours || [], sizes: p.sizes || [] };
     document.getElementById('ordCode').textContent = p.code;
     document.getElementById('ordProduct').textContent = p.name;
-    document.getElementById('ordPrice').textContent = fmtPKR(p.sale);
+    document.getElementById('ordPrice').textContent = fmtPKR(dealPrice(p));
     fillSelect('colourField', 'fColour', p.colours);
     fillSelect('sizeField', 'fSize', p.sizes);
   }
@@ -3038,6 +3038,24 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   function bottomOrder() { showView('cart'); }
   function priceNum() { return parseInt(String(selected.price).replace(/[^0-9]/g, ''), 10) || 0; }
   function fmtPKR(n) { return 'PKR ' + n.toLocaleString('en-US'); }
+  /* ---- Flash Deal (Tools engine: tools/active = 'flashdeal') ----
+     Engine window.SL_DEAL = { pct, map: { code: true } } set karta hai.
+     Deal price hamesha LIVE p.sale se banti hai (manual overrides ke baad
+     bhi sahi), is liye ye helpers har render par sahi price dete hain. */
+  function dealInfo(p) {
+    var d = window.SL_DEAL;
+    if (!d || !d.map || !d.map[p.code]) return null;
+    var pct = (typeof d.pct === 'number' && d.pct > 0 && d.pct < 100) ? d.pct : 30;
+    var oldP = p.sale;
+    var nowP = Math.max(1, Math.round(oldP * (100 - pct) / 100));
+    return { old: oldP, now: nowP, pct: pct };
+  }
+  function dealPrice(p) { var d = dealInfo(p); return d ? d.now : p.sale; }
+  function dealPriceHtml(p) {
+    var d = dealInfo(p);
+    if (!d) return fmtPKR(p.sale);
+    return '<span class="sl-old-price">' + fmtPKR(d.old) + '</span> <span class="sl-new-price">' + fmtPKR(d.now) + '</span>';
+  }
   function advancePay() {
     var colour = document.getElementById('colourField').style.display !== 'none' ? document.getElementById('fColour').value : '';
     var size = document.getElementById('sizeField').style.display !== 'none' ? document.getElementById('fSize').value : '';
@@ -3445,7 +3463,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     var col = colour || ''; var sz = size || ''; var q = qty || 1;
     var found = null;
     cart.forEach(function(it) { if (it.code === code && (it.colour || '') === col && (it.size || '') === sz) found = it; });
-    if (found) found.qty = (found.qty || 1) + q; else cart.push({ code: p.code, product: p.name, price: p.sale, qty: q, colour: col, size: sz, img: (p.images && p.images[0]) ? p.images[0] : '' });
+    if (found) found.qty = (found.qty || 1) + q; else cart.push({ code: p.code, product: p.name, price: dealPrice(p), qty: q, colour: col, size: sz, img: (p.images && p.images[0]) ? p.images[0] : '' });
     saveCart(cart); updateCartBadge();
     var toastBox = document.getElementById('cartNote');
     alert('✅ Added to cart!\n' + p.name + '\nOpen the Cart to place your order.');
@@ -3608,7 +3626,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   function saveWishlist(w) { try { localStorage.setItem('saleonlie_wishlist', JSON.stringify(w)); } catch (e) {} updateWishBadge(); }
   function updateWishBadge() { var n = loadWishlist().length; var d = document.getElementById('drawerWishCount'); if (d) d.textContent = n ? '(' + n + ')' : ''; }
   function inWishlist(code) { return loadWishlist().indexOf(code) >= 0; }
-  function wishSnapshot(code) { var p = productByCode(code); if (!p) return null; return { code: p.code, product: p.name, price: p.sale, img: (p.images && p.images[0]) || '', ts: Date.now() }; }
+  function wishSnapshot(code) { var p = productByCode(code); if (!p) return null; return { code: p.code, product: p.name, price: dealPrice(p), img: (p.images && p.images[0]) || '', ts: Date.now() }; }
   async function toggleWishlist(code) {
     var w = loadWishlist(); var i = w.indexOf(code); var added = false;
     if (i >= 0) { w.splice(i, 1); } else { w.push(code); added = true; }
@@ -3945,6 +3963,9 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     ".sl-sale-badge{display:inline-block;background:#c62828;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;margin-bottom:5px;}",
     ".sl-fest-badge{display:inline-block;background:#c9a227;color:#1c1500;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;margin-bottom:5px;}",
     ".sl-prem-badge{display:inline-block;background:#111;color:#d4af37;border:1px solid #c9a227;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;margin-bottom:5px;}",
+    ".sl-old-price{color:#c62828;text-decoration:line-through;font-size:0.8em;}",
+    ".sl-new-price{font-size:1.15em;font-weight:800;}",
+    ".sl-flash-badge{display:inline-block;background:linear-gradient(90deg,#c62828,#ff5722);color:#fff;font-size:11px;font-weight:800;padding:2px 9px;border-radius:999px;margin:2px 0;}",
     ".sl-urgency{font-size:12.5px;color:#c62828;font-weight:700;margin-top:3px;}",
     ".sl-trust-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:10px 12px;background:#eef7f1;border-bottom:1px solid #dde6e0;}",
     ".sl-trust-pill{background:#fff;border:1px solid #cfe6d7;border-radius:999px;padding:6px 13px;font-size:13px;font-weight:700;color:#0b5136;}",
@@ -4305,11 +4326,84 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     }, 2000);
   }
 
+  function hashSeed(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function seededRand(seed) { var a = seed >>> 0; return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; var t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  /* Flash Deal: har category se random items (round-robin, rozana seed se),
+     taake discount mukhtalif categories me phaila ho. Sirf codes ka set
+     rakha jata hai — price har render par LIVE p.sale se banti hai. */
+  function applyFlashDeal(s) {
+    var pct = parseFloat(s.discount_pct); if (isNaN(pct) || pct <= 0 || pct >= 100) pct = 30;
+    var count = parseInt(s.item_count, 10); if (isNaN(count) || count < 1) count = 12; if (count > 60) count = 60;
+    var seedStr = on(s.daily_refresh) ? new Date().toISOString().slice(0, 10) : 'flashdeal-fixed';
+    var rnd = seededRand(hashSeed(seedStr));
+    var list = (window.PRODUCTS || []).filter(function (p) {
+      return p && p.code && String(p.stock || '').toLowerCase().indexOf('out') < 0;
+    });
+    var byCat = {};
+    list.forEach(function (p) { (byCat[p.cat || 'Other'] = byCat[p.cat || 'Other'] || []).push(p); });
+    var cats = Object.keys(byCat);
+    for (var i = cats.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)); var tmp = cats[i]; cats[i] = cats[j]; cats[j] = tmp; }
+    cats.forEach(function (c) { var arr = byCat[c]; for (var k = arr.length - 1; k > 0; k--) { var m = Math.floor(rnd() * (k + 1)); var t2 = arr[k]; arr[k] = arr[m]; arr[m] = t2; } });
+    var map = {}; var picked = 0; var round = 0;
+    while (picked < count && round < 10) {
+      var progressed = false;
+      for (var ci = 0; ci < cats.length && picked < count; ci++) {
+        var arr2 = byCat[cats[ci]];
+        if (arr2[round]) { map[arr2[round].code] = true; picked++; progressed = true; }
+      }
+      if (!progressed) break;
+      round++;
+    }
+    window.SL_DEAL = { pct: pct, map: map };
+    if (on(s.deal_banner)) {
+      var bar = document.createElement('div');
+      bar.className = 'sl-tool-banner sl-sale-bar';
+      bar.textContent = '\uD83D\uDD25 Flash Deal Live \u2014 Random items par ' + pct + '% OFF!';
+      afterHeader(bar);
+    }
+    patchVisibleDealUI();
+  }
+  /* Pehle se render hui cards/detail par deal lagao (dobara render ke
+     baghair); us ke baad har naya render cardHTML/renderDetail se khud
+     deal-aware hota hai. */
+  function patchVisibleDealUI() {
+    try {
+      if (typeof window.dealInfo !== 'function') return;
+      document.querySelectorAll('.gcard').forEach(function (card) {
+        var code = cardCode(card); if (!code) return;
+        var p = productByCodeLocal(code); if (!p) return;
+        if (!window.dealInfo(p)) return;
+        var gp = card.querySelector('.gprice');
+        if (gp) gp.innerHTML = window.dealPriceHtml(p);
+        var gb = card.querySelector('.gbody');
+        if (gb && !gb.querySelector('.sl-flash-badge')) {
+          var b = document.createElement('span'); b.className = 'sl-flash-badge'; b.textContent = '\u26a1 Flash Deal';
+          if (gp) gb.insertBefore(b, gp); else gb.insertBefore(b, gb.firstChild);
+        }
+      });
+      var cur = null;
+      try { cur = window.currentDetailCode ? productByCodeLocal(window.currentDetailCode) : null; } catch (e) {}
+      if (cur && window.dealInfo(cur)) {
+        var dp = document.getElementById('dPrice');
+        if (dp) dp.innerHTML = window.dealPriceHtml(cur) + ' <span class="sl-flash-badge">\u26a1 Flash Deal</span>';
+        var da = document.getElementById('dAdv');
+        if (da) da.innerHTML = '\uD83D\uDCB3 <b>Rs. 110 OFF</b> on advance payment \u2014 only PKR ' + Math.max(0, window.dealPrice(cur) - 110).toLocaleString('en-US');
+        try {
+          if (window.selected && window.selected.code === cur.code) {
+            window.selected.price = 'PKR ' + window.dealPrice(cur).toLocaleString('en-US');
+            var op = document.getElementById('ordPrice'); if (op) op.textContent = window.selected.price;
+          }
+        } catch (e2) {}
+      }
+    } catch (e) {}
+  }
+
   function applyTool(id, s) {
     try { injectCss(); } catch (e) {}
     try {
       if (id === "festival") applyFestival(s);
       else if (id === "flashsale") applyFlashSale(s);
+      else if (id === "flashdeal") applyFlashDeal(s);
       else if (id === "darkmode") applyDarkMode(s);
       else if (id === "luxury") applyLuxury(s);
       else if (id === "layout") applyLayout(s);

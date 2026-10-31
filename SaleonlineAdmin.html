@@ -953,6 +953,11 @@ label{margin:14px 0 6px}
       { key: "sale_badges", label: "SALE badges on products", type: "toggle", def: true },
       { key: "urgency_text", label: "Urgency messages", type: "toggle", def: true },
       { key: "red_theme", label: "Red sale theme colours", type: "toggle", def: true } ] },
+    { id: "flashdeal", icon: "🔥", name: "30% Flash Deal", tagline: "Random items par discount — purani price red line ke saath, nayi price bari aur Flash Deal badge.", features: ["Har category se random items", "Purani price cut + choti", "Nayi price bari + Flash Deal badge", "Discount cart aur order me bhi lagta hai"], options: [
+      { key: "discount_pct", label: "Discount (%)", type: "number", def: 30 },
+      { key: "item_count", label: "Kitne items (alag categories se)", type: "number", def: 12 },
+      { key: "daily_refresh", label: "Rozana nayi random selection", type: "toggle", def: true },
+      { key: "deal_banner", label: "Flash Deal banner oopar", type: "toggle", def: true } ] },
     { id: "darkmode", icon: "🌙", name: "Dark Mode Pro", tagline: "Poori shop ka premium dark theme.", features: ["Dark background & cards", "Eye-friendly night look", "Optional gold accents", "Auto night mode (7pm–7am)"], options: [
       { key: "dark_bg", label: "Dark page background", type: "toggle", def: true },
       { key: "dark_cards", label: "Dark product cards", type: "toggle", def: true },
