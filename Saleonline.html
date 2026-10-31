@@ -172,6 +172,12 @@
   .sel-box .sel-head { font-weight: 800; font-size: 15.5px; margin-bottom: 10px; color: #7a5b00; }
   .sel-box label { font-size: 16px; font-weight: 800; }
   .sel-box select { width: 100%; padding: 13px 12px; font-size: 17px; border: 2px solid #cfd8d3; border-radius: 10px; margin-top: 4px; background: #fff; }
+  .sl-modal-ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99999; align-items: center; justify-content: center; padding: 20px; }
+  .sl-modal-box { background: #fff; border-radius: 16px; max-width: 380px; width: 100%; box-shadow: 0 12px 40px rgba(0,0,0,.35); overflow: hidden; }
+  .sl-modal-head { background: #0d7a4a; color: #fff; font-weight: 800; font-size: 17px; padding: 14px 18px; }
+  .sl-modal-msg { padding: 18px; font-size: 15.5px; line-height: 1.6; color: #1d2b25; white-space: pre-line; }
+  .sl-modal-foot { padding: 0 18px 18px; text-align: right; }
+  .sl-modal-foot button { background: #0d7a4a; color: #fff; border: none; border-radius: 10px; padding: 11px 28px; font-size: 16px; font-weight: 800; cursor: pointer; }
   .free-hint { font-size:13.5px; color:#5d4a00; background:#fff8e1; border:1px solid #ffe082; border-radius:10px; padding:10px 12px; margin:10px 0; line-height:1.6; }
   .free-hint.ok { background:#e5f4ec; border-color:#bfe3cd; color:#0b5136; }
   .saved-line { font-size:15px; font-weight:800; color:#0b7a4b; background:#e5f4ec; border-radius:10px; padding:10px 12px; margin:10px 0; display:none; }
@@ -3100,9 +3106,9 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   }
   async function placeCartOrder(e) {
     e.preventDefault();
-    if (window.SHOP_CLOSED) { alert('The shop is currently closed — orders are not being accepted right now. Please try again later.'); return false; }
+    if (window.SHOP_CLOSED) { showAlert('The shop is currently closed — orders are not being accepted right now. Please try again later.'); return false; }
     var cart = loadCart();
-    if (!cart.length) { alert('Your cart is empty — please add an item first.'); showView('products'); return false; }
+    if (!cart.length) { showAlert('Your cart is empty — please add an item first.'); showView('products'); return false; }
     var name = document.getElementById('cName').value.trim();
     var phone = cleanPhone(document.getElementById('cPhone').value);
     var address = document.getElementById('cAddress').value.trim();
@@ -3110,9 +3116,9 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     var payEl = document.querySelector('input[name="payMethod"]:checked');
     var pay = payEl ? payEl.value : 'COD';
     var trx = document.getElementById('trxId').value.trim();
-    if (!name || !phone || !address) { alert('Please fill in your Name, Contact Number and Delivery Address.'); return false; }
-    if (phone.length < 10 || phone.length > 13) { alert('Please enter a valid contact number (example: 03XX-XXXXXXX).'); return false; }
-    if (pay === 'Online' && trx.length < 5) { alert('A Trx ID is required for Online Purchase — enter the last 5 digits or the full Trx ID.'); return false; }
+    if (!name || !phone || !address) { showAlert('Please fill in your Name, Contact Number and Delivery Address.'); return false; }
+    if (phone.length < 10 || phone.length > 13) { showAlert('Please enter a valid contact number (example: 03XX-XXXXXXX).'); return false; }
+    if (pay === 'Online' && trx.length < 5) { showAlert('A Trx ID is required for Online Purchase — enter the last 5 digits or the full Trx ID.'); return false; }
     var totals = cartTotals();
     var order = { phone: phone, account: (currentUser ? currentUser.phone : ''), customer: name, address: address, remarks: remarks,
       items: cart, product: cart[0].product, code: cart[0].code, price: fmtPKR(cart[0].price),
@@ -3187,8 +3193,8 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     return '<span class="sl-old-price">' + fmtPKR(d.old) + '</span> <span class="sl-new-price">' + fmtPKR(d.now) + '</span>';
   }
   function advancePay() {
-    if (document.getElementById('colourField').style.display !== 'none' && !document.getElementById('fColour').value) { alert('Please select a Colour before ordering.'); document.getElementById('fColour').focus(); return; }
-    if (document.getElementById('sizeField').style.display !== 'none' && !document.getElementById('fSize').value) { alert('Please select a Size before ordering.'); document.getElementById('fSize').focus(); return; }
+    if (document.getElementById('colourField').style.display !== 'none' && !document.getElementById('fColour').value) { showAlert('Please select a Colour before ordering.'); document.getElementById('fColour').focus(); return; }
+    if (document.getElementById('sizeField').style.display !== 'none' && !document.getElementById('fSize').value) { showAlert('Please select a Size before ordering.'); document.getElementById('fSize').focus(); return; }
     var colour = document.getElementById('colourField').style.display !== 'none' ? document.getElementById('fColour').value : '';
     var size = document.getElementById('sizeField').style.display !== 'none' ? document.getElementById('fSize').value : '';
     var p = priceNum(); var d = Math.max(0, p - 110);
@@ -3202,6 +3208,21 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
       + (size ? "Size: " + size + "\n" : "")
       + "\nPlease send me the Easypaisa details and confirm my order. Thank you!";
     window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
+  }
+
+  /* Sale Online branded message dialog — native alert() browser ko page ka
+     origin (domain) dikhata hai, is liye tamam user messages isi
+     professional dialog se dikhaye jate hain. */
+  function showAlert(msg) {
+    var ov = document.getElementById('slAlert');
+    var tx = document.getElementById('slAlertMsg');
+    if (!ov || !tx) { alert(msg); return; }
+    tx.textContent = msg;
+    ov.style.display = 'flex';
+  }
+  function closeAlert() {
+    var ov = document.getElementById('slAlert');
+    if (ov) ov.style.display = 'none';
   }
 
   // ================= VIEWS =================
@@ -3395,17 +3416,17 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     d.addEventListener('click', function() { if (d.parentNode) d.parentNode.removeChild(d); });
   }
   function showBonusInfo() {
-    alert('⭐ Bonus Balance\n\nYou earn Rs. 11 bonus for reviewing each delivered order.\n\nOn your next order, tap "Redeem" in the Cart and the bonus will be deducted from your total.\n\nKeep earning bonus on every delivery!');
+    showAlert('⭐ Bonus Balance\n\nYou earn Rs. 11 bonus for reviewing each delivered order.\n\nOn your next order, tap "Redeem" in the Cart and the bonus will be deducted from your total.\n\nKeep earning bonus on every delivery!');
   }
   async function submitReview(orderId, idx, code) {
     var stars = reviewStars[orderId + '_' + idx] || 0;
-    if (!stars) { alert('Please select stars first (1 to 5).'); return; }
+    if (!stars) { showAlert('Please select stars first (1 to 5).'); return; }
     var inp = document.getElementById('revText-' + orderId + '_' + idx);
     var text = inp ? inp.value.trim() : '';
     try {
       var o = await dbRead('orders/' + orderId);
-      if (!o) { alert('Order not found — please try again.'); return; }
-      if (o.reviews && o.reviews[idx]) { alert('This item has already been reviewed.'); loadOrders(); return; }
+      if (!o) { showAlert('Order not found — please try again.'); return; }
+      if (o.reviews && o.reviews[idx]) { showAlert('This item has already been reviewed.'); loadOrders(); return; }
       var reviews = o.reviews || {}; reviews[idx] = { stars: stars, text: text, ts: Date.now(), code: code };
       await dbUpdate('orders/' + orderId, { reviews: reviews });
       var phone = o.account || o.phone;
@@ -3413,7 +3434,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
       updateHomeBonus();
       showBonusCelebration(BONUS_PER_REVIEW);
       loadOrders();
-    } catch (err) { alert('Could not save your review — check your internet and try again.'); }
+    } catch (err) { showAlert('Could not save your review — check your internet and try again.'); }
   }
   async function loadOrders() {
     var box = document.getElementById('ordersBox');
@@ -3598,7 +3619,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   }
   function addToCart(code, colour, size, qty, silent) {
     var p = productByCode(code); if (!p) return false;
-    if ((p.stock || '').toLowerCase().indexOf('out') >= 0) { alert('This product is currently Out of Stock.'); return false; }
+    if ((p.stock || '').toLowerCase().indexOf('out') >= 0) { showAlert('This product is currently Out of Stock.'); return false; }
     var cart = loadCart();
     var col = colour || ''; var sz = size || ''; var q = qty || 1;
     var found = null;
@@ -3606,15 +3627,15 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     if (found) found.qty = (found.qty || 1) + q; else cart.push({ code: p.code, product: p.name, price: dealPrice(p), qty: q, colour: col, size: sz, img: (p.images && p.images[0]) ? p.images[0] : '' });
     saveCart(cart); updateCartBadge();
     var toastBox = document.getElementById('cartNote');
-    if (!silent) alert('✅ Added to cart!\n' + p.name + '\nOpen the Cart to place your order.');
+    if (!silent) showAlert('✅ Added to cart!\n' + p.name + '\nOpen the Cart to place your order.');
     return true;
   }
   function addToCartCurrent(silent) {
     var p = productByCode(selected.code); if (!p) return false;
     var colour = document.getElementById('colourField').style.display !== 'none' ? document.getElementById('fColour').value : '';
     var size = document.getElementById('sizeField').style.display !== 'none' ? document.getElementById('fSize').value : '';
-    if (document.getElementById('colourField').style.display !== 'none' && !colour) { alert('Please select a Colour before ordering.'); document.getElementById('fColour').focus(); return false; }
-    if (document.getElementById('sizeField').style.display !== 'none' && !size) { alert('Please select a Size before ordering.'); document.getElementById('fSize').focus(); return false; }
+    if (document.getElementById('colourField').style.display !== 'none' && !colour) { showAlert('Please select a Colour before ordering.'); document.getElementById('fColour').focus(); return false; }
+    if (document.getElementById('sizeField').style.display !== 'none' && !size) { showAlert('Please select a Size before ordering.'); document.getElementById('fSize').focus(); return false; }
     var qEl = document.getElementById('fQty'); var q = qEl ? Math.max(1, parseInt(qEl.value, 10) || 1) : 1;
     return addToCart(selected.code, colour, size, q, silent);
   }
@@ -3638,7 +3659,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   function removeCartItem(idx) { var cart = loadCart(); cart.splice(idx, 1); saveCart(cart); renderCart(); }
   function toggleRedeem() {
     var bonus = getBonusLocal();
-    if (!redeemApplied) { if (!bonus) { alert('Your bonus balance is Rs. 0. Review a delivered order — every review earns you Rs. 11 bonus.'); return; } redeemApplied = true; bonusRedeemed = bonus; }
+    if (!redeemApplied) { if (!bonus) { showAlert('Your bonus balance is Rs. 0. Review a delivered order — every review earns you Rs. 11 bonus.'); return; } redeemApplied = true; bonusRedeemed = bonus; }
     else { redeemApplied = false; bonusRedeemed = 0; }
     renderCart();
   }
@@ -3764,8 +3785,8 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     closeDrawer();
     var url = 'https://hammad57.github.io/POS/Saleonlie.html';
     if (navigator.share) { navigator.share({ title: 'Sale Online', text: 'Shop quality fashion online with Cash on Delivery all over Pakistan:', url: url }).catch(function() {}); }
-    else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function() { alert('Store link copied!\n' + url + '\nShare it with anyone.'); }, function() { alert('Store link:\n' + url); }); }
-    else { alert('Store link:\n' + url); }
+    else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function() { showAlert('Store link copied!\n' + url + '\nShare it with anyone.'); }, function() { showAlert('Store link:\n' + url); }); }
+    else { showAlert('Store link:\n' + url); }
   }
 
   // ================= WISHLIST =================
@@ -4641,5 +4662,12 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
 })();
 
 </script>
+  <div class="sl-modal-ov" id="slAlert" onclick="if(event.target===this)closeAlert()">
+    <div class="sl-modal-box" role="alertdialog" aria-live="assertive">
+      <div class="sl-modal-head">🛍️ Sale Online</div>
+      <div class="sl-modal-msg" id="slAlertMsg"></div>
+      <div class="sl-modal-foot"><button type="button" onclick="closeAlert()">OK</button></div>
+    </div>
+  </div>
 </body>
 </html>
