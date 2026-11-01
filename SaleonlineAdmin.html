@@ -90,7 +90,7 @@ label{margin:14px 0 6px}
 }
 </style>
 <style>
-/* ============ DARK DASHBOARD REDESIGN (2026-11-01, user: dark wali picture jaisa) ============ */
+/* ============ TEAL TRY DESIGN (2026-11-01, user: try karo — previous dark design ka backup mehfooz hai) ============ */
 /* Layout + colours only: saare ids, buttons aur kaam waisay hi; koi fake number/chart nahi */
 body{background:#0a0a0a;color:#e7e7e7}
 header.site{background:#0a0a0a;color:#fff;padding:22px 18px 4px}
@@ -102,10 +102,10 @@ header.site .hwrap{max-width:1120px}
 .card h3{color:#fff}
 label{color:#d4d4d4}
 input,select,textarea{background:#1f1f1f;border:1px solid #2e2e2e;color:#eee}
-input:focus,select:focus,textarea:focus{outline:none;border-color:#f97316;box-shadow:0 0 0 3px rgba(249,115,22,.25)}
-a{color:#fb923c}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#2dd4bf;box-shadow:0 0 0 3px rgba(45,212,191,.25)}
+a{color:#5eead4}
 .tabs{display:none}
-.cta{background:#f97316;color:#fff;border-radius:999px}
+.cta{background:#2dd4bf;color:#0f172a;border-radius:999px}
 .cta.small{border-radius:999px}
 .cta.gray{background:#262626;color:#e5e5e5}
 .note,.ometa,.empty{color:#a3a3a3}
@@ -115,7 +115,7 @@ a{color:#fb923c}
 .udetail{background:#1c1c1c;border:1px solid #2a2a2a}
 .demo-banner{background:#2a2113;border:1px solid #5a4416;color:#e8c97a}
 .err{background:#2b1210;border:1px solid #5c1f1a;color:#f0a39e}
-#toast{background:#f97316;color:#111}
+#toast{background:#2dd4bf;color:#111}
 #visitorsTable th{color:#8a8a86}
 #visitorsTable tbody tr:hover{background:#1f1f1f}
 .side-nav{display:none}
@@ -125,7 +125,7 @@ body.panel-open .side-nav{display:flex;flex-direction:column;position:fixed;left
 .side-label{font-size:10px;letter-spacing:2px;color:#71717a;padding:14px 12px 6px;font-weight:700}
 .side-link{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:0;border-left:3px solid transparent;color:#a3a3a0;padding:11px 12px;border-radius:0 10px 10px 0;font-size:14.5px;font-weight:700;cursor:pointer;text-align:left;font-family:inherit;text-decoration:none}
 .side-link:hover{color:#fff;background:#1c1c1c}
-.side-link.active{color:#fff;background:#1c1c1c;border-left-color:#f97316}
+.side-link.active{color:#fff;background:#1c1c1c;border-left-color:#2dd4bf}
 .side-link .tab-badge{margin-left:auto}
 .side-profile{display:flex;align-items:center;gap:10px;padding:14px 8px 2px;margin-top:auto}
 .side-avatar{width:38px;height:38px;border-radius:50%;background:#262624;display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto}
@@ -139,9 +139,16 @@ body.panel-open .side-nav{display:flex;flex-direction:column;position:fixed;left
   body.panel-open .side-nav{position:static;width:auto;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding:10px 12px;gap:4px;border-right:0;border-bottom:1px solid #1f1f1f}
   body.panel-open .side-brand, body.panel-open .side-label, body.panel-open .side-profile{display:none}
   .side-link{white-space:nowrap;border-left:0;border-bottom:3px solid transparent;border-radius:10px}
-  .side-link.active{border-bottom-color:#f97316}
+  .side-link.active{border-bottom-color:#2dd4bf}
   .greet{font-size:24px}
 }
+
+.stat{display:flex;gap:12px;align-items:flex-start}
+.stat-ico{width:38px;height:38px;border-radius:50%;background:#134e4a;color:#5eead4;display:flex;align-items:center;justify-content:center;font-size:17px;flex:0 0 auto}
+.stat-txt small{display:block;color:#8a8a86;font-size:12px;margin-top:2px}
+.side-quote{margin-top:auto;background:#134e4a;border:1px solid #1f5f57;border-radius:16px;padding:14px;font-size:13.5px;font-weight:700;color:#ccfbf1}
+.side-quote small{display:block;color:#99f6e4;font-weight:400;margin-top:2px;font-size:12px}
+.side-profile{margin-top:0}
 </style>
 </head>
 <body>
@@ -149,12 +156,14 @@ body.panel-open .side-nav{display:flex;flex-direction:column;position:fixed;left
 <header class="site">
   <div class="hwrap">
     <div>
-      <div class="greet">Overview</div>
-      <div class="gsub">Sale Online — Admin Panel</div>
+      <div class="gsub" id="greetSmall">WELCOME BACK</div>
+      <div class="greet">Welcome back to Sale Online</div>
+      <div class="gsub">Here is what is happening with your store today.</div>
     </div>
     <span style="margin-left:auto; font-size:13.5px;">Sirf owner ke liye</span>
   </div>
 </header>
+<script>(function(){var h=new Date().getHours();var g=h<12?'GOOD MORNING':(h<17?'GOOD AFTERNOON':'GOOD EVENING');var e=document.getElementById('greetSmall');if(e)e.textContent=g;})();</script>
 
 <div class="wrap">
   <div id="demoBanner" class="demo-banner" style="display:none;">⚠️ <b>Demo mode:</b> Firebase abhi connect nahi hai — orders sirf isi browser ke nazar aayenge. Asli data ke liye Firebase connect karna baqi hai.</div>
@@ -188,11 +197,9 @@ body.panel-open .side-nav{display:flex;flex-direction:column;position:fixed;left
       <div class="side-label">MAIN</div>
       <button class="side-link" type="button" onclick="switchTab('orders');window.scrollTo(0,0)">📊 Overview</button>
       <button class="side-link active" type="button" data-tab="orders" onclick="switchTab('orders')">🧾 Orders</button>
-      <div class="side-label">CATALOGUE</div>
       <button class="side-link" type="button" data-tab="items" onclick="switchTab('items')">📦 Store Items</button>
       <button class="side-link" type="button" data-tab="cats" onclick="switchTab('cats')">🗂️ Categories</button>
       <button class="side-link" type="button" data-tab="manual" onclick="switchTab('manual')">✏️ Manual Prices <span class="tab-badge" id="manualCount" style="display:none;">0</span></button>
-      <div class="side-label">SALES</div>
       <button class="side-link" type="button" data-tab="users" onclick="switchTab('users')">👥 Users</button>
       <button class="side-link" type="button" data-tab="bonus" onclick="switchTab('bonus')">🎁 Bonus &amp; Offers</button>
       <div class="side-label">ADMINISTRATION</div>
@@ -201,13 +208,14 @@ body.panel-open .side-nav{display:flex;flex-direction:column;position:fixed;left
       <button class="side-link" type="button" data-tab="visitors" onclick="switchTab('visitors')">👁️ Visitors</button>
       <div class="side-label">STOREFRONT</div>
       <a class="side-link" href="Saleonline.html">🛍️ Shop page kholein</a>
+      <div class="side-quote">🛍️ Sale Online<small>Cash on Delivery available</small></div>
       <div class="side-profile"><span class="side-avatar">🛠️</span><span><b>Sale Online</b><small>Admin</small></span></div>
     </aside>
     <div class="card">
       <div class="stats">
-        <div class="stat"><b id="statOrders">–</b>Kul Orders</div>
-        <div class="stat"><b id="statPending">–</b>Pending</div>
-        <div class="stat"><b id="statUsers">–</b>Registered Users</div>
+        <div class="stat"><span class="stat-ico">🧾</span><span class="stat-txt"><b id="statOrders">–</b>Kul Orders<small>ab tak ke orders</small></span></div>
+        <div class="stat"><span class="stat-ico">⏳</span><span class="stat-txt"><b id="statPending">–</b>Pending<small>jin par action baqi hai</small></span></div>
+        <div class="stat"><span class="stat-ico">👥</span><span class="stat-txt"><b id="statUsers">–</b>Registered Users<small>registered accounts</small></span></div>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
         <button class="cta small" type="button" onclick="loadAdmin()">🔄 Refresh</button>
