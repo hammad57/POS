@@ -90,45 +90,56 @@ label{margin:14px 0 6px}
 }
 </style>
 <style>
-/* ============ DRIBBBLE-STYLE REDESIGN (2026-11-01, user: admin design picture jaisa) ============ */
-/* Layout + colours only: saare ids, buttons aur kaam waisay hi */
-body{background:#f1f0eb}
-header.site{background:#f1f0eb;color:#111;padding:22px 18px 4px}
+/* ============ DARK DASHBOARD REDESIGN (2026-11-01, user: dark wali picture jaisa) ============ */
+/* Layout + colours only: saare ids, buttons aur kaam waisay hi; koi fake number/chart nahi */
+body{background:#0a0a0a;color:#e7e7e7}
+header.site{background:#0a0a0a;color:#fff;padding:22px 18px 4px}
 header.site .hwrap{max-width:1120px}
-.greet{font-size:30px;font-weight:800;letter-spacing:-.5px;color:#111;line-height:1.1}
+.greet{font-size:30px;font-weight:800;letter-spacing:-.5px;color:#fff;line-height:1.1}
 .gsub{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8a8a86;font-weight:700;margin-top:2px}
 .wrap{max-width:1120px}
-.card{border-radius:22px;box-shadow:0 8px 30px rgba(20,20,20,.06);border:1px solid #eceae4}
+.card{background:#171717;border:1px solid #262626;border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+.card h3{color:#fff}
+label{color:#d4d4d4}
+input,select,textarea{background:#1f1f1f;border:1px solid #2e2e2e;color:#eee}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#f97316;box-shadow:0 0 0 3px rgba(249,115,22,.25)}
+a{color:#fb923c}
 .tabs{display:none}
-.cta{background:#111;border-radius:999px}
+.cta{background:#f97316;color:#fff;border-radius:999px}
 .cta.small{border-radius:999px}
-.cta.gray{background:#e9e7e0;color:#333}
-.stat{background:#fff;border:1px solid #eceae4;border-radius:18px}
-.stat b{color:#111;font-size:26px}
+.cta.gray{background:#262626;color:#e5e5e5}
+.note,.ometa,.empty{color:#a3a3a3}
+.stat{background:#1e1e1e;border:1px solid #2a2a2a;border-radius:18px}
+.stat b{color:#fff;font-size:26px}
+.irow,.urow,.ocard{background:#1c1c1c;border:1px solid #2a2a2a}
+.udetail{background:#1c1c1c;border:1px solid #2a2a2a}
+.demo-banner{background:#2a2113;border:1px solid #5a4416;color:#e8c97a}
+.err{background:#2b1210;border:1px solid #5c1f1a;color:#f0a39e}
+#toast{background:#f97316;color:#111}
+#visitorsTable th{color:#8a8a86}
+#visitorsTable tbody tr:hover{background:#1f1f1f}
 .side-nav{display:none}
-body.panel-open .side-nav{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:248px;background:#101010;color:#fff;padding:22px 16px;z-index:40;overflow-y:auto}
-.side-brand{font-size:19px;font-weight:800;letter-spacing:.5px;padding:4px 12px 18px}
+body.panel-open .side-nav{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:248px;background:#0d0d0d;color:#fff;padding:22px 16px;z-index:40;overflow-y:auto;border-right:1px solid #1f1f1f}
+.side-brand{font-size:19px;font-weight:800;letter-spacing:.5px;padding:4px 12px 18px;color:#fff}
 .side-brand small{display:block;font-size:10px;letter-spacing:2px;color:#8a8a86;margin-top:2px}
-.side-label{font-size:10px;letter-spacing:2px;color:#8a8a86;padding:10px 12px 6px;font-weight:700}
-.side-link{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:0;border-left:3px solid transparent;color:#a3a3a0;padding:11px 12px;border-radius:0 10px 10px 0;font-size:14.5px;font-weight:700;cursor:pointer;text-align:left;font-family:inherit}
+.side-label{font-size:10px;letter-spacing:2px;color:#71717a;padding:14px 12px 6px;font-weight:700}
+.side-link{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:0;border-left:3px solid transparent;color:#a3a3a0;padding:11px 12px;border-radius:0 10px 10px 0;font-size:14.5px;font-weight:700;cursor:pointer;text-align:left;font-family:inherit;text-decoration:none}
 .side-link:hover{color:#fff;background:#1c1c1c}
-.side-link.active{color:#fff;background:#1c1c1c;border-left-color:#4ade80}
+.side-link.active{color:#fff;background:#1c1c1c;border-left-color:#f97316}
 .side-link .tab-badge{margin-left:auto}
-.side-shop{display:block;margin-top:auto;background:#262624;border:1px solid #333;color:#fff;text-decoration:none;border-radius:16px;padding:14px;font-size:13.5px;font-weight:700}
-.side-shop small{display:block;color:#a3a3a0;font-weight:400;margin-top:2px}
-.side-profile{display:flex;align-items:center;gap:10px;padding:14px 8px 2px}
+.side-profile{display:flex;align-items:center;gap:10px;padding:14px 8px 2px;margin-top:auto}
 .side-avatar{width:38px;height:38px;border-radius:50%;background:#262624;display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto}
-.side-profile b{display:block;font-size:13.5px}
+.side-profile b{display:block;font-size:13.5px;color:#fff}
 .side-profile small{color:#a3a3a0;font-size:11.5px}
 @media (min-width:901px){
   body.panel-open header.site, body.panel-open .wrap{margin-left:248px}
   body.panel-open .wrap{max-width:none}
 }
 @media (max-width:900px){
-  body.panel-open .side-nav{position:static;width:auto;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding:10px 12px;gap:4px}
-  body.panel-open .side-brand, body.panel-open .side-label, body.panel-open .side-shop, body.panel-open .side-profile{display:none}
+  body.panel-open .side-nav{position:static;width:auto;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding:10px 12px;gap:4px;border-right:0;border-bottom:1px solid #1f1f1f}
+  body.panel-open .side-brand, body.panel-open .side-label, body.panel-open .side-profile{display:none}
   .side-link{white-space:nowrap;border-left:0;border-bottom:3px solid transparent;border-radius:10px}
-  .side-link.active{border-bottom-color:#4ade80}
+  .side-link.active{border-bottom-color:#f97316}
   .greet{font-size:24px}
 }
 </style>
@@ -138,7 +149,7 @@ body.panel-open .side-nav{display:flex;flex-direction:column;position:fixed;left
 <header class="site">
   <div class="hwrap">
     <div>
-      <div class="greet">Hello, Admin</div>
+      <div class="greet">Overview</div>
       <div class="gsub">Sale Online — Admin Panel</div>
     </div>
     <span style="margin-left:auto; font-size:13.5px;">Sirf owner ke liye</span>
@@ -174,17 +185,22 @@ body.panel-open .side-nav{display:flex;flex-direction:column;position:fixed;left
   <div id="panel" style="display:none;">
     <aside class="side-nav" id="sideNav">
       <div class="side-brand">SALE ONLINE<small>ADMIN PANEL</small></div>
-      <div class="side-label">MENU</div>
+      <div class="side-label">MAIN</div>
+      <button class="side-link" type="button" onclick="switchTab('orders');window.scrollTo(0,0)">📊 Overview</button>
       <button class="side-link active" type="button" data-tab="orders" onclick="switchTab('orders')">🧾 Orders</button>
+      <div class="side-label">CATALOGUE</div>
       <button class="side-link" type="button" data-tab="items" onclick="switchTab('items')">📦 Store Items</button>
+      <button class="side-link" type="button" data-tab="cats" onclick="switchTab('cats')">🗂️ Categories</button>
       <button class="side-link" type="button" data-tab="manual" onclick="switchTab('manual')">✏️ Manual Prices <span class="tab-badge" id="manualCount" style="display:none;">0</span></button>
+      <div class="side-label">SALES</div>
       <button class="side-link" type="button" data-tab="users" onclick="switchTab('users')">👥 Users</button>
       <button class="side-link" type="button" data-tab="bonus" onclick="switchTab('bonus')">🎁 Bonus &amp; Offers</button>
+      <div class="side-label">ADMINISTRATION</div>
       <button class="side-link" type="button" data-tab="import" onclick="switchTab('import')">🔄 Import / Export</button>
-      <button class="side-link" type="button" data-tab="cats" onclick="switchTab('cats')">🗂️ Categories</button>
       <button class="side-link" type="button" data-tab="tools" onclick="switchTab('tools')">🧩 Tools</button>
       <button class="side-link" type="button" data-tab="visitors" onclick="switchTab('visitors')">👁️ Visitors</button>
-      <a class="side-shop" href="Saleonline.html">🛍️ Shop page kholein<small>Live store dekhein</small></a>
+      <div class="side-label">STOREFRONT</div>
+      <a class="side-link" href="Saleonline.html">🛍️ Shop page kholein</a>
       <div class="side-profile"><span class="side-avatar">🛠️</span><span><b>Sale Online</b><small>Admin</small></span></div>
     </aside>
     <div class="card">
