@@ -89,12 +89,58 @@ label{margin:14px 0 6px}
   .tab-btn{padding:9px 12px;font-size:14px}
 }
 </style>
+<style>
+/* ============ DRIBBBLE-STYLE REDESIGN (2026-11-01, user: admin design picture jaisa) ============ */
+/* Layout + colours only: saare ids, buttons aur kaam waisay hi */
+body{background:#f1f0eb}
+header.site{background:#f1f0eb;color:#111;padding:22px 18px 4px}
+header.site .hwrap{max-width:1120px}
+.greet{font-size:30px;font-weight:800;letter-spacing:-.5px;color:#111;line-height:1.1}
+.gsub{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8a8a86;font-weight:700;margin-top:2px}
+.wrap{max-width:1120px}
+.card{border-radius:22px;box-shadow:0 8px 30px rgba(20,20,20,.06);border:1px solid #eceae4}
+.tabs{display:none}
+.cta{background:#111;border-radius:999px}
+.cta.small{border-radius:999px}
+.cta.gray{background:#e9e7e0;color:#333}
+.stat{background:#fff;border:1px solid #eceae4;border-radius:18px}
+.stat b{color:#111;font-size:26px}
+.side-nav{display:none}
+body.panel-open .side-nav{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:248px;background:#101010;color:#fff;padding:22px 16px;z-index:40;overflow-y:auto}
+.side-brand{font-size:19px;font-weight:800;letter-spacing:.5px;padding:4px 12px 18px}
+.side-brand small{display:block;font-size:10px;letter-spacing:2px;color:#8a8a86;margin-top:2px}
+.side-label{font-size:10px;letter-spacing:2px;color:#8a8a86;padding:10px 12px 6px;font-weight:700}
+.side-link{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:0;border-left:3px solid transparent;color:#a3a3a0;padding:11px 12px;border-radius:0 10px 10px 0;font-size:14.5px;font-weight:700;cursor:pointer;text-align:left;font-family:inherit}
+.side-link:hover{color:#fff;background:#1c1c1c}
+.side-link.active{color:#fff;background:#1c1c1c;border-left-color:#4ade80}
+.side-link .tab-badge{margin-left:auto}
+.side-shop{display:block;margin-top:auto;background:#262624;border:1px solid #333;color:#fff;text-decoration:none;border-radius:16px;padding:14px;font-size:13.5px;font-weight:700}
+.side-shop small{display:block;color:#a3a3a0;font-weight:400;margin-top:2px}
+.side-profile{display:flex;align-items:center;gap:10px;padding:14px 8px 2px}
+.side-avatar{width:38px;height:38px;border-radius:50%;background:#262624;display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto}
+.side-profile b{display:block;font-size:13.5px}
+.side-profile small{color:#a3a3a0;font-size:11.5px}
+@media (min-width:901px){
+  body.panel-open header.site, body.panel-open .wrap{margin-left:248px}
+  body.panel-open .wrap{max-width:none}
+}
+@media (max-width:900px){
+  body.panel-open .side-nav{position:static;width:auto;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding:10px 12px;gap:4px}
+  body.panel-open .side-brand, body.panel-open .side-label, body.panel-open .side-shop, body.panel-open .side-profile{display:none}
+  .side-link{white-space:nowrap;border-left:0;border-bottom:3px solid transparent;border-radius:10px}
+  .side-link.active{border-bottom-color:#4ade80}
+  .greet{font-size:24px}
+}
+</style>
 </head>
 <body>
 
 <header class="site">
   <div class="hwrap">
-    <div class="brand">🛠️ Sale Online — Admin Panel</div>
+    <div>
+      <div class="greet">Hello, Admin</div>
+      <div class="gsub">Sale Online — Admin Panel</div>
+    </div>
     <span style="margin-left:auto; font-size:13.5px;">Sirf owner ke liye</span>
   </div>
 </header>
@@ -126,6 +172,21 @@ label{margin:14px 0 6px}
   </div>
 
   <div id="panel" style="display:none;">
+    <aside class="side-nav" id="sideNav">
+      <div class="side-brand">SALE ONLINE<small>ADMIN PANEL</small></div>
+      <div class="side-label">MENU</div>
+      <button class="side-link active" type="button" data-tab="orders" onclick="switchTab('orders')">🧾 Orders</button>
+      <button class="side-link" type="button" data-tab="items" onclick="switchTab('items')">📦 Store Items</button>
+      <button class="side-link" type="button" data-tab="manual" onclick="switchTab('manual')">✏️ Manual Prices <span class="tab-badge" id="manualCount" style="display:none;">0</span></button>
+      <button class="side-link" type="button" data-tab="users" onclick="switchTab('users')">👥 Users</button>
+      <button class="side-link" type="button" data-tab="bonus" onclick="switchTab('bonus')">🎁 Bonus &amp; Offers</button>
+      <button class="side-link" type="button" data-tab="import" onclick="switchTab('import')">🔄 Import / Export</button>
+      <button class="side-link" type="button" data-tab="cats" onclick="switchTab('cats')">🗂️ Categories</button>
+      <button class="side-link" type="button" data-tab="tools" onclick="switchTab('tools')">🧩 Tools</button>
+      <button class="side-link" type="button" data-tab="visitors" onclick="switchTab('visitors')">👁️ Visitors</button>
+      <a class="side-shop" href="Saleonline.html">🛍️ Shop page kholein<small>Live store dekhein</small></a>
+      <div class="side-profile"><span class="side-avatar">🛠️</span><span><b>Sale Online</b><small>Admin</small></span></div>
+    </aside>
     <div class="card">
       <div class="stats">
         <div class="stat"><b id="statOrders">–</b>Kul Orders</div>
@@ -170,7 +231,7 @@ label{margin:14px 0 6px}
     <div class="tabs">
       <button class="tab-btn active" type="button" id="tb-orders" onclick="switchTab('orders')">🧾 Orders</button>
       <button class="tab-btn" type="button" id="tb-items" onclick="switchTab('items')">📦 Store Items</button>
-      <button class="tab-btn" type="button" id="tb-manual" onclick="switchTab('manual')">✏️ Manual Prices <span class="tab-badge" id="manualCount" style="display:none;">0</span></button>
+      <button class="tab-btn" type="button" id="tb-manual" onclick="switchTab('manual')">✏️ Manual Prices</button>
       <button class="tab-btn" type="button" id="tb-users" onclick="switchTab('users')">👥 Users</button>
       <button class="tab-btn" type="button" id="tb-bonus" onclick="switchTab('bonus')">🎁 Bonus & Offers</button>
       <button class="tab-btn" type="button" id="tb-import" onclick="switchTab('import')">🔄 Import / Export</button>
@@ -338,7 +399,7 @@ label{margin:14px 0 6px}
   }
 
   function adminLogout() { sessionStorage.removeItem('saleonlie_admin'); location.reload(); }
-  function enterAdmin() { document.getElementById('gateCard').style.display = 'none'; document.getElementById('panel').style.display = 'block'; loadAdmin(); resumeStoreUpdatePoll(); }
+  function enterAdmin() { document.getElementById('gateCard').style.display = 'none'; document.getElementById('panel').style.display = 'block'; document.body.classList.add('panel-open'); loadAdmin(); resumeStoreUpdatePoll(); }
 
   // ================= ORDERS =================
   function statusClass(s) { return { 'Pending': 'st-pending', 'Confirmed': 'st-confirmed', 'Shipped': 'st-shipped', 'Delivered': 'st-delivered', 'Cancelled': 'st-cancelled' }[s] || 'st-pending'; }
@@ -426,6 +487,7 @@ label{margin:14px 0 6px}
       if (pane) pane.style.display = (t === name) ? 'block' : 'none';
       var btn = document.getElementById('tb-' + t); if (btn) btn.classList.toggle('active', t === name);
     });
+    document.querySelectorAll('.side-link').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab') === name); });
     if (name === 'items' || name === 'manual' || name === 'import') loadStoreItems();
     if (name === 'cats') loadCategoriesTab();
     if (name === 'users') loadUsersTab();
