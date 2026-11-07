@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facebook Videos Calendar 3D — November 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #1c1e21;
+    background: radial-gradient(1200px 600px at 15% -10%, #7fb3ff33, transparent 60%),
+                radial-gradient(1000px 500px at 95% 10%, #ffd66b2e, transparent 55%),
+                linear-gradient(160deg, #0f2027 0%, #203a43 45%, #2c5364 100%);
+    background-attachment: fixed;
+    padding: 18px 14px 40px;
+    overflow-x: hidden;
+  }
+  /* floating light orbs for depth */
+  .orb { position: fixed; border-radius: 50%; filter: blur(60px); opacity: .5; pointer-events: none; z-index: 0; animation: float 12s ease-in-out infinite; }
+  .orb.o1 { width: 280px; height: 280px; background: #4f8ef7; top: -60px; left: -60px; }
+  .orb.o2 { width: 240px; height: 240px; background: #f7b733; bottom: -40px; right: -40px; animation-delay: -6s; }
+  @keyframes float { 0%,100% { transform: translateY(0) translateX(0); } 50% { transform: translateY(26px) translateX(18px); } }
+
+  .wrap { max-width: 780px; margin: 0 auto; position: relative; z-index: 1; }
+
+  /* ===== 3D title ===== */
+  .title3d { text-align: center; margin: 6px 0 2px; perspective: 600px; }
+  .title3d h1 {
+    font-size: 30px; letter-spacing: .5px; color: #fff;
+    text-shadow: 0 1px 0 #c8d6e5, 0 2px 0 #aebfd2, 0 3px 0 #93a7bd, 0 4px 0 #7b8fa6, 0 6px 12px rgba(0,0,0,.55);
+    transform: rotateX(8deg);
+    animation: titleIn .8s cubic-bezier(.2,.9,.3,1.4) both;
+  }
+  @keyframes titleIn { from { transform: rotateX(-70deg) translateY(-18px); opacity: 0; } to { transform: rotateX(8deg) translateY(0); opacity: 1; } }
+  .sub { text-align: center; color: #d7e3f4; font-size: 14px; margin-bottom: 18px; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+
+  /* ===== view toggle — 3D pill buttons ===== */
+  .toggle { display: flex; gap: 10px; margin-bottom: 16px; perspective: 800px; }
+  .toggle button {
+    flex: 1; padding: 13px 8px; font-size: 15px; font-weight: 700; cursor: pointer;
+    border: none; border-radius: 14px; color: #1877f2; background: linear-gradient(180deg, #ffffff, #dfe7ef);
+    box-shadow: 0 5px 0 #9fb0c3, 0 10px 18px rgba(0,0,0,.45);
+    transform: translateY(0); transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+  .toggle button:hover { transform: translateY(-2px) rotateX(4deg); box-shadow: 0 7px 0 #9fb0c3, 0 14px 22px rgba(0,0,0,.5); }
+  .toggle button:active { transform: translateY(3px); box-shadow: 0 2px 0 #9fb0c3, 0 5px 10px rgba(0,0,0,.4); }
+  .toggle button.active { background: linear-gradient(180deg, #3b9bf5, #1877f2); color: #fff; box-shadow: 0 5px 0 #0d5cb8, 0 10px 18px rgba(0,0,0,.5); }
+
+  /* ===== the calendar book ===== */
+  .book {
+    background: linear-gradient(180deg, #fdfdfd, #eef1f5);
+    border-radius: 18px;
+    padding: 0 14px 16px;
+    box-shadow: 0 30px 60px rgba(0,0,0,.55), 0 4px 0 rgba(255,255,255,.25) inset;
+    transform: rotateX(4deg);
+    transform-origin: top center;
+    animation: bookIn .7s cubic-bezier(.2,.8,.3,1) both;
+  }
+  @keyframes bookIn { from { transform: rotateX(35deg) translateY(30px); opacity: 0; } to { transform: rotateX(4deg) translateY(0); opacity: 1; } }
+
+  /* binder rings */
+  .rings { display: flex; justify-content: space-evenly; padding: 10px 30px 0; }
+  .ring {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 5px solid #c9d2dc;
+    background: radial-gradient(circle at 35% 30%, #ffffff, #9aa8b8 55%, #6d7d90);
+    box-shadow: 0 3px 6px rgba(0,0,0,.35), inset 0 1px 2px rgba(255,255,255,.9);
+    transform: translateY(6px);
+  }
+
+  .monthbar { display: flex; align-items: center; justify-content: space-between; margin: 12px 0 10px; }
+  .monthbar button {
+    padding: 9px 15px; font-size: 15px; font-weight: 700; cursor: pointer; color: #fff;
+    border: none; border-radius: 10px; background: linear-gradient(180deg, #3b9bf5, #1668c4);
+    box-shadow: 0 4px 0 #0d4d96, 0 8px 14px rgba(0,0,0,.3);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .monthbar button:hover:not(:disabled) { transform: translateY(-2px); }
+  .monthbar button:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #0d4d96; }
+  .monthbar button:disabled { opacity: .35; cursor: default; box-shadow: 0 4px 0 #7a8a9a; }
+  .monthbar .mname {
+    font-size: 21px; font-weight: 800; color: #1c1e21;
+    text-shadow: 0 1px 0 #fff, 0 2px 3px rgba(0,0,0,.2);
+  }
+
+  .summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip {
+    background: linear-gradient(180deg, #ffffff, #e9eef3);
+    border: 1px solid #d4dae1; border-radius: 12px; padding: 8px 12px; font-size: 13.5px;
+    box-shadow: 0 3px 0 #c3ccd6, 0 6px 10px rgba(0,0,0,.12);
+  }
+  .chip b { font-size: 16px; }
+  .chip.warn { background: linear-gradient(180deg, #fff8e1, #ffecb3); border-color: #f5c33b; }
+
+  /* ===== 3D grid ===== */
+  .scene { perspective: 1100px; }
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; transform-style: preserve-3d; transition: transform .45s ease, opacity .45s ease; }
+  .grid.flipping { transform: rotateY(88deg) scale(.94); opacity: 0; }
+  .dow { text-align: center; font-size: 12px; font-weight: 800; color: #5b6470; padding: 5px 0; letter-spacing: .4px; }
+
+  .day {
+    position: relative; min-height: 92px; padding: 7px 5px 6px; cursor: pointer; text-align: center;
+    border-radius: 12px; border: 1px solid #d3d9e0;
+    background: linear-gradient(180deg, #ffffff 0%, #eef1f5 100%);
+    box-shadow: 0 1px 0 #ffffff inset, 0 4px 0 #c6cfd9, 0 10px 16px rgba(0,0,0,.18);
+    transform-style: preserve-3d;
+    transition: transform .18s ease, box-shadow .18s ease;
+    animation: tileIn .5s cubic-bezier(.2,.9,.3,1.25) both;
+    animation-delay: calc(var(--i) * 28ms);
+    will-change: transform;
+  }
+  @keyframes tileIn { from { transform: rotateX(-85deg) translateY(14px); opacity: 0; } to { transform: rotateX(0) translateY(0); opacity: 1; } }
+  /* extruded edge for real depth */
+  .day::after {
+    content: ""; position: absolute; inset: 0; border-radius: 12px; z-index: -1;
+    background: linear-gradient(180deg, #b9c4d0, #98a5b5);
+    transform: translateZ(-7px);
+  }
+  .day .num { font-size: 14px; font-weight: 700; display: block; color: #2b2f36; }
+  .day .cnt { font-size: 23px; font-weight: 800; display: block; margin-top: 1px; line-height: 1.05; color: #1d7a2e; text-shadow: 0 1px 0 #fff; }
+  .day .lbl { font-size: 10.5px; color: #65676b; display: block; }
+  .day .stats { display: flex; justify-content: center; gap: 5px; margin-top: 4px; font-size: 10.5px; font-weight: 700; color: #4a5568; flex-wrap: wrap; }
+  .day .stats span { background: rgba(24,119,242,.1); border-radius: 6px; padding: 1px 4px; white-space: nowrap; }
+  .day.has { background: linear-gradient(180deg, #d9f7df 0%, #a9e8b6 100%); border-color: #42b72a; box-shadow: 0 1px 0 #ffffff inset, 0 4px 0 #2e9e4f, 0 12px 18px rgba(20,120,50,.35); }
+  .day.has .cnt { color: #136b22; }
+  .day.zero .cnt { color: #c3c9d1; }
+  .day.unknown { background: linear-gradient(180deg, #fff8e1, #ffe9a8); border-color: #f5c33b; box-shadow: 0 1px 0 #fff inset, 0 4px 0 #d9a521, 0 10px 16px rgba(180,130,0,.3); }
+  .day.unknown .cnt { color: #b26a00; }
+  .day.future { background: linear-gradient(180deg, #f7f8fa, #eceff2); cursor: default; box-shadow: 0 1px 0 #fff inset, 0 3px 0 #d3d9e0, 0 6px 10px rgba(0,0,0,.1); }
+  .day.future .cnt { color: #d5dae0; }
+  .day.out { background: transparent; border-color: transparent; box-shadow: none; cursor: default; animation: none; }
+  .day.out::after { display: none; }
+  .day.out .num { color: #c6ccd4; }
+  .day.today { outline: 2px solid #1877f2; outline-offset: 1px; }
+  .day.selected { outline: 3px solid #1877f2; outline-offset: 0; box-shadow: 0 1px 0 #fff inset, 0 4px 0 #0d5cb8, 0 14px 22px rgba(24,119,242,.45); }
+  @media (hover: hover) {
+    .day:not(.out):not(.future):hover { transform: translateY(-5px) translateZ(14px) rotateX(6deg); box-shadow: 0 1px 0 #fff inset, 0 9px 0 #aab4c0, 0 22px 26px rgba(0,0,0,.3); }
+    .day.has:not(.out):hover { box-shadow: 0 1px 0 #fff inset, 0 9px 0 #2e9e4f, 0 22px 26px rgba(20,120,50,.4); }
+  }
+  .day:active:not(.out):not(.future) { transform: translateY(2px) translateZ(2px); }
+
+  /* ===== detail panel — 3D flip-in card ===== */
+  .detail {
+    margin-top: 16px; background: linear-gradient(180deg, #ffffff, #f2f5f8);
+    border: 1px solid #d4dae1; border-radius: 16px; padding: 16px;
+    box-shadow: 0 18px 34px rgba(0,0,0,.35), 0 3px 0 #c3ccd6;
+    transform-origin: top center;
+    animation: panelIn .45s cubic-bezier(.2,.9,.3,1.2) both;
+  }
+  @keyframes panelIn { from { transform: rotateX(-65deg) translateY(-14px); opacity: 0; } to { transform: rotateX(0) translateY(0); opacity: 1; } }
+  .detail h2 { font-size: 17px; margin-bottom: 4px; }
+  .detail .dsum { font-size: 13.5px; color: #4a5568; margin-bottom: 6px; }
+  .detail .dsum b { color: #1c1e21; }
+  .detail .v { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid #e4e6eb; }
+  .detail .v .t { font-size: 14px; font-weight: 600; }
+  .detail .v .t small { color: #65676b; display: block; font-size: 12px; font-weight: 400; }
+  .detail .v .vstats { font-size: 12.5px; font-weight: 700; color: #4a5568; white-space: nowrap; text-align: right; }
+  .detail .v .vstats span { background: rgba(24,119,242,.09); border-radius: 6px; padding: 2px 5px; margin-left: 3px; }
+  .detail .v a { font-size: 13px; font-weight: 700; color: #1877f2; text-decoration: none; white-space: nowrap; margin-left: 8px; }
+  .detail .none { color: #65676b; font-size: 14px; }
+  .detail .warn { background: #fff8e1; border: 1px solid #f5c33b; border-radius: 8px; padding: 8px 10px; font-size: 13px; margin-top: 10px; }
+
+  .legend { margin-top: 16px; font-size: 13px; color: #d7e3f4; line-height: 1.8; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+  .legend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+  .note { margin-top: 10px; font-size: 12.5px; color: #aebfd2; line-height: 1.65; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+  @media (max-width: 480px) {
+    .title3d h1 { font-size: 24px; }
+    .day { min-height: 84px; }
+    .day .stats { font-size: 9.5px; gap: 3px; }
+  }
+</style>
+</head>
+<body>
+<div class="orb o1"></div><div class="orb o2"></div>
+<div class="wrap">
+  <div class="title3d"><h1>📅 Facebook Videos Calendar</h1></div>
+  <p class="sub">Har date par kitni videos — aur un ke Views, Likes aur Comments bhi. Date par tap karein, poori detail neeche khul jayegi.</p>
+
+  <div class="toggle">
+    <button id="btnProfile" class="active" onclick="setView('profile')">👤 Profile — Areesha Jabeen</button>
+    <button id="btnPage" onclick="setView('page')">📄 Page — Sale Online</button>
+  </div>
+
+  <div class="book">
+    <div class="rings"><div class="ring"></div><div class="ring"></div><div class="ring"></div></div>
+
+    <div class="monthbar">
+      <button id="prevBtn" onclick="changeMonth(-1)">‹ Pichla</button>
+      <span class="mname" id="monthName"></span>
+      <button id="nextBtn" onclick="changeMonth(1)">Agla ›</button>
+    </div>
+
+    <div class="summary" id="summary"></div>
+
+    <div class="scene"><div class="grid" id="grid"></div></div>
+
+    <div class="detail" id="detail" style="display:none"></div>
+  </div>
+
+  <div class="legend">
+    <span><span class="sw" style="background:#42b72a"></span>Videos hain</span> &nbsp;
+    <span><span class="sw" style="background:#d7dade"></span>0 videos</span> &nbsp;
+    <span><span class="sw" style="background:#f5c33b"></span>Data nahi mila (?)</span> &nbsp;
+    <span><span class="sw" style="background:#f5f6f7"></span>Aane wala din</span>
+  </div>
+  <p class="note" id="datanote"></p>
+</div>
+
+<script>
+const TODAY = "2026-11-08";
+const MONTHS = [
+  { key: "2026-10", name: "October 2026", year: 2026, month: 9 },
+  { key: "2026-11", name: "November 2026", year: 2026, month: 10 }
+];
+
+// views: null = Facebook se views ka figure nahi mila (profile posts ke liye views available nahi)
+// likes = kul reactions (Facebook ne Like/Love/Wow alag se nahi bataya)
+const DATA = {
+  profile: {
+    "2026-10": { unknown: true },
+    "2026-11": {
+      "2026-11-01": { status: "unknown" },
+      "2026-11-02": { status: "unknown" },
+      "2026-11-03": { status: "unknown" },
+      "2026-11-04": { count: 1, views: null, likes: 1, comments: 0, videos: [
+        { time: "12:18 PM", label: "Shared video", url: "https://facebook.com/61595657737821/posts/pfbid0yzM5AQxEBtsBjejEB39HfCdwCLZ1rYNV9JWk3ogowb5ekpk2E5NxZLezJNi6c3h2l/", views: null, likes: 1, comments: 0 }
+      ]},
+      "2026-11-05": { count: 0 },
+      "2026-11-06": { count: 0 },
+      "2026-11-07": { count: 8, views: null, likes: 9, comments: 2, note: "Is ke ilawa 1 share (11:45 PM) bhi hai jis ki type confirm nahi ho saki — video bhi ho sakta hai.", videos: [
+        { time: "01:13 PM", label: "Tricks and tips (reel)", url: "https://facebook.com/reel/1527288763790900/", views: null, likes: 1, comments: 0 },
+        { time: "01:16 PM", label: "Poetry (reel)", url: "https://facebook.com/reel/2648065618963858/", views: null, likes: 1, comments: 0 },
+        { time: "01:21 PM", label: "Morning (reel)", url: "https://facebook.com/reel/4402346420027027/", views: null, likes: 2, comments: 0 },
+        { time: "01:23 PM", label: "Prindy (reel)", url: "https://facebook.com/reel/2008053503932762/", views: null, likes: 4, comments: 0 },
+        { time: "06:03 PM", label: "Shared video", url: "https://facebook.com/61595657737821/posts/pfbid02W7AMgrJHcp5hnBfr5mFtPRJKaeTgi5MBUgBKTJidMPg9Kp9haRpYfuz8su53i1yXl/", views: null, likes: 0, comments: 1 },
+        { time: "11:46 PM", label: "Shared video — Sawab ki khatar", url: "https://facebook.com/61595657737821/posts/pfbid0ZV5wufC8YZ4dGNB9yHEtjWs8WSXR3Lt2MSSTS2GHMyBtsngtzZcs7TE4QaGGGE9Vl/", views: null, likes: 0, comments: 0 },
+        { time: "11:50 PM", label: "Darood e Ibrahimi (reel)", url: "https://facebook.com/reel/2070626420323984/", views: null, likes: 1, comments: 1 },
+        { time: "11:55 PM", label: "Nature is a life (reel)", url: "https://facebook.com/reel/1142936454886215/", views: null, likes: 0, comments: 0 }
+      ]},
+      "2026-11-08": { count: 1, views: null, likes: 0, comments: 0, videos: [
+        { time: "12:02 AM", label: "Shared video — Wow", url: "https://facebook.com/61595657737821/posts/pfbid0qfdwjPPGxCN1Zuj1PV4DF5K6Kw9i9uncugxsvKy8Rn6VagbYVV4EATMYA8AF4A8il/", views: null, likes: 0, comments: 0 }
+      ]}
+    }
+  },
+  page: {
+    "2026-10": { allZero: true },
+    "2026-11": {
+      "2026-11-02": { count: 1, views: 64, likes: 0, comments: 0, videos: [
+        { time: "03:42 PM", label: "Sale Online promo video — 6 products", url: "https://facebook.com/reel/1434308078865148/", views: 64, likes: 0, comments: 0 }
+      ]}
+    }
+  }
+};
+
+let view = "profile";
+let monthIdx = 1;
+let selected = null;
+const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function iso(y, m, d) { return y + "-" + String(m + 1).padStart(2, "0") + "-" + String(d).padStart(2, "0"); }
+function getDay(key, ds) {
+  const m = DATA[view][key];
+  if (!m) return { count: 0 };
+  if (m.unknown) return { status: "unknown" };
+  if (m.allZero) return { count: 0 };
+  return m[ds] || { count: 0 };
+}
+function fmtViews(v) { return v === null || v === undefined ? "–" : v; }
+
+function render() {
+  const m = MONTHS[monthIdx];
+  document.getElementById("monthName").textContent = m.name;
+  document.getElementById("prevBtn").disabled = monthIdx === 0;
+  document.getElementById("nextBtn").disabled = monthIdx === MONTHS.length - 1;
+  document.getElementById("btnProfile").className = view === "profile" ? "active" : "";
+  document.getElementById("btnPage").className = view === "page" ? "active" : "";
+
+  const daysInMonth = new Date(m.year, m.month + 1, 0).getDate();
+  let total = 0, totalLikes = 0, totalComments = 0, totalViews = 0, viewsKnown = true, best = null, bestCount = 0, unknownDays = 0;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = iso(m.year, m.month, d);
+    if (ds > TODAY) continue;
+    const info = getDay(m.key, ds);
+    if (info.status === "unknown") { unknownDays++; continue; }
+    total += info.count || 0;
+    totalLikes += info.likes || 0;
+    totalComments += info.comments || 0;
+    if (info.views === null || info.views === undefined) { if (info.count) viewsKnown = false; }
+    else totalViews += info.views;
+    if ((info.count || 0) > bestCount) { bestCount = info.count; best = ds; }
+  }
+  let sum = '<span class="chip">🎬 Videos: <b>' + total + '</b></span>';
+  sum += '<span class="chip">👁️ Views: <b>' + (viewsKnown ? totalViews : "–") + '</b></span>';
+  sum += '<span class="chip">👍 Likes: <b>' + totalLikes + '</b></span>';
+  sum += '<span class="chip">💬 Comments: <b>' + totalComments + '</b></span>';
+  if (best) sum += '<span class="chip">🔥 Sab se zyada: <b>' + parseInt(best.split("-")[2], 10) + ' Nov — ' + bestCount + ' videos</b></span>';
+  if (unknownDays) sum += '<span class="chip warn">⚠️ ' + unknownDays + ' din ka data nahi mila</span>';
+  document.getElementById("summary").innerHTML = sum;
+
+  const grid = document.getElementById("grid");
+  let html = DOW.map(x => '<div class="dow">' + x + '</div>').join("");
+  const first = new Date(m.year, m.month, 1);
+  let offset = (first.getDay() + 6) % 7;
+  const prevMonthDays = new Date(m.year, m.month, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < offset; i++) cells.push({ out: true, num: prevMonthDays - offset + 1 + i });
+  for (let d = 1; d <= daysInMonth; d++) cells.push({ num: d, ds: iso(m.year, m.month, d) });
+  let nxt = 1;
+  while (cells.length % 7 !== 0) cells.push({ out: true, num: nxt++ });
+
+  cells.forEach((c, idx) => {
+    if (c.out) { html += '<div class="day out" style="--i:' + idx + '"><span class="num">' + c.num + '</span></div>'; return; }
+    const info = getDay(m.key, c.ds);
+    const isFuture = c.ds > TODAY;
+    const isToday = c.ds === TODAY;
+    let cls = "day", cnt = "0", lbl = "videos", stats = "";
+    if (isFuture) { cls += " future"; cnt = "–"; lbl = ""; }
+    else if (info.status === "unknown") { cls += " unknown"; cnt = "?"; lbl = "data nahi"; }
+    else if ((info.count || 0) > 0) {
+      cls += " has"; cnt = info.count; lbl = info.count === 1 ? "video" : "videos";
+      stats = '<div class="stats"><span>👁️ ' + fmtViews(info.views) + '</span><span>👍 ' + (info.likes || 0) + '</span><span>💬 ' + (info.comments || 0) + '</span></div>';
+    } else { cls += " zero"; cnt = "0"; lbl = "videos"; }
+    if (isToday) cls += " today";
+    if (selected === c.ds) cls += " selected";
+    html += '<div class="' + cls + '" style="--i:' + idx + '" onclick="selectDay(\'' + c.ds + '\')" onmousemove="tilt(event,this)" onmouseleave="untilt(this)"><span class="num">' + c.num + '</span><span class="cnt">' + cnt + '</span><span class="lbl">' + lbl + '</span>' + stats + '</div>';
+  });
+  grid.innerHTML = html;
+
+  document.getElementById("datanote").textContent =
+    view === "profile"
+      ? "Data: Areesha Jabeen profile (Facebook se, 8 Nov 2026 subah 02:41 PKT). Views: profile posts ke liye Facebook views ka figure nahi deta, is liye '–' dikhaya gaya hai. Likes = kul reactions (Facebook ne Like / Love / Wow alag se nahi bataya). Facebook ne sirf 20 taaza posts dikhayi — is liye 1–3 Nov aur poora October maloom nahi ho saka, woh din '?' se dikhaye gaye hain."
+      : "Data: Sale Online Page ki poori 90-din ki post list (Facebook se, 8 Nov 2026 subah 02:41 PKT). 2 Nov wali video ke 64 views Facebook par dikhaya gaya figure hai. Page par rozana 5 photo posts hoti hain — videos sirf 1 hai.";
+
+  if (selected) showDetail(selected);
+}
+
+function tilt(e, el) {
+  if (!window.matchMedia("(hover: hover)").matches) return;
+  const r = el.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width - 0.5;
+  const y = (e.clientY - r.top) / r.height - 0.5;
+  el.style.transform = "translateY(-5px) translateZ(16px) rotateY(" + (x * 14) + "deg) rotateX(" + (-y * 14) + "deg)";
+}
+function untilt(el) { el.style.transform = ""; }
+
+function selectDay(ds) {
+  if (ds > TODAY) return;
+  selected = ds;
+  render();
+  showDetail(ds);
+  document.getElementById("detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function showDetail(ds) {
+  const box = document.getElementById("detail");
+  const m = MONTHS[monthIdx];
+  const info = getDay(m.key, ds);
+  const dayNum = parseInt(ds.split("-")[2], 10);
+  let h = "<h2>" + dayNum + " " + m.name + " — " + (view === "profile" ? "Profile" : "Page") + "</h2>";
+  if (info.status === "unknown") {
+    h += '<p class="none">Is din ka data nahi mil saka. Facebook ki timeline ne sirf 20 taaza posts dikhayi, is liye is din ki videos gin nahi sakay.</p>';
+  } else if (!info.count) {
+    h += '<p class="none">Is din koi video upload nahi hui (0 videos).</p>';
+  } else {
+    h += '<p class="dsum">Kul <b>' + info.count + (info.count === 1 ? ' video' : ' videos') + '</b> &nbsp;•&nbsp; 👁️ Views: <b>' + fmtViews(info.views) + '</b> &nbsp;•&nbsp; 👍 Likes: <b>' + (info.likes || 0) + '</b> &nbsp;•&nbsp; 💬 Comments: <b>' + (info.comments || 0) + '</b></p>';
+    info.videos.forEach(v => {
+      h += '<div class="v"><div class="t">' + v.label + '<small>' + v.time + '</small></div><div class="vstats"><span>👁️ ' + fmtViews(v.views) + '</span><span>👍 ' + (v.likes || 0) + '</span><span>💬 ' + (v.comments || 0) + '</span></div><a href="' + v.url + '" target="_blank">Open ↗</a></div>';
+    });
+    if (info.note) h += '<div class="warn">' + info.note + '</div>';
+  }
+  box.innerHTML = h;
+  box.style.display = "block";
+  box.style.animation = "none"; void box.offsetWidth; box.style.animation = "";
+}
+
+function setView(v) { view = v; selected = null; document.getElementById("detail").style.display = "none"; flipGrid(render); }
+function changeMonth(dir) { monthIdx += dir; selected = null; document.getElementById("detail").style.display = "none"; flipGrid(render); }
+function flipGrid(after) {
+  const g = document.getElementById("grid");
+  g.classList.add("flipping");
+  setTimeout(() => { after(); g.classList.remove("flipping"); }, 420);
+}
+
+render();
+</script>
+</body>
+</html>
