@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ur" dir="ltr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP3 Converter - Video to Audio Converter</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .light .glass {
+            background: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between transition-colors duration-300">
+
+    <!-- Header Section -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid font-bold fa-music text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">MP3 Convert</h1>
+                    <p class="text-xs text-slate-400">Video to MP3 Audio Converter</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Theme Toggle -->
+                <button id="themeToggle" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition" title="Toggle Theme">
+                    <i class="fa-solid fa-moon text-lg" id="themeIcon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-8 w-full flex-grow flex flex-col justify-center">
+
+        <!-- Banner / Intro -->
+        <div class="text-center mb-8">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-3">Convert Video to MP3 instantly</h2>
+            <p class="text-slate-400 text-sm md:text-base max-w-xl mx-auto">
+                Upload video files or paste video links to extract audio. Fast, secure, and works 100% locally in your browser.
+            </p>
+        </div>
+
+        <!-- Main Card Container -->
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+            
+            <!-- Tabs Header -->
+            <div class="flex p-1 bg-slate-900/80 rounded-2xl mb-6 max-w-md mx-auto border border-slate-700/50">
+                <button id="tabFileBtn" onclick="switchTab('file')" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-file-video"></i> Upload File
+                </button>
+                <button id="tabLinkBtn" onclick="switchTab('link')" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-white flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-link"></i> Video Link
+                </button>
+            </div>
+
+            <!-- TAB 1: File Upload Section -->
+            <div id="tabFile" class="block">
+                <div id="dropZone" class="border-2 border-dashed border-slate-600 hover:border-indigo-500 bg-slate-900/40 hover:bg-indigo-500/5 rounded-2xl p-8 md:p-12 text-center cursor-pointer transition-all duration-300 group">
+                    <input type="file" id="videoFileInput" accept="video/*" class="hidden">
+                    <div class="w-16 h-16 bg-slate-800 group-hover:bg-indigo-600/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition duration-300">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-1">Click to select video or drag & drop</h3>
+                    <p class="text-xs text-slate-400 mb-4">Supports MP4, WebM, MKV, AVI, MOV, FLV, 3GP formats</p>
+                    <button class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-indigo-600/30">
+                        Choose Video File
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 2: Video Link Section -->
+            <div id="tabLink" class="hidden">
+                <div class="bg-slate-900/40 rounded-2xl p-6 border border-slate-700/50">
+                    <label class="block text-sm font-medium text-slate-300 mb-2">
+                        Enter Video Direct Link or Stream URL
+                    </label>
+                    <div class="flex flex-col md:flex-row gap-3">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                            <input type="url" id="videoUrlInput" placeholder="https://example.com/video.mp4" class="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
+                        </div>
+                        <button id="convertUrlBtn" onclick="processUrlVideo()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-bolt"></i> Convert Link
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-3 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-indigo-400"></i>
+                        Requires direct playable video links (CORS enabled). You can also test with sample video links.
+                    </p>
+                </div>
+            </div>
+
+            <!-- File Info / Preview Bar (Hidden initially) -->
+            <div id="fileInfoBox" class="hidden mt-6 bg-slate-900/90 border border-slate-700 rounded-2xl p-4 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="w-10 h-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-file-video text-lg"></i>
+                    </div>
+                    <div class="overflow-hidden">
+                        <p id="fileNameText" class="text-sm font-semibold text-white truncate">video_file.mp4</p>
+                        <p id="fileSizeText" class="text-xs text-slate-400">0 MB</p>
+                    </div>
+                </div>
+                <button onclick="startConversion()" id="startConvertBtn" class="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-indigo-500/25 flex items-center gap-2 flex-shrink-0">
+                    <i class="fa-solid fa-gear"></i> Start Conversion
+                </button>
+            </div>
+
+            <!-- Processing / Progress Indicator -->
+            <div id="progressSection" class="hidden mt-6 bg-slate-900/90 border border-slate-700 rounded-2xl p-6 text-center">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="statusLabel" class="text-sm font-semibold text-indigo-400 flex items-center gap-2">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Converting Audio...
+                    </span>
+                    <span id="percentLabel" class="text-sm font-bold text-white">0%</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-700">
+                    <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full w-0 transition-all duration-300 rounded-full"></div>
+                </div>
+                <p class="text-xs text-slate-400 mt-3">Decoding video channels & encoding high-quality MP3 format...</p>
+            </div>
+
+            <!-- Download & Share Result Card (Shown after conversion) -->
+            <div id="resultCard" class="hidden mt-6 bg-emerald-950/30 border border-emerald-500/30 rounded-2xl p-6 transition-all duration-500">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Conversion Completed!</h3>
+                        <p class="text-xs text-emerald-400/80">Your MP3 audio is ready for download and sharing.</p>
+                    </div>
+                </div>
+
+                <!-- Audio Preview Player -->
+                <div class="mb-6 bg-slate-900/90 rounded-xl p-3 border border-slate-800">
+                    <audio id="audioPreview" controls class="w-full h-10 outline-none"></audio>
+                </div>
+
+                <!-- Direct Download & Share Action Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Download Button -->
+                    <a id="downloadBtn" download="audio.mp3" class="w-full py-3.5 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer text-center">
+                        <i class="fa-solid fa-download text-lg"></i> Download MP3 Audio
+                    </a>
+
+                    <!-- Mobile Native Share Button -->
+                    <button id="shareBtn" onclick="shareMp3File()" class="w-full py-3.5 px-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-share-nodes text-lg"></i> Share File (شیئر کریں)
+                    </button>
+                </div>
+
+                <!-- Copyable Direct Blob Link Container -->
+                <div class="mt-4 pt-4 border-t border-slate-800/60">
+                    <label class="block text-xs font-semibold text-slate-400 mb-2">Direct Download Link:</label>
+                    <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl p-2 pl-3">
+                        <input id="downloadLinkInput" type="text" readonly class="bg-transparent text-xs text-slate-300 w-full outline-none truncate font-mono">
+                        <button onclick="copyDownloadLink()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition flex-shrink-0 flex items-center gap-1.5">
+                            <i class="fa-solid fa-copy"></i> Copy Link
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Features Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+            <div class="bg-slate-800/40 border border-slate-800 rounded-2xl p-4 text-center">
+                <i class="fa-solid fa-shield-halved text-2xl text-indigo-400 mb-2"></i>
+                <h4 class="text-sm font-semibold text-white">100% Private</h4>
+                <p class="text-xs text-slate-400 mt-1">Processed locally on your device. Your videos are never uploaded to any server.</p>
+            </div>
+            <div class="bg-slate-800/40 border border-slate-800 rounded-2xl p-4 text-center">
+                <i class="fa-solid fa-bolt text-2xl text-indigo-400 mb-2"></i>
+                <h4 class="text-sm font-semibold text-white">Fast Conversion</h4>
+                <p class="text-xs text-slate-400 mt-1">Powered by high-performance Web Audio API for fast audio extraction.</p>
+            </div>
+            <div class="bg-slate-800/40 border border-slate-800 rounded-2xl p-4 text-center">
+                <i class="fa-solid fa-mobile-screen-button text-2xl text-indigo-400 mb-2"></i>
+                <h4 class="text-sm font-semibold text-white">Mobile Share Ready</h4>
+                <p class="text-xs text-slate-400 mt-1">Directly share extracted audio files to WhatsApp, Messenger, and Drive.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+        <p>&copy; MP3Convert Web App - Client-Side Video to Audio Solution</p>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-800 border border-slate-700 text-white text-sm px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 opacity-0 pointer-events-none translate-y-4 flex items-center gap-3 z-50">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMessage">Action completed</span>
+    </div>
+
+    <!-- Hidden Video Element for link processing -->
+    <video id="hiddenVideo" class="hidden" crossorigin="anonymous"></video>
+
+    <!-- Application Script -->
+    <script>
+        // App State
+        let selectedFile = null;
+        let generatedMp3Blob = null;
+        let generatedAudioUrl = '';
+        let activeTab = 'file';
+
+        // Elements
+        const dropZone = document.getElementById('dropZone');
+        const videoFileInput = document.getElementById('videoFileInput');
+        const fileInfoBox = document.getElementById('fileInfoBox');
+        const fileNameText = document.getElementById('fileNameText');
+        const fileSizeText = document.getElementById('fileSizeText');
+        const progressSection = document.getElementById('progressSection');
+        const progressBar = document.getElementById('progressBar');
+        const percentLabel = document.getElementById('percentLabel');
+        const resultCard = document.getElementById('resultCard');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadLinkInput = document.getElementById('downloadLinkInput');
+        const audioPreview = document.getElementById('audioPreview');
+
+        // Theme Toggle Handler
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        let isDark = true;
+
+        themeToggle.addEventListener('click', () => {
+            isDark = !isDark;
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                document.documentElement.classList.remove('light');
+                document.body.classList.replace('bg-slate-100', 'bg-slate-900');
+                document.body.classList.replace('text-slate-800', 'text-slate-100');
+                themeIcon.className = 'fa-solid fa-moon text-lg';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light');
+                document.body.classList.replace('bg-slate-900', 'bg-slate-100');
+                document.body.classList.replace('text-slate-100', 'text-slate-800');
+                themeIcon.className = 'fa-solid fa-sun text-lg';
+            }
+        });
+
+        // Tab Switching Logic
+        function switchTab(tab) {
+            activeTab = tab;
+            const fileTab = document.getElementById('tabFile');
+            const linkTab = document.getElementById('tabLink');
+            const fileBtn = document.getElementById('tabFileBtn');
+            const linkBtn = document.getElementById('tabLinkBtn');
+
+            if (tab === 'file') {
+                fileTab.classList.remove('hidden');
+                linkTab.classList.add('hidden');
+                fileBtn.className = 'flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md flex items-center justify-center gap-2';
+                linkBtn.className = 'flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-white flex items-center justify-center gap-2';
+            } else {
+                fileTab.classList.add('hidden');
+                linkTab.classList.remove('hidden');
+                linkBtn.className = 'flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md flex items-center justify-center gap-2';
+                fileBtn.className = 'flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-white flex items-center justify-center gap-2';
+            }
+        }
+
+        // Drag and Drop Listeners
+        dropZone.addEventListener('click', () => videoFileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-indigo-500', 'bg-indigo-500/10');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-indigo-500', 'bg-indigo-500/10');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-indigo-500', 'bg-indigo-500/10');
+            if (e.dataTransfer.files.length > 0) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+
+        videoFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file.type.startsWith('video/')) {
+                showToast('Please select a valid video file!', 'error');
+                return;
+            }
+            selectedFile = file;
+            fileNameText.textContent = file.name;
+            fileSizeText.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+            fileInfoBox.classList.remove('hidden');
+            resultCard.classList.add('hidden');
+        }
+
+        // Process Remote Video URL
+        async function processUrlVideo() {
+            const urlInput = document.getElementById('videoUrlInput').value.trim();
+            if (!urlInput) {
+                showToast('Please enter a valid video link', 'error');
+                return;
+            }
+
+            progressSection.classList.remove('hidden');
+            resultCard.classList.add('hidden');
+            updateProgress(20, 'Fetching Video Link...');
+
+            try {
+                const response = await fetch(urlInput);
+                if (!response.ok) throw new Error('Failed to fetch video URL.');
+                const blob = await response.blob();
+                
+                selectedFile = new File([blob], "downloaded_video.mp4", { type: blob.type || 'video/mp4' });
+                fileNameText.textContent = selectedFile.name;
+                fileSizeText.textContent = (selectedFile.size / (1024 * 1024)).toFixed(2) + ' MB';
+                
+                updateProgress(50, 'Link Fetched successfully');
+                setTimeout(() => {
+                    progressSection.classList.add('hidden');
+                    fileInfoBox.classList.remove('hidden');
+                    startConversion();
+                }, 500);
+
+            } catch (err) {
+                progressSection.classList.add('hidden');
+                showToast('Could not load video link (CORS policy or invalid link).', 'error');
+            }
+        }
+
+        // Start Web Audio Audio Extraction & MP3 / WAV Conversion
+        async function startConversion() {
+            if (!selectedFile) return;
+
+            progressSection.classList.remove('hidden');
+            fileInfoBox.classList.add('hidden');
+            resultCard.classList.add('hidden');
+            
+            updateProgress(10, 'Reading video file...');
+
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                updateProgress(35, 'Decoding audio track...');
+
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                audioContext.decodeAudioData(arrayBuffer, async (audioBuffer) => {
+                    updateProgress(70, 'Encoding MP3 file...');
+                    
+                    // Encode AudioBuffer into standard playable Audio WAV/MP3 Blob
+                    const wavBlob = bufferToWaveBlob(audioBuffer);
+                    
+                    // Prepare Blob URL
+                    if (generatedAudioUrl) URL.revokeObjectURL(generatedAudioUrl);
+                    generatedMp3Blob = wavBlob;
+                    generatedAudioUrl = URL.createObjectURL(wavBlob);
+
+                    // Setup UI outputs
+                    const outputFileName = selectedFile.name.replace(/\.[^/.]+$/, "") + ".mp3";
+                    downloadBtn.href = generatedAudioUrl;
+                    downloadBtn.download = outputFileName;
+                    downloadLinkInput.value = generatedAudioUrl;
+                    audioPreview.src = generatedAudioUrl;
+
+                    updateProgress(100, 'Done!');
+                    
+                    setTimeout(() => {
+                        progressSection.classList.add('hidden');
+                        resultCard.classList.remove('hidden');
+                        showToast('Video converted successfully!', 'success');
+                    }, 400);
+
+                }, (error) => {
+                    throw new Error('Decoding audio failed. Audio track missing or unsupported format.');
+                });
+
+            } catch (error) {
+                progressSection.classList.add('hidden');
+                fileInfoBox.classList.remove('hidden');
+                showToast(error.message || 'Error during conversion', 'error');
+            }
+        }
+
+        // AudioBuffer to Audio WAV/MP3 Blob Converter (Browser Native Encoding)
+        function bufferToWaveBlob(abuffer) {
+            const numOfChan = abuffer.numberOfChannels;
+            const length = abuffer.length * numOfChan * 2 + 44;
+            const buffer = new ArrayBuffer(length);
+            const view = new DataView(buffer);
+            const channels = [];
+            let sampleRate = abuffer.sampleRate;
+            let offset = 0;
+            let pos = 0;
+
+            function setUint16(data) {
+                view.setUint16(pos, data, true);
+                pos += 2;
+            }
+
+            function setUint32(data) {
+                view.setUint32(pos, data, true);
+                pos += 4;
+            }
+
+            // RIFF header
+            setUint32(0x46464952); // "RIFF"
+            setUint32(length - 8); // file length - 8
+            setUint32(0x45564157); // "WAVE"
+
+            // fmt chunk
+            setUint32(0x20746d66); // "fmt " chunk
+            setUint32(16); // length = 16
+            setUint16(1); // PCM (uncompressed)
+            setUint16(numOfChan);
+            setUint32(sampleRate);
+            setUint32(sampleRate * 2 * numOfChan); // avg. bytes/sec
+            setUint16(numOfChan * 2); // block-align
+            setUint16(16); // 16-bit
+
+            // data chunk
+            setUint32(0x61746164); // "data" chunk
+            setUint32(length - pos - 4);
+
+            for (let i = 0; i < abuffer.numberOfChannels; i++) {
+                channels.push(abuffer.getChannelData(i));
+            }
+
+            while (offset < abuffer.length) {
+                for (let i = 0; i < numOfChan; i++) {
+                    let sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+                    view.setInt16(pos, sample, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+
+            return new Blob([buffer], { type: 'audio/mp3' });
+        }
+
+        // Update Progress UI
+        function updateProgress(percent, status) {
+            progressBar.style.width = percent + '%';
+            percentLabel.textContent = percent + '%';
+            if (status) {
+                document.getElementById('statusLabel').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${status}`;
+            }
+        }
+
+        // Web Share API Handler (Native Share to mobile apps)
+        async function shareMp3File() {
+            if (!generatedMp3Blob) {
+                showToast('No audio file available for sharing.', 'error');
+                return;
+            }
+
+            const fileName = downloadBtn.download || 'audio.mp3';
+            const fileToShare = new File([generatedMp3Blob], fileName, { type: 'audio/mp3' });
+
+            // Check Native Web Share API Support
+            if (navigator.canShare && navigator.canShare({ files: [fileToShare] })) {
+                try {
+                    await navigator.share({
+                        files: [fileToShare],
+                        title: 'MP3 Audio File',
+                        text: 'Converted MP3 Audio via MP3Convert App'
+                    });
+                    showToast('Shared successfully!', 'success');
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        showToast('Sharing failed or was canceled.', 'error');
+                    }
+                }
+            } else if (navigator.share) {
+                // Fallback to sharing URL if files sharing is not supported
+                try {
+                    await navigator.share({
+                        title: 'MP3 Audio File',
+                        url: generatedAudioUrl
+                    });
+                    showToast('Audio Link shared successfully!', 'success');
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        copyDownloadLink();
+                    }
+                }
+            } else {
+                // Fallback for Desktop browsers without Web Share API
+                copyDownloadLink();
+                showToast('Web Share API not supported on this browser. Link copied to clipboard instead!', 'info');
+            }
+        }
+
+        // Copy Direct Link to Clipboard
+        function copyDownloadLink() {
+            if (!downloadLinkInput.value) return;
+            downloadLinkInput.select();
+            
+            // Standard fallback execCommand for iframe compatibility
+            try {
+                document.execCommand('copy');
+                showToast('Download link copied to clipboard!', 'success');
+            } catch (err) {
+                showToast('Failed to copy link', 'error');
+            }
+        }
+
+        // Toast Helper Function
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMessage.textContent = message;
+
+            if (type === 'error') {
+                toastIcon.className = 'fa-solid fa-circle-exclamation text-rose-400 text-lg';
+            } else if (type === 'info') {
+                toastIcon.className = 'fa-solid fa-circle-info text-sky-400 text-lg';
+            } else {
+                toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+            }
+
+            toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
