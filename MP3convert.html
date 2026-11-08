@@ -413,7 +413,7 @@
                     // Prepare Blob URL
                     if (generatedAudioUrl) URL.revokeObjectURL(generatedAudioUrl);
                     generatedMp3Blob = mp3Blob;
-                    generatedAudioUrl = URL.createObjectURL(wavBlob);
+                    generatedAudioUrl = URL.createObjectURL(mp3Blob);
 
                     // Setup UI outputs
                     const outputFileName = selectedFile.name.replace(/\.[^/.]+$/, "") + ".mp3";
