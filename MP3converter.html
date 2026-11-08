@@ -6,6 +6,15 @@
     <title>MP3 Converter - Video to Audio Converter</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- lamejs: REAL MP3 encoder (cdnjs primary, jsdelivr fallback) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.all.js" onerror="loadLameFallback()"></script>
+    <script>
+        function loadLameFallback() {
+            var sc = document.createElement('script');
+            sc.src = 'https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.all.js';
+            document.head.appendChild(sc);
+        }
+    </script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -190,7 +199,7 @@
 
                 <!-- Copyable Direct Blob Link Container -->
                 <div class="mt-4 pt-4 border-t border-slate-800/60">
-                    <label class="block text-xs font-semibold text-slate-400 mb-2">Direct Download Link:</label>
+                    <label class="block text-xs font-semibold text-slate-400 mb-2">Copyable Download Link (works anywhere):</label>
                     <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl p-2 pl-3">
                         <input id="downloadLinkInput" type="text" readonly class="bg-transparent text-xs text-slate-300 w-full outline-none truncate font-mono">
                         <button onclick="copyDownloadLink()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition flex-shrink-0 flex items-center gap-1.5">
@@ -373,7 +382,7 @@
             }
         }
 
-        // Start Web Audio Audio Extraction & MP3 / WAV Conversion
+        // Start Web Audio Audio Extraction & MP3 Conversion
         async function startConversion() {
             if (!selectedFile) return;
 
@@ -390,25 +399,46 @@
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 
                 audioContext.decodeAudioData(arrayBuffer, async (audioBuffer) => {
+                    if (typeof lamejs === 'undefined') {
+                        progressSection.classList.add('hidden');
+                        fileInfoBox.classList.remove('hidden');
+                        showToast('MP3 encoder load nahi hua — internet check karein aur dobara koshish karein.', 'error');
+                        return;
+                    }
                     updateProgress(70, 'Encoding MP3 file...');
-                    
-                    // Encode AudioBuffer into standard playable Audio WAV/MP3 Blob
-                    const wavBlob = bufferToWaveBlob(audioBuffer);
-                    
-                    // Prepare Blob URL
+
+                    // REAL MP3 encoding with lamejs (the old code wrote a
+                    // non-MP3 audio file with an .mp3 name — that was NOT a real MP3).
+                    const mp3Blob = await encodeAudioBufferToMp3(audioBuffer, function (frac) {
+                        updateProgress(70 + Math.round(frac * 25), 'Encoding MP3 file...');
+                    });
+
+                    // Prepare Blob URL (direct download + audio preview).
                     if (generatedAudioUrl) URL.revokeObjectURL(generatedAudioUrl);
-                    generatedMp3Blob = wavBlob;
-                    generatedAudioUrl = URL.createObjectURL(wavBlob);
+                    generatedMp3Blob = mp3Blob;
+                    generatedAudioUrl = URL.createObjectURL(mp3Blob);
 
                     // Setup UI outputs
                     const outputFileName = selectedFile.name.replace(/\.[^/.]+$/, "") + ".mp3";
                     downloadBtn.href = generatedAudioUrl;
                     downloadBtn.download = outputFileName;
-                    downloadLinkInput.value = generatedAudioUrl;
                     audioPreview.src = generatedAudioUrl;
 
+                    // Copyable link = a data: URL (works anywhere, even after
+                    // this page closes). A blob: URL only lives inside this
+                    // page, so it must NOT be the copied link.
+                    updateProgress(96, 'Preparing download link...');
+                    downloadLinkInput.value = await blobToDataUrl(mp3Blob);
+
                     updateProgress(100, 'Done!');
-                    
+
+                    // If running inside the Download Manager app, send the
+                    // MP3 back to the app so it lands in Downloads/IDM
+                    // File/Audio/ (a WebView cannot download blob: URLs).
+                    if (typeof AppFile !== 'undefined' && AppFile.putMp3Chunk) {
+                        sendMp3ToApp(generatedMp3Blob, downloadBtn.download || 'audio.mp3');
+                    }
+
                     setTimeout(() => {
                         progressSection.classList.add('hidden');
                         resultCard.classList.remove('hidden');
@@ -416,7 +446,9 @@
                     }, 400);
 
                 }, (error) => {
-                    throw new Error('Decoding audio failed. Audio track missing or unsupported format.');
+                    progressSection.classList.add('hidden');
+                    fileInfoBox.classList.remove('hidden');
+                    showToast('Decoding audio failed. Audio track missing or unsupported format.', 'error');
                 });
 
             } catch (error) {
@@ -426,61 +458,151 @@
             }
         }
 
-        // AudioBuffer to Audio WAV/MP3 Blob Converter (Browser Native Encoding)
-        function bufferToWaveBlob(abuffer) {
-            const numOfChan = abuffer.numberOfChannels;
-            const length = abuffer.length * numOfChan * 2 + 44;
-            const buffer = new ArrayBuffer(length);
-            const view = new DataView(buffer);
-            const channels = [];
-            let sampleRate = abuffer.sampleRate;
-            let offset = 0;
-            let pos = 0;
-
-            function setUint16(data) {
-                view.setUint16(pos, data, true);
-                pos += 2;
+        // ---------- REAL MP3 encoding with lamejs ----------
+        // (The old code wrote a non-MP3 audio file with an .mp3 name
+        // and MIME type audio/mp3 — that was NOT a real MP3. This encodes a
+        // genuine MPEG Layer-III file with the LAME encoder.)
+        function floatTo16BitPCM(input) {
+            var out = new Int16Array(input.length);
+            for (var k = 0; k < input.length; k++) {
+                var v = Math.max(-1, Math.min(1, input[k]));
+                out[k] = v < 0 ? v * 32768 : v * 32767;
             }
+            return out;
+        }
 
-            function setUint32(data) {
-                view.setUint32(pos, data, true);
-                pos += 4;
+        async function encodeAudioBufferToMp3(audioBuffer, onProgress) {
+            var channels = audioBuffer.numberOfChannels;
+            var sampleRate = audioBuffer.sampleRate;
+            var encoder = new lamejs.Mp3Encoder(channels, sampleRate, 128);
+            var left = floatTo16BitPCM(audioBuffer.getChannelData(0));
+            var right = channels > 1 ? floatTo16BitPCM(audioBuffer.getChannelData(1)) : null;
+            var mp3Data = [];
+            var blockSize = 1152;
+            for (var n = 0; n < left.length; n += blockSize) {
+                var l = left.subarray(n, n + blockSize);
+                var r = right ? right.subarray(n, n + blockSize) : null;
+                var buf = right ? encoder.encodeBuffer(l, r) : encoder.encodeBuffer(l);
+                if (buf && buf.length > 0) mp3Data.push(new Int8Array(buf));
+                if (onProgress) onProgress(n / left.length);
+                // Yield to the UI thread every ~200 blocks so progress shows.
+                if (n % (blockSize * 200) === 0) await new Promise(function (res) { setTimeout(res, 0); });
             }
+            var end = encoder.flush();
+            if (end && end.length > 0) mp3Data.push(new Int8Array(end));
+            return new Blob(mp3Data, { type: 'audio/mpeg' });
+        }
 
-            // RIFF header
-            setUint32(0x46464952); // "RIFF"
-            setUint32(length - 8); // file length - 8
-            setUint32(0x45564157); // "WAVE"
+        // Blob -> data: URL (data:audio/mpeg;base64,...). The copied download
+        // link MUST be a data: URL: a blob: URL only lives inside this page
+        // and cannot be downloaded anywhere else.
+        function blobToDataUrl(blob) {
+            return new Promise(function (resolve, reject) {
+                var reader = new FileReader();
+                reader.onload = function () { resolve(reader.result); };
+                reader.onerror = function () { reject(new Error('Could not read MP3')); };
+                reader.readAsDataURL(blob);
+            });
+        }
 
-            // fmt chunk
-            setUint32(0x20746d66); // "fmt " chunk
-            setUint32(16); // length = 16
-            setUint16(1); // PCM (uncompressed)
-            setUint16(numOfChan);
-            setUint32(sampleRate);
-            setUint32(sampleRate * 2 * numOfChan); // avg. bytes/sec
-            setUint16(numOfChan * 2); // block-align
-            setUint16(16); // 16-bit
+        // ---------- Download Manager app bridge ----------
+        // The app opens this page in a WebView and pushes the selected
+        // video/audio file to it in 256 KB base64 chunks (a single call
+        // cannot safely carry tens of MB). The page reassembles the chunks
+        // and shows the file as "Ready to convert" — the user only taps
+        // Convert. After conversion the MP3 is sent back to the app the
+        // same way, so it lands in Downloads/IDM File/Audio/ (a WebView
+        // cannot download blob: URLs).
+        var APP_CHUNK = 262144; // 256 KB
 
-            // data chunk
-            setUint32(0x61746164); // "data" chunk
-            setUint32(length - pos - 4);
+        function base64ToUint8(b64) {
+            var bin = atob(b64);
+            var len = bin.length;
+            var bytes = new Uint8Array(len);
+            for (var k = 0; k < len; k++) bytes[k] = bin.charCodeAt(k);
+            return bytes;
+        }
 
-            for (let i = 0; i < abuffer.numberOfChannels; i++) {
-                channels.push(abuffer.getChannelData(i));
+        function b64encodeUint8(u8) {
+            var s = '';
+            for (var j = 0; j < u8.length; j += 8192) {
+                s += String.fromCharCode.apply(null, u8.subarray(j, j + 8192));
             }
+            return btoa(s);
+        }
 
-            while (offset < abuffer.length) {
-                for (let i = 0; i < numOfChan; i++) {
-                    let sample = Math.max(-1, Math.min(1, channels[i][offset]));
-                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
-                    view.setInt16(pos, sample, true);
-                    pos += 2;
+        // Called by the app (evaluateJavascript) after the page loads.
+        window.startAppFileLoad = function () {
+            if (typeof AppFile === 'undefined') return;
+            try {
+                var name = AppFile.getFileName();
+                var size = AppFile.getFileSize();
+                var total = AppFile.getTotalChunks();
+                if (!name || total <= 0 || size <= 0) {
+                    showToast('File nahi mili', 'error');
+                    return;
                 }
-                offset++;
+                progressSection.classList.remove('hidden');
+                resultCard.classList.add('hidden');
+                updateProgress(5, 'Song load ho raha hai...');
+                var parts = [];
+                var i = 0;
+                function next() {
+                    if (i >= total) {
+                        var blob = new Blob(parts, { type: 'video/mp4' });
+                        selectedFile = new File([blob], name, { type: 'video/mp4' });
+                        fileNameText.textContent = selectedFile.name;
+                        fileSizeText.textContent = (selectedFile.size / (1024 * 1024)).toFixed(2) + ' MB';
+                        progressSection.classList.add('hidden');
+                        fileInfoBox.classList.remove('hidden');
+                        showToast('Song load ho gaya — Convert dabayein', 'success');
+                        return;
+                    }
+                    try {
+                        parts.push(base64ToUint8(AppFile.getChunk(i)));
+                    } catch (e) {
+                        progressSection.classList.add('hidden');
+                        showToast('File load nahi hui', 'error');
+                        return;
+                    }
+                    i++;
+                    updateProgress(5 + Math.round(85 * i / total), 'Song load ho raha hai... (' + i + '/' + total + ')');
+                    setTimeout(next, 0);
+                }
+                next();
+            } catch (e) {
+                progressSection.classList.add('hidden');
+                showToast('File load nahi hui', 'error');
             }
+        };
 
-            return new Blob([buffer], { type: 'audio/mp3' });
+        // Send the finished MP3 back to the app in 256 KB base64 chunks.
+        function sendMp3ToApp(blob, fileName) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var bytes = new Uint8Array(reader.result);
+                var total = Math.ceil(bytes.length / APP_CHUNK);
+                var i = 0;
+                try { AppFile.beginMp3(total, fileName); } catch (e) { return; }
+                function next() {
+                    if (i >= total) {
+                        try { AppFile.finishMp3(total, fileName); } catch (e) {}
+                        showToast('MP3 app mein save ho gayi', 'success');
+                        return;
+                    }
+                    var slice = bytes.subarray(i * APP_CHUNK, Math.min(bytes.length, (i + 1) * APP_CHUNK));
+                    try {
+                        AppFile.putMp3Chunk(i, b64encodeUint8(slice));
+                    } catch (e) {
+                        showToast('MP3 save nahi hui', 'error');
+                        return;
+                    }
+                    i++;
+                    setTimeout(next, 0);
+                }
+                next();
+            };
+            reader.readAsArrayBuffer(blob);
         }
 
         // Update Progress UI
@@ -537,10 +659,26 @@
         }
 
         // Copy Direct Link to Clipboard
+        // The copied link is a data: URL (data:audio/mpeg;base64,...) that
+        // works anywhere — even after this page closes. A blob: URL only
+        // lives inside this page, so it must never be the copied link.
         function copyDownloadLink() {
             if (!downloadLinkInput.value) return;
+            var link = downloadLinkInput.value;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(link).then(function () {
+                    showToast('Download link copied to clipboard!', 'success');
+                }).catch(function () {
+                    copyDownloadLinkFallback();
+                });
+            } else {
+                copyDownloadLinkFallback();
+            }
+        }
+
+        function copyDownloadLinkFallback() {
             downloadLinkInput.select();
-            
+
             // Standard fallback execCommand for iframe compatibility
             try {
                 document.execCommand('copy');
