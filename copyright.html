@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ur" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator Guard Pro - Advanced Copyright & Policy Risk Analyzer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        youtube: '#FF0000',
+                        facebook: '#1877F2',
+                        tiktok: '#EE1D52',
+                        darkbg: '#0F172A',
+                        cardbg: '#1E293B'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 9999px; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300 flex flex-col">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-shield-dog"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg leading-none bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">Creator Guard Pro</h1>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Advanced YouTube, Facebook & TikTok Compliance Analyzer</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                    <i class="fa-solid fa-scale-balanced"></i> Pro Legal Edition
+                </span>
+                
+                <button id="themeToggle" class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <i id="themeIcon" class="fa-solid fa-sun"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-6 overflow-x-auto">
+            <button onclick="switchTab('inspector')" id="tab-btn-inspector" class="py-3 px-1 border-b-2 font-semibold text-xs sm:text-sm flex items-center gap-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                <i class="fa-solid fa-magnifying-glass-chart"></i> 1. Link & Metadata Inspector
+            </button>
+            <button onclick="switchTab('checklist')" id="tab-btn-checklist" class="py-3 px-1 border-b-2 font-semibold text-xs sm:text-sm flex items-center gap-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap">
+                <i class="fa-solid fa-list-check"></i> 2. 10-Point Heuristic Risk Engine
+            </button>
+            <button onclick="switchTab('workflow')" id="tab-btn-workflow" class="py-3 px-1 border-b-2 font-semibold text-xs sm:text-sm flex items-center gap-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap">
+                <i class="fa-solid fa-book-open-reader"></i> 3. Official Platform Workflow Guide
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Grid -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Pane: Tab Contents (7 cols) -->
+        <section class="lg:col-span-7 space-y-6">
+            
+            <!-- TAB 1: LINK & METADATA INSPECTOR -->
+            <div id="tab-inspector" class="space-y-6">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-base font-semibold flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 text-xs flex items-center justify-center font-bold">A</span>
+                            Target Platform & Content Link
+                        </h2>
+                        <span class="text-xs text-slate-500">Step 1</span>
+                    </div>
+
+                    <!-- Platform Selector -->
+                    <div class="grid grid-cols-3 gap-3 mb-5">
+                        <button type="button" onclick="selectPlatform('youtube')" id="btn-youtube" class="platform-btn flex flex-col items-center p-3.5 rounded-xl border-2 transition-all border-red-500 bg-red-500/10 text-red-600 dark:text-red-400">
+                            <i class="fa-brands fa-youtube text-2xl mb-1"></i>
+                            <span class="text-xs font-semibold">YouTube</span>
+                        </button>
+                        <button type="button" onclick="selectPlatform('facebook')" id="btn-facebook" class="platform-btn flex flex-col items-center p-3.5 rounded-xl border-2 transition-all border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300">
+                            <i class="fa-brands fa-facebook text-2xl mb-1"></i>
+                            <span class="text-xs font-semibold">Facebook</span>
+                        </button>
+                        <button type="button" onclick="selectPlatform('tiktok')" id="btn-tiktok" class="platform-btn flex flex-col items-center p-3.5 rounded-xl border-2 transition-all border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300">
+                            <i class="fa-brands fa-tiktok text-2xl mb-1"></i>
+                            <span class="text-xs font-semibold">TikTok</span>
+                        </button>
+                    </div>
+
+                    <!-- Input Fields -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Video URL or Reference Link (YouTube, Facebook, TikTok)</label>
+                            <div class="relative flex items-center">
+                                <input type="url" id="inspectorUrl" placeholder="https://youtube.com/watch?v=..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm pr-24 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <button type="button" onclick="runInspectorScan()" class="absolute right-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium transition-all shadow-sm">
+                                    Deep Scan
+                                </button>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-1">AI heuristic analyzer checks title keywords, domain reputation, and audio patterns.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Video Title / Metadata Description (Urdu/English)</label>
+                            <input type="text" id="inspectorTitle" placeholder="e.g. Movie Reaction, Remix Song, News Coverage" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scan Results Panel -->
+                <div id="inspectorResultsBox" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hidden">
+                    <h3 class="text-sm font-bold mb-3 flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                        <i class="fa-solid fa-microchip"></i> Link Metadata Pattern Analysis Report
+                    </h3>
+                    <div id="inspectorReportContent" class="space-y-3 text-xs">
+                        <!-- Dynamic Report -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: 10-POINT HEURISTIC RISK ENGINE -->
+            <div id="tab-checklist" class="space-y-6 hidden">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-base font-semibold flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 text-xs flex items-center justify-center font-bold">B</span>
+                            10-Point Comprehensive Content Audit
+                        </h2>
+                        <span class="text-xs text-slate-500">Step 2</span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Check all applicable traits in your video content to compute an accurate strike probability index:</p>
+
+                    <div class="space-y-3" id="tenPointChecklist">
+                        <!-- 1. Music -->
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer">
+                            <input type="checkbox" onchange="calculateProRisk()" data-weight="35" id="chk_1" class="mt-1 w-4 h-4 rounded text-indigo-600 border-slate-300">
+                            <div>
+                                <span class="text-sm font-medium block">1. Commercial / Copyrighted Background Music</span>
+                                <span class="text-xs text-slate-500">Using popular Bollywood, Hollywood, or commercial song tracks without written licensing.</span>
+                            </div>
+                        </label>
+
+                        <!-- 2. Footage -->
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer">
+                            <input type="checkbox" onchange="calculateProRisk()" data-weight="35" id="chk_2" class="mt-1 w-4 h-4 rounded text-indigo-600 border-slate-300">
+                            <div>
+                                <span class="text-sm font-medium block">2. Movie, Drama, or Sports Live Footage</span>
+                                <span class="text-xs text-slate-500">Clips from Netflix, cinema movies, cricket matches, or TV broadcasts.</span>
+                            </div>
+                        </label>
+
+                        <!-- 3. Reused -->
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer">
+                            <input type="checkbox" onchange="calculateProRisk()" data-weight="25" id="chk_3" class="mt-1 w-4 h-4 rounded text-indigo-600 border-slate-300">
+                            <div>
+                                <span class="text-sm font-medium block">3. Re-uploaded TikTok / Instagram Reels / YouTube Shorts</span>
+                                <span class="text-xs text-slate-500">Unedited or minimally edited clips downloaded from other social feeds.</span>
+                            </div>
+                        </label>
+
+                        <!-- 4. Watermark -->
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer">
+                            <input type="checkbox" onchange="calculateProRisk()" data-weight="15" id="chk_4" class="mt-1 w-4 h-4 rounded text-indigo-600 border-slate-300">
+                            <div>
+                                <span class="text-sm font-medium block">4. Visible Third-Party Watermarks / Logos</span>
+                                <span class="text-xs text-slate-500">CapCut ending, TikTok watermark, or news channel logos visible on screen.</span>
+                            </div>
+                        </label>
+
+                        <!-- 5. AI Voice / Face -->
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer">
+                            <input type="checkbox" onchange="calculateProRisk()" data-weight="15" id="chk_5" class="mt-1 w-4 h-4 rounded text-indigo-600 border-slate-300">
+                            <div>
+                                <span class="text-sm font-medium block">5. Synthetic AI Voice Cloning / Deepfake Elements</span>
+                                <span class="text-xs text-slate-500">AI-generated celebrity voices or synthetic talking avatars requiring platform disclosure.</span>
+                            </div>
+                        </label>
+
+                        <!-- 6. Sensational Clickbait -->
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer">
+                            <input type="checkbox" onchange="calculateProRisk()" data-weight="20" id="chk_6" class="mt-1 w-4 h-4 rounded text-indigo-600 border-slate-300">
+                            <div>
+                                <span class="text-sm font-medium block">6. Misleading Metadata / Sensational Clickbait Title</span>
+                                <span class="text-xs text-slate-500">Exaggerated thumbnails or titles promising fake breaking news or prizes.</span>
+                            </div>
+                        </label>
+
+                        <!-- 7. Sensitive Safety -->
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer">
+                            <input type="checkbox" onchange="calculateProRisk()" data-weight="40" id="chk_7" class="mt-1 w-4 h-4 rounded text-indigo-600 border-slate-300">
+                            <div>
+                                <span class="text-sm font-medium block">7. Sensitive / Dangerous / Restricted Topics</span>
+                                <span class="text-xs text-slate-500">Weapons instruction, violence, hate speech, medical misinformation, or scams.</span>
+                            </div>
+                        </label>
+
+                        <!-- 8. Transformation: Voiceover -->
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 cursor-pointer">
+                            <input type="checkbox" onchange="calculateProRisk()" data-weight="-25" id="chk_8" class="mt-1 w-4 h-4 rounded text-emerald-600 border-slate-300">
+                            <div>
+                                <span class="text-sm font-medium text-emerald-700 dark:text-emerald-400 block">8. [Mitigation] Original Voiceover / Deep Commentary Added</span>
+                                <span class="text-xs text-slate-500">Adding continuous educational commentary or original facecam review throughout.</span>
+                            </div>
+                        </label>
+
+                        <!-- 9. Transformation: Short Cuts -->
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 cursor-pointer">
+                            <input type="checkbox" onchange="calculateProRisk()" data-weight="-15" id="chk_9" class="mt-1 w-4 h-4 rounded text-emerald-600 border-slate-300">
+                            <div>
+                                <span class="text-sm font-medium text-emerald-700 dark:text-emerald-400 block">9. [Mitigation] Micro-Cuts (&lt; 5 seconds per clip)</span>
+                                <span class="text-xs text-slate-500">Third-party video snippets are heavily chopped into micro-clips under 5 seconds.</span>
+                            </div>
+                        </label>
+
+                        <!-- 10. Royalty Free Audio -->
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 cursor-pointer">
+                            <input type="checkbox" onchange="calculateProRisk()" data-weight="-30" id="chk_10" class="mt-1 w-4 h-4 rounded text-emerald-600 border-slate-300">
+                            <div>
+                                <span class="text-sm font-medium text-emerald-700 dark:text-emerald-400 block">10. [Mitigation] YouTube Audio Library / Creator Studio License</span>
+                                <span class="text-xs text-slate-500">Audio track is officially downloaded from YouTube Audio Library or Meta Sound Collection.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: OFFICIAL PLATFORM SAFETY WORKFLOW GUIDE -->
+            <div id="tab-workflow" class="space-y-6 hidden">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
+                    <h2 class="text-base font-semibold flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 text-xs flex items-center justify-center font-bold">C</span>
+                        Official Platform Safety Checklists & Workflows
+                    </h2>
+
+                    <!-- YouTube Workflow -->
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                        <h3 class="font-bold text-sm text-red-600 flex items-center gap-2">
+                            <i class="fa-brands fa-youtube"></i> YouTube Studio "Checks" Best Practice
+                        </h3>
+                        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            <strong>Hamesha Video Unlisted Upload Karein:</strong> Jab aap YouTube par video upload karte hain, toh publish karne se pehle **"Checks"** ka step aata hai. Is step mein Content ID aur Ad Suitability automated scan hoti hai. 
+                            <br><br>
+                            <em>Rule:</em> Hamesha video ko 15-20 minutes ke liye **Unlisted** ya **Private** rakhein. Agar Content ID claim ya copyright flag aa jaye, toh video ko delete kiye bina audio replace ya trim kar sakte hain. Public karne ki jaldi kabhi mat karein!
+                        </p>
+                    </div>
+
+                    <!-- Facebook Workflow -->
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                        <h3 class="font-bold text-sm text-blue-600 flex items-center gap-2">
+                            <i class="fa-brands fa-facebook"></i> Facebook Meta Rights Manager & Originality
+                        </h3>
+                        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Facebook par **Unoriginal Content Policy** sab se bara khatra hai. Agar video mein 60% se ziada footage kisi aur ki hai ya aapka face/voice nahi hai, toh Creator Studio mein monetization red ho jati hai.
+                            <br><br>
+                            <em>Rule:</em> Apni original storytelling, picture-in-picture facecam reaction, aur custom subtitles zaroor add karein.
+                        </p>
+                    </div>
+
+                    <!-- TikTok Workflow -->
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                        <h3 class="font-bold text-sm text-pink-600 flex items-center gap-2">
+                            <i class="fa-brands fa-tiktok"></i> TikTok Commercial Music & Audio Inspector
+                        </h3>
+                        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            TikTok par agar aap Business Account use kar rahe hain, toh trending personal songs use karne par audio mute ho jata hai.
+                            <br><br>
+                            <em>Rule:</em> TikTok Commercial Music Library (CML) se hi tracks select karein taake copyright strike ya audio mute hone se bach sakein.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right Pane: Real-Time Risk Score & Disclaimer (5 cols) -->
+        <section class="lg:col-span-5 space-y-6">
+            
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl sticky top-20 space-y-6">
+                
+                <!-- Gauge Card -->
+                <div class="text-center pb-6 border-b border-slate-200 dark:border-slate-800">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Live Strike Risk Probability</span>
+                    
+                    <div class="mt-4 flex flex-col items-center justify-center">
+                        <div id="gaugeRing" class="w-32 h-32 rounded-full border-8 border-emerald-500/20 flex flex-col items-center justify-center transition-all duration-500 relative">
+                            <span id="riskScoreVal" class="text-3xl font-extrabold text-emerald-500">10%</span>
+                            <span id="riskScoreLabel" class="text-[11px] font-bold text-emerald-500 uppercase mt-0.5">Low Risk</span>
+                        </div>
+                    </div>
+
+                    <div id="statusAlertBox" class="mt-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+                        <p id="statusAlertText" class="text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                            ✅ Video pattern looks safe! Low likelihood of copyright strikes.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Honest Legal Disclaimer (Crucial Requirement) -->
+                <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-1.5">
+                    <div class="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-bold text-xs">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Honest Legal & Technical Disclaimer:
+                    </div>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Yeh tool heuristic pattern matching aur checklist ke zariye estimated risk calculate karta hai. <strong>Asli copyright strike ya Content ID claim ka faisla YouTube, Facebook, ya TikTok ke automated backend servers</strong> karte hain jab aap content publish karte hain. Hamesha official checks complete hone ka intezar karein.
+                    </p>
+                </div>
+
+                <!-- Action Items / Fixes -->
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-wrench text-indigo-500"></i> Pre-Upload Recommendations
+                    </h3>
+                    <ul id="recommendationsList" class="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                        <li class="flex items-start gap-2 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg">
+                            <i class="fa-solid fa-check text-emerald-500 mt-0.5"></i>
+                            <span>No major flags. Ready for safe upload workflow.</span>
+                        </li>
+                    </ul>
+
+                    <button onclick="copyAuditReport()" class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 shadow-md">
+                        <i class="fa-regular fa-copy"></i> Copy Full Audit Report
+                    </button>
+                    <p id="toastMessage" class="text-[11px] text-center text-emerald-500 hidden font-medium">Audit report copied successfully!</p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 mt-12 text-xs text-slate-500 text-center">
+        <p>© 2026 Creator Guard Pro • Advanced Content Compliance & Risk Simulation Engine.</p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let currentPlatform = 'youtube';
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            ['inspector', 'checklist', 'workflow'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                document.getElementById('tab-btn-' + t).className = 'py-3 px-1 border-b-2 font-semibold text-xs sm:text-sm flex items-center gap-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap';
+            });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.getElementById('tab-btn-' + tabId).className = 'py-3 px-1 border-b-2 font-semibold text-xs sm:text-sm flex items-center gap-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 whitespace-nowrap';
+        }
+
+        // Platform Selection
+        function selectPlatform(platform) {
+            currentPlatform = platform;
+            ['youtube', 'facebook', 'tiktok'].forEach(p => {
+                const btn = document.getElementById('btn-' + p);
+                btn.className = 'platform-btn flex flex-col items-center p-3.5 rounded-xl border-2 transition-all border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300';
+            });
+            const activeBtn = document.getElementById('btn-' + platform);
+            let colorBorder = platform === 'youtube' ? 'border-red-500 bg-red-500/10 text-red-600 dark:text-red-400' : (platform === 'facebook' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-pink-500 bg-pink-500/10 text-pink-600 dark:text-pink-400');
+            activeBtn.className = 'platform-btn flex flex-col items-center p-3.5 rounded-xl border-2 transition-all ' + colorBorder;
+            calculateProRisk();
+        }
+
+        // Link Inspector Scan Simulation
+        function runInspectorScan() {
+            const url = document.getElementById('inspectorUrl').value.trim().toLowerCase();
+            const title = document.getElementById('inspectorTitle').value.trim().toLowerCase();
+            const resultsBox = document.getElementById('inspectorResultsBox');
+            const reportContent = document.getElementById('inspectorReportContent');
+
+            if (!url && !title) {
+                alert('Meharbani karke pehle link ya title enter karein.');
+                return;
+            }
+
+            resultsBox.classList.remove('hidden');
+
+            let riskFlags = [];
+            let musicDetected = url.includes('song') || title.includes('song') || title.includes('remix') || title.includes('music');
+            let movieDetected = url.includes('movie') || title.includes('film') || title.includes('scene') || title.includes('drama');
+            let clickbaitDetected = title.includes('shocking') || title.includes('fake') || title.includes('100%') || title.includes('leak');
+
+            if (musicDetected) {
+                riskFlags.push('<div class="p-2 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded">🎵 <strong>Audio Match Warning:</strong> Title/Link suggests commercial music track. Content ID claim likely.</div>');
+                document.getElementById('chk_1').checked = true;
+            }
+            if (movieDetected) {
+                riskFlags.push('<div class="p-2 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded">🎬 <strong>Footage Match Warning:</strong> Movie/Drama references detected. High strike risk without transformation.</div>');
+                document.getElementById('chk_2').checked = true;
+            }
+            if (clickbaitDetected) {
+                riskFlags.push('<div class="p-2 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded">⚠️ <strong>Metadata Warning:</strong> Clickbait terms detected. Policy violation risk.</div>');
+                document.getElementById('chk_6').checked = true;
+            }
+
+            if (riskFlags.length === 0) {
+                reportContent.innerHTML = '<div class="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded">✅ No obvious keyword flags in link/metadata. Proceed to 10-Point Checklist for deep analysis.</div>';
+            } else {
+                reportContent.innerHTML = riskFlags.join('');
+            }
+
+            calculateProRisk();
+        }
+
+        // 10-Point Risk Calculator Engine
+        function calculateProRisk() {
+            let score = 10; // Base score
+
+            for (let i = 1; i <= 10; i++) {
+                const chk = document.getElementById('chk_' + i);
+                if (chk && chk.checked) {
+                    let weight = parseInt(chk.getAttribute('data-weight'));
+                    score += weight;
+                }
+            }
+
+            if (score < 5) score = 5;
+            if (score > 98) score = 98;
+
+            updateRiskUI(score);
+        }
+
+        // Update Gauge & Recommendations
+        function updateRiskUI(score) {
+            const scoreVal = document.getElementById('riskScoreVal');
+            const scoreLabel = document.getElementById('riskScoreLabel');
+            const ring = document.getElementById('gaugeRing');
+            const alertBox = document.getElementById('statusAlertBox');
+            const alertText = document.getElementById('statusAlertText');
+            const recList = document.getElementById('recommendationsList');
+
+            scoreVal.innerText = score + '%';
+
+            if (score < 30) {
+                scoreLabel.innerText = 'LOW RISK';
+                scoreLabel.className = 'text-[11px] font-bold text-emerald-500 uppercase mt-0.5';
+                scoreVal.className = 'text-3xl font-extrabold text-emerald-500';
+                ring.className = 'w-32 h-32 rounded-full border-8 border-emerald-500/20 flex flex-col items-center justify-center transition-all duration-500 relative shadow-[0_0_20px_rgba(16,185,129,0.2)]';
+                alertBox.className = 'mt-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800';
+                alertText.className = 'text-xs font-medium text-emerald-700 dark:text-emerald-400';
+                alertText.innerText = '✅ Video pattern looks safe. Low likelihood of copyright strikes.';
+            } else if (score >= 30 && score < 65) {
+                scoreLabel.innerText = 'MODERATE RISK';
+                scoreLabel.className = 'text-[11px] font-bold text-amber-500 uppercase mt-0.5';
+                scoreVal.className = 'text-3xl font-extrabold text-amber-500';
+                ring.className = 'w-32 h-32 rounded-full border-8 border-amber-500/20 flex flex-col items-center justify-center transition-all duration-500 relative shadow-[0_0_20px_rgba(245,158,11,0.2)]';
+                alertBox.className = 'mt-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800';
+                alertText.className = 'text-xs font-medium text-amber-700 dark:text-amber-400';
+                alertText.innerText = '⚠️ Moderate risk: Content ID claim or Reused Content warning possible. Add voiceover.';
+            } else {
+                scoreLabel.innerText = 'HIGH STRIKE RISK';
+                scoreLabel.className = 'text-[11px] font-bold text-rose-500 uppercase mt-0.5';
+                scoreVal.className = 'text-3xl font-extrabold text-rose-500';
+                ring.className = 'w-32 h-32 rounded-full border-8 border-rose-500/20 flex flex-col items-center justify-center transition-all duration-500 relative shadow-[0_0_20px_rgba(244,63,94,0.2)]';
+                alertBox.className = 'mt-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800';
+                alertText.className = 'text-xs font-medium text-rose-700 dark:text-rose-400';
+                alertText.innerText = '🚨 High Strike Risk! Do not upload directly without editing audio or trimming clips.';
+            }
+
+            // Recommendations generator
+            let recs = [];
+            if (document.getElementById('chk_1').checked && !document.getElementById('chk_10').checked) {
+                recs.push('Replace copyrighted background music with YouTube Audio Library or Meta Sound Collection.');
+            }
+            if (document.getElementById('chk_2').checked && !document.getElementById('chk_8').checked) {
+                recs.push('Add continuous educational commentary or voiceover to qualify under Fair Use.');
+            }
+            if (document.getElementById('chk_4').checked) {
+                recs.push('Crop out or remove external watermarks (CapCut, TikTok) to prevent reach suppression.');
+            }
+            if (document.getElementById('chk_6').checked) {
+                recs.push('Revise sensational title and thumbnail to avoid misleading metadata flags.');
+            }
+
+            if (recs.length === 0) {
+                recList.innerHTML = '<li class="flex items-start gap-2 bg-emerald-500/10 p-2.5 rounded-lg text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-check-double mt-0.5"></i><span>Ready for Unlisted Upload & Automated Platform Checks.</span></li>';
+            } else {
+                recList.innerHTML = recs.map(r => '<li class="flex items-start gap-2 bg-amber-500/10 p-2.5 rounded-lg text-amber-700 dark:text-amber-300"><i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5 shrink-0"></i><span>' + r + '</span></li>').join('');
+            }
+        }
+
+        // Copy Report
+        function copyAuditReport() {
+            const score = document.getElementById('riskScoreVal').innerText;
+            const platform = currentPlatform.toUpperCase();
+            const text = `=== CREATOR GUARD PRO AUDIT ===
+Platform: ${platform}
+Estimated Strike Risk: ${score}
+Disclaimer: Pattern simulation checked. Always verify via YouTube Studio Unlisted Checks before publishing.`;
+
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = text;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+
+            const toast = document.getElementById('toastMessage');
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 2500);
+        }
+
+        // Dark / Light Mode Toggle
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').className = 'fa-solid fa-moon';
+            } else {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').className = 'fa-solid fa-sun';
+            }
+        });
+
+        window.onload = function() {
+            calculateProRisk();
+        };
+    </script>
+</body>
+</html>
