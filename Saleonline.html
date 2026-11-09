@@ -523,7 +523,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     </div>
 
     <div class="card">
-      <div class="grid-products" id="gridProducts" style="visibility:hidden">
+      <div class="grid-products" id="gridProducts">
         <div class="gcard" data-cat="Cosmetics"><img src="https://static.markaz.app/pakistan/products/3227-343-MZ3227200005GA-780326001-product-1.webp" alt="Nasal Nose &amp; Ear Hair Remover – Shopper Packing" onclick="showProduct('MZ3227200005GA')"><div class="gbody"><div class="gname" onclick="showProduct('MZ3227200005GA')">Nasal Nose &amp; Ear Hair Remover – Shopper Packing</div><div class="gcode">Code: MZ3227200005GA</div><div class="gprice">PKR 559</div><div class="gdate">2026-11-09</div><button class="cta" type="button" onclick="addToCart('MZ3227200005GA')">🛒 Add to Cart</button></div></div>
         <div class="gcard" data-cat="Cosmetics"><img src="https://static.markaz.app/pakistan/products/3227-241-MZ3227200003GA-780324001-product-1.webp" alt="Moisturizing Spa Gel Socks – Premium Quality (With Box)" onclick="showProduct('MZ3227200003GA')"><div class="gbody"><div class="gname" onclick="showProduct('MZ3227200003GA')">Moisturizing Spa Gel Socks – Premium Quality (With Box)</div><div class="gcode">Code: MZ3227200003GA</div><div class="gprice">PKR 930</div><div class="gdate">2026-11-09</div><button class="cta" type="button" onclick="addToCart('MZ3227200003GA')">🛒 Add to Cart</button></div></div>
         <div class="gcard" data-cat="Women&#x27;s Unstitched"><img src="https://static.markaz.app/pakistan/products/3479-2-MZ3479200011LCDNEESE-780321001-product-1.webp" alt="3 Pcs Women's Unstitched Embroidered Suit" onclick="showProduct('MZ3479200011LCDNEESE')"><div class="gbody"><div class="gname" onclick="showProduct('MZ3479200011LCDNEESE')">3 Pcs Women's Unstitched Embroidered Suit</div><div class="gcode">Code: MZ3479200011LCDNEESE</div><div class="gprice">PKR 3,789</div><div class="gdate">2026-11-09</div><button class="cta" type="button" onclick="addToCart('MZ3479200011LCDNEESE')">🛒 Add to Cart</button></div></div>
@@ -2845,7 +2845,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
       <h3 style="margin-top:0">🛍️ <span id="prodCatTitle">All Products</span> (<span id="prodCatCount">0</span>)</h3>
       <p class="muted">All our products in one place — tap Add to Cart on anything you like, then place your order from the Cart.</p>
       <div class="cat-chips" id="catChips"></div>
-      <div class="grid-products" id="gridAll" style="visibility:hidden">
+      <div class="grid-products" id="gridAll">
         <div class="gcard" data-cat="Cosmetics"><img src="https://static.markaz.app/pakistan/products/3227-343-MZ3227200005GA-780326001-product-1.webp" alt="Nasal Nose &amp; Ear Hair Remover – Shopper Packing" onclick="showProduct('MZ3227200005GA')"><div class="gbody"><div class="gname" onclick="showProduct('MZ3227200005GA')">Nasal Nose &amp; Ear Hair Remover – Shopper Packing</div><div class="gcode">Code: MZ3227200005GA</div><div class="gprice">PKR 559</div><div class="gdate">2026-11-09</div><button class="cta" type="button" onclick="addToCart('MZ3227200005GA')">🛒 Add to Cart</button></div></div>
         <div class="gcard" data-cat="Cosmetics"><img src="https://static.markaz.app/pakistan/products/3227-241-MZ3227200003GA-780324001-product-1.webp" alt="Moisturizing Spa Gel Socks – Premium Quality (With Box)" onclick="showProduct('MZ3227200003GA')"><div class="gbody"><div class="gname" onclick="showProduct('MZ3227200003GA')">Moisturizing Spa Gel Socks – Premium Quality (With Box)</div><div class="gcode">Code: MZ3227200003GA</div><div class="gprice">PKR 930</div><div class="gdate">2026-11-09</div><button class="cta" type="button" onclick="addToCart('MZ3227200003GA')">🛒 Add to Cart</button></div></div>
         <div class="gcard" data-cat="Women&#x27;s Unstitched"><img src="https://static.markaz.app/pakistan/products/3479-2-MZ3479200011LCDNEESE-780321001-product-1.webp" alt="3 Pcs Women's Unstitched Embroidered Suit" onclick="showProduct('MZ3479200011LCDNEESE')"><div class="gbody"><div class="gname" onclick="showProduct('MZ3479200011LCDNEESE')">3 Pcs Women's Unstitched Embroidered Suit</div><div class="gcode">Code: MZ3479200011LCDNEESE</div><div class="gprice">PKR 3,789</div><div class="gdate">2026-11-09</div><button class="cta" type="button" onclick="addToCart('MZ3479200011LCDNEESE')">🛒 Add to Cart</button></div></div>
@@ -5732,7 +5732,6 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
         // Category-first order: us category ke items pehle, phir baqi random.
         var same = [], rest = [];
         cards.forEach(function(card) { if (card.getAttribute('data-cat') === cat) same.push(card); else rest.push(card); });
-        for (var i = rest.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = rest[i]; rest[i] = rest[j]; rest[j] = t; }
         same.concat(rest).forEach(function(card) { card.style.display = ''; grid.appendChild(card); });
         shown = same.length;
       } else {
@@ -6168,13 +6167,7 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
     }).join('');
   }
 
-  // ================= SHUFFLE (mixed products, different on every visit) =================
-  function shuffleGrid(id) {
-    var g = document.getElementById(id); if (!g) return;
-    var cards = Array.prototype.slice.call(g.children);
-    for (var i = cards.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = cards[i]; cards[i] = cards[j]; cards[j] = t; }
-    cards.forEach(function(c) { g.appendChild(c); });
-  }
+  // Shuffle ab har raat 11:59 ko file mein hota hai (nightly shuffle) — page load par koi shuffle nahi.
 
   // ================= STORE EXTRAS: price overrides, offer, notifications =================
   async function dbDelete(path) {
@@ -6271,12 +6264,6 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
   try { var _dc = new URLSearchParams(location.search).get('code'); if (_dc && typeof productByCode === 'function' && productByCode(_dc)) { showProduct(_dc); } } catch (e) {}
   tryAutoLogin();
   setTimeout(trackVisit, 1500); setTimeout(logVisitorVisit, 1500);
-  shuffleGrid('gridProducts');
-  shuffleGrid('gridAll');
-  // Grids shuffle hone tak chhupi thi (ek dafa shuffle, phir stable) — ab dikhao.
-  try { var _gp = document.getElementById('gridProducts'); if (_gp) _gp.style.visibility = 'visible'; var _ga = document.getElementById('gridAll'); if (_ga) _ga.style.visibility = 'visible'; } catch (e) {}
-  // Safety: kuch bhi fail ho to bhi grids 3s mein zaroor dikh jayen.
-  setTimeout(function() { try { var _gp2 = document.getElementById('gridProducts'); if (_gp2) _gp2.style.visibility = 'visible'; var _ga2 = document.getElementById('gridAll'); if (_ga2) _ga2.style.visibility = 'visible'; } catch (e) {} }, 3000);
   initWishButtons();
   var _pc = applyPanelControls();
   if (_pc && typeof _pc.then === 'function') _pc.then(function() { insertHomeAds(); applyStoreExtras(); });
