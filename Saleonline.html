@@ -298,12 +298,12 @@ src="https://www.facebook.com/tr?id=1773421627257672&ev=PageView&noscript=1"
 /></noscript>
 <!-- End Meta Pixel Code -->
 <style>
-/* ===== Pinterest-style masonry product cards (2026-11-04, user request) ===== */
-.grid-products{display:block;column-count:4;column-gap:14px}
-@media (max-width:1100px){.grid-products{column-count:3;column-gap:12px}}
-@media (max-width:760px){.grid-products{column-count:3;column-gap:6px}}
-.grid-products .gcard{break-inside:avoid;margin:0 0 14px;border:none;border-radius:20px;overflow:hidden;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.25)}
-@media (max-width:760px){.grid-products .gcard{margin-bottom:6px;border-radius:16px}}
+/* ===== Row-based product grid (2026-11-09): masonry hataya — column layout mein top row bikri hui (shuffled jaisi) lagti thi; ab products seedhi qatar mein, catalog tartib se dikhte hain ===== */
+.grid-products{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media (max-width:1100px){.grid-products{grid-template-columns:repeat(3,1fr);gap:12px}}
+@media (max-width:760px){.grid-products{grid-template-columns:repeat(3,1fr);gap:6px}}
+.grid-products .gcard{margin:0;border:none;border-radius:20px;overflow:hidden;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+@media (max-width:760px){.grid-products .gcard{border-radius:16px}}
 @media (max-width:760px){#gridProducts,#gridAll{margin-left:-6px;margin-right:-6px}}
 .grid-products .gcard:nth-child(6n+1){background:#43102a}
 .grid-products .gcard:nth-child(6n+2){background:#59301a}
