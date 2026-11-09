@@ -1,226 +1,605 @@
 <!DOCTYPE html>
-<html lang="ur">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strict Content ID & Copyright Policy Pre-Checker</title>
+    <title>FB Copyright & Policy Checker Simulator</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    </style>
-</head>
-<body class="bg-gray-900 text-gray-100 min-h-screen">
-
-    <!-- Header -->
-    <header class="border-b border-gray-800 bg-gray-950 p-4 sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-3 space-x-reverse">
-                <i class="fa-solid fa-shield-cat text-red-500 text-2xl"></i>
-                <h1 class="text-xl font-bold text-white">Strict Copyright & Policy Guard</h1>
-            </div>
-            <span class="bg-red-950 border border-red-800 text-red-300 text-xs px-3 py-1 rounded-full font-semibold">
-                <i class="fa-solid fa-triangle-exclamation mr-1"></i> No False Guarantees
-            </span>
-        </div>
-    </header>
-
-    <main class="max-w-6xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        <!-- Critical Notice -->
-        <div class="lg:col-span-12 bg-amber-950/40 border border-amber-600/40 p-4 rounded-xl flex items-start space-x-3 space-x-reverse">
-            <i class="fa-solid fa-circle-exclamation text-amber-500 text-xl mt-1"></i>
-            <div class="text-sm text-amber-200">
-                <strong class="font-bold text-amber-400">Ahem Wazahat (Reality Check):</strong> 
-                Duniya ka koi bhi browser tool YouTube ya Facebook ke internal Content ID database ko access nahi kar sakta. Koi web page aap ko 100% safe hone ka signal nahi de sakta jab tak video official platform pe upload karke "Checks" stage par verify na ho. Ye tool aap ke content me moujood **pukka strike hone wale elements** ko pakadta hai.
-            </div>
-        </div>
-
-        <!-- Left Input Panel -->
-        <div class="lg:col-span-7 space-y-6">
-
-            <!-- Platform Selector -->
-            <div class="bg-gray-800 border border-gray-700 p-5 rounded-2xl">
-                <label class="block text-sm font-semibold text-gray-300 mb-3">1. Platform Select Karen:</label>
-                <div class="grid grid-cols-3 gap-3">
-                    <button onclick="selectPlatform('youtube')" id="btn-yt" class="platform-btn border-2 border-red-600 bg-red-950/30 p-3 rounded-xl flex flex-col items-center gap-1 transition">
-                        <i class="fa-brands fa-youtube text-red-500 text-2xl"></i>
-                        <span class="text-xs font-bold">YouTube</span>
-                    </button>
-                    <button onclick="selectPlatform('facebook')" id="btn-fb" class="platform-btn border border-gray-700 bg-gray-900 p-3 rounded-xl flex flex-col items-center gap-1 transition opacity-60">
-                        <i class="fa-brands fa-facebook text-blue-500 text-2xl"></i>
-                        <span class="text-xs font-bold">Facebook</span>
-                    </button>
-                    <button onclick="selectPlatform('tiktok')" id="btn-tt" class="platform-btn border border-gray-700 bg-gray-900 p-3 rounded-xl flex flex-col items-center gap-1 transition opacity-60">
-                        <i class="fa-brands fa-tiktok text-pink-500 text-2xl"></i>
-                        <span class="text-xs font-bold">TikTok</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Input Tabs -->
-            <div class="bg-gray-800 border border-gray-700 p-5 rounded-2xl">
-                <label class="block text-sm font-semibold text-gray-300 mb-3">2. Link ya Video Details Inspect Karen:</label>
-                
-                <input type="text" id="videoUrl" placeholder="Video Link yahan paste karen (e.g. TikTok, Insta Reels, YouTube)..." 
-                       class="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-red-500 mb-4">
-
-                <div class="border-t border-gray-700 pt-4">
-                    <span class="text-xs text-gray-400 block mb-2 font-medium">Video Content Questionnaire (Zero False-Positive Scanner):</span>
-                    
-                    <div class="space-y-3">
-                        <label class="flex items-center justify-between p-3 bg-gray-900 rounded-lg text-sm border border-gray-700 cursor-pointer">
-                            <span>Kya isme koi Copyrighted Background Music / Song hai?</span>
-                            <input type="checkbox" id="checkMusic" class="w-4 h-4 accent-red-600">
-                        </label>
-                        <label class="flex items-center justify-between p-3 bg-gray-900 rounded-lg text-sm border border-gray-700 cursor-pointer">
-                            <span>Kya isme Movies, TV Shows, ya Dramas ke clips hain?</span>
-                            <input type="checkbox" id="checkMovies" class="w-4 h-4 accent-red-600">
-                        </label>
-                        <label class="flex items-center justify-between p-3 bg-gray-900 rounded-lg text-sm border border-gray-700 cursor-pointer">
-                            <span>Kya video par kisi aur channel/app ka Watermark (TikTok, Watermark logo) hai?</span>
-                            <input type="checkbox" id="checkWatermark" class="w-4 h-4 accent-red-600">
-                        </label>
-                        <label class="flex items-center justify-between p-3 bg-gray-900 rounded-lg text-sm border border-gray-700 cursor-pointer">
-                            <span>Kya isme aapki apni Voiceover / Chehra (Face) shamil hai?</span>
-                            <input type="checkbox" id="checkOwnVoice" class="w-4 h-4 accent-emerald-600" checked>
-                        </label>
-                    </div>
-                </div>
-
-                <button onclick="runStrictAnalysis()" class="w-full mt-5 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-microscope"></i> Strict Audit Run Karen
-                </button>
-            </div>
-
-        </div>
-
-        <!-- Right Output Panel -->
-        <div class="lg:col-span-5 space-y-6">
-            
-            <div class="bg-gray-800 border border-gray-700 p-5 rounded-2xl">
-                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Audit & Risk Result</h3>
-                
-                <div id="resultBox" class="p-4 rounded-xl border border-gray-700 bg-gray-900 text-center">
-                    <i class="fa-solid fa-magnifying-glass text-gray-500 text-3xl mb-2"></i>
-                    <p class="text-sm text-gray-400">Detail fill karke "Strict Audit Run" par click karen.</p>
-                </div>
-
-                <!-- Platform Safe Workflow -->
-                <div class="mt-6 border-t border-gray-700 pt-4">
-                    <h4 class="text-xs font-bold text-gray-300 uppercase mb-2"><i class="fa-solid fa-lock text-emerald-400 mr-1"></i> Safe Upload Procedure:</h4>
-                    <ol class="text-xs text-gray-400 space-y-2 list-decimal list-inside">
-                        <li>Video ko hamesha <strong>"Unlisted" / "Private"</strong> mod par upload karen.</li>
-                        <li>Platform ke automated <strong>"Checks" (Content ID)</strong> ko complete hone me 10-15 minute den.</li>
-                        <li>Agar wahan "No issues found" aaye tab hi video ko <strong>Public</strong> karen.</li>
-                        <li>Kisi bhi 3rd-party site ke "Safe" kehne par sidha Public upload mat karen.</li>
-                    </ol>
-                </div>
-            </div>
-
-        </div>
-
-    </main>
-
     <script>
-        let currentPlatform = 'youtube';
-
-        function selectPlatform(platform) {
-            currentPlatform = platform;
-            document.querySelectorAll('.platform-btn').forEach(btn => {
-                btn.classList.remove('border-red-600', 'bg-red-950/30');
-                btn.classList.add('border-gray-700', 'bg-gray-900', 'opacity-60');
-            });
-            
-            let activeBtn = document.getElementById(platform === 'youtube' ? 'btn-yt' : platform === 'facebook' ? 'btn-fb' : 'btn-tt');
-            activeBtn.classList.remove('border-gray-700', 'bg-gray-900', 'opacity-60');
-            activeBtn.classList.add('border-red-600', 'bg-red-950/30');
-        }
-
-        function runStrictAnalysis() {
-            const url = document.getElementById('videoUrl').value.trim();
-            const hasMusic = document.getElementById('checkMusic').checked;
-            const hasMovies = document.getElementById('checkMovies').checked;
-            const hasWatermark = document.getElementById('checkWatermark').checked;
-            const hasOwnVoice = document.getElementById('checkOwnVoice').checked;
-            
-            const resultBox = document.getElementById('resultBox');
-
-            let riskScore = 0; // 0 (Low), >30 (Medium), >60 (High)
-            let reasons = [];
-
-            // Pattern checking from URL
-            if (url) {
-                if (url.includes('tiktok.com') || url.includes('instagram.com') || url.includes('facebook.com')) {
-                    if (currentPlatform === 'youtube') {
-                        riskScore += 40;
-                        reasons.push("Doosre social platforms se direct uthai gayi video par Repetitive/Reused Content ka issue aayega.");
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        fb: {
+                            blue: '#1877F2',
+                            darkblue: '#0e56b3',
+                            dark: '#18191a',
+                            card: '#242526',
+                            border: '#393a3b',
+                            input: '#3a3b3c'
+                        }
                     }
                 }
             }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #18191a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3a3b3c;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4e4f50;
+        }
+    </style>
+</head>
+<body class="bg-[#18191a] text-gray-100 min-h-screen flex flex-col justify-between selection:bg-blue-600 selection:text-white">
 
-            if (hasMovies) {
-                riskScore += 50;
-                reasons.push("Movies/Dramas ke clips par automated Content ID / Rights Manager ka **Direct Copyright Strike** aata hai.");
-            }
+    <!-- Header Navbar -->
+    <header class="bg-[#242526] border-b border-[#393a3b] sticky top-0 z-50 px-4 py-3 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 text-white p-2.5 rounded-xl shadow-lg flex items-center justify-center">
+                    <i class="fa-solid fa-shield-halved text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        FB Copyright & Policy Shield 
+                        <span class="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-medium">Simulator</span>
+                    </h1>
+                    <p class="text-xs text-gray-400">Check Facebook Rights Manager & Community Standards before going live/uploading</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-gray-300 bg-[#3a3b3c] px-3 py-1.5 rounded-lg border border-[#4e4f50]">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Rights Manager Engine v4.2 Active</span>
+            </div>
+        </div>
+    </header>
 
-            if (hasMusic) {
-                riskScore += 40;
-                reasons.push("Commercial songs/music par Audio Claim ya Block ka warning high hota hai.");
-            }
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto w-full p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+        
+        <!-- Left Column: Input Form (5 cols) -->
+        <section class="lg:col-span-5 bg-[#242526] border border-[#393a3b] rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-[#393a3b]">
+                    <h2 class="text-md font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-blue-500"></i> Video & Stream Details
+                    </h2>
+                    <button onclick="fillSampleData('freefire')" class="text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-md transition font-medium">
+                        <i class="fa-solid fa-bolt mr-1"></i> Load Free Fire Sample
+                    </button>
+                </div>
 
-            if (hasWatermark) {
-                riskScore += 30;
-                reasons.push("Watermarked video par platform reach zero kar deta hai aur Reused policy hit hoti hai.");
-            }
-
-            if (!hasOwnVoice) {
-                riskScore += 25;
-                reasons.push("Bina apni awaaz/commentary ke video ko 'Unoriginal Content' declare kar diya jata hai.");
-            }
-
-            // Output Rendering
-            let riskTitle = "";
-            let riskClass = "";
-
-            if (riskScore >= 60) {
-                riskTitle = "HIGH RISK: STRIKE / BLOCK PROBABLE";
-                riskClass = "bg-red-950/60 border-red-600 text-red-200";
-            } else if (riskScore >= 30) {
-                riskTitle = "MEDIUM RISK: REUSED / CLAIM WARNING";
-                riskClass = "bg-amber-950/60 border-amber-600 text-amber-200";
-            } else {
-                riskTitle = "NEUTRAL / PRE-CHECK REQUIRED";
-                riskClass = "bg-blue-950/60 border-blue-600 text-blue-200";
-            }
-
-            let html = `
-                <div class="p-4 rounded-xl border ${riskClass} text-left space-y-3">
-                    <div class="font-bold text-sm uppercase flex items-center justify-between">
-                        <span>${riskTitle}</span>
-                        <span class="text-xs px-2 py-1 bg-black/40 rounded">Score: ${riskScore}/100</span>
+                <form id="checkerForm" onsubmit="handleAnalyze(event)" class="space-y-4">
+                    <!-- Category Selection -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1.5">Content Category / Category Select</label>
+                        <select id="contentCategory" class="w-full bg-[#3a3b3c] border border-[#4e4f50] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition">
+                            <option value="gaming">🎮 Gaming Live Stream / Gameplay (e.g., Free Fire, PUBG)</option>
+                            <option value="movie">🎬 Movie / Drama Clip (High Copyright Risk)</option>
+                            <option value="music">🎵 Music / Song Cover or Remix</option>
+                            <option value="vlog">📹 Personal Vlog / Educational / Tech</option>
+                            <option value="reels">📱 Short Reel / TikTok Repost (Unoriginal Risk)</option>
+                        </select>
                     </div>
-                    <hr class="border-white/10">
-                    <ul class="text-xs space-y-1.5 list-disc list-inside">
-            `;
 
-            if (reasons.length > 0) {
-                reasons.forEach(r => {
-                    html += `<li>${r}</li>`;
-                });
-            } else {
-                html += `<li>Koi bada red-flag nahi mila, lekin <strong>Audio/Music verification sirf Platform Upload Checks me ho sakti hai.</strong></li>`;
-            }
+                    <!-- Video Title -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1.5">Video Title / Stream Title</label>
+                        <input type="text" id="videoTitle" placeholder="e.g., Free Fire Live Custom Room Squad Gameplay 🔥" required
+                            class="w-full bg-[#3a3b3c] border border-[#4e4f50] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition">
+                    </div>
 
-            html += `
-                    </ul>
-                    <div class="pt-2 text-xs font-semibold text-yellow-300">
-                        <i class="fa-solid fa-lightbulb mr-1"></i> Recommendation: Video ko Unlisted upload karke 15 mins wait karen.
+                    <!-- Tags / Keywords / Music Info -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1.5">Keywords / Background Music / Tags (Comma separated)</label>
+                        <input type="text" id="videoTags" placeholder="e.g., free fire, ncs music, romantic song, pubg mobile"
+                            class="w-full bg-[#3a3b3c] border border-[#4e4f50] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition">
+                        <p class="text-[11px] text-gray-400 mt-1">Hint: Mention songs or movie names if any are included in background.</p>
+                    </div>
+
+                    <!-- Video Link or File Name -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1.5">Video Link (YouTube/FB) or File Name</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 text-sm">
+                                <i class="fa-solid fa-link"></i>
+                            </span>
+                            <input type="text" id="videoSource" placeholder="https://youtube.com/... or gameplay_v1.mp4"
+                                class="w-full bg-[#3a3b3c] border border-[#4e4f50] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition">
+                        </div>
+                    </div>
+
+                    <!-- Description / Transcript Excerpt -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1.5">Description / Audio Dialogues (Optional)</label>
+                        <textarea id="videoDesc" rows="2" placeholder="Write description or paste text/dialogue details..."
+                            class="w-full bg-[#3a3b3c] border border-[#4e4f50] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition resize-none"></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="analyzeBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-medium py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Analyze Copyright & Policy Risk</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Quick Tips Box (Urdu/Roman Urdu help) -->
+            <div class="mt-5 bg-[#3a3b3c]/50 border border-[#393a3b] rounded-xl p-3.5">
+                <div class="flex items-start gap-2.5">
+                    <i class="fa-solid fa-circle-info text-blue-400 mt-0.5"></i>
+                    <div class="text-xs space-y-1 text-gray-300">
+                        <p class="font-semibold text-white">💡 Pro Tip (Roman Urdu):</p>
+                        <p>Free Fire gaming streams bilkul safe hain agar background mein copyrighted songs na chalayein. NCS (NoCopyrightSounds) use karein taaki mute na ho!</p>
                     </div>
                 </div>
-            `;
+            </div>
+        </section>
 
-            resultBox.innerHTML = html;
+        <!-- Right Column: Results & History (7 cols) -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
+            
+            <!-- Scanning Progress Box (Hidden by default) -->
+            <div id="scanningCard" class="hidden bg-[#242526] border border-[#393a3b] rounded-2xl p-6 shadow-xl flex flex-col items-center justify-center text-center py-12">
+                <div class="relative w-16 h-16 mb-4">
+                    <div class="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
+                    <div class="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-blue-400">
+                        <i class="fa-solid fa-radar text-xl animate-pulse"></i>
+                    </div>
+                </div>
+                <h3 class="text-base font-semibold text-white mb-1" id="scanStatusTitle">Scanning Video Content...</h3>
+                <p class="text-xs text-gray-400 mb-4" id="scanStatusSubtitle">Checking Facebook Rights Manager database & audio fingerprinting</p>
+                <div class="w-full max-w-md bg-[#3a3b3c] rounded-full h-2.5 overflow-hidden">
+                    <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full w-0 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- Results Card -->
+            <div id="resultsCard" class="bg-[#242526] border border-[#393a3b] rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-[#393a3b] mb-4">
+                        <h2 class="text-md font-semibold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-emerald-400"></i> Diagnostic Results Report
+                        </h2>
+                        <span id="timestampBadge" class="text-xs text-gray-400">Awaiting Analysis...</span>
+                    </div>
+
+                    <!-- Initial Placeholder State -->
+                    <div id="emptyResultState" class="py-12 text-center flex flex-col items-center justify-center">
+                        <div class="w-14 h-14 bg-[#3a3b3c] rounded-2xl flex items-center justify-center text-gray-400 mb-3 text-2xl">
+                            <i class="fa-solid fa-file-shield"></i>
+                        </div>
+                        <h3 class="text-sm font-medium text-gray-300 mb-1">No analysis performed yet</h3>
+                        <p class="text-xs text-gray-500 max-w-xs">Fill in your video details on the left and click 'Analyze Copyright & Policy Risk' to see detailed Facebook compliance breakdown.</p>
+                    </div>
+
+                    <!-- Active Results Content (Hidden initially) -->
+                    <div id="activeResultContent" class="hidden space-y-5">
+                        
+                        <!-- Overall Risk Banner -->
+                        <div id="riskBanner" class="p-4 rounded-xl border flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <div id="riskIconBox" class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-md">
+                                    <i id="riskIcon" class="fa-solid fa-check"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs uppercase tracking-wider font-bold opacity-80" id="riskLevelSubtitle">Overall Status</div>
+                                    <h3 id="riskTitle" class="text-base font-bold text-white">Safe to Stream / Upload</h3>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400">Safety Score</div>
+                                <div id="scoreDisplay" class="text-2xl font-black text-emerald-400">95%</div>
+                            </div>
+                        </div>
+
+                        <!-- Policy Breakdown Grid -->
+                        <div>
+                            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5">Facebook Policy Breakdown</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                
+                                <!-- Audio / Music Check -->
+                                <div class="bg-[#3a3b3c]/60 border border-[#4e4f50] rounded-xl p-3 flex items-start gap-3">
+                                    <div id="audioCheckIcon" class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs shrink-0 mt-0.5">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-xs font-semibold text-white">Audio / Music Rights</h5>
+                                        <p id="audioCheckDesc" class="text-[11px] text-gray-300 mt-0.5">No copyrighted audio fingerprint detected.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Visual / Video Match -->
+                                <div class="bg-[#3a3b3c]/60 border border-[#4e4f50] rounded-xl p-3 flex items-start gap-3">
+                                    <div id="visualCheckIcon" class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs shrink-0 mt-0.5">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-xs font-semibold text-white">Visual / Video Match</h5>
+                                        <p id="visualCheckDesc" class="text-[11px] text-gray-300 mt-0.5">Original or allowed game footage.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Unoriginal Content Check -->
+                                <div class="bg-[#3a3b3c]/60 border border-[#4e4f50] rounded-xl p-3 flex items-start gap-3">
+                                    <div id="reuseCheckIcon" class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs shrink-0 mt-0.5">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-xs font-semibold text-white">Unoriginal Content Check</h5>
+                                        <p id="reuseCheckDesc" class="text-[11px] text-gray-300 mt-0.5">Unique commentary & stream context verified.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Community Standards -->
+                                <div class="bg-[#3a3b3c]/60 border border-[#4e4f50] rounded-xl p-3 flex items-start gap-3">
+                                    <div id="standardsCheckIcon" class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs shrink-0 mt-0.5">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-xs font-semibold text-white">Community Standards</h5>
+                                        <p id="standardsCheckDesc" class="text-[11px] text-gray-300 mt-0.5">No violent or restricted policy violations.</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Actionable Recommendations & Warnings -->
+                        <div class="bg-[#3a3b3c] border border-[#4e4f50] rounded-xl p-4">
+                            <h4 class="text-xs font-semibold text-white mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-blue-400"></i> Actionable Recommendations (Sifarishat)
+                            </h4>
+                            <ul id="recommendationList" class="space-y-1.5 text-xs text-gray-300">
+                                <!-- Populated dynamically -->
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Log Section -->
+            <div class="bg-[#242526] border border-[#393a3b] rounded-2xl p-5 shadow-xl">
+                <div class="flex items-center justify-between mb-3 pb-2 border-b border-[#393a3b]">
+                    <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-blue-400"></i> Recent Checked History (LocalStorage)
+                    </h3>
+                    <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-red-300 transition flex items-center gap-1 font-medium">
+                        <i class="fa-solid fa-trash-can"></i> Clear History
+                    </button>
+                </div>
+                <div id="historyContainer" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    <p class="text-xs text-gray-500 text-center py-4">No recent checks recorded in browser storage.</p>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#242526] border-t border-[#393a3b] py-4 px-6 text-center text-xs text-gray-400">
+        <p>FB Copyright & Policy Shield Simulator &bull; Designed for Content Creators & Streamers to test safety before Facebook live streaming.</p>
+    </footer>
+
+    <!-- Notification Message Modal / Box -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 bg-gray-900 border border-gray-700 text-white px-4 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
+        <div id="toastIcon" class="text-emerald-400 text-lg">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+            <h5 id="toastTitle" class="text-xs font-bold">Success</h5>
+            <p id="toastMessage" class="text-[11px] text-gray-300">Action completed successfully.</p>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // Load history on startup
+        document.addEventListener('DOMContentLoaded', () => {
+            renderHistory();
+        });
+
+        // Sample data loader for Free Fire or Movie clip test
+        function fillSampleData(type) {
+            if (type === 'freefire') {
+                document.getElementById('contentCategory').value = 'gaming';
+                document.getElementById('videoTitle').value = 'Garena Free Fire Live - Grandmaster Rank Push Squad Match 🔥';
+                document.getElementById('videoTags').value = 'free fire, ncs, gaming live, esports, battle royale';
+                document.getElementById('videoSource').value = 'https://fb.watch/free_fire_live_stream_01';
+                document.getElementById('videoDesc').value = 'Playing Free Fire with squad. Using NoCopyrightSounds background music.';
+                showToast('Sample Loaded', 'Free Fire gaming sample loaded successfully.', 'success');
+            }
+        }
+
+        // Handle Form Submission & Simulation Analysis
+        function handleAnalyze(e) {
+            e.preventDefault();
+            
+            const category = document.getElementById('contentCategory').value;
+            const title = document.getElementById('videoTitle').value.trim();
+            const tags = document.getElementById('videoTags').value.toLowerCase();
+            const source = document.getElementById('videoSource').value.trim();
+            const desc = document.getElementById('videoDesc').value.toLowerCase();
+
+            // Hide results & show progress bar
+            document.getElementById('emptyResultState').classList.add('hidden');
+            document.getElementById('activeResultContent').classList.add('hidden');
+            document.getElementById('scanningCard').classList.remove('hidden');
+
+            // Simulate progress steps
+            let progress = 0;
+            const progressBar = document.getElementById('progressBar');
+            const scanStatusTitle = document.getElementById('scanStatusTitle');
+            const scanStatusSubtitle = document.getElementById('scanStatusSubtitle');
+
+            const steps = [
+                { p: 25, title: "Parsing Audio Fingerprints...", sub: "Comparing against Audible Magic & FB Rights Manager database..." },
+                { p: 50, title: "Scanning Visual Frames...", sub: "Checking video hash against copyrighted movie and TV show segments..." },
+                { p: 75, title: "Evaluating Community Standards...", sub: "Analyzing descriptions for policy compliance and safety..." },
+                { p: 100, title: "Generating Diagnostic Report...", sub: "Compiling risk score and actionable recommendations..." }
+            ];
+
+            let stepIdx = 0;
+            const interval = setInterval(() => {
+                if (stepIdx < steps.length) {
+                    progressBar.style.width = steps[stepIdx].p + '%';
+                    scanStatusTitle.innerText = steps[stepIdx].title;
+                    scanStatusSubtitle.innerText = steps[stepIdx].sub;
+                    stepIdx++;
+                } else {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('scanningCard').classList.add('hidden');
+                        processResults(category, title, tags, source, desc);
+                    }, 400);
+                }
+            }, 450);
+        }
+
+        // Core algorithm to calculate risk based on keywords & category
+        function processResults(category, title, tags, source, desc) {
+            const combinedText = (title + " " + tags + " " + desc).toLowerCase();
+            
+            let riskScore = 95;
+            let riskLevel = 'safe'; // safe, moderate, high
+            let audioStatus = { status: 'safe', msg: 'No copyrighted audio fingerprint matched.' };
+            let visualStatus = { status: 'safe', msg: 'Original or allowed game footage detected.' };
+            let reuseStatus = { status: 'safe', msg: 'Unique commentary and context verified.' };
+            let standardsStatus = { status: 'safe', msg: 'No community standard violations found.' };
+            let recommendations = [];
+
+            // Check for Movie / Copyright keywords
+            const movieKeywords = ['movie', 'full movie', 'drama', 'episode', 'netflix', 'bollywoood', 'hollywood', 'scene', 'trailer clip'];
+            const musicKeywords = ['remix', 'song', 'audio track', 'copyright song', 't-series', 'gaana', 'mp3'];
+            const gamingKeywords = ['free fire', 'pubg', 'gta', 'valorant', 'minecraft', 'gaming', 'gameplay', 'stream', 'esports'];
+            const badMusicKeywords = ['ncs' , 'copyright free'];
+
+            let hasMovieKeyword = movieKeywords.some(kw => combinedText.includes(kw));
+            let hasMusicKeyword = musicKeywords.some(kw => combinedText.includes(kw));
+            let hasGamingKeyword = gamingKeywords.some(kw => combinedText.includes(kw));
+            let hasNoCopyrightMention = badMusicKeywords.some(kw => combinedText.includes(kw));
+
+            if (category === 'movie' || hasMovieKeyword) {
+                riskScore = 20;
+                riskLevel = 'high';
+                audioStatus = { status: 'danger', msg: 'High risk of audio/visual block by Rights Manager.' };
+                visualStatus = { status: 'danger', msg: 'Copyrighted movie/TV scene match detected.' };
+                reuseStatus = { status: 'danger', msg: 'Unoriginal content flag: Re-uploaded movie clip.' };
+                recommendations.push('❌ Do not upload this clip. Facebook will take it down or restrict monetization.');
+                recommendations.push('💡 Add extensive transformation, critique, or reaction commentary if used under Fair Use.');
+            } else if (category === 'music' || hasMusicKeyword) {
+                if (hasNoCopyrightMention) {
+                    riskScore = 75;
+                    riskLevel = 'moderate';
+                    audioStatus = { status: 'safe', msg: 'NCS / Copyright-free music tag recognized.' };
+                    recommendations.push('⚠️ Ensure you credit the music author in your description.');
+                    recommendations.push('✅ Safe to stream as long as it is certified NCS music.');
+                } else {
+                    riskScore = 35;
+                    riskLevel = 'high';
+                    audioStatus = { status: 'danger', msg: 'Commercial song detected in metadata or tags.' };
+                    recommendations.push('❌ Remove background commercial music immediately to avoid stream muting.');
+                    recommendations.push('💡 Use Facebook Sound Collection or NoCopyrightSounds (NCS) instead.');
+                }
+            } else if (category === 'gaming' || hasGamingKeyword) {
+                if (hasNoCopyrightMention || tags.includes('ncs') || tags.includes('free fire') || tags.includes('pubg')) {
+                    riskScore = 95;
+                    riskLevel = 'safe';
+                    audioStatus = { status: 'safe', msg: 'Game sounds & safe background audio detected.' };
+                    visualStatus = { status: 'safe', msg: 'Garena Free Fire / Gaming content is officially supported.' };
+                    recommendations.push('✅ 100% Safe to stream and upload on Facebook Gaming.');
+                    recommendations.push('💡 Keep your microphone unmuted for live commentary to qualify for Facebook Level Up program.');
+                } else {
+                    riskScore = 80;
+                    riskLevel = 'safe';
+                    audioStatus = { status: 'moderate', msg: 'Ensure no copyrighted songs are playing in the game lobby.' };
+                    recommendations.push('✅ Great for gaming live stream! Just make sure in-game radio music is turned off.');
+                }
+            } else {
+                // Default general check
+                riskScore = 90;
+                riskLevel = 'safe';
+                recommendations.push('✅ Your video looks clean and compliant with Facebook policies.');
+                recommendations.push('💡 Remember to keep engagement high with viewers during the stream.');
+            }
+
+            // Render Results to DOM
+            renderReport(riskScore, riskLevel, audioStatus, visualStatus, reuseStatus, standardsStatus, recommendations, title, category);
+            
+            // Save to LocalStorage History
+            saveHistoryItem({
+                title: title || 'Untitled Video',
+                category: category,
+                score: riskScore,
+                level: riskLevel,
+                date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString()
+            });
+
+            showToast('Analysis Complete', 'Diagnostic report generated successfully.', 'success');
+        }
+
+        // Render Report Elements
+        function renderReport(score, level, audio, visual, reuse, standards, recs, title, category) {
+            document.getElementById('activeResultContent').classList.remove('hidden');
+            document.getElementById('timestampBadge').innerText = 'Checked at ' + new Date().toLocaleTimeString();
+            document.getElementById('scoreDisplay').innerText = score + '%';
+
+            const banner = document.getElementById('riskBanner');
+            const iconBox = document.getElementById('riskIconBox');
+            const riskIcon = document.getElementById('riskIcon');
+            const riskTitle = document.getElementById('riskTitle');
+            const riskLevelSubtitle = document.getElementById('riskLevelSubtitle');
+
+            // Set styling based on risk level
+            if (level === 'safe') {
+                banner.className = "p-4 rounded-xl border bg-emerald-950/30 border-emerald-500/30 flex items-center justify-between gap-4";
+                iconBox.className = "w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl shadow-md border border-emerald-500/30";
+                riskIcon.className = "fa-solid fa-shield-check text-emerald-400";
+                riskTitle.innerText = "Safe to Stream / Upload (Be-fikr ho kar upload karein)";
+                riskTitle.className = "text-base font-bold text-emerald-300";
+                riskLevelSubtitle.innerText = "Overall Status: Low Risk";
+                document.getElementById('scoreDisplay').className = "text-2xl font-black text-emerald-400";
+            } else if (level === 'moderate') {
+                banner.className = "p-4 rounded-xl border bg-amber-950/30 border-amber-500/30 flex items-center justify-between gap-4";
+                iconBox.className = "w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl shadow-md border border-amber-500/30";
+                riskIcon.className = "fa-solid fa-triangle-exclamation text-amber-400";
+                riskTitle.innerText = "Moderate Risk (Thori Ehtiyat Lazmi Hai)";
+                riskTitle.className = "text-base font-bold text-amber-300";
+                riskLevelSubtitle.innerText = "Overall Status: Warning";
+                document.getElementById('scoreDisplay').className = "text-2xl font-black text-amber-400";
+            } else {
+                banner.className = "p-4 rounded-xl border bg-red-950/30 border-red-500/30 flex items-center justify-between gap-4";
+                iconBox.className = "w-12 h-12 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center text-xl shadow-md border border-red-500/30";
+                riskIcon.className = "fa-solid fa-ban text-red-400";
+                riskTitle.innerText = "High Risk / Copyright Warning (Copyright Aa Sakta Hai)";
+                riskTitle.className = "text-base font-bold text-red-300";
+                riskLevelSubtitle.innerText = "Overall Status: High Risk Strike";
+                document.getElementById('scoreDisplay').className = "text-2xl font-black text-red-400";
+            }
+
+            // Populate Check Items
+            setCheckCard('audioCheckIcon', 'audioCheckDesc', audio);
+            setCheckCard('visualCheckIcon', 'visualCheckDesc', visual);
+            setCheckCard('reuseCheckIcon', 'reuseCheckDesc', reuse);
+            setCheckCard('standardsCheckIcon', 'standardsCheckDesc', standards);
+
+            // Populate Recommendations
+            const recList = document.getElementById('recommendationList');
+            recList.innerHTML = '';
+            recs.forEach(rec => {
+                const li = document.createElement('li');
+                li.className = "flex items-start gap-2";
+                li.innerHTML = `<span class="text-blue-400 mt-0.5">•</span> <span>${rec}</span>`;
+                recList.appendChild(li);
+            });
+        }
+
+        function setCheckCard(iconId, descId, data) {
+            const iconBox = document.getElementById(iconId);
+            const descElem = document.getElementById(descId);
+            descElem.innerText = data.msg;
+
+            if (data.status === 'safe') {
+                iconBox.className = "w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs shrink-0 mt-0.5";
+                iconBox.innerHTML = '<i class="fa-solid fa-check"></i>';
+            } else if (data.status === 'moderate') {
+                iconBox.className = "w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs shrink-0 mt-0.5";
+                iconBox.innerHTML = '<i class="fa-solid fa-exclamation"></i>';
+            } else {
+                iconBox.className = "w-7 h-7 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center text-xs shrink-0 mt-0.5";
+                iconBox.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            }
+        }
+
+        // LocalStorage History Management
+        function saveHistoryItem(item) {
+            let history = JSON.parse(localStorage.getItem('fb_checker_history') || '[]');
+            history.unshift(item);
+            if (history.length > 10) history = history.slice(0, 10); // Keep last 10
+            localStorage.setItem('fb_checker_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            const history = JSON.parse(localStorage.getItem('fb_checker_history') || '[]');
+
+            if (history.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">No recent checks recorded in browser storage.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            history.forEach(h => {
+                let badgeColor = h.level === 'safe' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : (h.level === 'moderate' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30');
+                
+                const div = document.createElement('div');
+                div.className = "bg-[#3a3b3c]/50 border border-[#4e4f50] rounded-xl p-2.5 flex items-center justify-between text-xs";
+                div.innerHTML = `
+                    <div class="truncate pr-2">
+                        <div class="font-semibold text-white truncate">${escapeHtml(h.title)}</div>
+                        <div class="text-[10px] text-gray-400 uppercase tracking-wider">${h.category} &bull; ${h.date}</div>
+                    </div>
+                    <div class="shrink-0">
+                        <span class="px-2 py-0.5 rounded-md border font-bold text-[11px] ${badgeColor}">${h.score}% Safe</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('fb_checker_history');
+            renderHistory();
+            showToast('History Cleared', 'All previous check logs have been removed.', 'info');
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // Toast Notification Helper
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('toastNotification');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastTitle.innerText = title;
+            toastMessage.innerText = message;
+
+            if (type === 'success') {
+                toastIcon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+            } else {
+                toastIcon.innerHTML = '<i class="fa-solid fa-circle-info text-blue-400"></i>';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
         }
     </script>
 </body>
