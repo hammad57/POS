@@ -361,7 +361,7 @@ const DATA = {
     "2026-10": { allZero: true },
     "2026-11": {
       "2026-11-02": { count: 1, views: 64, likes: 0, comments: 0, videos: [
-        { time: "03:42 PM", label: "Sale Online promo video — 6 products", url: "https://facebook.com/reel/1434308078865148/", views: 64, likes: 0, comments: 0 }
+        { time: "03:42 PM", label: "Sale Online promo video — 6 products", url: "https://facebook.com/reel/1434308078865148/", views: 64, uv: 61, likes: 0, comments: 0 }
       ]}
     }
   }
@@ -445,8 +445,8 @@ function render() {
 
   document.getElementById("datanote").textContent =
     view === "profile"
-      ? "Data: Areesha Jabeen profile (Facebook se, 8 Nov 2026 subah 02:41 PKT). Views: profile posts ke liye Facebook views ka figure nahi deta, is liye '–' dikhaya gaya hai. Likes = kul reactions (Facebook ne Like / Love / Wow alag se nahi bataya). Facebook ne sirf 20 taaza posts dikhayi — is liye 1–3 Nov aur poora October maloom nahi ho saka, woh din '?' se dikhaye gaye hain."
-      : "Data: Sale Online Page ki poori 90-din ki post list (Facebook se, 8 Nov 2026 subah 02:41 PKT). 2 Nov wali video ke 64 views Facebook par dikhaya gaya figure hai. Page par rozana 5 photo posts hoti hain — videos sirf 1 hai.";
+      ? "Data: Areesha Jabeen profile (Facebook se, 10 Nov 2026). Views: profile posts ke liye Facebook views ka figure nahi deta, is liye '–' dikhaya gaya hai. Watch time bhi is connection se nahi milta — har reel ke views aur watch time Facebook app mein us reel ko khol kar dekhe ja sakte hain. Likes = kul reactions (Facebook ne Like / Love / Wow alag se nahi bataya). Facebook ne sirf 20 taaza posts dikhayi — is liye 1–3 Nov aur poora October maloom nahi ho saka, woh din '?' se dikhaye gaye hain."
+      : "Data: Sale Online Page ki poori 90-din ki post list (Facebook se, 10 Nov 2026). 2 Nov wali video ke 64 views (61 unique viewers) Facebook ka figure hai. Watch time is connection se nahi milta — woh Meta Business Suite (Insights → Content) mein dekha ja sakta hai. Page par rozana 5 photo posts hoti hain — videos sirf 1 hai.";
 
   renderNotes();
   if (selected) showDetail(selected);
@@ -482,7 +482,7 @@ function showDetail(ds) {
   } else {
     h += '<p class="dsum">Kul <b>' + info.count + (info.count === 1 ? ' video' : ' videos') + '</b> &nbsp;•&nbsp; 👁️ Views: <b>' + fmtViews(info.views) + '</b> &nbsp;•&nbsp; 👍 Likes: <b>' + (info.likes || 0) + '</b> &nbsp;•&nbsp; 💬 Comments: <b>' + (info.comments || 0) + '</b></p>';
     info.videos.forEach(v => {
-      h += '<div class="v"><div class="t">' + v.label + '<small>' + v.time + '</small></div><div class="vstats"><span>👁️ ' + fmtViews(v.views) + '</span><span>👍 ' + (v.likes || 0) + '</span><span>💬 ' + (v.comments || 0) + '</span></div><a href="' + v.url + '" target="_blank">Open ↗</a></div>';
+      h += '<div class="v"><div class="t">' + v.label + '<small>' + v.time + '</small></div><div class="vstats"><span>👁️ ' + fmtViews(v.views) + '</span>' + (v.uv ? '<span title="Unique viewers">👥 ' + v.uv + '</span>' : '') + '<span>👍 ' + (v.likes || 0) + '</span><span>💬 ' + (v.comments || 0) + '</span></div><a href="' + v.url + '" target="_blank">Open ↗</a></div>';
     });
     if (info.note) h += '<div class="warn">' + info.note + '</div>';
   }
