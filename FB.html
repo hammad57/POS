@@ -165,6 +165,48 @@
   .legend { margin-top: 16px; font-size: 13px; color: #d7e3f4; line-height: 1.8; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
   .legend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
   .note { margin-top: 10px; font-size: 12.5px; color: #aebfd2; line-height: 1.65; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+
+  /* ===== '+' button + added notes ===== */
+  .fab {
+    position: fixed; right: 18px; bottom: 18px; z-index: 50;
+    width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer;
+    font-size: 34px; font-weight: 800; line-height: 1; color: #fff;
+    background: linear-gradient(180deg, #3b9bf5, #1668c4);
+    box-shadow: 0 6px 0 #0d4d96, 0 14px 24px rgba(0,0,0,.5);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .fab:hover { transform: translateY(-3px) scale(1.05); }
+  .fab:active { transform: translateY(3px); box-shadow: 0 2px 0 #0d4d96, 0 6px 12px rgba(0,0,0,.4); }
+  .notebadge { font-size: 10.5px; font-weight: 700; color: #1877f2; margin-top: 2px; }
+  .notesec {
+    margin-top: 16px; background: linear-gradient(180deg, #ffffff, #f2f5f8);
+    border: 1px solid #d4dae1; border-radius: 16px; padding: 16px;
+    box-shadow: 0 18px 34px rgba(0,0,0,.35), 0 3px 0 #c3ccd6;
+  }
+  .notesec h2 { font-size: 16px; margin-bottom: 4px; }
+  .notesec .nhint { font-size: 13px; color: #4a5568; margin-bottom: 8px; }
+  .notesec .nitem { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid #e4e6eb; font-size: 14px; }
+  .notesec .nitem small { color: #65676b; display: block; font-size: 12px; }
+  .notesec .ndel { border: none; background: none; color: #c00; font-size: 16px; font-weight: 700; cursor: pointer; }
+  .notesec .none { color: #65676b; font-size: 14px; }
+  .modalback { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.55); display: none; align-items: flex-end; justify-content: center; padding: 16px; }
+  .modalback.open { display: flex; }
+  .modal {
+    width: 100%; max-width: 520px; background: #fff; border-radius: 18px; padding: 18px;
+    box-shadow: 0 24px 48px rgba(0,0,0,.5); animation: panelIn .35s cubic-bezier(.2,.9,.3,1.2) both;
+  }
+  .modal h2 { font-size: 17px; margin-bottom: 10px; }
+  .modal label { font-size: 13px; font-weight: 700; color: #4a5568; display: block; margin: 10px 0 4px; }
+  .modal input, .modal select, .modal textarea {
+    width: 100%; padding: 10px; font-size: 14px; font-family: inherit;
+    border: 1px solid #d4dae1; border-radius: 10px; box-sizing: border-box;
+  }
+  .modal textarea { min-height: 110px; resize: vertical; }
+  .modal .mrow { display: flex; gap: 10px; margin-top: 14px; }
+  .modal .mrow button { flex: 1; padding: 12px; font-size: 15px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; }
+  .modal .addbtn { background: linear-gradient(180deg, #3b9bf5, #1668c4); color: #fff; box-shadow: 0 4px 0 #0d4d96; }
+  .modal .cancelbtn { background: #eef1f5; color: #1c1e21; }
+  .modal .mhint { font-size: 12.5px; color: #65676b; margin-top: 10px; line-height: 1.6; }
   @media (max-width: 480px) {
     .title3d h1 { font-size: 24px; }
     .day { min-height: 84px; }
@@ -199,6 +241,12 @@
     <div class="detail" id="detail" style="display:none"></div>
   </div>
 
+  <div class="notesec" id="notesec">
+    <h2>📝 Added lines — meri likhi hui lines</h2>
+    <p class="nhint">Neeche '+' dabakar koi bhi date aur text add karein — har line alag entry banegi, aur baar baar add kar sakte hain. Ye lines isi browser mein save rehti hain.</p>
+    <div id="noteslist"></div>
+  </div>
+
   <div class="legend">
     <span><span class="sw" style="background:#42b72a"></span>Videos hain</span> &nbsp;
     <span><span class="sw" style="background:#d7dade"></span>0 videos</span> &nbsp;
@@ -208,8 +256,60 @@
   <p class="note" id="datanote"></p>
 </div>
 
-<script>
-const TODAY = "2026-11-08";
+<button class="fab" id="fabPlus" title="Line add karein" onclick="openNotesPanel()">+</button>
+<div class="modalback" id="modalback" onclick="if(event.target===this) closeNotesPanel()">
+  <div class="modal">
+    <h2>➕ Line add karein</h2>
+    <label for="noteDate">Date</label>
+    <input type="date" id="noteDate" value="2026-11-08">
+    <label for="noteView">Kis par?</label>
+    <select id="noteView"><option value="profile">Profile — Areesha Jabeen</option><option value="page">Page — Sale Online</option></select>
+    <label for="noteText">Line(s) — aik line per row likhein, jitni chahen</label>
+    <textarea id="noteText" placeholder="Masalan:&#10;Aaj 2 funny reels lagayi&#10;Kal Page par promo video lagani hai"></textarea>
+    <div class="mrow">
+      <button class="addbtn" onclick="addNotes()">Add karein ✓</button>
+      <button class="cancelbtn" onclick="closeNotesPanel()">Band karein</button>
+    </div>
+    <p class="mhint">Har line alag entry banegi — aik dafa mein 1 ya zyada lines add kar sakte hain, aur '+' dobara dabakar phir se add kar sakte hain. Kisi line ko hatane ke liye us ke saamne × dabayein. Lines isi browser mein save hoti hain (is phone/browser par rehti hain).</p>
+  </div>
+</div>
+
+<script>const TODAY = "2026-11-10";
+
+// ===== '+' button: user-added lines (browser localStorage mein save) =====
+const NOTES_KEY = "fbCalendarNotesV1";
+function loadNotes() { try { return JSON.parse(localStorage.getItem(NOTES_KEY) || "[]"); } catch (e) { return []; } }
+function saveNotes(n) { try { localStorage.setItem(NOTES_KEY, JSON.stringify(n)); } catch (e) {} }
+function notesFor(ds, v) { return loadNotes().filter(n => n.date === ds && n.view === v); }
+function openNotesPanel() {
+  const sel = selected || TODAY;
+  document.getElementById("noteDate").value = sel;
+  document.getElementById("noteView").value = view;
+  document.getElementById("modalback").classList.add("open");
+  setTimeout(() => document.getElementById("noteText").focus(), 80);
+}
+function closeNotesPanel() { document.getElementById("modalback").classList.remove("open"); }
+function addNotes() {
+  const date = document.getElementById("noteDate").value || TODAY;
+  const v = document.getElementById("noteView").value || view;
+  const lines = document.getElementById("noteText").value.split("\n").map(x => x.trim()).filter(Boolean);
+  if (!lines.length) { alert("Pehle aik line likhein."); return; }
+  const notes = loadNotes();
+  const now = Date.now();
+  lines.forEach((t, i) => notes.push({ id: now + "_" + i + "_" + Math.random().toString(36).slice(2, 7), date: date, view: v, text: t, ts: now }));
+  saveNotes(notes);
+  document.getElementById("noteText").value = "";
+  closeNotesPanel();
+  render();
+}
+function deleteNote(id) { saveNotes(loadNotes().filter(n => n.id !== id)); render(); }
+function renderNotes() {
+  const list = document.getElementById("noteslist");
+  if (!list) return;
+  const notes = loadNotes().slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.ts - b.ts));
+  if (!notes.length) { list.innerHTML = '<p class="none">Abhi koi line add nahi hui — neeche + dabakar pehli line likhein.</p>'; return; }
+  list.innerHTML = notes.map(n => '<div class="nitem"><div>' + n.text.replace(/</g, "&lt;") + '<small>' + n.date + ' • ' + (n.view === "profile" ? "Profile" : "Page") + '</small></div><button class="ndel" title="Hatayein" onclick="deleteNote(\'' + n.id + '\')">×</button></div>').join("");
+}
 const MONTHS = [
   { key: "2026-10", name: "October 2026", year: 2026, month: 9 },
   { key: "2026-11", name: "November 2026", year: 2026, month: 10 }
@@ -239,8 +339,21 @@ const DATA = {
         { time: "11:50 PM", label: "Darood e Ibrahimi (reel)", url: "https://facebook.com/reel/2070626420323984/", views: null, likes: 1, comments: 1 },
         { time: "11:55 PM", label: "Nature is a life (reel)", url: "https://facebook.com/reel/1142936454886215/", views: null, likes: 0, comments: 0 }
       ]},
-      "2026-11-08": { count: 1, views: null, likes: 0, comments: 0, videos: [
-        { time: "12:02 AM", label: "Shared video — Wow", url: "https://facebook.com/61595657737821/posts/pfbid0qfdwjPPGxCN1Zuj1PV4DF5K6Kw9i9uncugxsvKy8Rn6VagbYVV4EATMYA8AF4A8il/", views: null, likes: 0, comments: 0 }
+      "2026-11-08": { count: 6, views: null, likes: 22, comments: 2, videos: [
+        { time: "12:02 AM", label: "Shared video — Wow", url: "https://facebook.com/61595657737821/posts/pfbid0qfdwjPPGxCN1Zuj1PV4DF5K6Kw9i9uncugxsvKy8Rn6VagbYVV4EATMYA8AF4A8il/", views: null, likes: 0, comments: 0 },
+        { time: "10:21 AM", label: "Shared video (Punjabi)", url: "https://facebook.com/61595657737821/posts/pfbid0w97VrFKRF3owd7LKNA16m6fYHD3SiZV9tKa9i3oco3MF1i2SgqByY8BJShUbRKvql/", views: null, likes: 1, comments: 0 },
+        { time: "10:22 AM", label: "Shared video (Hindi song)", url: "https://facebook.com/61595657737821/posts/pfbid0j7v42R6CXtiCHf8bfSok3a5kPoGQw9oYZ1yuzK6N29KZ1YeSftwvUYRopD5V4iNYl/", views: null, likes: 0, comments: 0 },
+        { time: "10:45 AM", label: "Funny shadi (reel)", url: "https://facebook.com/reel/1127764029855027/", views: null, likes: 14, comments: 1 },
+        { time: "12:05 PM", label: "Shared video (Urdu)", url: "https://facebook.com/61595657737821/posts/pfbid02sZPqinZ1tk3gi6rG5MAZN5Re5s6y4GVrt6x5tjxyw1ZbeVqKtXifNdYR5tSXQsVQl/", views: null, likes: 4, comments: 0 },
+        { time: "05:49 PM", label: "Shared video", url: "https://facebook.com/61595657737821/posts/pfbid0Q5FkxRwr5AwxCgcYcCauCfMcJV948EEYG89QBXztAqhedhAjvNBxkgdAxq6pd7wwl/", views: null, likes: 3, comments: 1 }
+      ]},
+      "2026-11-09": { count: 6, views: null, likes: 27, comments: 0, videos: [
+        { time: "11:56 AM", label: "Army movie scene (reel)", url: "https://facebook.com/reel/1706153851178960/", views: null, likes: 19, comments: 0 },
+        { time: "01:38 PM", label: "Hindi old songs (reel)", url: "https://facebook.com/reel/1634673894802248/", views: null, likes: 3, comments: 0 },
+        { time: "01:39 PM", label: "Minecraft trick (reel)", url: "https://facebook.com/reel/1481768487149150/", views: null, likes: 2, comments: 0 },
+        { time: "01:52 PM", label: "Army heroes (reel)", url: "https://facebook.com/reel/1323350309858346/", views: null, likes: 0, comments: 0 },
+        { time: "04:01 PM", label: "Urdu song — sawan (reel)", url: "https://facebook.com/reel/1141489961959005/", views: null, likes: 1, comments: 0 },
+        { time: "05:22 PM", label: "Car accident clip (reel)", url: "https://facebook.com/reel/1058660537197358/", views: null, likes: 2, comments: 0 }
       ]}
     }
   },
@@ -322,6 +435,8 @@ function render() {
       cls += " has"; cnt = info.count; lbl = info.count === 1 ? "video" : "videos";
       stats = '<div class="stats"><span>👁️ ' + fmtViews(info.views) + '</span><span>👍 ' + (info.likes || 0) + '</span><span>💬 ' + (info.comments || 0) + '</span></div>';
     } else { cls += " zero"; cnt = "0"; lbl = "videos"; }
+    const nc = notesFor(c.ds, view).length;
+    if (nc) stats += '<div class="notebadge">📝 ' + nc + ' line' + (nc > 1 ? 's' : '') + '</div>';
     if (isToday) cls += " today";
     if (selected === c.ds) cls += " selected";
     html += '<div class="' + cls + '" style="--i:' + idx + '" onclick="selectDay(\'' + c.ds + '\')" onmousemove="tilt(event,this)" onmouseleave="untilt(this)"><span class="num">' + c.num + '</span><span class="cnt">' + cnt + '</span><span class="lbl">' + lbl + '</span>' + stats + '</div>';
@@ -333,6 +448,7 @@ function render() {
       ? "Data: Areesha Jabeen profile (Facebook se, 8 Nov 2026 subah 02:41 PKT). Views: profile posts ke liye Facebook views ka figure nahi deta, is liye '–' dikhaya gaya hai. Likes = kul reactions (Facebook ne Like / Love / Wow alag se nahi bataya). Facebook ne sirf 20 taaza posts dikhayi — is liye 1–3 Nov aur poora October maloom nahi ho saka, woh din '?' se dikhaye gaye hain."
       : "Data: Sale Online Page ki poori 90-din ki post list (Facebook se, 8 Nov 2026 subah 02:41 PKT). 2 Nov wali video ke 64 views Facebook par dikhaya gaya figure hai. Page par rozana 5 photo posts hoti hain — videos sirf 1 hai.";
 
+  renderNotes();
   if (selected) showDetail(selected);
 }
 
@@ -369,6 +485,11 @@ function showDetail(ds) {
       h += '<div class="v"><div class="t">' + v.label + '<small>' + v.time + '</small></div><div class="vstats"><span>👁️ ' + fmtViews(v.views) + '</span><span>👍 ' + (v.likes || 0) + '</span><span>💬 ' + (v.comments || 0) + '</span></div><a href="' + v.url + '" target="_blank">Open ↗</a></div>';
     });
     if (info.note) h += '<div class="warn">' + info.note + '</div>';
+  }
+  const dayNotes = notesFor(ds, view);
+  if (dayNotes.length) {
+    h += '<h2 style="margin-top:14px;font-size:15px">📝 Is din ki added lines</h2>';
+    dayNotes.forEach(n => { h += '<div class="v"><div class="t">' + n.text.replace(/</g, "&lt;") + '</div><button class="ndel" style="border:none;background:none;color:#c00;font-size:16px;font-weight:700;cursor:pointer" onclick="deleteNote(\'' + n.id + '\')">×</button></div>'; });
   }
   box.innerHTML = h;
   box.style.display = "block";
