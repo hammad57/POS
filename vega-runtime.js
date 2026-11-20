@@ -47,7 +47,9 @@
     return typeof u === "string" && /^https?:\/\//i.test(u);
   }
   function proxyUrl(target) {
-    return PROXY_BASE + target;
+    // Percent-encode the whole target: a raw "://" in the path makes the
+    // Pages edge miss the Functions route and serve index.html instead.
+    return PROXY_BASE + encodeURIComponent(target);
   }
   function proxifyImage(u) {
     if (!u) return "";
