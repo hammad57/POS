@@ -3,123 +3,595 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vega Web — Live TV | Nadan-Prinda</title>
+<title>Vega Web — Nadan-Prinda</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0b0f14; color: #e8edf2; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; min-height: 100vh; }
-  header { padding: 18px 20px 8px; text-align: center; }
+  header { padding: 16px 16px 6px; text-align: center; }
   header h1 { font-size: 26px; letter-spacing: .5px; }
   header h1 span { color: #e11d48; }
-  header p { color: #8b98a5; font-size: 13px; margin-top: 4px; }
-  .wrap { max-width: 900px; margin: 0 auto; padding: 10px 14px 30px; }
+  header p { color: #8b98a5; font-size: 12px; margin-top: 4px; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 8px 14px 40px; }
+  .source-bar { display: flex; gap: 8px; margin: 10px 0 4px; }
+  .source-bar input { flex: 1; background: #111827; border: 1px solid #374151; color: #e8edf2; border-radius: 8px; padding: 10px 12px; font-size: 15px; }
+  .source-bar input:focus { outline: none; border-color: #e11d48; }
+  button { background: #e11d48; color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 15px; cursor: pointer; }
+  button:hover { background: #be123c; }
+  button.ghost { background: #1f2937; }
+  button.ghost:hover { background: #374151; }
+  button:disabled { opacity: .5; cursor: default; }
+  .tabs { display: flex; gap: 8px; margin: 12px 0; }
+  .tabs button { flex: 1; }
+  .tabs button.off { background: #1f2937; }
+  #status { min-height: 20px; font-size: 13px; color: #f59e0b; margin: 4px 2px 10px; }
+  #status.err { color: #f87171; }
+  #status.ok { color: #4ade80; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .grid.posts { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 14px; cursor: pointer; transition: border-color .15s, transform .15s; text-align: center; }
+  .card:hover { border-color: #e11d48; transform: translateY(-2px); }
+  .card img.icon { width: 56px; height: 56px; object-fit: contain; border-radius: 10px; background: #0b0f14; }
+  .card .initial { width: 56px; height: 56px; margin: 0 auto; border-radius: 10px; background: #e11d48; color: #fff; font-size: 26px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .card h3 { font-size: 14px; margin-top: 8px; line-height: 1.3; }
+  .card p { color: #8b98a5; font-size: 12px; margin-top: 3px; }
+  .post-card { text-align: left; padding: 0; overflow: hidden; }
+  .post-card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; background: #1f2937; }
+  .post-card h3 { padding: 8px 10px 10px; margin: 0; font-size: 13px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .chips button { background: #1f2937; padding: 7px 14px; font-size: 13px; }
+  .chips button.on { background: #e11d48; }
+  .search-row { display: flex; gap: 8px; margin: 10px 0; }
+  .search-row input { flex: 1; background: #111827; border: 1px solid #374151; color: #e8edf2; border-radius: 8px; padding: 10px 12px; font-size: 15px; }
+  .back { margin: 6px 0 12px; }
   .player-box { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; border: 1px solid #1f2937; }
   .player-box video { width: 100%; height: 100%; display: block; background: #000; }
-  .now { display: flex; align-items: center; gap: 8px; margin: 12px 2px 4px; font-size: 15px; }
+  .detail { display: flex; gap: 16px; margin: 10px 0; }
+  .detail img.poster { width: 160px; border-radius: 10px; object-fit: cover; align-self: flex-start; }
+  .detail .info h2 { font-size: 20px; margin-bottom: 6px; }
+  .detail .info p { color: #c3cbd4; font-size: 14px; line-height: 1.5; }
+  .detail .meta-line { color: #8b98a5; font-size: 13px; margin-top: 8px; }
+  .section { margin: 16px 0; }
+  .section h3 { font-size: 16px; margin-bottom: 8px; }
+  .ep-list, .server-list { display: flex; flex-direction: column; gap: 8px; }
+  .row-item { background: #111827; border: 1px solid #1f2937; border-radius: 10px; padding: 11px 14px; cursor: pointer; text-align: left; width: 100%; color: #e8edf2; font-size: 14px; }
+  .row-item:hover { border-color: #e11d48; }
+  .row-item small { color: #8b98a5; display: block; margin-top: 2px; font-size: 12px; }
+  .row-item.disabled { opacity: .55; cursor: default; }
+  .row-item.disabled:hover { border-color: #1f2937; }
+  .center { text-align: center; margin: 18px 0; }
+  .note { color: #8b98a5; font-size: 12px; line-height: 1.5; margin-top: 18px; text-align: center; }
+  .note a { color: #9ca3af; }
+  .hidden { display: none !important; }
   .live-dot { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; display: inline-block; animation: pulse 1.4s infinite; }
   @keyframes pulse { 0% { opacity: 1; } 50% { opacity: .35; } 100% { opacity: 1; } }
-  .now b { font-size: 16px; }
-  .now span.cat { color: #8b98a5; font-size: 13px; }
-  #status { color: #f59e0b; font-size: 13px; margin: 2px 2px 12px; min-height: 18px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-  .card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 16px; cursor: pointer; transition: border-color .15s, transform .15s; }
-  .card:hover { border-color: #e11d48; transform: translateY(-2px); }
-  .card.active { border-color: #e11d48; background: #1a1216; }
-  .card.disabled { opacity: .55; cursor: default; }
-  .card.disabled:hover { border-color: #1f2937; transform: none; }
-  .card h3 { font-size: 17px; margin-bottom: 4px; }
-  .card p { color: #8b98a5; font-size: 13px; }
-  .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-top: 10px; }
-  .badge.live { background: #dc2626; color: #fff; }
-  .badge.mob { background: #374151; color: #d1d5db; }
-  footer { text-align: center; color: #6b7280; font-size: 12px; padding: 18px 10px 26px; }
-  footer a { color: #9ca3af; }
+  @media (max-width: 600px) { .detail { flex-direction: column; } .detail img.poster { width: 130px; } }
 </style>
 </head>
 <body>
 <header>
-  <h1><span>▶</span> Vega Web — Live TV</h1>
-  <p>Source: Nadan-Prinda &nbsp;•&nbsp; Live channels, no app needed</p>
+  <h1><span>▶</span> Vega Web</h1>
+  <p>Providers source se — jaise mobile app</p>
 </header>
 
 <div class="wrap">
-  <div class="player-box">
-    <video id="player" controls playsinline muted></video>
+  <div class="source-bar">
+    <input id="sourceInput" type="text" placeholder="Source code — GitHub username" autocomplete="off" spellcheck="false">
+    <button id="loadSourceBtn">Load</button>
   </div>
-  <div class="now"><span class="live-dot"></span><b id="nowName">DW English</b><span class="cat" id="nowCat">News &bull; English</span></div>
   <div id="status"></div>
 
-  <div class="grid" id="channels"></div>
+  <div id="view-home">
+    <div class="tabs">
+      <button id="tabProviders">Providers</button>
+      <button id="tabLive" class="off">Live TV</button>
+    </div>
+    <div id="providerGrid" class="grid"></div>
+    <div id="liveGrid" class="grid hidden"></div>
+    <p class="note">Source = GitHub username jis ke <b>vega-providers</b> repo se providers aate hain.<br>
+    Providers web par proxy (<span id="proxyNote">/proxy/</span>) se chalte hain — kuch sites (Cloudflare/WAF wali) browser se nahi khul sakti, wo mobile app mein hi chalengi.</p>
+  </div>
+
+  <div id="view-provider" class="hidden">
+    <button class="ghost back" id="backToHome">← Providers</button>
+    <h2 id="provTitle"></h2>
+    <div class="chips" id="catalogChips"></div>
+    <div class="search-row">
+      <input id="searchInput" type="text" placeholder="Search is provider mein..." autocomplete="off">
+      <button id="searchBtn">Search</button>
+    </div>
+    <div id="postsGrid" class="grid posts"></div>
+    <div class="center"><button id="moreBtn" class="ghost">Load more</button></div>
+  </div>
+
+  <div id="view-detail" class="hidden">
+    <button class="ghost back" id="backToProvider">← Back</button>
+    <div class="detail">
+      <img id="detailPoster" class="poster" alt="">
+      <div class="info">
+        <h2 id="detailTitle"></h2>
+        <p id="detailSynopsis"></p>
+        <div class="meta-line" id="detailMeta"></div>
+      </div>
+    </div>
+    <div id="linkSections"></div>
+  </div>
+
+  <div id="view-player" class="hidden">
+    <button class="ghost back" id="backToDetail">← Back</button>
+    <div class="player-box"><video id="player" controls playsinline></video></div>
+    <div id="playerTitle" style="margin:12px 2px 4px;font-size:16px;font-weight:700;"></div>
+    <div id="playerStatus" style="color:#f59e0b;font-size:13px;min-height:18px;"></div>
+    <div class="section"><h3>Servers</h3><div id="serverList" class="server-list"></div></div>
+    <div class="section" id="dlSection" class="hidden"><a id="dlLink" href="#" target="_blank" rel="noopener"><button class="ghost">Download MP4</button></a></div>
+  </div>
 </div>
 
-<footer>
-  Streams from <a href="https://github.com/Nadan-Prinda/vega-providers" target="_blank" rel="noopener">Nadan-Prinda/vega-providers</a> &nbsp;•&nbsp; Powered by HLS
-</footer>
-
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+<script src="vega-vendor.js"></script>
+<script src="vega-runtime.js"></script>
 <script>
-var CHANNELS = [
-  { name: "DW English", cat: "News \u2022 English",
-    url: "https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8" },
-  { name: "NASA TV", cat: "Science \u2022 English",
-    url: "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8" },
-  { name: "8XM", cat: "Music \u2022 Pakistani", mobileOnly: true,
-    url: "http://116.90.120.149:8000/play/a0tw/index.m3u8" }
-];
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var statusEl = $("status");
+  var state = {
+    author: localStorage.getItem("vegaweb:author") || VegaWeb.DEFAULT_AUTHOR,
+    manifest: [],
+    provider: null, // {display_name, value, icon}
+    catalog: [],
+    filter: "",
+    page: 1,
+    searching: false,
+    query: "",
+    posts: [],
+    meta: null,
+    streams: [],
+    currentStreamLink: "",
+    currentStreamTitle: "",
+    hls: null,
+    retriedProxy: false,
+  };
 
-var video = document.getElementById("player");
-var statusEl = document.getElementById("status");
-var hls = null;
+  function setStatus(msg, kind) {
+    statusEl.textContent = msg || "";
+    statusEl.className = kind === "err" ? "err" : kind === "ok" ? "ok" : "";
+    statusEl.id = "status";
+  }
+  function show(view) {
+    ["view-home", "view-provider", "view-detail", "view-player"].forEach(function (v) {
+      $(v).classList.toggle("hidden", v !== view);
+    });
+    window.scrollTo(0, 0);
+  }
+  function friendlyError(e, what) {
+    var m = (e && e.message) || String(e);
+    if (/403|503|Cloudflare|cf-|WAF/i.test(m)) {
+      return what + " nahi khula — site ne rok diya hai (Cloudflare/WAF). Ye mobile app mein chal sakta hai, web par nahi.";
+    }
+    if (/HTTP 4|HTTP 5/.test(m)) return what + " nahi khula (server error " + m + "). Dobara try karein.";
+    if (/timeout/i.test(m)) return what + " ka jawab nahi aaya (timeout) — dobara try karein.";
+    return what + " nahi khula: " + m;
+  }
 
-function setStatus(msg) { statusEl.textContent = msg || ""; }
+  /* ---------- source / providers ---------- */
+  async function loadSource() {
+    var author = $("sourceInput").value.trim();
+    if (!author) author = VegaWeb.DEFAULT_AUTHOR;
+    state.author = author;
+    localStorage.setItem("vegaweb:author", author);
+    setStatus("Source load ho raha hai: " + author + "...");
+    try {
+      var list = await VegaWeb.loadManifest(author);
+      state.manifest = list.filter(function (p) { return !p.disabled; });
+      renderProviders();
+      setStatus(state.manifest.length + " providers mil gaye — " + author, "ok");
+    } catch (e) {
+      state.manifest = [];
+      renderProviders();
+      setStatus(friendlyError(e, "Source"), "err");
+    }
+  }
+  function renderProviders() {
+    var grid = $("providerGrid");
+    grid.innerHTML = "";
+    if (!state.manifest.length) {
+      grid.innerHTML = '<p style="color:#8b98a5">Koi provider nahi mila. Source code check karein.</p>';
+      return;
+    }
+    state.manifest.forEach(function (p) {
+      var card = document.createElement("div");
+      card.className = "card";
+      var icon = p.icon ? '<img class="icon" src="' + VegaWeb.proxifyImage(p.icon) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
+        '<div class="initial" style="display:none">' + (p.display_name || "?").charAt(0) + '</div>'
+        : '<div class="initial">' + (p.display_name || "?").charAt(0) + '</div>';
+      card.innerHTML = icon + "<h3>" + escapeHtml(p.display_name || p.value) + "</h3><p>v" + escapeHtml(p.version || "") + "</p>";
+      card.addEventListener("click", function () { openProvider(p); });
+      grid.appendChild(card);
+    });
+  }
+  function renderLive() {
+    var grid = $("liveGrid");
+    grid.innerHTML = "";
+    VegaWeb.LIVE_TV.forEach(function (ch) {
+      var card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = '<span class="live-dot"></span><h3>' + escapeHtml(ch.name) + '</h3><p>' + escapeHtml(ch.cat) + '</p>' +
+        (ch.mobileOnly ? '<p style="color:#f59e0b">Mobile app only</p>' : '<p style="color:#4ade80">LIVE</p>');
+      card.addEventListener("click", function () {
+        if (ch.mobileOnly) {
+          setStatus("8XM ka stream http hai — https page par browser block kar deta hai. Ye sirf mobile app mein chalega.", "err");
+          return;
+        }
+        openLivePlayer(ch);
+      });
+      grid.appendChild(card);
+    });
+  }
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
 
-function playChannel(ch) {
-  document.getElementById("nowName").textContent = ch.name;
-  document.getElementById("nowCat").textContent = ch.cat;
-  document.querySelectorAll(".card").forEach(function (el) {
-    el.classList.toggle("active", el.dataset.name === ch.name);
+  /* ---------- provider browsing ---------- */
+  async function openProvider(p) {
+    state.provider = p;
+    state.page = 1;
+    state.searching = false;
+    state.query = "";
+    state.posts = [];
+    $("provTitle").textContent = p.display_name || p.value;
+    $("searchInput").value = "";
+    $("postsGrid").innerHTML = "";
+    $("catalogChips").innerHTML = "";
+    show("view-provider");
+    setStatus("Catalog load ho raha hai...");
+    try {
+      await VegaWeb.seedSettings(state.author, p.value);
+      var cat = await VegaWeb.getCatalog(state.author, p.value);
+      state.catalog = cat.catalog || [];
+      renderChips();
+      if (state.catalog.length) {
+        state.filter = state.catalog[0].filter;
+        markChip(0);
+        await loadPosts(true);
+      } else {
+        setStatus("Is provider ka catalog khali hai.", "err");
+      }
+    } catch (e) {
+      setStatus(friendlyError(e, "Provider"), "err");
+    }
+  }
+  function renderChips() {
+    var box = $("catalogChips");
+    box.innerHTML = "";
+    state.catalog.forEach(function (c, i) {
+      var b = document.createElement("button");
+      b.textContent = c.title;
+      b.addEventListener("click", function () {
+        state.filter = c.filter;
+        state.searching = false;
+        markChip(i);
+        loadPosts(true);
+      });
+      box.appendChild(b);
+    });
+  }
+  function markChip(i) {
+    Array.prototype.forEach.call($("catalogChips").children, function (b, j) {
+      b.classList.toggle("on", j === i);
+    });
+  }
+  async function loadPosts(reset) {
+    if (reset) { state.page = 1; state.posts = []; $("postsGrid").innerHTML = ""; }
+    setStatus("Posts load ho rahe hain...");
+    $("moreBtn").disabled = true;
+    try {
+      var posts;
+      if (state.searching) {
+        posts = await VegaWeb.searchPosts(state.author, state.provider.value, state.query, state.page);
+      } else {
+        posts = await VegaWeb.getPosts(state.author, state.provider.value, state.filter, state.page);
+      }
+      posts = posts || [];
+      state.posts = state.posts.concat(posts);
+      renderPosts();
+      setStatus(posts.length ? state.posts.length + " titles" : "Kuch nahi mila.", posts.length ? "ok" : "err");
+      $("moreBtn").disabled = false;
+      $("moreBtn").style.display = posts.length ? "" : "none";
+    } catch (e) {
+      setStatus(friendlyError(e, "Posts"), "err");
+      $("moreBtn").disabled = false;
+    }
+  }
+  function renderPosts() {
+    var grid = $("postsGrid");
+    grid.innerHTML = "";
+    state.posts.forEach(function (post) {
+      var card = document.createElement("div");
+      card.className = "card post-card";
+      var img = post.image ? '<img src="' + VegaWeb.proxifyImage(post.image) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : "";
+      card.innerHTML = img + "<h3>" + escapeHtml(post.title || "Untitled") + "</h3>";
+      card.addEventListener("click", function () { openDetail(post); });
+      grid.appendChild(card);
+    });
+  }
+
+  /* ---------- detail ---------- */
+  async function openDetail(post) {
+    show("view-detail");
+    $("detailTitle").textContent = post.title || "";
+    $("detailSynopsis").textContent = "Loading...";
+    $("detailPoster").src = post.image ? VegaWeb.proxifyImage(post.image) : "";
+    $("detailPoster").style.display = post.image ? "" : "none";
+    $("linkSections").innerHTML = "";
+    setStatus("Details load ho rahe hain...");
+    try {
+      var meta = await VegaWeb.getMeta(state.author, state.provider.value, post.link);
+      state.meta = meta;
+      $("detailTitle").textContent = meta.title || post.title || "";
+      $("detailSynopsis").textContent = meta.synopsis || "No synopsis.";
+      var bits = [];
+      if (meta.type) bits.push(meta.type);
+      if (meta.rating) bits.push("Rating: " + meta.rating);
+      if (meta.tags && meta.tags.length) bits.push(meta.tags.join(", "));
+      if (meta.cast && meta.cast.length) bits.push("Cast: " + meta.cast.slice(0, 5).join(", "));
+      $("detailMeta").textContent = bits.join("  •  ");
+      if (meta.image) { $("detailPoster").src = VegaWeb.proxifyImage(meta.image); $("detailPoster").style.display = ""; }
+      renderLinkSections(meta);
+      setStatus("", "");
+    } catch (e) {
+      setStatus(friendlyError(e, "Details"), "err");
+    }
+  }
+  function renderLinkSections(meta) {
+    var box = $("linkSections");
+    box.innerHTML = "";
+    var links = meta.linkList || [];
+    if (!links.length) {
+      box.innerHTML = '<p style="color:#8b98a5">Is title ke liye koi stream link nahi mila.</p>';
+      return;
+    }
+    links.forEach(function (link) {
+      var sec = document.createElement("div");
+      sec.className = "section";
+      var title = link.title || "Watch";
+      if (link.quality) title += " (" + link.quality + ")";
+      sec.innerHTML = "<h3>" + escapeHtml(title) + "</h3>";
+      var list = document.createElement("div");
+      list.className = "ep-list";
+      if (link.directLinks && link.directLinks.length) {
+        link.directLinks.forEach(function (dl) {
+          var b = document.createElement("button");
+          b.className = "row-item";
+          b.innerHTML = escapeHtml(dl.title || "Play") + (dl.description ? "<small>" + escapeHtml(dl.description) + "</small>" : "");
+          b.addEventListener("click", function () { loadStreams(dl.link, dl.type || "movie", dl.title || title); });
+          list.appendChild(b);
+        });
+      } else if (link.episodesLink) {
+        var b = document.createElement("button");
+        b.className = "row-item";
+        b.textContent = "Episodes dekhein";
+        b.addEventListener("click", async function () {
+          b.disabled = true;
+          b.textContent = "Episodes load ho rahe hain...";
+          try {
+            var eps = await VegaWeb.getEpisodes(state.author, state.provider.value, link.episodesLink);
+            list.innerHTML = "";
+            (eps || []).forEach(function (ep) {
+              var eb = document.createElement("button");
+              eb.className = "row-item";
+              eb.innerHTML = escapeHtml(ep.title || "Episode") + (ep.description ? "<small>" + escapeHtml(ep.description) + "</small>" : "");
+              eb.addEventListener("click", function () { loadStreams(ep.link, "series", ep.title || title); });
+              list.appendChild(eb);
+            });
+            if (!eps || !eps.length) list.innerHTML = '<p style="color:#8b98a5">Koi episode nahi mila.</p>';
+          } catch (e) {
+            list.innerHTML = '<p style="color:#f87171">' + escapeHtml(friendlyError(e, "Episodes")) + "</p>";
+          }
+        });
+        list.appendChild(b);
+      }
+      sec.appendChild(list);
+      box.appendChild(sec);
+    });
+  }
+
+  /* ---------- streams + player ---------- */
+  async function loadStreams(link, type, title) {
+    show("view-player");
+    $("playerTitle").textContent = title || "";
+    $("serverList").innerHTML = "";
+    $("playerStatus").textContent = "Servers load ho rahe hain...";
+    $("dlSection").classList.add("hidden");
+    stopPlayer();
+    try {
+      var streams = await VegaWeb.getStreams(state.author, state.provider.value, link, type);
+      state.streams = streams || [];
+      renderServers(title);
+      $("playerStatus").textContent = state.streams.length ? "" : "Koi server nahi mila.";
+    } catch (e) {
+      $("playerStatus").textContent = friendlyError(e, "Streams");
+    }
+  }
+  function renderServers(title) {
+    var box = $("serverList");
+    box.innerHTML = "";
+    state.streams.forEach(function (s) {
+      var b = document.createElement("button");
+      var label = (s.server || "Server") + (s.quality ? " • " + s.quality : "") + (s.type ? " • " + s.type : "");
+      if (s.drm) {
+        b.className = "row-item disabled";
+        b.innerHTML = escapeHtml(label) + "<small>DRM — web par nahi chalega (mobile app mein chal sakta hai)</small>";
+        b.disabled = true;
+      } else {
+        b.className = "row-item";
+        b.textContent = label;
+        b.addEventListener("click", function () { playStream(s, title); });
+      }
+      box.appendChild(b);
+    });
+    if (state.streams.length) {
+      var first = state.streams.find(function (s) { return !s.drm; });
+      if (first) playStream(first, title);
+    }
+  }
+  function stopPlayer() {
+    var v = $("player");
+    try { v.pause(); } catch (e) {}
+    if (state.hls) { try { state.hls.destroy(); } catch (e) {} state.hls = null; }
+    v.removeAttribute("src");
+    try { v.load(); } catch (e) {}
+    state.retriedProxy = false;
+  }
+  function isHls(u) {
+    return /\.m3u8(\?|$)/i.test(u || "");
+  }
+  function playStream(s, title) {
+    var v = $("player");
+    var url = s.link;
+    state.currentStreamLink = url;
+    state.currentStreamTitle = (title || "") + " — " + (s.server || "");
+    $("playerTitle").textContent = state.currentStreamTitle;
+    $("playerStatus").textContent = "";
+    stopPlayer();
+    // Download link only for direct mp4.
+    if (/\.mp4(\?|$)/i.test(url)) {
+      $("dlSection").classList.remove("hidden");
+      $("dlLink").href = url;
+    } else {
+      $("dlSection").classList.add("hidden");
+    }
+    // Subtitles (vtt only — browsers can't play srt natively).
+    Array.prototype.slice.call(v.querySelectorAll("track")).forEach(function (t) { t.remove(); });
+    if (s.subtitles && s.subtitles.length) {
+      s.subtitles.forEach(function (sub) {
+        if (sub && sub.uri && /\.vtt(\?|$)/i.test(sub.uri)) {
+          var tr = document.createElement("track");
+          tr.kind = "subtitles";
+          tr.label = sub.title || sub.language || "Subtitles";
+          tr.srclang = sub.language || "en";
+          tr.src = VegaWeb.proxifyImage(sub.uri);
+          v.appendChild(tr);
+        }
+      });
+    }
+    var saved = VegaWeb.getProgress(url);
+    function onLoadedMeta() {
+      if (saved > 10 && v.duration && saved < v.duration - 10) {
+        try { v.currentTime = saved; } catch (e) {}
+        $("playerStatus").textContent = "Resume ho raha hai: " + fmtTime(saved);
+      }
+    }
+    v.addEventListener("loadedmetadata", onLoadedMeta, { once: true });
+    var lastSave = 0;
+    v.ontimeupdate = function () {
+      var now = Date.now();
+      if (now - lastSave > 5000) { lastSave = now; VegaWeb.setProgress(url, v.currentTime); }
+    };
+    v.onpause = function () { VegaWeb.setProgress(url, v.currentTime); };
+    v.onended = function () { VegaWeb.clearProgress(url); };
+    v.onerror = function () {
+      if (!isHls(url) && url.indexOf("/proxy/") === -1) {
+        // MP4 direct failed — retry through the proxy.
+        v.src = VegaWeb.proxyUrl(url);
+        v.play().catch(function () {});
+        $("playerStatus").textContent = "Direct nahi chala — proxy se try ho raha hai...";
+      } else {
+        $("playerStatus").textContent = "Video nahi chal rahi — server down ho sakta hai, koi aur server azmayein.";
+      }
+    };
+    if (isHls(url)) {
+      playHls(url, false);
+    } else {
+      v.src = url;
+      v.play().catch(function () { $("playerStatus").textContent = "Play dabayein."; });
+    }
+  }
+  function playHls(url, viaProxy) {
+    var v = $("player");
+    if (window.Hls && Hls.isSupported()) {
+      var cfg = {};
+      if (viaProxy) {
+        var Loader = VegaWeb.createHlsProxyLoader();
+        if (Loader) cfg.loader = Loader;
+      }
+      var hls = new Hls(cfg);
+      state.hls = hls;
+      hls.loadSource(viaProxy ? VegaWeb.proxyUrl(url) : url);
+      hls.attachMedia(v);
+      hls.on(Hls.Events.MANIFEST_PARSED, function () {
+        v.play().catch(function () { $("playerStatus").textContent = "Play dabayein."; });
+      });
+      hls.on(Hls.Events.ERROR, function (ev, data) {
+        if (!data || !data.fatal) return;
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR && !viaProxy && !state.retriedProxy) {
+          state.retriedProxy = true;
+          $("playerStatus").textContent = "Direct nahi chala — proxy se try ho raha hai...";
+          try { hls.destroy(); } catch (e) {}
+          playHls(url, true);
+        } else if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          $("playerStatus").textContent = "Stream nahi chal raha (network error) — koi aur server azmayein.";
+        } else {
+          $("playerStatus").textContent = "Video error — koi aur server azmayein.";
+        }
+      });
+    } else if (v.canPlayType("application/vnd.apple.mpegurl")) {
+      v.src = viaProxy ? VegaWeb.proxyUrl(url) : url;
+      v.play().catch(function () { $("playerStatus").textContent = "Play dabayein."; });
+    } else {
+      $("playerStatus").textContent = "Aapka browser live stream (HLS) support nahi karta.";
+    }
+  }
+  function fmtTime(s) {
+    s = Math.floor(s);
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    return (h ? h + ":" : "") + String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+  }
+  function openLivePlayer(ch) {
+    show("view-player");
+    state.streams = [];
+    $("serverList").innerHTML = "";
+    $("dlSection").classList.add("hidden");
+    playStream({ server: ch.name, link: ch.url, type: "m3u8" }, ch.name);
+  }
+
+  /* ---------- wiring ---------- */
+  $("sourceInput").value = state.author;
+  $("loadSourceBtn").addEventListener("click", loadSource);
+  $("sourceInput").addEventListener("keydown", function (e) { if (e.key === "Enter") loadSource(); });
+  $("tabProviders").addEventListener("click", function () {
+    $("tabProviders").classList.remove("off");
+    $("tabLive").classList.add("off");
+    $("providerGrid").classList.remove("hidden");
+    $("liveGrid").classList.add("hidden");
   });
-  if (ch.mobileOnly) {
-    setStatus("8XM ka stream http hai, is liye web page (https) par nahi chalega — ye sirf mobile app mein chalega.");
-    return;
-  }
-  setStatus("Loading " + ch.name + "...");
-  if (hls) { hls.destroy(); hls = null; }
-  if (window.Hls && Hls.isSupported()) {
-    hls = new Hls({ maxBufferLength: 30 });
-    hls.loadSource(ch.url);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, function () {
-      setStatus("");
-      video.play().catch(function () { setStatus("Play dabayein — browser ne auto-play roka hai."); });
-    });
-    hls.on(Hls.Events.ERROR, function (e, data) {
-      if (data.fatal) setStatus("Stream nahi chal raha — thodi der baad dobara try karein.");
-    });
-  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = ch.url;
-    video.play().catch(function () { setStatus("Play dabayein — browser ne auto-play roka hai."); });
-    setStatus("");
-  } else {
-    setStatus("Aapka browser live stream (HLS) support nahi karta — Chrome ya Safari use karein.");
-  }
-}
+  $("tabLive").addEventListener("click", function () {
+    $("tabLive").classList.remove("off");
+    $("tabProviders").classList.add("off");
+    $("liveGrid").classList.remove("hidden");
+    $("providerGrid").classList.add("hidden");
+    renderLive();
+  });
+  $("backToHome").addEventListener("click", function () { show("view-home"); setStatus("", ""); });
+  $("backToProvider").addEventListener("click", function () { show("view-provider"); });
+  $("backToDetail").addEventListener("click", function () {
+    stopPlayer();
+    if (state.meta) show("view-detail"); else show("view-provider");
+  });
+  $("searchBtn").addEventListener("click", function () {
+    var q = $("searchInput").value.trim();
+    if (!q) return;
+    state.searching = true;
+    state.query = q;
+    loadPosts(true);
+  });
+  $("searchInput").addEventListener("keydown", function (e) { if (e.key === "Enter") $("searchBtn").click(); });
+  $("moreBtn").addEventListener("click", function () { state.page += 1; loadPosts(false); });
 
-var grid = document.getElementById("channels");
-CHANNELS.forEach(function (ch) {
-  var card = document.createElement("div");
-  card.className = "card" + (ch.mobileOnly ? " disabled" : "");
-  card.dataset.name = ch.name;
-  card.innerHTML = "<h3>" + ch.name + "</h3><p>" + ch.cat + "</p>" +
-    (ch.mobileOnly
-      ? '<span class="badge mob">Mobile app only</span>'
-      : '<span class="badge live">\u25CF LIVE</span>');
-  card.addEventListener("click", function () { playChannel(ch); });
-  grid.appendChild(card);
-});
-
-// Start with the first channel (muted autoplay, unmute from the player controls)
-playChannel(CHANNELS[0]);
-video.addEventListener("click", function () { video.muted = false; });
+  renderLive();
+  loadSource();
+})();
 </script>
 </body>
 </html>
